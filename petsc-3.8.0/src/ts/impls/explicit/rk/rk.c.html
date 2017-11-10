@@ -1,0 +1,1030 @@
+<center><a href="rk.c">Actual source code: rk.c</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/ts/impls/explicit/rk/rk.c.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-27T00:13:03+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/ts/impls/explicit/rk/rk.c.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+<a name="line1">  1: </a><font color="#B22222">/*</font>
+<a name="line2">  2: </a><font color="#B22222">  Code for time stepping with the Runge-Kutta method</font>
+
+<a name="line4">  4: </a><font color="#B22222">  Notes:</font>
+<a name="line5">  5: </a><font color="#B22222">  The general system is written as</font>
+
+<a name="line7">  7: </a><font color="#B22222">  Udot = F(t,U)</font>
+
+<a name="line9">  9: </a><font color="#B22222">*/</font>
+<a name="line10"> 10: </a> #include <A href="../../../../../include/petsc/private/tsimpl.h.html">&lt;petsc/private/tsimpl.h&gt;</A>
+<a name="line11"> 11: </a> #include <A href="../../../../../include/petscdm.h.html">&lt;petscdm.h&gt;</A>
+
+<a name="line13"> 13: </a>static <a href="../../../../../docs/manualpages/TS/TSRKType.html#TSRKType">TSRKType</a>  TSRKDefault = <a href="../../../../../docs/manualpages/TS/TSRK3BS.html#TSRK3BS">TSRK3BS</a>;
+<a name="line14"> 14: </a>static <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> TSRKRegisterAllCalled;
+<a name="line15"> 15: </a>static <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> TSRKPackageInitialized;
+
+<a name="line17"> 17: </a><font color="#4169E1">typedef struct _RKTableau *RKTableau;</font>
+<a name="line18"> 18: </a><font color="#4169E1"><a name="_RKTableau"></a>struct _RKTableau </font>{
+<a name="line19"> 19: </a>  char      *name;
+<a name="line20"> 20: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>   order;               <font color="#B22222">/* Classical approximation order of the method i              */</font>
+<a name="line21"> 21: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>   s;                   <font color="#B22222">/* Number of stages                                           */</font>
+<a name="line22"> 22: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>   p;                   <font color="#B22222">/* Interpolation order                                        */</font>
+<a name="line23"> 23: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>  FSAL;                <font color="#B22222">/* flag to indicate if tableau is FSAL                        */</font>
+<a name="line24"> 24: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> *A,*b,*c;             <font color="#B22222">/* Tableau                                                    */</font>
+<a name="line25"> 25: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> *bembed;              <font color="#B22222">/* Embedded formula of order one less (order-1)               */</font>
+<a name="line26"> 26: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> *binterp;             <font color="#B22222">/* Dense output formula                                       */</font>
+<a name="line27"> 27: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>  ccfl;                <font color="#B22222">/* Placeholder for CFL coefficient relative to forward Euler  */</font>
+<a name="line28"> 28: </a>};
+<a name="line29"> 29: </a><font color="#4169E1">typedef struct _RKTableauLink *RKTableauLink;</font>
+<a name="line30"> 30: </a><font color="#4169E1"><a name="_RKTableauLink"></a>struct _RKTableauLink </font>{
+<a name="line31"> 31: </a>  <font color="#4169E1">struct _RKTableau</font> tab;
+<a name="line32"> 32: </a>  RKTableauLink     next;
+<a name="line33"> 33: </a>};
+<a name="line34"> 34: </a>static RKTableauLink RKTableauList;
+
+<a name="line36"> 36: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line37"> 37: </a>  RKTableau    tableau;
+<a name="line38"> 38: </a>  <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>          *Y;               <font color="#B22222">/* States computed during the step */</font>
+<a name="line39"> 39: </a>  <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>          *YdotRHS;         <font color="#B22222">/* Function evaluations for the non-stiff part */</font>
+<a name="line40"> 40: </a>  <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>          *VecDeltaLam;     <font color="#B22222">/* Increment of the adjoint sensitivity w.r.t IC at stage */</font>
+<a name="line41"> 41: </a>  <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>          *VecDeltaMu;      <font color="#B22222">/* Increment of the adjoint sensitivity w.r.t P at stage */</font>
+<a name="line42"> 42: </a>  <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>          *VecSensiTemp;    <font color="#B22222">/* Vector to be timed with Jacobian transpose */</font>
+<a name="line43"> 43: </a>  <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>          VecCostIntegral0; <font color="#B22222">/* backup for roll-backs due to events */</font>
+<a name="line44"> 44: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>  *work;            <font color="#B22222">/* Scalar work */</font>
+<a name="line45"> 45: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>    stage_time;
+<a name="line46"> 46: </a>  TSStepStatus status;
+<a name="line47"> 47: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>    ptime;
+<a name="line48"> 48: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>    time_step;
+<a name="line49"> 49: </a>} TS_RK;
+
+<a name="line51"> 51: </a><font color="#B22222">/*MC</font>
+<a name="line52"> 52: </a><font color="#B22222">     <a href="../../../../../docs/manualpages/TS/TSRK1FE.html#TSRK1FE">TSRK1FE</a> - First order forward Euler scheme.</font>
+
+<a name="line54"> 54: </a><font color="#B22222">     This method has one stage.</font>
+
+<a name="line56"> 56: </a><font color="#B22222">     Options database:</font>
+<a name="line57"> 57: </a><font color="#B22222">.     -ts_rk_type 1fe</font>
+
+<a name="line59"> 59: </a><font color="#B22222">     Level: advanced</font>
+
+<a name="line61"> 61: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/TS/TSRK.html#TSRK">TSRK</a>, <a href="../../../../../docs/manualpages/TS/TSRKType.html#TSRKType">TSRKType</a>, <a href="../../../../../docs/manualpages/TS/TSRKSetType.html#TSRKSetType">TSRKSetType</a>()</font>
+<a name="line62"> 62: </a><font color="#B22222">M*/</font>
+<a name="line63"> 63: </a><font color="#B22222">/*MC</font>
+<a name="line64"> 64: </a><font color="#B22222">     <a href="../../../../../docs/manualpages/TS/TSRK2A.html#TSRK2A">TSRK2A</a> - Second order RK scheme.</font>
+
+<a name="line66"> 66: </a><font color="#B22222">     This method has two stages.</font>
+
+<a name="line68"> 68: </a><font color="#B22222">     Options database:</font>
+<a name="line69"> 69: </a><font color="#B22222">.     -ts_rk_type 2a</font>
+
+<a name="line71"> 71: </a><font color="#B22222">     Level: advanced</font>
+
+<a name="line73"> 73: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/TS/TSRK.html#TSRK">TSRK</a>, <a href="../../../../../docs/manualpages/TS/TSRKType.html#TSRKType">TSRKType</a>, <a href="../../../../../docs/manualpages/TS/TSRKSetType.html#TSRKSetType">TSRKSetType</a>()</font>
+<a name="line74"> 74: </a><font color="#B22222">M*/</font>
+<a name="line75"> 75: </a><font color="#B22222">/*MC</font>
+<a name="line76"> 76: </a><font color="#B22222">     <a href="../../../../../docs/manualpages/TS/TSRK3.html#TSRK3">TSRK3</a> - Third order RK scheme.</font>
+
+<a name="line78"> 78: </a><font color="#B22222">     This method has three stages.</font>
+
+<a name="line80"> 80: </a><font color="#B22222">     Options database:</font>
+<a name="line81"> 81: </a><font color="#B22222">.     -ts_rk_type 3</font>
+
+<a name="line83"> 83: </a><font color="#B22222">     Level: advanced</font>
+
+<a name="line85"> 85: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/TS/TSRK.html#TSRK">TSRK</a>, <a href="../../../../../docs/manualpages/TS/TSRKType.html#TSRKType">TSRKType</a>, <a href="../../../../../docs/manualpages/TS/TSRKSetType.html#TSRKSetType">TSRKSetType</a>()</font>
+<a name="line86"> 86: </a><font color="#B22222">M*/</font>
+<a name="line87"> 87: </a><font color="#B22222">/*MC</font>
+<a name="line88"> 88: </a><font color="#B22222">     <a href="../../../../../docs/manualpages/TS/TSRK3BS.html#TSRK3BS">TSRK3BS</a> - Third order RK scheme of Bogacki-Shampine with 2nd order embedded method.</font>
+
+<a name="line90"> 90: </a><font color="#B22222">     This method has four stages with the First Same As Last (FSAL) property.</font>
+
+<a name="line92"> 92: </a><font color="#B22222">     Options database:</font>
+<a name="line93"> 93: </a><font color="#B22222">.     -ts_rk_type 3bs</font>
+
+<a name="line95"> 95: </a><font color="#B22222">     Level: advanced</font>
+
+<a name="line97"> 97: </a><font color="#B22222">     References: https://doi.org/10.1016/0893-9659(89)90079-7</font>
+
+<a name="line99"> 99: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/TS/TSRK.html#TSRK">TSRK</a>, <a href="../../../../../docs/manualpages/TS/TSRKType.html#TSRKType">TSRKType</a>, <a href="../../../../../docs/manualpages/TS/TSRKSetType.html#TSRKSetType">TSRKSetType</a>()</font>
+<a name="line100">100: </a><font color="#B22222">M*/</font>
+<a name="line101">101: </a><font color="#B22222">/*MC</font>
+<a name="line102">102: </a><font color="#B22222">     <a href="../../../../../docs/manualpages/TS/TSRK4.html#TSRK4">TSRK4</a> - Fourth order RK scheme.</font>
+
+<a name="line104">104: </a><font color="#B22222">     This is the classical Runge-Kutta method with four stages.</font>
+
+<a name="line106">106: </a><font color="#B22222">     Options database:</font>
+<a name="line107">107: </a><font color="#B22222">.     -ts_rk_type 4</font>
+
+<a name="line109">109: </a><font color="#B22222">     Level: advanced</font>
+
+<a name="line111">111: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/TS/TSRK.html#TSRK">TSRK</a>, <a href="../../../../../docs/manualpages/TS/TSRKType.html#TSRKType">TSRKType</a>, <a href="../../../../../docs/manualpages/TS/TSRKSetType.html#TSRKSetType">TSRKSetType</a>()</font>
+<a name="line112">112: </a><font color="#B22222">M*/</font>
+<a name="line113">113: </a><font color="#B22222">/*MC</font>
+<a name="line114">114: </a><font color="#B22222">     <a href="../../../../../docs/manualpages/TS/TSRK5F.html#TSRK5F">TSRK5F</a> - Fifth order Fehlberg RK scheme with a 4th order embedded method.</font>
+
+<a name="line116">116: </a><font color="#B22222">     This method has six stages.</font>
+
+<a name="line118">118: </a><font color="#B22222">     Options database:</font>
+<a name="line119">119: </a><font color="#B22222">.     -ts_rk_type 5f</font>
+
+<a name="line121">121: </a><font color="#B22222">     Level: advanced</font>
+
+<a name="line123">123: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/TS/TSRK.html#TSRK">TSRK</a>, <a href="../../../../../docs/manualpages/TS/TSRKType.html#TSRKType">TSRKType</a>, <a href="../../../../../docs/manualpages/TS/TSRKSetType.html#TSRKSetType">TSRKSetType</a>()</font>
+<a name="line124">124: </a><font color="#B22222">M*/</font>
+<a name="line125">125: </a><font color="#B22222">/*MC</font>
+<a name="line126">126: </a><font color="#B22222">     <a href="../../../../../docs/manualpages/TS/TSRK5DP.html#TSRK5DP">TSRK5DP</a> - Fifth order Dormand-Prince RK scheme with the 4th order embedded method.</font>
+
+<a name="line128">128: </a><font color="#B22222">     This method has seven stages with the First Same As Last (FSAL) property.</font>
+
+<a name="line130">130: </a><font color="#B22222">     Options database:</font>
+<a name="line131">131: </a><font color="#B22222">.     -ts_rk_type 5dp</font>
+
+<a name="line133">133: </a><font color="#B22222">     Level: advanced</font>
+
+<a name="line135">135: </a><font color="#B22222">     References: https://doi.org/10.1016/0771-050X(80)90013-3</font>
+
+<a name="line137">137: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/TS/TSRK.html#TSRK">TSRK</a>, <a href="../../../../../docs/manualpages/TS/TSRKType.html#TSRKType">TSRKType</a>, <a href="../../../../../docs/manualpages/TS/TSRKSetType.html#TSRKSetType">TSRKSetType</a>()</font>
+<a name="line138">138: </a><font color="#B22222">M*/</font>
+<a name="line139">139: </a><font color="#B22222">/*MC</font>
+<a name="line140">140: </a><font color="#B22222">     <a href="../../../../../docs/manualpages/TS/TSRK5BS.html#TSRK5BS">TSRK5BS</a> - Fifth order Bogacki-Shampine RK scheme with 4th order embedded method.</font>
+
+<a name="line142">142: </a><font color="#B22222">     This method has eight stages with the First Same As Last (FSAL) property.</font>
+
+<a name="line144">144: </a><font color="#B22222">     Options database:</font>
+<a name="line145">145: </a><font color="#B22222">.     -ts_rk_type 5bs</font>
+
+<a name="line147">147: </a><font color="#B22222">     Level: advanced</font>
+
+<a name="line149">149: </a><font color="#B22222">     References: https://doi.org/10.1016/0898-1221(96)00141-1</font>
+
+<a name="line151">151: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/TS/TSRK.html#TSRK">TSRK</a>, <a href="../../../../../docs/manualpages/TS/TSRKType.html#TSRKType">TSRKType</a>, <a href="../../../../../docs/manualpages/TS/TSRKSetType.html#TSRKSetType">TSRKSetType</a>()</font>
+<a name="line152">152: </a><font color="#B22222">M*/</font>
+
+<a name="line154">154: </a><font color="#B22222">/*@C</font>
+<a name="line155">155: </a><font color="#B22222">  <a href="../../../../../docs/manualpages/TS/TSRKRegisterAll.html#TSRKRegisterAll">TSRKRegisterAll</a> - Registers all of the Runge-Kutta explicit methods in <a href="../../../../../docs/manualpages/TS/TSRK.html#TSRK">TSRK</a></font>
+
+<a name="line157">157: </a><font color="#B22222">  Not Collective, but should be called by all processes which will need the schemes to be registered</font>
+
+<a name="line159">159: </a><font color="#B22222">  Level: advanced</font>
+
+<a name="line161">161: </a><font color="#B22222">.keywords: <a href="../../../../../docs/manualpages/TS/TS.html#TS">TS</a>, <a href="../../../../../docs/manualpages/TS/TSRK.html#TSRK">TSRK</a>, register, all</font>
+
+<a name="line163">163: </a><font color="#B22222">.seealso:  <a href="../../../../../docs/manualpages/TS/TSRKRegisterDestroy.html#TSRKRegisterDestroy">TSRKRegisterDestroy</a>()</font>
+<a name="line164">164: </a><font color="#B22222">@*/</font>
+<a name="line165">165: </a><strong><font color="#4169E1"><a name="TSRKRegisterAll"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/TS/TSRKRegisterAll.html#TSRKRegisterAll">TSRKRegisterAll</a>(void)</font></strong>
+<a name="line166">166: </a>{
+
+<a name="line170">170: </a>  <font color="#4169E1">if</font> (TSRKRegisterAllCalled) <font color="#4169E1">return</font>(0);
+<a name="line171">171: </a>  TSRKRegisterAllCalled = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+
+<a name="line173">173: </a><strong><font color="#228B22">#define RC PetscRealConstant</font></strong>
+<a name="line174">174: </a>  {
+<a name="line175">175: </a>    const <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>
+<a name="line176">176: </a>      A[1][1] = {{0}},
+<a name="line177">177: </a>      b[1]    = {RC(1.0)};
+<a name="line178">178: </a>    <a href="../../../../../docs/manualpages/TS/TSRKRegister.html#TSRKRegister">TSRKRegister</a>(<a href="../../../../../docs/manualpages/TS/TSRK1FE.html#TSRK1FE">TSRK1FE</a>,1,1,&amp;A[0][0],b,NULL,NULL,0,NULL);
+<a name="line179">179: </a>  }
+<a name="line180">180: </a>  {
+<a name="line181">181: </a>    const <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>
+<a name="line182">182: </a>      A[2][2]   = {{0,0},
+<a name="line183">183: </a>                   {RC(1.0),0}},
+<a name="line184">184: </a>      b[2]      =  {RC(0.5),RC(0.5)},
+<a name="line185">185: </a>      bembed[2] =  {RC(1.0),0};
+<a name="line186">186: </a>    <a href="../../../../../docs/manualpages/TS/TSRKRegister.html#TSRKRegister">TSRKRegister</a>(<a href="../../../../../docs/manualpages/TS/TSRK2A.html#TSRK2A">TSRK2A</a>,2,2,&amp;A[0][0],b,NULL,bembed,0,NULL);
+<a name="line187">187: </a>  }
+<a name="line188">188: </a>  {
+<a name="line189">189: </a>    const <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>
+<a name="line190">190: </a>      A[3][3] = {{0,0,0},
+<a name="line191">191: </a>                 {RC(2.0)/RC(3.0),0,0},
+<a name="line192">192: </a>                 {RC(-1.0)/RC(3.0),RC(1.0),0}},
+<a name="line193">193: </a>      b[3]    =  {RC(0.25),RC(0.5),RC(0.25)};
+<a name="line194">194: </a>    <a href="../../../../../docs/manualpages/TS/TSRKRegister.html#TSRKRegister">TSRKRegister</a>(<a href="../../../../../docs/manualpages/TS/TSRK3.html#TSRK3">TSRK3</a>,3,3,&amp;A[0][0],b,NULL,NULL,0,NULL);
+<a name="line195">195: </a>  }
+<a name="line196">196: </a>  {
+<a name="line197">197: </a>    const <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>
+<a name="line198">198: </a>      A[4][4]   = {{0,0,0,0},
+<a name="line199">199: </a>                   {RC(1.0)/RC(2.0),0,0,0},
+<a name="line200">200: </a>                   {0,RC(3.0)/RC(4.0),0,0},
+<a name="line201">201: </a>                   {RC(2.0)/RC(9.0),RC(1.0)/RC(3.0),RC(4.0)/RC(9.0),0}},
+<a name="line202">202: </a>      b[4]      =  {RC(2.0)/RC(9.0),RC(1.0)/RC(3.0),RC(4.0)/RC(9.0),0},
+<a name="line203">203: </a>      bembed[4] =  {RC(7.0)/RC(24.0),RC(1.0)/RC(4.0),RC(1.0)/RC(3.0),RC(1.0)/RC(8.0)};
+<a name="line204">204: </a>    <a href="../../../../../docs/manualpages/TS/TSRKRegister.html#TSRKRegister">TSRKRegister</a>(<a href="../../../../../docs/manualpages/TS/TSRK3BS.html#TSRK3BS">TSRK3BS</a>,3,4,&amp;A[0][0],b,NULL,bembed,0,NULL);
+<a name="line205">205: </a>  }
+<a name="line206">206: </a>  {
+<a name="line207">207: </a>    const <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>
+<a name="line208">208: </a>      A[4][4] = {{0,0,0,0},
+<a name="line209">209: </a>                 {RC(0.5),0,0,0},
+<a name="line210">210: </a>                 {0,RC(0.5),0,0},
+<a name="line211">211: </a>                 {0,0,RC(1.0),0}},
+<a name="line212">212: </a>      b[4]    =  {RC(1.0)/RC(6.0),RC(1.0)/RC(3.0),RC(1.0)/RC(3.0),RC(1.0)/RC(6.0)};
+<a name="line213">213: </a>    <a href="../../../../../docs/manualpages/TS/TSRKRegister.html#TSRKRegister">TSRKRegister</a>(<a href="../../../../../docs/manualpages/TS/TSRK4.html#TSRK4">TSRK4</a>,4,4,&amp;A[0][0],b,NULL,NULL,0,NULL);
+<a name="line214">214: </a>  }
+<a name="line215">215: </a>  {
+<a name="line216">216: </a>    const <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>
+<a name="line217">217: </a>      A[6][6]   = {{0,0,0,0,0,0},
+<a name="line218">218: </a>                   {RC(0.25),0,0,0,0,0},
+<a name="line219">219: </a>                   {RC(3.0)/RC(32.0),RC(9.0)/RC(32.0),0,0,0,0},
+<a name="line220">220: </a>                   {RC(1932.0)/RC(2197.0),RC(-7200.0)/RC(2197.0),RC(7296.0)/RC(2197.0),0,0,0},
+<a name="line221">221: </a>                   {RC(439.0)/RC(216.0),RC(-8.0),RC(3680.0)/RC(513.0),RC(-845.0)/RC(4104.0),0,0},
+<a name="line222">222: </a>                   {RC(-8.0)/RC(27.0),RC(2.0),RC(-3544.0)/RC(2565.0),RC(1859.0)/RC(4104.0),RC(-11.0)/RC(40.0),0}},
+<a name="line223">223: </a>      b[6]      =  {RC(16.0)/RC(135.0),0,RC(6656.0)/RC(12825.0),RC(28561.0)/RC(56430.0),RC(-9.0)/RC(50.0),RC(2.0)/RC(55.0)},
+<a name="line224">224: </a>      bembed[6] =  {RC(25.0)/RC(216.0),0,RC(1408.0)/RC(2565.0),RC(2197.0)/RC(4104.0),RC(-1.0)/RC(5.0),0};
+<a name="line225">225: </a>    <a href="../../../../../docs/manualpages/TS/TSRKRegister.html#TSRKRegister">TSRKRegister</a>(<a href="../../../../../docs/manualpages/TS/TSRK5F.html#TSRK5F">TSRK5F</a>,5,6,&amp;A[0][0],b,NULL,bembed,0,NULL);
+<a name="line226">226: </a>  }
+<a name="line227">227: </a>  {
+<a name="line228">228: </a>    const <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>
+<a name="line229">229: </a>      A[7][7]   = {{0,0,0,0,0,0,0},
+<a name="line230">230: </a>                   {RC(1.0)/RC(5.0),0,0,0,0,0,0},
+<a name="line231">231: </a>                   {RC(3.0)/RC(40.0),RC(9.0)/RC(40.0),0,0,0,0,0},
+<a name="line232">232: </a>                   {RC(44.0)/RC(45.0),RC(-56.0)/RC(15.0),RC(32.0)/RC(9.0),0,0,0,0},
+<a name="line233">233: </a>                   {RC(19372.0)/RC(6561.0),RC(-25360.0)/RC(2187.0),RC(64448.0)/RC(6561.0),RC(-212.0)/RC(729.0),0,0,0},
+<a name="line234">234: </a>                   {RC(9017.0)/RC(3168.0),RC(-355.0)/RC(33.0),RC(46732.0)/RC(5247.0),RC(49.0)/RC(176.0),RC(-5103.0)/RC(18656.0),0,0},
+<a name="line235">235: </a>                   {RC(35.0)/RC(384.0),0,RC(500.0)/RC(1113.0),RC(125.0)/RC(192.0),RC(-2187.0)/RC(6784.0),RC(11.0)/RC(84.0),0}},
+<a name="line236">236: </a>      b[7]      =  {RC(35.0)/RC(384.0),0,RC(500.0)/RC(1113.0),RC(125.0)/RC(192.0),RC(-2187.0)/RC(6784.0),RC(11.0)/RC(84.0),0},
+<a name="line237">237: </a>      bembed[7] =  {RC(5179.0)/RC(57600.0),0,RC(7571.0)/RC(16695.0),RC(393.0)/RC(640.0),RC(-92097.0)/RC(339200.0),RC(187.0)/RC(2100.0),RC(1.0)/RC(40.0)};
+<a name="line238">238: </a>    <a href="../../../../../docs/manualpages/TS/TSRKRegister.html#TSRKRegister">TSRKRegister</a>(<a href="../../../../../docs/manualpages/TS/TSRK5DP.html#TSRK5DP">TSRK5DP</a>,5,7,&amp;A[0][0],b,NULL,bembed,0,NULL);
+<a name="line239">239: </a>  }
+<a name="line240">240: </a>  {
+<a name="line241">241: </a>    const <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>
+<a name="line242">242: </a>      A[8][8]   = {{0,0,0,0,0,0,0,0},
+<a name="line243">243: </a>                   {RC(1.0)/RC(6.0),0,0,0,0,0,0,0},
+<a name="line244">244: </a>                   {RC(2.0)/RC(27.0),RC(4.0)/RC(27.0),0,0,0,0,0,0},
+<a name="line245">245: </a>                   {RC(183.0)/RC(1372.0),RC(-162.0)/RC(343.0),RC(1053.0)/RC(1372.0),0,0,0,0,0},
+<a name="line246">246: </a>                   {RC(68.0)/RC(297.0),RC(-4.0)/RC(11.0),RC(42.0)/RC(143.0),RC(1960.0)/RC(3861.0),0,0,0,0},
+<a name="line247">247: </a>                   {RC(597.0)/RC(22528.0),RC(81.0)/RC(352.0),RC(63099.0)/RC(585728.0),RC(58653.0)/RC(366080.0),RC(4617.0)/RC(20480.0),0,0,0},
+<a name="line248">248: </a>                   {RC(174197.0)/RC(959244.0),RC(-30942.0)/RC(79937.0),RC(8152137.0)/RC(19744439.0),RC(666106.0)/RC(1039181.0),RC(-29421.0)/RC(29068.0),RC(482048.0)/RC(414219.0),0,0},
+<a name="line249">249: </a>                   {RC(587.0)/RC(8064.0),0,RC(4440339.0)/RC(15491840.0),RC(24353.0)/RC(124800.0),RC(387.0)/RC(44800.0),RC(2152.0)/RC(5985.0),RC(7267.0)/RC(94080.0),0}},
+<a name="line250">250: </a>      b[8]      =  {RC(587.0)/RC(8064.0),0,RC(4440339.0)/RC(15491840.0),RC(24353.0)/RC(124800.0),RC(387.0)/RC(44800.0),RC(2152.0)/RC(5985.0),RC(7267.0)/RC(94080.0),0},
+<a name="line251">251: </a>      bembed[8] =  {RC(2479.0)/RC(34992.0),0,RC(123.0)/RC(416.0),RC(612941.0)/RC(3411720.0),RC(43.0)/RC(1440.0),RC(2272.0)/RC(6561.0),RC(79937.0)/RC(1113912.0),RC(3293.0)/RC(556956.0)};
+<a name="line252">252: </a>    <a href="../../../../../docs/manualpages/TS/TSRKRegister.html#TSRKRegister">TSRKRegister</a>(<a href="../../../../../docs/manualpages/TS/TSRK5BS.html#TSRK5BS">TSRK5BS</a>,5,8,&amp;A[0][0],b,NULL,bembed,0,NULL);
+<a name="line253">253: </a>  }
+<a name="line254">254: </a><strong><font color="#228B22">#undef RC</font></strong>
+<a name="line255">255: </a>  <font color="#4169E1">return</font>(0);
+<a name="line256">256: </a>}
+
+<a name="line258">258: </a><font color="#B22222">/*@C</font>
+<a name="line259">259: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/TS/TSRKRegisterDestroy.html#TSRKRegisterDestroy">TSRKRegisterDestroy</a> - Frees the list of schemes that were registered by <a href="../../../../../docs/manualpages/TS/TSRKRegister.html#TSRKRegister">TSRKRegister</a>().</font>
+
+<a name="line261">261: </a><font color="#B22222">   Not Collective</font>
+
+<a name="line263">263: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line265">265: </a><font color="#B22222">.keywords: <a href="../../../../../docs/manualpages/TS/TSRK.html#TSRK">TSRK</a>, register, destroy</font>
+<a name="line266">266: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/TS/TSRKRegister.html#TSRKRegister">TSRKRegister</a>(), <a href="../../../../../docs/manualpages/TS/TSRKRegisterAll.html#TSRKRegisterAll">TSRKRegisterAll</a>()</font>
+<a name="line267">267: </a><font color="#B22222">@*/</font>
+<a name="line268">268: </a><strong><font color="#4169E1"><a name="TSRKRegisterDestroy"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/TS/TSRKRegisterDestroy.html#TSRKRegisterDestroy">TSRKRegisterDestroy</a>(void)</font></strong>
+<a name="line269">269: </a>{
+<a name="line271">271: </a>  RKTableauLink link;
+
+<a name="line274">274: </a>  <font color="#4169E1">while</font> ((link = RKTableauList)) {
+<a name="line275">275: </a>    RKTableau t = &amp;link-&gt;tab;
+<a name="line276">276: </a>    RKTableauList = link-&gt;next;
+<a name="line277">277: </a>    <a href="../../../../../docs/manualpages/Sys/PetscFree3.html#PetscFree3">PetscFree3</a>(t-&gt;A,t-&gt;b,t-&gt;c);
+<a name="line278">278: </a>    <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a> (t-&gt;bembed);
+<a name="line279">279: </a>    <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a> (t-&gt;binterp);
+<a name="line280">280: </a>    <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a> (t-&gt;name);
+<a name="line281">281: </a>    <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a> (link);
+<a name="line282">282: </a>  }
+<a name="line283">283: </a>  TSRKRegisterAllCalled = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+<a name="line284">284: </a>  <font color="#4169E1">return</font>(0);
+<a name="line285">285: </a>}
+
+<a name="line287">287: </a><font color="#B22222">/*@C</font>
+<a name="line288">288: </a><font color="#B22222">  <a href="../../../../../docs/manualpages/TS/TSRKInitializePackage.html#TSRKInitializePackage">TSRKInitializePackage</a> - This function initializes everything in the <a href="../../../../../docs/manualpages/TS/TSRK.html#TSRK">TSRK</a> package. It is called</font>
+<a name="line289">289: </a><font color="#B22222">  from PetscDLLibraryRegister() when using dynamic libraries, and on the first call to TSCreate_RK()</font>
+<a name="line290">290: </a><font color="#B22222">  when using static libraries.</font>
+
+<a name="line292">292: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line294">294: </a><font color="#B22222">.keywords: <a href="../../../../../docs/manualpages/TS/TS.html#TS">TS</a>, <a href="../../../../../docs/manualpages/TS/TSRK.html#TSRK">TSRK</a>, initialize, package</font>
+<a name="line295">295: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/Sys/PetscInitialize.html#PetscInitialize">PetscInitialize</a>()</font>
+<a name="line296">296: </a><font color="#B22222">@*/</font>
+<a name="line297">297: </a><strong><font color="#4169E1"><a name="TSRKInitializePackage"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/TS/TSRKInitializePackage.html#TSRKInitializePackage">TSRKInitializePackage</a>(void)</font></strong>
+<a name="line298">298: </a>{
+
+<a name="line302">302: </a>  <font color="#4169E1">if</font> (TSRKPackageInitialized) <font color="#4169E1">return</font>(0);
+<a name="line303">303: </a>  TSRKPackageInitialized = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+<a name="line304">304: </a>  <a href="../../../../../docs/manualpages/TS/TSRKRegisterAll.html#TSRKRegisterAll">TSRKRegisterAll</a>();
+<a name="line305">305: </a>  <a href="../../../../../docs/manualpages/Sys/PetscRegisterFinalize.html#PetscRegisterFinalize">PetscRegisterFinalize</a>(<a href="../../../../../docs/manualpages/TS/TSRKFinalizePackage.html#TSRKFinalizePackage">TSRKFinalizePackage</a>);
+<a name="line306">306: </a>  <font color="#4169E1">return</font>(0);
+<a name="line307">307: </a>}
+
+<a name="line309">309: </a><font color="#B22222">/*@C</font>
+<a name="line310">310: </a><font color="#B22222">  <a href="../../../../../docs/manualpages/TS/TSRKFinalizePackage.html#TSRKFinalizePackage">TSRKFinalizePackage</a> - This function destroys everything in the <a href="../../../../../docs/manualpages/TS/TSRK.html#TSRK">TSRK</a> package. It is</font>
+<a name="line311">311: </a><font color="#B22222">  called from <a href="../../../../../docs/manualpages/Sys/PetscFinalize.html#PetscFinalize">PetscFinalize</a>().</font>
+
+<a name="line313">313: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line315">315: </a><font color="#B22222">.keywords: Petsc, destroy, package</font>
+<a name="line316">316: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/Sys/PetscFinalize.html#PetscFinalize">PetscFinalize</a>()</font>
+<a name="line317">317: </a><font color="#B22222">@*/</font>
+<a name="line318">318: </a><strong><font color="#4169E1"><a name="TSRKFinalizePackage"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/TS/TSRKFinalizePackage.html#TSRKFinalizePackage">TSRKFinalizePackage</a>(void)</font></strong>
+<a name="line319">319: </a>{
+
+<a name="line323">323: </a>  TSRKPackageInitialized = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+<a name="line324">324: </a>  <a href="../../../../../docs/manualpages/TS/TSRKRegisterDestroy.html#TSRKRegisterDestroy">TSRKRegisterDestroy</a>();
+<a name="line325">325: </a>  <font color="#4169E1">return</font>(0);
+<a name="line326">326: </a>}
+
+<a name="line328">328: </a><font color="#B22222">/*@C</font>
+<a name="line329">329: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/TS/TSRKRegister.html#TSRKRegister">TSRKRegister</a> - register an RK scheme by providing the entries in the Butcher tableau and optionally embedded approximations and interpolation</font>
+
+<a name="line331">331: </a><font color="#B22222">   Not Collective, but the same schemes should be registered on all processes on which they will be used</font>
+
+<a name="line333">333: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line334">334: </a><font color="#B22222">+  name - identifier for method</font>
+<a name="line335">335: </a><font color="#B22222">.  order - approximation order of method</font>
+<a name="line336">336: </a><font color="#B22222">.  s - number of stages, this is the dimension of the matrices below</font>
+<a name="line337">337: </a><font color="#B22222">.  A - stage coefficients (dimension s*s, row-major)</font>
+<a name="line338">338: </a><font color="#B22222">.  b - step completion table (dimension s; NULL to use last row of A)</font>
+<a name="line339">339: </a><font color="#B22222">.  c - abscissa (dimension s; NULL to use row sums of A)</font>
+<a name="line340">340: </a><font color="#B22222">.  bembed - completion table for embedded method (dimension s; NULL if not available)</font>
+<a name="line341">341: </a><font color="#B22222">.  p - Order of the interpolation scheme, equal to the number of columns of binterp</font>
+<a name="line342">342: </a><font color="#B22222">-  binterp - Coefficients of the interpolation formula (dimension s*p; NULL to reuse b with p=1)</font>
+
+<a name="line344">344: </a><font color="#B22222">   Notes:</font>
+<a name="line345">345: </a><font color="#B22222">   Several RK methods are provided, this function is only needed to create new methods.</font>
+
+<a name="line347">347: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line349">349: </a><font color="#B22222">.keywords: <a href="../../../../../docs/manualpages/TS/TS.html#TS">TS</a>, register</font>
+
+<a name="line351">351: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/TS/TSRK.html#TSRK">TSRK</a></font>
+<a name="line352">352: </a><font color="#B22222">@*/</font>
+<a name="line353">353: </a><strong><font color="#4169E1"><a name="TSRKRegister"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/TS/TSRKRegister.html#TSRKRegister">TSRKRegister</a>(<a href="../../../../../docs/manualpages/TS/TSRKType.html#TSRKType">TSRKType</a> name,<a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> order,<a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> s,</font></strong>
+<a name="line354">354: </a><strong><font color="#4169E1">                            const <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> A[],const <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> b[],const <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> c[],</font></strong>
+<a name="line355">355: </a><strong><font color="#4169E1">                            const <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> bembed[],<a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> p,const <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> binterp[])</font></strong>
+<a name="line356">356: </a>{
+<a name="line357">357: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  ierr;
+<a name="line358">358: </a>  RKTableauLink   link;
+<a name="line359">359: </a>  RKTableau       t;
+<a name="line360">360: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>        i,j;
+
+
+<a name="line370">370: </a>  <a href="../../../../../docs/manualpages/Sys/PetscNew.html#PetscNew">PetscNew</a>(&amp;link);
+<a name="line371">371: </a>  t = &amp;link-&gt;tab;
+
+<a name="line373">373: </a>  <a href="../../../../../docs/manualpages/Sys/PetscStrallocpy.html#PetscStrallocpy">PetscStrallocpy</a>(name,&amp;t-&gt;name);
+<a name="line374">374: </a>  t-&gt;order = order;
+<a name="line375">375: </a>  t-&gt;s = s;
+<a name="line376">376: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc3.html#PetscMalloc3">PetscMalloc3</a>(s*s,&amp;t-&gt;A,s,&amp;t-&gt;b,s,&amp;t-&gt;c);
+<a name="line377">377: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(t-&gt;A,A,s*s*<font color="#4169E1">sizeof</font>(A[0]));
+<a name="line378">378: </a>  <font color="#4169E1">if</font> (b)  { <a href="../../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(t-&gt;b,b,s*<font color="#4169E1">sizeof</font>(b[0])); }
+<a name="line379">379: </a>  <font color="#4169E1">else</font> <font color="#4169E1">for</font> (i=0; i&lt;s; i++) t-&gt;b[i] = A[(s-1)*s+i];
+<a name="line380">380: </a>  <font color="#4169E1">if</font> (c)  { <a href="../../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(t-&gt;c,c,s*<font color="#4169E1">sizeof</font>(c[0])); }
+<a name="line381">381: </a>  <font color="#4169E1">else</font> <font color="#4169E1">for</font> (i=0; i&lt;s; i++) <font color="#4169E1">for</font> (j=0,t-&gt;c[i]=0; j&lt;s; j++) t-&gt;c[i] += A[i*s+j];
+<a name="line382">382: </a>  t-&gt;FSAL = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+<a name="line383">383: </a>  <font color="#4169E1">for</font> (i=0; i&lt;s; i++) <font color="#4169E1">if</font> (t-&gt;A[(s-1)*s+i] != t-&gt;b[i]) t-&gt;FSAL = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+
+<a name="line385">385: </a>  <font color="#4169E1">if</font> (bembed) {
+<a name="line386">386: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(s,&amp;t-&gt;bembed);
+<a name="line387">387: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(t-&gt;bembed,bembed,s*<font color="#4169E1">sizeof</font>(bembed[0]));
+<a name="line388">388: </a>  }
+
+<a name="line390">390: </a>  <font color="#4169E1">if</font> (!binterp) { p = 1; binterp = t-&gt;b; }
+<a name="line391">391: </a>  t-&gt;p = p;
+<a name="line392">392: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(s*p,&amp;t-&gt;binterp);
+<a name="line393">393: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(t-&gt;binterp,binterp,s*p*<font color="#4169E1">sizeof</font>(binterp[0]));
+
+<a name="line395">395: </a>  link-&gt;next = RKTableauList;
+<a name="line396">396: </a>  RKTableauList = link;
+<a name="line397">397: </a>  <font color="#4169E1">return</font>(0);
+<a name="line398">398: </a>}
+
+<a name="line400">400: </a><font color="#B22222">/*</font>
+<a name="line401">401: </a><font color="#B22222"> The step completion formula is</font>
+
+<a name="line403">403: </a><font color="#B22222"> x1 = x0 + h b^T YdotRHS</font>
+
+<a name="line405">405: </a><font color="#B22222"> This function can be called before or after ts-&gt;vec_sol has been updated.</font>
+<a name="line406">406: </a><font color="#B22222"> Suppose we have a completion formula (b) and an embedded formula (be) of different order.</font>
+<a name="line407">407: </a><font color="#B22222"> We can write</font>
+
+<a name="line409">409: </a><font color="#B22222"> x1e = x0 + h be^T YdotRHS</font>
+<a name="line410">410: </a><font color="#B22222">     = x1 - h b^T YdotRHS + h be^T YdotRHS</font>
+<a name="line411">411: </a><font color="#B22222">     = x1 + h (be - b)^T YdotRHS</font>
+
+<a name="line413">413: </a><font color="#B22222"> so we can evaluate the method with different order even after the step has been optimistically completed.</font>
+<a name="line414">414: </a><font color="#B22222">*/</font>
+<a name="line415">415: </a><strong><font color="#4169E1"><a name="TSEvaluateStep_RK"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> TSEvaluateStep_RK(<a href="../../../../../docs/manualpages/TS/TS.html#TS">TS</a> ts,<a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> order,<a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> X,<a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> *done)</font></strong>
+<a name="line416">416: </a>{
+<a name="line417">417: </a>  TS_RK         *rk   = (TS_RK*)ts-&gt;data;
+<a name="line418">418: </a>  RKTableau      tab  = rk-&gt;tableau;
+<a name="line419">419: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>   *w    = rk-&gt;work;
+<a name="line420">420: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>      h;
+<a name="line421">421: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       s    = tab-&gt;s,j;
+
+<a name="line425">425: </a>  <font color="#4169E1">switch</font> (rk-&gt;status) {
+<a name="line426">426: </a>  <font color="#4169E1">case</font> TS_STEP_INCOMPLETE:
+<a name="line427">427: </a>  <font color="#4169E1">case</font> TS_STEP_PENDING:
+<a name="line428">428: </a>    h = ts-&gt;time_step; <font color="#4169E1">break</font>;
+<a name="line429">429: </a>  <font color="#4169E1">case</font> TS_STEP_COMPLETE:
+<a name="line430">430: </a>    h = ts-&gt;ptime - ts-&gt;ptime_prev; <font color="#4169E1">break</font>;
+<a name="line431">431: </a><strong><font color="#FF0000">  default:</font></strong> <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)ts),PETSC_ERR_PLIB,<font color="#666666">"Invalid TSStepStatus"</font>);
+<a name="line432">432: </a>  }
+<a name="line433">433: </a>  <font color="#4169E1">if</font> (order == tab-&gt;order) {
+<a name="line434">434: </a>    <font color="#4169E1">if</font> (rk-&gt;status == TS_STEP_INCOMPLETE) {
+<a name="line435">435: </a>      <a href="../../../../../docs/manualpages/Vec/VecCopy.html#VecCopy">VecCopy</a>(ts-&gt;vec_sol,X);
+<a name="line436">436: </a>      <font color="#4169E1">for</font> (j=0; j&lt;s; j++) w[j] = h*tab-&gt;b[j];
+<a name="line437">437: </a>      <a href="../../../../../docs/manualpages/Vec/VecMAXPY.html#VecMAXPY">VecMAXPY</a>(X,s,w,rk-&gt;YdotRHS);
+<a name="line438">438: </a>    } <font color="#4169E1">else</font> {<a href="../../../../../docs/manualpages/Vec/VecCopy.html#VecCopy">VecCopy</a>(ts-&gt;vec_sol,X);}
+<a name="line439">439: </a>    <font color="#4169E1">return</font>(0);
+<a name="line440">440: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (order == tab-&gt;order-1) {
+<a name="line441">441: </a>    <font color="#4169E1">if</font> (!tab-&gt;bembed) <font color="#4169E1">goto</font> unavailable;
+<a name="line442">442: </a>    <font color="#4169E1">if</font> (rk-&gt;status == TS_STEP_INCOMPLETE) { <font color="#B22222">/* Complete with the embedded method (be) */</font>
+<a name="line443">443: </a>      <a href="../../../../../docs/manualpages/Vec/VecCopy.html#VecCopy">VecCopy</a>(ts-&gt;vec_sol,X);
+<a name="line444">444: </a>      <font color="#4169E1">for</font> (j=0; j&lt;s; j++) w[j] = h*tab-&gt;bembed[j];
+<a name="line445">445: </a>      <a href="../../../../../docs/manualpages/Vec/VecMAXPY.html#VecMAXPY">VecMAXPY</a>(X,s,w,rk-&gt;YdotRHS);
+<a name="line446">446: </a>    } <font color="#4169E1">else</font> { <font color="#B22222">/* Rollback and re-complete using (be-b) */</font>
+<a name="line447">447: </a>      <a href="../../../../../docs/manualpages/Vec/VecCopy.html#VecCopy">VecCopy</a>(ts-&gt;vec_sol,X);
+<a name="line448">448: </a>      <font color="#4169E1">for</font> (j=0; j&lt;s; j++) w[j] = h*(tab-&gt;bembed[j] - tab-&gt;b[j]);
+<a name="line449">449: </a>      <a href="../../../../../docs/manualpages/Vec/VecMAXPY.html#VecMAXPY">VecMAXPY</a>(X,s,w,rk-&gt;YdotRHS);
+<a name="line450">450: </a>      <font color="#4169E1">if</font> (ts-&gt;vec_costintegral &amp;&amp; ts-&gt;costintegralfwd) {
+<a name="line451">451: </a>        <a href="../../../../../docs/manualpages/Vec/VecCopy.html#VecCopy">VecCopy</a>(rk-&gt;VecCostIntegral0,ts-&gt;vec_costintegral);
+<a name="line452">452: </a>      }
+<a name="line453">453: </a>    }
+<a name="line454">454: </a>    <font color="#4169E1">if</font> (done) *done = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+<a name="line455">455: </a>    <font color="#4169E1">return</font>(0);
+<a name="line456">456: </a>  }
+<a name="line457">457: </a><strong><font color="#FF0000">unavailable:</font></strong>
+<a name="line458">458: </a>  <font color="#4169E1">if</font> (done) *done = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+<a name="line459">459: </a>  <font color="#4169E1">else</font> <a href="../../../../../docs/manualpages/Sys/SETERRQ3.html#SETERRQ3">SETERRQ3</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)ts),PETSC_ERR_SUP,<font color="#666666">"RK '%s' of order %D cannot evaluate step at order %D. Consider using -ts_adapt_type none or a different method that has an embedded estimate."</font>,tab-&gt;name,tab-&gt;order,order);
+<a name="line460">460: </a>  <font color="#4169E1">return</font>(0);
+<a name="line461">461: </a>}
+
+<a name="line463">463: </a><strong><font color="#4169E1"><a name="TSForwardCostIntegral_RK"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> TSForwardCostIntegral_RK(<a href="../../../../../docs/manualpages/TS/TS.html#TS">TS</a> ts)</font></strong>
+<a name="line464">464: </a>{
+<a name="line465">465: </a>  TS_RK           *rk = (TS_RK*)ts-&gt;data;
+<a name="line466">466: </a>  RKTableau       tab = rk-&gt;tableau;
+<a name="line467">467: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>  s = tab-&gt;s;
+<a name="line468">468: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> *b = tab-&gt;b,*c = tab-&gt;c;
+<a name="line469">469: </a>  <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>             *Y = rk-&gt;Y;
+<a name="line470">470: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>        i;
+<a name="line471">471: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  ierr;
+
+<a name="line474">474: </a>  <font color="#B22222">/* backup cost integral */</font>
+<a name="line475">475: </a>  <a href="../../../../../docs/manualpages/Vec/VecCopy.html#VecCopy">VecCopy</a>(ts-&gt;vec_costintegral,rk-&gt;VecCostIntegral0);
+<a name="line476">476: </a>  <font color="#4169E1">for</font> (i=s-1; i&gt;=0; i--) {
+<a name="line477">477: </a>    <font color="#B22222">/* Evolve ts-&gt;vec_costintegral to compute integrals */</font>
+<a name="line478">478: </a>    <a href="../../../../../docs/manualpages/TS/TSComputeCostIntegrand.html#TSComputeCostIntegrand">TSComputeCostIntegrand</a>(ts,rk-&gt;ptime+rk-&gt;time_step*(1.0-c[i]),Y[i],ts-&gt;vec_costintegrand);
+<a name="line479">479: </a>    <a href="../../../../../docs/manualpages/Vec/VecAXPY.html#VecAXPY">VecAXPY</a>(ts-&gt;vec_costintegral,rk-&gt;time_step*b[i],ts-&gt;vec_costintegrand);
+<a name="line480">480: </a>  }
+<a name="line481">481: </a>  <font color="#4169E1">return</font>(0);
+<a name="line482">482: </a>}
+
+<a name="line484">484: </a><strong><font color="#4169E1"><a name="TSAdjointCostIntegral_RK"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> TSAdjointCostIntegral_RK(<a href="../../../../../docs/manualpages/TS/TS.html#TS">TS</a> ts)</font></strong>
+<a name="line485">485: </a>{
+<a name="line486">486: </a>  TS_RK           *rk = (TS_RK*)ts-&gt;data;
+<a name="line487">487: </a>  RKTableau       tab = rk-&gt;tableau;
+<a name="line488">488: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>  s = tab-&gt;s;
+<a name="line489">489: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> *b = tab-&gt;b,*c = tab-&gt;c;
+<a name="line490">490: </a>  <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>             *Y = rk-&gt;Y;
+<a name="line491">491: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>        i;
+<a name="line492">492: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  ierr;
+
+<a name="line495">495: </a>  <font color="#4169E1">for</font> (i=s-1; i&gt;=0; i--) {
+<a name="line496">496: </a>    <font color="#B22222">/* Evolve ts-&gt;vec_costintegral to compute integrals */</font>
+<a name="line497">497: </a>    <a href="../../../../../docs/manualpages/TS/TSComputeCostIntegrand.html#TSComputeCostIntegrand">TSComputeCostIntegrand</a>(ts,ts-&gt;ptime-ts-&gt;time_step*(1.0-c[i]),Y[i],ts-&gt;vec_costintegrand);
+<a name="line498">498: </a>    <a href="../../../../../docs/manualpages/Vec/VecAXPY.html#VecAXPY">VecAXPY</a>(ts-&gt;vec_costintegral,-ts-&gt;time_step*b[i],ts-&gt;vec_costintegrand);
+<a name="line499">499: </a>  }
+<a name="line500">500: </a>  <font color="#4169E1">return</font>(0);
+<a name="line501">501: </a>}
+
+<a name="line503">503: </a><strong><font color="#4169E1"><a name="TSRollBack_RK"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> TSRollBack_RK(<a href="../../../../../docs/manualpages/TS/TS.html#TS">TS</a> ts)</font></strong>
+<a name="line504">504: </a>{
+<a name="line505">505: </a>  TS_RK           *rk = (TS_RK*)ts-&gt;data;
+<a name="line506">506: </a>  RKTableau       tab = rk-&gt;tableau;
+<a name="line507">507: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>  s  = tab-&gt;s;
+<a name="line508">508: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> *b = tab-&gt;b;
+<a name="line509">509: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>     *w = rk-&gt;work;
+<a name="line510">510: </a>  <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>             *YdotRHS = rk-&gt;YdotRHS;
+<a name="line511">511: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>        j;
+<a name="line512">512: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>       h;
+<a name="line513">513: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  ierr;
+
+<a name="line516">516: </a>  <font color="#4169E1">switch</font> (rk-&gt;status) {
+<a name="line517">517: </a>  <font color="#4169E1">case</font> TS_STEP_INCOMPLETE:
+<a name="line518">518: </a>  <font color="#4169E1">case</font> TS_STEP_PENDING:
+<a name="line519">519: </a>    h = ts-&gt;time_step; <font color="#4169E1">break</font>;
+<a name="line520">520: </a>  <font color="#4169E1">case</font> TS_STEP_COMPLETE:
+<a name="line521">521: </a>    h = ts-&gt;ptime - ts-&gt;ptime_prev; <font color="#4169E1">break</font>;
+<a name="line522">522: </a><strong><font color="#FF0000">  default:</font></strong> <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)ts),PETSC_ERR_PLIB,<font color="#666666">"Invalid TSStepStatus"</font>);
+<a name="line523">523: </a>  }
+<a name="line524">524: </a>  <font color="#4169E1">for</font> (j=0; j&lt;s; j++) w[j] = -h*b[j];
+<a name="line525">525: </a>  <a href="../../../../../docs/manualpages/Vec/VecMAXPY.html#VecMAXPY">VecMAXPY</a>(ts-&gt;vec_sol,s,w,YdotRHS);
+<a name="line526">526: </a>  <font color="#4169E1">return</font>(0);
+<a name="line527">527: </a>}
+
+<a name="line529">529: </a><strong><font color="#4169E1"><a name="TSStep_RK"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> TSStep_RK(<a href="../../../../../docs/manualpages/TS/TS.html#TS">TS</a> ts)</font></strong>
+<a name="line530">530: </a>{
+<a name="line531">531: </a>  TS_RK           *rk   = (TS_RK*)ts-&gt;data;
+<a name="line532">532: </a>  RKTableau        tab  = rk-&gt;tableau;
+<a name="line533">533: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>   s = tab-&gt;s;
+<a name="line534">534: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> *A = tab-&gt;A,*c = tab-&gt;c;
+<a name="line535">535: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>     *w = rk-&gt;work;
+<a name="line536">536: </a>  <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>             *Y = rk-&gt;Y,*YdotRHS = rk-&gt;YdotRHS;
+<a name="line537">537: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>        FSAL = tab-&gt;FSAL;
+<a name="line538">538: </a>  <a href="../../../../../docs/manualpages/TS/TSAdapt.html#TSAdapt">TSAdapt</a>          adapt;
+<a name="line539">539: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>         i,j;
+<a name="line540">540: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>         rejections = 0;
+<a name="line541">541: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>        stageok,accept = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+<a name="line542">542: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>        next_time_step = ts-&gt;time_step;
+<a name="line543">543: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr;
+
+<a name="line546">546: </a>  <font color="#4169E1">if</font> (ts-&gt;steprollback || ts-&gt;steprestart) FSAL = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+<a name="line547">547: </a>  <font color="#4169E1">if</font> (FSAL) { <a href="../../../../../docs/manualpages/Vec/VecCopy.html#VecCopy">VecCopy</a>(YdotRHS[s-1],YdotRHS[0]); }
+
+<a name="line549">549: </a>  rk-&gt;status = TS_STEP_INCOMPLETE;
+<a name="line550">550: </a>  <font color="#4169E1">while</font> (!ts-&gt;reason &amp;&amp; rk-&gt;status != TS_STEP_COMPLETE) {
+<a name="line551">551: </a>    <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> t = ts-&gt;ptime;
+<a name="line552">552: </a>    <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> h = ts-&gt;time_step;
+<a name="line553">553: </a>    <font color="#4169E1">for</font> (i=0; i&lt;s; i++) {
+<a name="line554">554: </a>      rk-&gt;stage_time = t + h*c[i];
+<a name="line555">555: </a>      <a href="../../../../../docs/manualpages/TS/TSPreStage.html#TSPreStage">TSPreStage</a>(ts,rk-&gt;stage_time);
+<a name="line556">556: </a>      <a href="../../../../../docs/manualpages/Vec/VecCopy.html#VecCopy">VecCopy</a>(ts-&gt;vec_sol,Y[i]);
+<a name="line557">557: </a>      <font color="#4169E1">for</font> (j=0; j&lt;i; j++) w[j] = h*A[i*s+j];
+<a name="line558">558: </a>      <a href="../../../../../docs/manualpages/Vec/VecMAXPY.html#VecMAXPY">VecMAXPY</a>(Y[i],i,w,YdotRHS);
+<a name="line559">559: </a>      <a href="../../../../../docs/manualpages/TS/TSPostStage.html#TSPostStage">TSPostStage</a>(ts,rk-&gt;stage_time,i,Y);
+<a name="line560">560: </a>      <a href="../../../../../docs/manualpages/TS/TSGetAdapt.html#TSGetAdapt">TSGetAdapt</a>(ts,&amp;adapt);
+<a name="line561">561: </a>      <a href="../../../../../docs/manualpages/TS/TSAdaptCheckStage.html#TSAdaptCheckStage">TSAdaptCheckStage</a>(adapt,ts,rk-&gt;stage_time,Y[i],&amp;stageok);
+<a name="line562">562: </a>      <font color="#4169E1">if</font> (!stageok) <font color="#4169E1">goto</font> reject_step;
+<a name="line563">563: </a>      <font color="#4169E1">if</font> (FSAL &amp;&amp; !i) <font color="#4169E1">continue</font>;
+<a name="line564">564: </a>      <a href="../../../../../docs/manualpages/TS/TSComputeRHSFunction.html#TSComputeRHSFunction">TSComputeRHSFunction</a>(ts,t+h*c[i],Y[i],YdotRHS[i]);
+<a name="line565">565: </a>    }
+
+<a name="line567">567: </a>    rk-&gt;status = TS_STEP_INCOMPLETE;
+<a name="line568">568: </a>    <a href="../../../../../docs/manualpages/TS/TSEvaluateStep.html#TSEvaluateStep">TSEvaluateStep</a>(ts,tab-&gt;order,ts-&gt;vec_sol,NULL);
+<a name="line569">569: </a>    rk-&gt;status = TS_STEP_PENDING;
+<a name="line570">570: </a>    <a href="../../../../../docs/manualpages/TS/TSGetAdapt.html#TSGetAdapt">TSGetAdapt</a>(ts,&amp;adapt);
+<a name="line571">571: </a>    <a href="../../../../../docs/manualpages/TS/TSAdaptCandidatesClear.html#TSAdaptCandidatesClear">TSAdaptCandidatesClear</a>(adapt);
+<a name="line572">572: </a>    <a href="../../../../../docs/manualpages/TS/TSAdaptCandidateAdd.html#TSAdaptCandidateAdd">TSAdaptCandidateAdd</a>(adapt,tab-&gt;name,tab-&gt;order,1,tab-&gt;ccfl,(<a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>)tab-&gt;s,<a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>);
+<a name="line573">573: </a>    <a href="../../../../../docs/manualpages/TS/TSAdaptChoose.html#TSAdaptChoose">TSAdaptChoose</a>(adapt,ts,ts-&gt;time_step,NULL,&amp;next_time_step,&amp;accept);
+<a name="line574">574: </a>    rk-&gt;status = accept ? TS_STEP_COMPLETE : TS_STEP_INCOMPLETE;
+<a name="line575">575: </a>    <font color="#4169E1">if</font> (!accept) { <font color="#B22222">/* Roll back the current step */</font>
+<a name="line576">576: </a>      TSRollBack_RK(ts);
+<a name="line577">577: </a>      ts-&gt;time_step = next_time_step;
+<a name="line578">578: </a>      <font color="#4169E1">goto</font> reject_step;
+<a name="line579">579: </a>    }
+
+<a name="line581">581: </a>    <font color="#4169E1">if</font> (ts-&gt;costintegralfwd) { <font color="#B22222">/* Save the info for the later use in cost integral evaluation*/</font>
+<a name="line582">582: </a>      rk-&gt;ptime     = ts-&gt;ptime;
+<a name="line583">583: </a>      rk-&gt;time_step = ts-&gt;time_step;
+<a name="line584">584: </a>    }
+
+<a name="line586">586: </a>    ts-&gt;ptime += ts-&gt;time_step;
+<a name="line587">587: </a>    ts-&gt;time_step = next_time_step;
+<a name="line588">588: </a>    <font color="#4169E1">break</font>;
+
+<a name="line590">590: </a><strong><font color="#FF0000">  reject_step:</font></strong>
+<a name="line591">591: </a>    ts-&gt;reject++; accept = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+<a name="line592">592: </a>    <font color="#4169E1">if</font> (!ts-&gt;reason &amp;&amp; ++rejections &gt; ts-&gt;max_reject &amp;&amp; ts-&gt;max_reject &gt;= 0) {
+<a name="line593">593: </a>      ts-&gt;reason = <a href="../../../../../docs/manualpages/TS/TS_DIVERGED_STEP_REJECTED.html#TS_DIVERGED_STEP_REJECTED">TS_DIVERGED_STEP_REJECTED</a>;
+<a name="line594">594: </a>      PetscInfo2(ts,<font color="#666666">"Step=%D, step rejections %D greater than current <a href="../../../../../docs/manualpages/TS/TS.html#TS">TS</a> allowed, stopping solve\n"</font>,ts-&gt;steps,rejections);
+<a name="line595">595: </a>    }
+<a name="line596">596: </a>  }
+<a name="line597">597: </a>  <font color="#4169E1">return</font>(0);
+<a name="line598">598: </a>}
+
+<a name="line600">600: </a><strong><font color="#4169E1"><a name="TSAdjointSetUp_RK"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> TSAdjointSetUp_RK(<a href="../../../../../docs/manualpages/TS/TS.html#TS">TS</a> ts)</font></strong>
+<a name="line601">601: </a>{
+<a name="line602">602: </a>  TS_RK         *rk  = (TS_RK*)ts-&gt;data;
+<a name="line603">603: </a>  RKTableau      tab = rk-&gt;tableau;
+<a name="line604">604: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       s   = tab-&gt;s;
+
+<a name="line608">608: </a>  <font color="#4169E1">if</font> (ts-&gt;adjointsetupcalled++) <font color="#4169E1">return</font>(0);
+<a name="line609">609: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicateVecs.html#VecDuplicateVecs">VecDuplicateVecs</a>(ts-&gt;vecs_sensi[0],s*ts-&gt;numcost,&amp;rk-&gt;VecDeltaLam);
+<a name="line610">610: </a>  <font color="#4169E1">if</font>(ts-&gt;vecs_sensip) {
+<a name="line611">611: </a>    <a href="../../../../../docs/manualpages/Vec/VecDuplicateVecs.html#VecDuplicateVecs">VecDuplicateVecs</a>(ts-&gt;vecs_sensip[0],s*ts-&gt;numcost,&amp;rk-&gt;VecDeltaMu);
+<a name="line612">612: </a>  }
+<a name="line613">613: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicateVecs.html#VecDuplicateVecs">VecDuplicateVecs</a>(ts-&gt;vecs_sensi[0],ts-&gt;numcost,&amp;rk-&gt;VecSensiTemp);
+<a name="line614">614: </a>  <font color="#4169E1">return</font>(0);
+<a name="line615">615: </a>}
+
+<a name="line617">617: </a><strong><font color="#4169E1"><a name="TSAdjointStep_RK"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> TSAdjointStep_RK(<a href="../../../../../docs/manualpages/TS/TS.html#TS">TS</a> ts)</font></strong>
+<a name="line618">618: </a>{
+<a name="line619">619: </a>  TS_RK           *rk   = (TS_RK*)ts-&gt;data;
+<a name="line620">620: </a>  RKTableau        tab  = rk-&gt;tableau;
+<a name="line621">621: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>   s    = tab-&gt;s;
+<a name="line622">622: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> *A = tab-&gt;A,*b = tab-&gt;b,*c = tab-&gt;c;
+<a name="line623">623: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>     *w    = rk-&gt;work;
+<a name="line624">624: </a>  <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>             *Y    = rk-&gt;Y,*VecDeltaLam = rk-&gt;VecDeltaLam,*VecDeltaMu = rk-&gt;VecDeltaMu,*VecSensiTemp = rk-&gt;VecSensiTemp;
+<a name="line625">625: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>         i,j,nadj;
+<a name="line626">626: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>        t = ts-&gt;ptime;
+<a name="line627">627: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr;
+<a name="line628">628: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>        h = ts-&gt;time_step;
+<a name="line629">629: </a>  <a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>              J,Jp;
+
+<a name="line632">632: </a>  rk-&gt;status = TS_STEP_INCOMPLETE;
+<a name="line633">633: </a>  <font color="#4169E1">for</font> (i=s-1; i&gt;=0; i--) {
+<a name="line634">634: </a>    rk-&gt;stage_time = t + h*(1.0-c[i]);
+<a name="line635">635: </a>    <font color="#4169E1">for</font> (nadj=0; nadj&lt;ts-&gt;numcost; nadj++) {
+<a name="line636">636: </a>      <a href="../../../../../docs/manualpages/Vec/VecCopy.html#VecCopy">VecCopy</a>(ts-&gt;vecs_sensi[nadj],VecSensiTemp[nadj]);
+<a name="line637">637: </a>      <a href="../../../../../docs/manualpages/Vec/VecScale.html#VecScale">VecScale</a>(VecSensiTemp[nadj],-h*b[i]);
+<a name="line638">638: </a>      <font color="#4169E1">for</font> (j=i+1; j&lt;s; j++) {
+<a name="line639">639: </a>        <a href="../../../../../docs/manualpages/Vec/VecAXPY.html#VecAXPY">VecAXPY</a>(VecSensiTemp[nadj],-h*A[j*s+i],VecDeltaLam[nadj*s+j]);
+<a name="line640">640: </a>      }
+<a name="line641">641: </a>    }
+<a name="line642">642: </a>    <font color="#B22222">/* Stage values of lambda */</font>
+<a name="line643">643: </a>    <a href="../../../../../docs/manualpages/TS/TSGetRHSJacobian.html#TSGetRHSJacobian">TSGetRHSJacobian</a>(ts,&amp;J,&amp;Jp,NULL,NULL);
+<a name="line644">644: </a>    <a href="../../../../../docs/manualpages/TS/TSComputeRHSJacobian.html#TSComputeRHSJacobian">TSComputeRHSJacobian</a>(ts,rk-&gt;stage_time,Y[i],J,Jp);
+<a name="line645">645: </a>    <font color="#4169E1">if</font> (ts-&gt;vec_costintegral) {
+<a name="line646">646: </a>      <a href="../../../../../docs/manualpages/TS/TSAdjointComputeDRDYFunction.html#TSAdjointComputeDRDYFunction">TSAdjointComputeDRDYFunction</a>(ts,rk-&gt;stage_time,Y[i],ts-&gt;vecs_drdy);
+<a name="line647">647: </a>    }
+<a name="line648">648: </a>    <font color="#4169E1">for</font> (nadj=0; nadj&lt;ts-&gt;numcost; nadj++) {
+<a name="line649">649: </a>      <a href="../../../../../docs/manualpages/Mat/MatMultTranspose.html#MatMultTranspose">MatMultTranspose</a>(J,VecSensiTemp[nadj],VecDeltaLam[nadj*s+i]);
+<a name="line650">650: </a>      <font color="#4169E1">if</font> (ts-&gt;vec_costintegral) {
+<a name="line651">651: </a>        <a href="../../../../../docs/manualpages/Vec/VecAXPY.html#VecAXPY">VecAXPY</a>(VecDeltaLam[nadj*s+i],-h*b[i],ts-&gt;vecs_drdy[nadj]);
+<a name="line652">652: </a>      }
+<a name="line653">653: </a>    }
+
+<a name="line655">655: </a>    <font color="#B22222">/* Stage values of mu */</font>
+<a name="line656">656: </a>    <font color="#4169E1">if</font>(ts-&gt;vecs_sensip) {
+<a name="line657">657: </a>      <a href="../../../../../docs/manualpages/TS/TSAdjointComputeRHSJacobian.html#TSAdjointComputeRHSJacobian">TSAdjointComputeRHSJacobian</a>(ts,rk-&gt;stage_time,Y[i],ts-&gt;Jacp);
+<a name="line658">658: </a>      <font color="#4169E1">if</font> (ts-&gt;vec_costintegral) {
+<a name="line659">659: </a>        <a href="../../../../../docs/manualpages/TS/TSAdjointComputeDRDPFunction.html#TSAdjointComputeDRDPFunction">TSAdjointComputeDRDPFunction</a>(ts,rk-&gt;stage_time,Y[i],ts-&gt;vecs_drdp);
+<a name="line660">660: </a>      }
+
+<a name="line662">662: </a>      <font color="#4169E1">for</font> (nadj=0; nadj&lt;ts-&gt;numcost; nadj++) {
+<a name="line663">663: </a>        <a href="../../../../../docs/manualpages/Mat/MatMultTranspose.html#MatMultTranspose">MatMultTranspose</a>(ts-&gt;Jacp,VecSensiTemp[nadj],VecDeltaMu[nadj*s+i]);
+<a name="line664">664: </a>        <font color="#4169E1">if</font> (ts-&gt;vec_costintegral) {
+<a name="line665">665: </a>          <a href="../../../../../docs/manualpages/Vec/VecAXPY.html#VecAXPY">VecAXPY</a>(VecDeltaMu[nadj*s+i],-h*b[i],ts-&gt;vecs_drdp[nadj]);
+<a name="line666">666: </a>        }
+<a name="line667">667: </a>      }
+<a name="line668">668: </a>    }
+<a name="line669">669: </a>  }
+
+<a name="line671">671: </a>  <font color="#4169E1">for</font> (j=0; j&lt;s; j++) w[j] = 1.0;
+<a name="line672">672: </a>  <font color="#4169E1">for</font> (nadj=0; nadj&lt;ts-&gt;numcost; nadj++) {
+<a name="line673">673: </a>    <a href="../../../../../docs/manualpages/Vec/VecMAXPY.html#VecMAXPY">VecMAXPY</a>(ts-&gt;vecs_sensi[nadj],s,w,&amp;VecDeltaLam[nadj*s]);
+<a name="line674">674: </a>    <font color="#4169E1">if</font>(ts-&gt;vecs_sensip) {
+<a name="line675">675: </a>      <a href="../../../../../docs/manualpages/Vec/VecMAXPY.html#VecMAXPY">VecMAXPY</a>(ts-&gt;vecs_sensip[nadj],s,w,&amp;VecDeltaMu[nadj*s]);
+<a name="line676">676: </a>    }
+<a name="line677">677: </a>  }
+<a name="line678">678: </a>  rk-&gt;status = TS_STEP_COMPLETE;
+<a name="line679">679: </a>  <font color="#4169E1">return</font>(0);
+<a name="line680">680: </a>}
+
+<a name="line682">682: </a><strong><font color="#4169E1"><a name="TSInterpolate_RK"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> TSInterpolate_RK(<a href="../../../../../docs/manualpages/TS/TS.html#TS">TS</a> ts,<a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> itime,<a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> X)</font></strong>
+<a name="line683">683: </a>{
+<a name="line684">684: </a>  TS_RK           *rk = (TS_RK*)ts-&gt;data;
+<a name="line685">685: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>         s  = rk-&gt;tableau-&gt;s,p = rk-&gt;tableau-&gt;p,i,j;
+<a name="line686">686: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>        h;
+<a name="line687">687: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>        tt,t;
+<a name="line688">688: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>     *b;
+<a name="line689">689: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> *B = rk-&gt;tableau-&gt;binterp;
+<a name="line690">690: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr;
+
+<a name="line693">693: </a>  <font color="#4169E1">if</font> (!B) <a href="../../../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)ts),PETSC_ERR_SUP,<font color="#666666">"<a href="../../../../../docs/manualpages/TS/TSRK.html#TSRK">TSRK</a> %s does not have an interpolation formula"</font>,rk-&gt;tableau-&gt;name);
+
+<a name="line695">695: </a>  <font color="#4169E1">switch</font> (rk-&gt;status) {
+<a name="line696">696: </a>  <font color="#4169E1">case</font> TS_STEP_INCOMPLETE:
+<a name="line697">697: </a>  <font color="#4169E1">case</font> TS_STEP_PENDING:
+<a name="line698">698: </a>    h = ts-&gt;time_step;
+<a name="line699">699: </a>    t = (itime - ts-&gt;ptime)/h;
+<a name="line700">700: </a>    <font color="#4169E1">break</font>;
+<a name="line701">701: </a>  <font color="#4169E1">case</font> TS_STEP_COMPLETE:
+<a name="line702">702: </a>    h = ts-&gt;ptime - ts-&gt;ptime_prev;
+<a name="line703">703: </a>    t = (itime - ts-&gt;ptime)/h + 1; <font color="#B22222">/* In the interval [0,1] */</font>
+<a name="line704">704: </a>    <font color="#4169E1">break</font>;
+<a name="line705">705: </a><strong><font color="#FF0000">  default:</font></strong> <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)ts),PETSC_ERR_PLIB,<font color="#666666">"Invalid TSStepStatus"</font>);
+<a name="line706">706: </a>  }
+<a name="line707">707: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(s,&amp;b);
+<a name="line708">708: </a>  <font color="#4169E1">for</font> (i=0; i&lt;s; i++) b[i] = 0;
+<a name="line709">709: </a>  <font color="#4169E1">for</font> (j=0,tt=t; j&lt;p; j++,tt*=t) {
+<a name="line710">710: </a>    <font color="#4169E1">for</font> (i=0; i&lt;s; i++) {
+<a name="line711">711: </a>      b[i]  += h * B[i*p+j] * tt;
+<a name="line712">712: </a>    }
+<a name="line713">713: </a>  }
+
+<a name="line715">715: </a>  <a href="../../../../../docs/manualpages/Vec/VecCopy.html#VecCopy">VecCopy</a>(rk-&gt;Y[0],X);
+<a name="line716">716: </a>  <a href="../../../../../docs/manualpages/Vec/VecMAXPY.html#VecMAXPY">VecMAXPY</a>(X,s,b,rk-&gt;YdotRHS);
+
+<a name="line718">718: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(b);
+<a name="line719">719: </a>  <font color="#4169E1">return</font>(0);
+<a name="line720">720: </a>}
+
+<a name="line722">722: </a><font color="#B22222">/*------------------------------------------------------------*/</font>
+
+<a name="line724">724: </a><strong><font color="#4169E1"><a name="TSRKTableauReset"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> TSRKTableauReset(<a href="../../../../../docs/manualpages/TS/TS.html#TS">TS</a> ts)</font></strong>
+<a name="line725">725: </a>{
+<a name="line726">726: </a>  TS_RK          *rk = (TS_RK*)ts-&gt;data;
+<a name="line727">727: </a>  RKTableau      tab = rk-&gt;tableau;
+
+<a name="line731">731: </a>  <font color="#4169E1">if</font> (!tab) <font color="#4169E1">return</font>(0);
+<a name="line732">732: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(rk-&gt;work);
+<a name="line733">733: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroyVecs.html#VecDestroyVecs">VecDestroyVecs</a>(tab-&gt;s,&amp;rk-&gt;Y);
+<a name="line734">734: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroyVecs.html#VecDestroyVecs">VecDestroyVecs</a>(tab-&gt;s,&amp;rk-&gt;YdotRHS);
+<a name="line735">735: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroyVecs.html#VecDestroyVecs">VecDestroyVecs</a>(tab-&gt;s*ts-&gt;numcost,&amp;rk-&gt;VecDeltaLam);
+<a name="line736">736: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroyVecs.html#VecDestroyVecs">VecDestroyVecs</a>(tab-&gt;s*ts-&gt;numcost,&amp;rk-&gt;VecDeltaMu);
+<a name="line737">737: </a>  <font color="#4169E1">return</font>(0);
+<a name="line738">738: </a>}
+
+<a name="line740">740: </a><strong><font color="#4169E1"><a name="TSReset_RK"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> TSReset_RK(<a href="../../../../../docs/manualpages/TS/TS.html#TS">TS</a> ts)</font></strong>
+<a name="line741">741: </a>{
+<a name="line742">742: </a>  TS_RK         *rk = (TS_RK*)ts-&gt;data;
+
+<a name="line746">746: </a>  TSRKTableauReset(ts);
+<a name="line747">747: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;rk-&gt;VecCostIntegral0);
+<a name="line748">748: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroyVecs.html#VecDestroyVecs">VecDestroyVecs</a>(ts-&gt;numcost,&amp;rk-&gt;VecSensiTemp);
+<a name="line749">749: </a>  <font color="#4169E1">return</font>(0);
+<a name="line750">750: </a>}
+
+<a name="line752">752: </a><strong><font color="#4169E1"><a name="TSDestroy_RK"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> TSDestroy_RK(<a href="../../../../../docs/manualpages/TS/TS.html#TS">TS</a> ts)</font></strong>
+<a name="line753">753: </a>{
+
+<a name="line757">757: </a>  TSReset_RK(ts);
+<a name="line758">758: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(ts-&gt;data);
+<a name="line759">759: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html#PetscObjectComposeFunction">PetscObjectComposeFunction</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)ts,<font color="#666666">"TSRKGetType_C"</font>,NULL);
+<a name="line760">760: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html#PetscObjectComposeFunction">PetscObjectComposeFunction</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)ts,<font color="#666666">"TSRKSetType_C"</font>,NULL);
+<a name="line761">761: </a>  <font color="#4169E1">return</font>(0);
+<a name="line762">762: </a>}
+
+
+<a name="line765">765: </a><strong><font color="#4169E1"><a name="DMCoarsenHook_TSRK"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMCoarsenHook_TSRK(<a href="../../../../../docs/manualpages/DM/DM.html#DM">DM</a> fine,<a href="../../../../../docs/manualpages/DM/DM.html#DM">DM</a> coarse,void *ctx)</font></strong>
+<a name="line766">766: </a>{
+<a name="line768">768: </a>  <font color="#4169E1">return</font>(0);
+<a name="line769">769: </a>}
+
+<a name="line771">771: </a><strong><font color="#4169E1"><a name="DMRestrictHook_TSRK"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMRestrictHook_TSRK(<a href="../../../../../docs/manualpages/DM/DM.html#DM">DM</a> fine,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> restrct,<a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> rscale,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> inject,<a href="../../../../../docs/manualpages/DM/DM.html#DM">DM</a> coarse,void *ctx)</font></strong>
+<a name="line772">772: </a>{
+<a name="line774">774: </a>  <font color="#4169E1">return</font>(0);
+<a name="line775">775: </a>}
+
+
+<a name="line778">778: </a><strong><font color="#4169E1"><a name="DMSubDomainHook_TSRK"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMSubDomainHook_TSRK(<a href="../../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../../../docs/manualpages/DM/DM.html#DM">DM</a> subdm,void *ctx)</font></strong>
+<a name="line779">779: </a>{
+<a name="line781">781: </a>  <font color="#4169E1">return</font>(0);
+<a name="line782">782: </a>}
+
+<a name="line784">784: </a><strong><font color="#4169E1"><a name="DMSubDomainRestrictHook_TSRK"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMSubDomainRestrictHook_TSRK(<a href="../../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../../../docs/manualpages/Vec/VecScatter.html#VecScatter">VecScatter</a> gscat,<a href="../../../../../docs/manualpages/Vec/VecScatter.html#VecScatter">VecScatter</a> lscat,<a href="../../../../../docs/manualpages/DM/DM.html#DM">DM</a> subdm,void *ctx)</font></strong>
+<a name="line785">785: </a>{
+
+<a name="line788">788: </a>  <font color="#4169E1">return</font>(0);
+<a name="line789">789: </a>}
+<a name="line790">790: </a><font color="#B22222">/*</font>
+<a name="line791">791: </a><font color="#B22222"><strong></font><font color="#4169E1"><a name="RKSetAdjCoe"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> RKSetAdjCoe(RKTableau tab)</font></strong>
+<a name="line792">792: </a>{
+<a name="line793">793: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> *A,*b;
+<a name="line794">794: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>        s,i,j;
+<a name="line795">795: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  ierr;
+
+<a name="line798">798: </a>  s    = tab-&gt;s;
+<a name="line799">799: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc2.html#PetscMalloc2">PetscMalloc2</a>(s*s,&amp;A,s,&amp;b);
+
+<a name="line801">801: </a>  for (i=0; i&lt;s; i++)
+<a name="line802">802: </a>    for (j=0; j&lt;s; j++) {
+<a name="line803">803: </a>      A[i*s+j] = (tab-&gt;b[s-1-i]==0) ? 0: -tab-&gt;A[s-1-i+(s-1-j)*s] * tab-&gt;b[s-1-j] / tab-&gt;b[s-1-i];
+<a name="line804">804: </a>      <a href="../../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,"Coefficients: A[%D][%D]=%.6f\n",i,j,A[i*s+j]);
+<a name="line805">805: </a>    }
+
+<a name="line807">807: </a>  for (i=0; i&lt;s; i++) b[i] = (tab-&gt;b[s-1-i]==0)? 0: -tab-&gt;b[s-1-i];
+
+<a name="line809">809: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(tab-&gt;A,A,s*s*sizeof(A[0]));
+<a name="line810">810: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(tab-&gt;b,b,s*sizeof(b[0]));
+<a name="line811">811: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree2.html#PetscFree2">PetscFree2</a>(A,b);
+<a name="line812">812: </a>  return(0);
+<a name="line813">813: </a>}
+<a name="line814">814: </a>*/
+
+<a name="line816">816: </a><strong><font color="#4169E1"><a name="TSRKTableauSetUp"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> TSRKTableauSetUp(<a href="../../../../../docs/manualpages/TS/TS.html#TS">TS</a> ts)</font></strong>
+<a name="line817">817: </a>{
+<a name="line818">818: </a>  TS_RK         *rk  = (TS_RK*)ts-&gt;data;
+<a name="line819">819: </a>  RKTableau      tab = rk-&gt;tableau;
+
+<a name="line823">823: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(tab-&gt;s,&amp;rk-&gt;work);
+<a name="line824">824: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicateVecs.html#VecDuplicateVecs">VecDuplicateVecs</a>(ts-&gt;vec_sol,tab-&gt;s,&amp;rk-&gt;Y);
+<a name="line825">825: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicateVecs.html#VecDuplicateVecs">VecDuplicateVecs</a>(ts-&gt;vec_sol,tab-&gt;s,&amp;rk-&gt;YdotRHS);
+<a name="line826">826: </a>  <font color="#4169E1">return</font>(0);
+<a name="line827">827: </a>}
+
+
+<a name="line830">830: </a><strong><font color="#4169E1"><a name="TSSetUp_RK"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> TSSetUp_RK(<a href="../../../../../docs/manualpages/TS/TS.html#TS">TS</a> ts)</font></strong>
+<a name="line831">831: </a>{
+<a name="line832">832: </a>  TS_RK         *rk = (TS_RK*)ts-&gt;data;
+<a name="line834">834: </a>  <a href="../../../../../docs/manualpages/DM/DM.html#DM">DM</a>             dm;
+
+<a name="line837">837: </a>  TSCheckImplicitTerm(ts);
+<a name="line838">838: </a>  TSRKTableauSetUp(ts);
+<a name="line839">839: </a>  <font color="#4169E1">if</font> (!rk-&gt;VecCostIntegral0 &amp;&amp; ts-&gt;vec_costintegral &amp;&amp; ts-&gt;costintegralfwd) { <font color="#B22222">/* back up cost integral */</font>
+<a name="line840">840: </a>    <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html#VecDuplicate">VecDuplicate</a>(ts-&gt;vec_costintegral,&amp;rk-&gt;VecCostIntegral0);
+<a name="line841">841: </a>  }
+<a name="line842">842: </a>  <a href="../../../../../docs/manualpages/TS/TSGetDM.html#TSGetDM">TSGetDM</a>(ts,&amp;dm);
+<a name="line843">843: </a>  <font color="#4169E1">if</font> (dm) {
+<a name="line844">844: </a>    <a href="../../../../../docs/manualpages/DM/DMCoarsenHookAdd.html#DMCoarsenHookAdd">DMCoarsenHookAdd</a>(dm,DMCoarsenHook_TSRK,DMRestrictHook_TSRK,ts);
+<a name="line845">845: </a>    <a href="../../../../../docs/manualpages/DM/DMSubDomainHookAdd.html#DMSubDomainHookAdd">DMSubDomainHookAdd</a>(dm,DMSubDomainHook_TSRK,DMSubDomainRestrictHook_TSRK,ts);
+<a name="line846">846: </a>  }
+<a name="line847">847: </a>  <font color="#4169E1">return</font>(0);
+<a name="line848">848: </a>}
+
+
+<a name="line851">851: </a><font color="#B22222">/*------------------------------------------------------------*/</font>
+
+<a name="line853">853: </a><strong><font color="#4169E1"><a name="TSSetFromOptions_RK"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> TSSetFromOptions_RK(PetscOptionItems *PetscOptionsObject,<a href="../../../../../docs/manualpages/TS/TS.html#TS">TS</a> ts)</font></strong>
+<a name="line854">854: </a>{
+<a name="line855">855: </a>  TS_RK         *rk = (TS_RK*)ts-&gt;data;
+
+<a name="line859">859: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsHead.html#PetscOptionsHead">PetscOptionsHead</a>(PetscOptionsObject,<font color="#666666">"RK ODE solver options"</font>);
+<a name="line860">860: </a>  {
+<a name="line861">861: </a>    RKTableauLink  link;
+<a name="line862">862: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       count,choice;
+<a name="line863">863: </a>    <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>      flg;
+<a name="line864">864: </a>    const char   **namelist;
+<a name="line865">865: </a>    <font color="#4169E1">for</font> (link=RKTableauList,count=0; link; link=link-&gt;next,count++) ;
+<a name="line866">866: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(count,&amp;namelist);
+<a name="line867">867: </a>    <font color="#4169E1">for</font> (link=RKTableauList,count=0; link; link=link-&gt;next,count++) namelist[count] = link-&gt;tab.name;
+<a name="line868">868: </a>    <a href="../../../../../docs/manualpages/Sys/PetscOptionsEList.html#PetscOptionsEList">PetscOptionsEList</a>(<font color="#666666">"-ts_rk_type"</font>,<font color="#666666">"Family of RK method"</font>,<font color="#666666">"<a href="../../../../../docs/manualpages/TS/TSRKSetType.html#TSRKSetType">TSRKSetType</a>"</font>,(const char*const*)namelist,count,rk-&gt;tableau-&gt;name,&amp;choice,&amp;flg);
+<a name="line869">869: </a>    <font color="#4169E1">if</font> (flg) {<a href="../../../../../docs/manualpages/TS/TSRKSetType.html#TSRKSetType">TSRKSetType</a>(ts,namelist[choice]);}
+<a name="line870">870: </a>    <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(namelist);
+<a name="line871">871: </a>  }
+<a name="line872">872: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsTail.html#PetscOptionsTail">PetscOptionsTail</a>();
+<a name="line873">873: </a>  <font color="#4169E1">return</font>(0);
+<a name="line874">874: </a>}
+
+<a name="line876">876: </a><strong><font color="#4169E1"><a name="PetscFormatRealArray"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscFormatRealArray(char buf[],size_t len,const char *fmt,<a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> n,const <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> x[])</font></strong>
+<a name="line877">877: </a>{
+<a name="line879">879: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       i;
+<a name="line880">880: </a>  size_t         left,count;
+<a name="line881">881: </a>  char           *p;
+
+<a name="line884">884: </a>  <font color="#4169E1">for</font> (i=0,p=buf,left=len; i&lt;n; i++) {
+<a name="line885">885: </a>    <a href="../../../../../docs/manualpages/Sys/PetscSNPrintfCount.html#PetscSNPrintfCount">PetscSNPrintfCount</a>(p,left,fmt,&amp;count,x[i]);
+<a name="line886">886: </a>    <font color="#4169E1">if</font> (count &gt;= left) <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_OUTOFRANGE,<font color="#666666">"Insufficient space in buffer"</font>);
+<a name="line887">887: </a>    left -= count;
+<a name="line888">888: </a>    p    += count;
+<a name="line889">889: </a>    *p++  = ' ';
+<a name="line890">890: </a>  }
+<a name="line891">891: </a>  p[i ? 0 : -1] = 0;
+<a name="line892">892: </a>  <font color="#4169E1">return</font>(0);
+<a name="line893">893: </a>}
+
+<a name="line895">895: </a><strong><font color="#4169E1"><a name="TSView_RK"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> TSView_RK(<a href="../../../../../docs/manualpages/TS/TS.html#TS">TS</a> ts,<a href="../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer)</font></strong>
+<a name="line896">896: </a>{
+<a name="line897">897: </a>  TS_RK          *rk = (TS_RK*)ts-&gt;data;
+<a name="line898">898: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>      iascii;
+
+<a name="line902">902: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<a href="../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html#PETSCVIEWERASCII">PETSCVIEWERASCII</a>,&amp;iascii);
+<a name="line903">903: </a>  <font color="#4169E1">if</font> (iascii) {
+<a name="line904">904: </a>    RKTableau tab  = rk-&gt;tableau;
+<a name="line905">905: </a>    <a href="../../../../../docs/manualpages/TS/TSRKType.html#TSRKType">TSRKType</a>  rktype;
+<a name="line906">906: </a>    char      buf[512];
+<a name="line907">907: </a>    <a href="../../../../../docs/manualpages/TS/TSRKGetType.html#TSRKGetType">TSRKGetType</a>(ts,&amp;rktype);
+<a name="line908">908: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"  RK type %s\n"</font>,rktype);
+<a name="line909">909: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"  Order: %D\n"</font>,tab-&gt;order);
+<a name="line910">910: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"  FSAL property: %s\n"</font>,tab-&gt;FSAL ? <font color="#666666">"yes"</font> : <font color="#666666">"no"</font>);
+<a name="line911">911: </a>    PetscFormatRealArray(buf,<font color="#4169E1">sizeof</font>(buf),<font color="#666666">"% 8.6f"</font>,tab-&gt;s,tab-&gt;c);
+<a name="line912">912: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"  Abscissa c = %s\n"</font>,buf);
+<a name="line913">913: </a>  }
+<a name="line914">914: </a>  <font color="#4169E1">return</font>(0);
+<a name="line915">915: </a>}
+
+<a name="line917">917: </a><strong><font color="#4169E1"><a name="TSLoad_RK"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> TSLoad_RK(<a href="../../../../../docs/manualpages/TS/TS.html#TS">TS</a> ts,<a href="../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer)</font></strong>
+<a name="line918">918: </a>{
+<a name="line920">920: </a>  <a href="../../../../../docs/manualpages/TS/TSAdapt.html#TSAdapt">TSAdapt</a>        adapt;
+
+<a name="line923">923: </a>  <a href="../../../../../docs/manualpages/TS/TSGetAdapt.html#TSGetAdapt">TSGetAdapt</a>(ts,&amp;adapt);
+<a name="line924">924: </a>  <a href="../../../../../docs/manualpages/TS/TSAdaptLoad.html#TSAdaptLoad">TSAdaptLoad</a>(adapt,viewer);
+<a name="line925">925: </a>  <font color="#4169E1">return</font>(0);
+<a name="line926">926: </a>}
+
+<a name="line928">928: </a><font color="#B22222">/*@C</font>
+<a name="line929">929: </a><font color="#B22222">  <a href="../../../../../docs/manualpages/TS/TSRKSetType.html#TSRKSetType">TSRKSetType</a> - Set the type of RK scheme</font>
+
+<a name="line931">931: </a><font color="#B22222">  Logically collective</font>
+
+<a name="line933">933: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line934">934: </a><font color="#B22222">+  ts - timestepping context</font>
+<a name="line935">935: </a><font color="#B22222">-  rktype - type of RK-scheme</font>
+
+<a name="line937">937: </a><font color="#B22222">  Options Database:</font>
+<a name="line938">938: </a><font color="#B22222">.   -ts_rk_type - &lt;1fe,2a,3,3bs,4,5f,5dp,5bs&gt;</font>
+
+<a name="line940">940: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line942">942: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/TS/TSRKGetType.html#TSRKGetType">TSRKGetType</a>(), <a href="../../../../../docs/manualpages/TS/TSRK.html#TSRK">TSRK</a>, <a href="../../../../../docs/manualpages/TS/TSRKType.html#TSRKType">TSRKType</a>, <a href="../../../../../docs/manualpages/TS/TSRK1FE.html#TSRK1FE">TSRK1FE</a>, <a href="../../../../../docs/manualpages/TS/TSRK2A.html#TSRK2A">TSRK2A</a>, <a href="../../../../../docs/manualpages/TS/TSRK3.html#TSRK3">TSRK3</a>, <a href="../../../../../docs/manualpages/TS/TSRK3BS.html#TSRK3BS">TSRK3BS</a>, <a href="../../../../../docs/manualpages/TS/TSRK4.html#TSRK4">TSRK4</a>, <a href="../../../../../docs/manualpages/TS/TSRK5F.html#TSRK5F">TSRK5F</a>, <a href="../../../../../docs/manualpages/TS/TSRK5DP.html#TSRK5DP">TSRK5DP</a>, <a href="../../../../../docs/manualpages/TS/TSRK5BS.html#TSRK5BS">TSRK5BS</a></font>
+<a name="line943">943: </a><font color="#B22222">@*/</font>
+<a name="line944">944: </a><strong><font color="#4169E1"><a name="TSRKSetType"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/TS/TSRKSetType.html#TSRKSetType">TSRKSetType</a>(<a href="../../../../../docs/manualpages/TS/TS.html#TS">TS</a> ts,<a href="../../../../../docs/manualpages/TS/TSRKType.html#TSRKType">TSRKType</a> rktype)</font></strong>
+<a name="line945">945: </a>{
+
+<a name="line951">951: </a>  PetscTryMethod(ts,<font color="#666666">"TSRKSetType_C"</font>,(<a href="../../../../../docs/manualpages/TS/TS.html#TS">TS</a>,<a href="../../../../../docs/manualpages/TS/TSRKType.html#TSRKType">TSRKType</a>),(ts,rktype));
+<a name="line952">952: </a>  <font color="#4169E1">return</font>(0);
+<a name="line953">953: </a>}
+
+<a name="line955">955: </a><font color="#B22222">/*@C</font>
+<a name="line956">956: </a><font color="#B22222">  <a href="../../../../../docs/manualpages/TS/TSRKGetType.html#TSRKGetType">TSRKGetType</a> - Get the type of RK scheme</font>
+
+<a name="line958">958: </a><font color="#B22222">  Logically collective</font>
+
+<a name="line960">960: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line961">961: </a><font color="#B22222">.  ts - timestepping context</font>
+
+<a name="line963">963: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line964">964: </a><font color="#B22222">.  rktype - type of RK-scheme</font>
+
+<a name="line966">966: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line968">968: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/TS/TSRKGetType.html#TSRKGetType">TSRKGetType</a>()</font>
+<a name="line969">969: </a><font color="#B22222">@*/</font>
+<a name="line970">970: </a><strong><font color="#4169E1"><a name="TSRKGetType"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/TS/TSRKGetType.html#TSRKGetType">TSRKGetType</a>(<a href="../../../../../docs/manualpages/TS/TS.html#TS">TS</a> ts,<a href="../../../../../docs/manualpages/TS/TSRKType.html#TSRKType">TSRKType</a> *rktype)</font></strong>
+<a name="line971">971: </a>{
+
+<a name="line976">976: </a>  PetscUseMethod(ts,<font color="#666666">"TSRKGetType_C"</font>,(<a href="../../../../../docs/manualpages/TS/TS.html#TS">TS</a>,<a href="../../../../../docs/manualpages/TS/TSRKType.html#TSRKType">TSRKType</a>*),(ts,rktype));
+<a name="line977">977: </a>  <font color="#4169E1">return</font>(0);
+<a name="line978">978: </a>}
+
+<a name="line980">980: </a><strong><font color="#4169E1"><a name="TSRKGetType_RK"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> TSRKGetType_RK(<a href="../../../../../docs/manualpages/TS/TS.html#TS">TS</a> ts,<a href="../../../../../docs/manualpages/TS/TSRKType.html#TSRKType">TSRKType</a> *rktype)</font></strong>
+<a name="line981">981: </a>{
+<a name="line982">982: </a>  TS_RK *rk = (TS_RK*)ts-&gt;data;
+
+<a name="line985">985: </a>  *rktype = rk-&gt;tableau-&gt;name;
+<a name="line986">986: </a>  <font color="#4169E1">return</font>(0);
+<a name="line987">987: </a>}
+<a name="line988">988: </a><strong><font color="#4169E1"><a name="TSRKSetType_RK"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> TSRKSetType_RK(<a href="../../../../../docs/manualpages/TS/TS.html#TS">TS</a> ts,<a href="../../../../../docs/manualpages/TS/TSRKType.html#TSRKType">TSRKType</a> rktype)</font></strong>
+<a name="line989">989: </a>{
+<a name="line990">990: </a>  TS_RK          *rk = (TS_RK*)ts-&gt;data;
+<a name="line992">992: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>      match;
+<a name="line993">993: </a>  RKTableauLink  link;
+
+<a name="line996">996: </a>  <font color="#4169E1">if</font> (rk-&gt;tableau) {
+<a name="line997">997: </a>    <a href="../../../../../docs/manualpages/Sys/PetscStrcmp.html#PetscStrcmp">PetscStrcmp</a>(rk-&gt;tableau-&gt;name,rktype,&amp;match);
+<a name="line998">998: </a>    <font color="#4169E1">if</font> (match) <font color="#4169E1">return</font>(0);
+<a name="line999">999: </a>  }
+<a name="line1000">1000: </a>  <font color="#4169E1">for</font> (link = RKTableauList; link; link=link-&gt;next) {
+<a name="line1001">1001: </a>    <a href="../../../../../docs/manualpages/Sys/PetscStrcmp.html#PetscStrcmp">PetscStrcmp</a>(link-&gt;tab.name,rktype,&amp;match);
+<a name="line1002">1002: </a>    <font color="#4169E1">if</font> (match) {
+<a name="line1003">1003: </a>      <font color="#4169E1">if</font> (ts-&gt;setupcalled) {TSRKTableauReset(ts);}
+<a name="line1004">1004: </a>      rk-&gt;tableau = &amp;link-&gt;tab;
+<a name="line1005">1005: </a>      <font color="#4169E1">if</font> (ts-&gt;setupcalled) {TSRKTableauSetUp(ts);}
+<a name="line1006">1006: </a>      ts-&gt;default_adapt_type = rk-&gt;tableau-&gt;bembed ? <a href="../../../../../docs/manualpages/TS/TSADAPTBASIC.html#TSADAPTBASIC">TSADAPTBASIC</a> : <a href="../../../../../docs/manualpages/TS/TSADAPTNONE.html#TSADAPTNONE">TSADAPTNONE</a>;
+<a name="line1007">1007: </a>      <font color="#4169E1">return</font>(0);
+<a name="line1008">1008: </a>    }
+<a name="line1009">1009: </a>  }
+<a name="line1010">1010: </a>  <a href="../../../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)ts),PETSC_ERR_ARG_UNKNOWN_TYPE,<font color="#666666">"Could not find '%s'"</font>,rktype);
+<a name="line1011">1011: </a>  <font color="#4169E1">return</font>(0);
+<a name="line1012">1012: </a>}
+
+<a name="line1014">1014: </a><strong><font color="#4169E1"><a name="TSGetStages_RK"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  TSGetStages_RK(<a href="../../../../../docs/manualpages/TS/TS.html#TS">TS</a> ts,<a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *ns,<a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> **Y)</font></strong>
+<a name="line1015">1015: </a>{
+<a name="line1016">1016: </a>  TS_RK          *rk = (TS_RK*)ts-&gt;data;
+
+<a name="line1019">1019: </a>  *ns = rk-&gt;tableau-&gt;s;
+<a name="line1020">1020: </a>  <font color="#4169E1">if</font>(Y) *Y  = rk-&gt;Y;
+<a name="line1021">1021: </a>  <font color="#4169E1">return</font>(0);
+<a name="line1022">1022: </a>}
+
+
+<a name="line1025">1025: </a><font color="#B22222">/* ------------------------------------------------------------ */</font>
+<a name="line1026">1026: </a><font color="#B22222">/*MC</font>
+<a name="line1027">1027: </a><font color="#B22222">      <a href="../../../../../docs/manualpages/TS/TSRK.html#TSRK">TSRK</a> - ODE and DAE solver using Runge-Kutta schemes</font>
+
+<a name="line1029">1029: </a><font color="#B22222">  The user should provide the right hand side of the equation</font>
+<a name="line1030">1030: </a><font color="#B22222">  using <a href="../../../../../docs/manualpages/TS/TSSetRHSFunction.html#TSSetRHSFunction">TSSetRHSFunction</a>().</font>
+
+<a name="line1032">1032: </a><font color="#B22222">  Notes:</font>
+<a name="line1033">1033: </a><font color="#B22222">  The default is <a href="../../../../../docs/manualpages/TS/TSRK3BS.html#TSRK3BS">TSRK3BS</a>, it can be changed with <a href="../../../../../docs/manualpages/TS/TSRKSetType.html#TSRKSetType">TSRKSetType</a>() or -ts_rk_type</font>
+
+<a name="line1035">1035: </a><font color="#B22222">  Level: beginner</font>
+
+<a name="line1037">1037: </a><font color="#B22222">.seealso:  <a href="../../../../../docs/manualpages/TS/TSCreate.html#TSCreate">TSCreate</a>(), <a href="../../../../../docs/manualpages/TS/TS.html#TS">TS</a>, <a href="../../../../../docs/manualpages/TS/TSSetType.html#TSSetType">TSSetType</a>(), <a href="../../../../../docs/manualpages/TS/TSRKSetType.html#TSRKSetType">TSRKSetType</a>(), <a href="../../../../../docs/manualpages/TS/TSRKGetType.html#TSRKGetType">TSRKGetType</a>(), TSRKSetFullyImplicit(), TSRK2D, TTSRK2E, <a href="../../../../../docs/manualpages/TS/TSRK3.html#TSRK3">TSRK3</a>,</font>
+<a name="line1038">1038: </a><font color="#B22222">           <a href="../../../../../docs/manualpages/TS/TSRK4.html#TSRK4">TSRK4</a>, TSRK5, TSRKPRSSP2, TSRKBPR3, <a href="../../../../../docs/manualpages/TS/TSRKType.html#TSRKType">TSRKType</a>, <a href="../../../../../docs/manualpages/TS/TSRKRegister.html#TSRKRegister">TSRKRegister</a>()</font>
+
+<a name="line1040">1040: </a><font color="#B22222">M*/</font>
+<a name="line1041">1041: </a><strong><font color="#4169E1"><a name="TSCreate_RK"></a>PETSC_EXTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> TSCreate_RK(<a href="../../../../../docs/manualpages/TS/TS.html#TS">TS</a> ts)</font></strong>
+<a name="line1042">1042: </a>{
+<a name="line1043">1043: </a>  TS_RK          *rk;
+
+<a name="line1047">1047: </a>  <a href="../../../../../docs/manualpages/TS/TSRKInitializePackage.html#TSRKInitializePackage">TSRKInitializePackage</a>();
+
+<a name="line1049">1049: </a>  ts-&gt;ops-&gt;reset          = TSReset_RK;
+<a name="line1050">1050: </a>  ts-&gt;ops-&gt;destroy        = TSDestroy_RK;
+<a name="line1051">1051: </a>  ts-&gt;ops-&gt;view           = TSView_RK;
+<a name="line1052">1052: </a>  ts-&gt;ops-&gt;load           = TSLoad_RK;
+<a name="line1053">1053: </a>  ts-&gt;ops-&gt;setup          = TSSetUp_RK;
+<a name="line1054">1054: </a>  ts-&gt;ops-&gt;adjointsetup   = TSAdjointSetUp_RK;
+<a name="line1055">1055: </a>  ts-&gt;ops-&gt;step           = TSStep_RK;
+<a name="line1056">1056: </a>  ts-&gt;ops-&gt;interpolate    = TSInterpolate_RK;
+<a name="line1057">1057: </a>  ts-&gt;ops-&gt;evaluatestep   = TSEvaluateStep_RK;
+<a name="line1058">1058: </a>  ts-&gt;ops-&gt;rollback       = TSRollBack_RK;
+<a name="line1059">1059: </a>  ts-&gt;ops-&gt;setfromoptions = TSSetFromOptions_RK;
+<a name="line1060">1060: </a>  ts-&gt;ops-&gt;getstages      = TSGetStages_RK;
+<a name="line1061">1061: </a>  ts-&gt;ops-&gt;adjointstep    = TSAdjointStep_RK;
+
+<a name="line1063">1063: </a>  ts-&gt;ops-&gt;adjointintegral = TSAdjointCostIntegral_RK;
+<a name="line1064">1064: </a>  ts-&gt;ops-&gt;forwardintegral = TSForwardCostIntegral_RK;
+
+<a name="line1066">1066: </a>  <a href="../../../../../docs/manualpages/Sys/PetscNewLog.html#PetscNewLog">PetscNewLog</a>(ts,&amp;rk);
+<a name="line1067">1067: </a>  ts-&gt;data = (void*)rk;
+
+<a name="line1069">1069: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html#PetscObjectComposeFunction">PetscObjectComposeFunction</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)ts,<font color="#666666">"TSRKGetType_C"</font>,TSRKGetType_RK);
+<a name="line1070">1070: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html#PetscObjectComposeFunction">PetscObjectComposeFunction</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)ts,<font color="#666666">"TSRKSetType_C"</font>,TSRKSetType_RK);
+
+<a name="line1072">1072: </a>  <a href="../../../../../docs/manualpages/TS/TSRKSetType.html#TSRKSetType">TSRKSetType</a>(ts,TSRKDefault);
+<a name="line1073">1073: </a>  <font color="#4169E1">return</font>(0);
+<a name="line1074">1074: </a>}
+</pre>
+</body>
+
+</html>

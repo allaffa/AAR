@@ -1,0 +1,394 @@
+<center><a href="grglvis.c">Actual source code: grglvis.c</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/dm/impls/da/grglvis.c.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:39:45+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/dm/impls/da/grglvis.c.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+<a name="line1">  1: </a><font color="#B22222">/* Routines to visualize DMDAs and fields through GLVis */</font>
+
+<a name="line3">  3: </a> #include <A href="../../../../include/petsc/private/dmdaimpl.h.html">&lt;petsc/private/dmdaimpl.h&gt;</A>
+<a name="line4">  4: </a> #include <A href="../../../../include/petsc/private/glvisviewerimpl.h.html">&lt;petsc/private/glvisviewerimpl.h&gt;</A>
+
+<a name="line6">  6: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line7">  7: </a>  <a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> xlocal;
+<a name="line8">  8: </a>} DMDAGLVisViewerCtx;
+
+<a name="line10"> 10: </a><strong><font color="#4169E1"><a name="DMDADestroyGLVisViewerCtx_Private"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMDADestroyGLVisViewerCtx_Private(void *vctx)</font></strong>
+<a name="line11"> 11: </a>{
+<a name="line12"> 12: </a>  DMDAGLVisViewerCtx *ctx = (DMDAGLVisViewerCtx*)vctx;
+<a name="line13"> 13: </a>  <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>     ierr;
+
+<a name="line16"> 16: </a>  <a href="../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;ctx-&gt;xlocal);
+<a name="line17"> 17: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(vctx);
+<a name="line18"> 18: </a>  <font color="#4169E1">return</font>(0);
+<a name="line19"> 19: </a>}
+
+<a name="line21"> 21: </a><font color="#B22222">/* all but the last proc per dimension claim the ghosted node */</font>
+<a name="line22"> 22: </a><strong><font color="#4169E1"><a name="DMDAGetNumElementsGhosted"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMDAGetNumElementsGhosted(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> da, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *nex, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *ney, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *nez)</font></strong>
+<a name="line23"> 23: </a>{
+<a name="line24"> 24: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       M,N,P,sx,sy,sz,ien,jen,ken;
+
+<a name="line28"> 28: </a>  <font color="#B22222">/* Appease -Wmaybe-uninitialized */</font>
+<a name="line29"> 29: </a>  <font color="#4169E1">if</font> (nex) *nex = -1;
+<a name="line30"> 30: </a>  <font color="#4169E1">if</font> (ney) *ney = -1;
+<a name="line31"> 31: </a>  <font color="#4169E1">if</font> (nez) *nez = -1;
+<a name="line32"> 32: </a>  <a href="../../../../docs/manualpages/DMDA/DMDAGetInfo.html#DMDAGetInfo">DMDAGetInfo</a>(da,NULL,&amp;M,&amp;N,&amp;P,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+<a name="line33"> 33: </a>  <a href="../../../../docs/manualpages/DMDA/DMDAGetCorners.html#DMDAGetCorners">DMDAGetCorners</a>(da,&amp;sx,&amp;sy,&amp;sz,&amp;ien,&amp;jen,&amp;ken);
+<a name="line34"> 34: </a>  <font color="#4169E1">if</font> (sx+ien == M) ien--;
+<a name="line35"> 35: </a>  <font color="#4169E1">if</font> (sy+jen == N) jen--;
+<a name="line36"> 36: </a>  <font color="#4169E1">if</font> (sz+ken == P) ken--;
+<a name="line37"> 37: </a>  <font color="#4169E1">if</font> (nex) *nex = ien;
+<a name="line38"> 38: </a>  <font color="#4169E1">if</font> (ney) *ney = jen;
+<a name="line39"> 39: </a>  <font color="#4169E1">if</font> (nez) *nez = ken;
+<a name="line40"> 40: </a>  <font color="#4169E1">return</font>(0);
+<a name="line41"> 41: </a>}
+
+<a name="line43"> 43: </a><font color="#B22222">/* inherits number of vertices from DMDAGetNumElementsGhosted */</font>
+<a name="line44"> 44: </a><strong><font color="#4169E1"><a name="DMDAGetNumVerticesGhosted"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMDAGetNumVerticesGhosted(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> da, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *nvx, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *nvy, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *nvz)</font></strong>
+<a name="line45"> 45: </a>{
+<a name="line46"> 46: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       ien,jen,ken,dim;
+
+<a name="line50"> 50: </a>  <a href="../../../../docs/manualpages/DM/DMGetDimension.html#DMGetDimension">DMGetDimension</a>(da,&amp;dim);
+<a name="line51"> 51: </a>  DMDAGetNumElementsGhosted(da,&amp;ien,&amp;jen,&amp;ken);
+<a name="line52"> 52: </a>  ien  = ien+1;
+<a name="line53"> 53: </a>  jen  = dim &gt; 1 ? jen+1 : 1;
+<a name="line54"> 54: </a>  ken  = dim &gt; 2 ? ken+1 : 1;
+<a name="line55"> 55: </a>  <font color="#4169E1">if</font> (nvx) *nvx = ien;
+<a name="line56"> 56: </a>  <font color="#4169E1">if</font> (nvy) *nvy = jen;
+<a name="line57"> 57: </a>  <font color="#4169E1">if</font> (nvz) *nvz = ken;
+<a name="line58"> 58: </a>  <font color="#4169E1">return</font>(0);
+<a name="line59"> 59: </a>}
+
+<a name="line61"> 61: </a><strong><font color="#4169E1"><a name="DMDASampleGLVisFields_Private"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMDASampleGLVisFields_Private(<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a> oX, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> nf, <a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a> oXf[], void *vctx)</font></strong>
+<a name="line62"> 62: </a>{
+<a name="line63"> 63: </a>  <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a>                 da;
+<a name="line64"> 64: </a>  DMDAGLVisViewerCtx *ctx = (DMDAGLVisViewerCtx*)vctx;
+<a name="line65"> 65: </a>  const <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>  *array;
+<a name="line66"> 66: </a>  <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>        **arrayf;
+<a name="line67"> 67: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>           i,f,ii,ien,jen,ken,ie,je,ke,bs,*bss;
+<a name="line68"> 68: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>           sx,sy,sz,gsx,gsy,gsz,ist,jst,kst,gm,gn,gp;
+<a name="line69"> 69: </a>  <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>     ierr;
+
+<a name="line72"> 72: </a>  <a href="../../../../docs/manualpages/DM/VecGetDM.html#VecGetDM">VecGetDM</a>(ctx-&gt;xlocal,&amp;da);
+<a name="line73"> 73: </a>  <font color="#4169E1">if</font> (!da) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>(oX),PETSC_ERR_ARG_WRONG,<font color="#666666">"Vector not generated from a <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a>"</font>);
+<a name="line74"> 74: </a>  <a href="../../../../docs/manualpages/Vec/VecGetBlockSize.html#VecGetBlockSize">VecGetBlockSize</a>(ctx-&gt;xlocal,&amp;bs);
+<a name="line75"> 75: </a>  <a href="../../../../docs/manualpages/DM/DMGlobalToLocalBegin.html#DMGlobalToLocalBegin">DMGlobalToLocalBegin</a>(da,(<a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>)oX,<a href="../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>,ctx-&gt;xlocal);
+<a name="line76"> 76: </a>  <a href="../../../../docs/manualpages/DM/DMGlobalToLocalEnd.html#DMGlobalToLocalEnd">DMGlobalToLocalEnd</a>(da,(<a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>)oX,<a href="../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>,ctx-&gt;xlocal);
+<a name="line77"> 77: </a>  DMDAGetNumVerticesGhosted(da,&amp;ien,&amp;jen,&amp;ken);
+<a name="line78"> 78: </a>  <a href="../../../../docs/manualpages/DMDA/DMDAGetGhostCorners.html#DMDAGetGhostCorners">DMDAGetGhostCorners</a>(da,&amp;gsx,&amp;gsy,&amp;gsz,&amp;gm,&amp;gn,&amp;gp);
+<a name="line79"> 79: </a>  <a href="../../../../docs/manualpages/DMDA/DMDAGetCorners.html#DMDAGetCorners">DMDAGetCorners</a>(da,&amp;sx,&amp;sy,&amp;sz,NULL,NULL,NULL);
+<a name="line80"> 80: </a>  kst  = gsz != sz ? 1 : 0;
+<a name="line81"> 81: </a>  jst  = gsy != sy ? 1 : 0;
+<a name="line82"> 82: </a>  ist  = gsx != sx ? 1 : 0;
+<a name="line83"> 83: </a>  <a href="../../../../docs/manualpages/Sys/PetscMalloc2.html#PetscMalloc2">PetscMalloc2</a>(nf,&amp;arrayf,nf,&amp;bss);
+<a name="line84"> 84: </a>  <a href="../../../../docs/manualpages/Vec/VecGetArrayRead.html#VecGetArrayRead">VecGetArrayRead</a>(ctx-&gt;xlocal,&amp;array);
+<a name="line85"> 85: </a>  <font color="#4169E1">for</font> (f=0;f&lt;nf;f++) {
+<a name="line86"> 86: </a>    <a href="../../../../docs/manualpages/Vec/VecGetBlockSize.html#VecGetBlockSize">VecGetBlockSize</a>((<a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>)oXf[f],&amp;bss[f]);
+<a name="line87"> 87: </a>    <a href="../../../../docs/manualpages/Vec/VecGetArray.html#VecGetArray">VecGetArray</a>((<a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>)oXf[f],&amp;arrayf[f]);
+<a name="line88"> 88: </a>  }
+<a name="line89"> 89: </a>  <font color="#4169E1">for</font> (ke = kst, ii = 0; ke &lt; kst + ken; ke++) {
+<a name="line90"> 90: </a>    <font color="#4169E1">for</font> (je = jst; je &lt; jst + jen; je++) {
+<a name="line91"> 91: </a>      <font color="#4169E1">for</font> (ie = ist; ie &lt; ist + ien; ie++) {
+<a name="line92"> 92: </a>        <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> cf,b;
+<a name="line93"> 93: </a>        i = ke * gm * gn + je * gm + ie;
+<a name="line94"> 94: </a>        <font color="#4169E1">for</font> (f=0,cf=0;f&lt;nf;f++)
+<a name="line95"> 95: </a>          <font color="#4169E1">for</font> (b=0;b&lt;bss[f];b++)
+<a name="line96"> 96: </a>            arrayf[f][bss[f]*ii+b] = array[i*bs+cf++];
+<a name="line97"> 97: </a>        ii++;
+<a name="line98"> 98: </a>      }
+<a name="line99"> 99: </a>    }
+<a name="line100">100: </a>  }
+<a name="line101">101: </a>  <font color="#4169E1">for</font> (f=0;f&lt;nf;f++) { <a href="../../../../docs/manualpages/Vec/VecRestoreArray.html#VecRestoreArray">VecRestoreArray</a>((<a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>)oXf[f],&amp;arrayf[f]); }
+<a name="line102">102: </a>  <a href="../../../../docs/manualpages/Vec/VecRestoreArrayRead.html#VecRestoreArrayRead">VecRestoreArrayRead</a>(ctx-&gt;xlocal,&amp;array);
+<a name="line103">103: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree2.html#PetscFree2">PetscFree2</a>(arrayf,bss);
+<a name="line104">104: </a>  <font color="#4169E1">return</font>(0);
+<a name="line105">105: </a>}
+
+<a name="line107">107: </a><strong><font color="#4169E1"><a name="DMSetUpGLVisViewer_DMDA"></a>PETSC_INTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMSetUpGLVisViewer_DMDA(<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a> oda, <a href="../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer)</font></strong>
+<a name="line108">108: </a>{
+<a name="line109">109: </a>  <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a>                 da = (<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a>)oda,daview,dacoord;
+<a name="line110">110: </a>  <a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>                xcoor,xcoorl,xlocal;
+<a name="line111">111: </a>  DMDAGLVisViewerCtx *ctx;
+<a name="line112">112: </a>  const char         **dafieldname;
+<a name="line113">113: </a>  char               **fec_type,**fieldname,fec[64];
+<a name="line114">114: </a>  const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>     *lx,*ly,*lz;
+<a name="line115">115: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>           *nlocal,*bss,*dims;
+<a name="line116">116: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>           dim,M,N,P,m,n,p,dof,s,i,nf;
+<a name="line117">117: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>          bsset;
+<a name="line118">118: </a>  <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>     ierr;
+
+<a name="line121">121: </a>  <font color="#B22222">/* Create a properly ghosted <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a> to visualize the mesh and the fields associated with */</font>
+<a name="line122">122: </a>  <a href="../../../../docs/manualpages/DMDA/DMDAGetInfo.html#DMDAGetInfo">DMDAGetInfo</a>(da,&amp;dim,&amp;M,&amp;N,&amp;P,&amp;m,&amp;n,&amp;p,&amp;dof,&amp;s,NULL,NULL,NULL,NULL);
+<a name="line123">123: </a>  <a href="../../../../docs/manualpages/DMDA/DMDAGetOwnershipRanges.html#DMDAGetOwnershipRanges">DMDAGetOwnershipRanges</a>(da,&amp;lx,&amp;ly,&amp;lz);
+<a name="line124">124: </a>  <a href="../../../../docs/manualpages/DM/DMGetCoordinates.html#DMGetCoordinates">DMGetCoordinates</a>(da,&amp;xcoor);
+<a name="line125">125: </a>  <a href="../../../../docs/manualpages/Profiling/PetscInfo.html#PetscInfo">PetscInfo</a>(da,<font color="#666666">"Creating auxilary <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a> for managing GLVis graphics\n"</font>);
+<a name="line126">126: </a>  <font color="#4169E1">switch</font> (dim) {
+<a name="line127">127: </a>  <font color="#4169E1">case</font> 1:
+<a name="line128">128: </a>    <a href="../../../../docs/manualpages/DMDA/DMDACreate1d.html#DMDACreate1d">DMDACreate1d</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),<a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_NONE</a>,M,dof,1,lx,&amp;daview);
+<a name="line129">129: </a>    <a href="../../../../docs/manualpages/DMDA/DMDACreate1d.html#DMDACreate1d">DMDACreate1d</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),<a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_NONE</a>,M,1,1,lx,&amp;dacoord);
+<a name="line130">130: </a>    <a href="../../../../docs/manualpages/Sys/PetscStrcpy.html#PetscStrcpy">PetscStrcpy</a>(fec,<font color="#666666">"FiniteElementCollection: H1_1D_P1"</font>);
+<a name="line131">131: </a>    <font color="#4169E1">break</font>;
+<a name="line132">132: </a>  <font color="#4169E1">case</font> 2:
+<a name="line133">133: </a>    <a href="../../../../docs/manualpages/DMDA/DMDACreate2d.html#DMDACreate2d">DMDACreate2d</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),<a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_NONE</a>,<a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_NONE</a>,<a href="../../../../docs/manualpages/DMDA/DMDAStencilType.html#DMDAStencilType">DMDA_STENCIL_BOX</a>,M,N,m,n,dof,1,lx,ly,&amp;daview);
+<a name="line134">134: </a>    <a href="../../../../docs/manualpages/DMDA/DMDACreate2d.html#DMDACreate2d">DMDACreate2d</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),<a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_NONE</a>,<a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_NONE</a>,<a href="../../../../docs/manualpages/DMDA/DMDAStencilType.html#DMDAStencilType">DMDA_STENCIL_BOX</a>,M,N,m,n,2,1,lx,ly,&amp;dacoord);
+<a name="line135">135: </a>    <a href="../../../../docs/manualpages/Sys/PetscStrcpy.html#PetscStrcpy">PetscStrcpy</a>(fec,<font color="#666666">"FiniteElementCollection: H1_2D_P1"</font>);
+<a name="line136">136: </a>    <font color="#4169E1">break</font>;
+<a name="line137">137: </a>  <font color="#4169E1">case</font> 3:
+<a name="line138">138: </a>    <a href="../../../../docs/manualpages/DMDA/DMDACreate3d.html#DMDACreate3d">DMDACreate3d</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),<a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_NONE</a>,<a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_NONE</a>,<a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_NONE</a>,<a href="../../../../docs/manualpages/DMDA/DMDAStencilType.html#DMDAStencilType">DMDA_STENCIL_BOX</a>,M,N,P,m,n,p,dof,1,lx,ly,lz,&amp;daview);
+<a name="line139">139: </a>    <a href="../../../../docs/manualpages/DMDA/DMDACreate3d.html#DMDACreate3d">DMDACreate3d</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),<a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_NONE</a>,<a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_NONE</a>,<a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_NONE</a>,<a href="../../../../docs/manualpages/DMDA/DMDAStencilType.html#DMDAStencilType">DMDA_STENCIL_BOX</a>,M,N,P,m,n,p,3,1,lx,ly,lz,&amp;dacoord);
+<a name="line140">140: </a>    <a href="../../../../docs/manualpages/Sys/PetscStrcpy.html#PetscStrcpy">PetscStrcpy</a>(fec,<font color="#666666">"FiniteElementCollection: H1_3D_P1"</font>);
+<a name="line141">141: </a>    <font color="#4169E1">break</font>;
+<a name="line142">142: </a><strong><font color="#FF0000">  default:</font></strong>
+<a name="line143">143: </a>    <a href="../../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),PETSC_ERR_SUP,<font color="#666666">"Unsupported dimension %D"</font>,dim);
+<a name="line144">144: </a>    <font color="#4169E1">break</font>;
+<a name="line145">145: </a>  }
+<a name="line146">146: </a>  <a href="../../../../docs/manualpages/DM/DMSetUp.html#DMSetUp">DMSetUp</a>(daview);
+<a name="line147">147: </a>  <a href="../../../../docs/manualpages/DM/DMSetUp.html#DMSetUp">DMSetUp</a>(dacoord);
+<a name="line148">148: </a>  <font color="#4169E1">if</font> (!xcoor) {
+<a name="line149">149: </a>    <a href="../../../../docs/manualpages/DMDA/DMDASetUniformCoordinates.html#DMDASetUniformCoordinates">DMDASetUniformCoordinates</a>(daview,0.0,1.0,0.0,1.0,0.0,1.0);
+<a name="line150">150: </a>    <a href="../../../../docs/manualpages/DM/DMGetCoordinates.html#DMGetCoordinates">DMGetCoordinates</a>(daview,&amp;xcoor);
+<a name="line151">151: </a>  }
+<a name="line152">152: </a>  <a href="../../../../docs/manualpages/DM/DMCreateLocalVector.html#DMCreateLocalVector">DMCreateLocalVector</a>(daview,&amp;xlocal);
+<a name="line153">153: </a>  <a href="../../../../docs/manualpages/DM/DMCreateLocalVector.html#DMCreateLocalVector">DMCreateLocalVector</a>(dacoord,&amp;xcoorl);
+<a name="line154">154: </a>  <a href="../../../../docs/manualpages/DM/DMGlobalToLocalBegin.html#DMGlobalToLocalBegin">DMGlobalToLocalBegin</a>(dacoord,xcoor,<a href="../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>,xcoorl);
+<a name="line155">155: </a>  <a href="../../../../docs/manualpages/DM/DMGlobalToLocalEnd.html#DMGlobalToLocalEnd">DMGlobalToLocalEnd</a>(dacoord,xcoor,<a href="../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>,xcoorl);
+
+<a name="line157">157: </a>  <font color="#B22222">/* xcoorl is composed with the original <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a>, ghosted coordinate <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a> is only available through this vector */</font>
+<a name="line158">158: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectCompose.html#PetscObjectCompose">PetscObjectCompose</a>(oda,<font color="#666666">"GLVisGraphicsCoordsGhosted"</font>,(<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)xcoorl);
+<a name="line159">159: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectDereference.html#PetscObjectDereference">PetscObjectDereference</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)xcoorl);
+
+<a name="line161">161: </a>  <font color="#B22222">/* customize the viewer */</font>
+<a name="line162">162: </a>  <a href="../../../../docs/manualpages/DMDA/DMDAGetFieldNames.html#DMDAGetFieldNames">DMDAGetFieldNames</a>(da,(const char * const **)&amp;dafieldname);
+<a name="line163">163: </a>  DMDAGetNumVerticesGhosted(daview,&amp;M,&amp;N,&amp;P);
+<a name="line164">164: </a>  <a href="../../../../docs/manualpages/Sys/PetscMalloc5.html#PetscMalloc5">PetscMalloc5</a>(dof,&amp;fec_type,dof,&amp;nlocal,dof,&amp;bss,dof,&amp;dims,dof,&amp;fieldname);
+<a name="line165">165: </a>  <font color="#4169E1">for</font> (i=0;i&lt;dof;i++) bss[i] = 1;
+<a name="line166">166: </a>  nf = dof;
+
+<a name="line168">168: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsBegin.html#PetscOptionsBegin">PetscOptionsBegin</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>(oda),oda-&gt;prefix,<font color="#666666">"GLVis <a href="../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a> Options"</font>,<font color="#666666">"<a href="../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a>"</font>);
+<a name="line169">169: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsIntArray.html#PetscOptionsIntArray">PetscOptionsIntArray</a>(<font color="#666666">"-viewer_glvis_dm_da_bs"</font>,<font color="#666666">"Block sizes for subfields; enable vector representation"</font>,NULL,bss,&amp;nf,&amp;bsset);
+<a name="line170">170: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsEnd.html#PetscOptionsEnd">PetscOptionsEnd</a>();
+<a name="line171">171: </a>  <font color="#4169E1">if</font> (bsset) {
+<a name="line172">172: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> t;
+<a name="line173">173: </a>    <font color="#4169E1">for</font> (i=0,t=0;i&lt;nf;i++) t += bss[i];
+<a name="line174">174: </a>    <font color="#4169E1">if</font> (t != dof) <a href="../../../../docs/manualpages/Sys/SETERRQ2.html#SETERRQ2">SETERRQ2</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>(oda),PETSC_ERR_USER,<font color="#666666">"Sum of block sizes %D should equal %D"</font>,t,dof);
+<a name="line175">175: </a>  } <font color="#4169E1">else</font> nf = dof;
+
+<a name="line177">177: </a>  <font color="#4169E1">for</font> (i=0,s=0;i&lt;nf;i++) {
+<a name="line178">178: </a>    <a href="../../../../docs/manualpages/Sys/PetscStrallocpy.html#PetscStrallocpy">PetscStrallocpy</a>(fec,&amp;fec_type[i]);
+<a name="line179">179: </a>    <font color="#4169E1">if</font> (bss[i] == 1) {
+<a name="line180">180: </a>      <a href="../../../../docs/manualpages/Sys/PetscStrallocpy.html#PetscStrallocpy">PetscStrallocpy</a>(dafieldname[s],&amp;fieldname[i]);
+<a name="line181">181: </a>    } <font color="#4169E1">else</font> {
+<a name="line182">182: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> b;
+<a name="line183">183: </a>      size_t tlen = 9; <font color="#B22222">/* "Vector-" + end */</font>
+<a name="line184">184: </a>      <font color="#4169E1">for</font> (b=0;b&lt;bss[i];b++) {
+<a name="line185">185: </a>        size_t len;
+<a name="line186">186: </a>        <a href="../../../../docs/manualpages/Sys/PetscStrlen.html#PetscStrlen">PetscStrlen</a>(dafieldname[s+b],&amp;len);
+<a name="line187">187: </a>        tlen += len + 1; <font color="#B22222">/* field + "-" */</font>
+<a name="line188">188: </a>      }
+<a name="line189">189: </a>      <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(tlen,&amp;fieldname[i]);
+<a name="line190">190: </a>      <a href="../../../../docs/manualpages/Sys/PetscStrcpy.html#PetscStrcpy">PetscStrcpy</a>(fieldname[i],<font color="#666666">"Vector-"</font>);
+<a name="line191">191: </a>      <font color="#4169E1">for</font> (b=0;b&lt;bss[i]-1;b++) {
+<a name="line192">192: </a>        <a href="../../../../docs/manualpages/Sys/PetscStrcat.html#PetscStrcat">PetscStrcat</a>(fieldname[i],dafieldname[s+b]);
+<a name="line193">193: </a>        <a href="../../../../docs/manualpages/Sys/PetscStrcat.html#PetscStrcat">PetscStrcat</a>(fieldname[i],<font color="#666666">"-"</font>);
+<a name="line194">194: </a>      }
+<a name="line195">195: </a>      <a href="../../../../docs/manualpages/Sys/PetscStrcat.html#PetscStrcat">PetscStrcat</a>(fieldname[i],dafieldname[s+b]);
+<a name="line196">196: </a>    }
+<a name="line197">197: </a>    dims[i] = dim;
+<a name="line198">198: </a>    nlocal[i] = M*N*P*bss[i];
+<a name="line199">199: </a>    s += bss[i];
+<a name="line200">200: </a>  }
+
+<a name="line202">202: </a>  <font color="#B22222">/* the viewer context takes ownership of xlocal (and the the properly ghosted <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a> associated with it) */</font>
+<a name="line203">203: </a>  <a href="../../../../docs/manualpages/Sys/PetscNew.html#PetscNew">PetscNew</a>(&amp;ctx);
+<a name="line204">204: </a>  ctx-&gt;xlocal = xlocal;
+
+<a name="line206">206: </a>  PetscViewerGLVisSetFields(viewer,nf,(const char**)fieldname,(const char**)fec_type,nlocal,bss,dims,DMDASampleGLVisFields_Private,ctx,DMDADestroyGLVisViewerCtx_Private);
+<a name="line207">207: </a>  <font color="#4169E1">for</font> (i=0;i&lt;nf;i++) {
+<a name="line208">208: </a>    <a href="../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(fec_type[i]);
+<a name="line209">209: </a>    <a href="../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(fieldname[i]);
+<a name="line210">210: </a>  }
+<a name="line211">211: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree5.html#PetscFree5">PetscFree5</a>(fec_type,nlocal,bss,dims,fieldname);
+<a name="line212">212: </a>  <a href="../../../../docs/manualpages/DM/DMDestroy.html#DMDestroy">DMDestroy</a>(&amp;dacoord);
+<a name="line213">213: </a>  <a href="../../../../docs/manualpages/DM/DMDestroy.html#DMDestroy">DMDestroy</a>(&amp;daview);
+<a name="line214">214: </a>  <font color="#4169E1">return</font>(0);
+<a name="line215">215: </a>}
+
+<a name="line217">217: </a><strong><font color="#4169E1"><a name="DMDAView_GLVis_ASCII"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMDAView_GLVis_ASCII(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm, <a href="../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer)</font></strong>
+<a name="line218">218: </a>{
+<a name="line219">219: </a>  <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a>                da;
+<a name="line220">220: </a>  <a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>               xcoorl;
+<a name="line221">221: </a>  <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>       commsize;
+<a name="line222">222: </a>  const <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> *array;
+<a name="line223">223: </a>  <a href="../../../../docs/manualpages/Sys/PetscContainer.html#PetscContainer">PetscContainer</a>    glvis_container;
+<a name="line224">224: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          dim,sdim,i,vid[8],mid,cid;
+<a name="line225">225: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          sx,sy,sz,ie,je,ke,ien,jen,ken;
+<a name="line226">226: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          gsx,gsy,gsz,gm,gn,gp,kst,jst,ist;
+<a name="line227">227: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>         enabled = <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>, isascii;
+<a name="line228">228: </a>  <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+
+<a name="line233">233: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<a href="../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html#PETSCVIEWERASCII">PETSCVIEWERASCII</a>,&amp;isascii);
+<a name="line234">234: </a>  <font color="#4169E1">if</font> (!isascii) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer),PETSC_ERR_SUP,<font color="#666666">"Viewer must be of type VIEWERASCII"</font>);
+<a name="line235">235: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer),&amp;commsize);
+<a name="line236">236: </a>  <font color="#4169E1">if</font> (commsize &gt; 1) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer),PETSC_ERR_SUP,<font color="#666666">"Use single sequential viewers for parallel visualization"</font>);
+<a name="line237">237: </a>  <a href="../../../../docs/manualpages/DM/DMGetDimension.html#DMGetDimension">DMGetDimension</a>(dm,&amp;dim);
+
+<a name="line239">239: </a>  <font color="#B22222">/* get container: determines if a process visualizes is portion of the data or not */</font>
+<a name="line240">240: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectQuery.html#PetscObjectQuery">PetscObjectQuery</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<font color="#666666">"_glvis_info_container"</font>,(<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>*)&amp;glvis_container);
+<a name="line241">241: </a>  <font color="#4169E1">if</font> (!glvis_container) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_PLIB,<font color="#666666">"Missing GLVis container"</font>);
+<a name="line242">242: </a>  {
+<a name="line243">243: </a>    PetscViewerGLVisInfo glvis_info;
+<a name="line244">244: </a>    <a href="../../../../docs/manualpages/Sys/PetscContainerGetPointer.html#PetscContainerGetPointer">PetscContainerGetPointer</a>(glvis_container,(void**)&amp;glvis_info);
+<a name="line245">245: </a>    enabled = glvis_info-&gt;enabled;
+<a name="line246">246: </a>  }
+<a name="line247">247: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectQuery.html#PetscObjectQuery">PetscObjectQuery</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm,<font color="#666666">"GLVisGraphicsCoordsGhosted"</font>,(<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>*)&amp;xcoorl);
+<a name="line248">248: </a>  <font color="#4169E1">if</font> (!xcoorl) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_PLIB,<font color="#666666">"Missing GLVis ghosted coords"</font>);
+<a name="line249">249: </a>  <a href="../../../../docs/manualpages/DM/VecGetDM.html#VecGetDM">VecGetDM</a>(xcoorl,&amp;da);
+<a name="line250">250: </a>  <font color="#4169E1">if</font> (!da) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_PLIB,<font color="#666666">"Missing GLVis ghosted <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a>"</font>);
+<a name="line251">251: </a>  <a href="../../../../docs/manualpages/DM/DMGetCoordinateDim.html#DMGetCoordinateDim">DMGetCoordinateDim</a>(da,&amp;sdim);
+
+<a name="line253">253: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"MFEM mesh v1.1\n"</font>);
+<a name="line254">254: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"\ndimension\n"</font>);
+<a name="line255">255: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"%D\n"</font>,dim);
+
+<a name="line257">257: </a>  <font color="#4169E1">if</font> (!enabled) {
+<a name="line258">258: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"\nelements\n"</font>);
+<a name="line259">259: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"%D\n"</font>,0);
+<a name="line260">260: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"\nboundary\n"</font>);
+<a name="line261">261: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"%D\n"</font>,0);
+<a name="line262">262: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"\nvertices\n"</font>);
+<a name="line263">263: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"%D\n"</font>,0);
+<a name="line264">264: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"%D\n"</font>,sdim);
+<a name="line265">265: </a>    <font color="#4169E1">return</font>(0);
+<a name="line266">266: </a>  }
+
+<a name="line268">268: </a>  DMDAGetNumElementsGhosted(da,&amp;ien,&amp;jen,&amp;ken);
+<a name="line269">269: </a>  i    = ien;
+<a name="line270">270: </a>  <font color="#4169E1">if</font> (dim &gt; 1) i *= jen;
+<a name="line271">271: </a>  <font color="#4169E1">if</font> (dim &gt; 2) i *= ken;
+<a name="line272">272: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"\nelements\n"</font>);
+<a name="line273">273: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"%D\n"</font>,i);
+<a name="line274">274: </a>  <font color="#4169E1">switch</font> (dim) {
+<a name="line275">275: </a>  <font color="#4169E1">case</font> 1:
+<a name="line276">276: </a>    <font color="#4169E1">for</font> (ie = 0; ie &lt; ien; ie++) {
+<a name="line277">277: </a>      vid[0] = ie;
+<a name="line278">278: </a>      vid[1] = ie+1;
+<a name="line279">279: </a>      mid    = 1; <font color="#B22222">/* material id */</font>
+<a name="line280">280: </a>      cid    = 1; <font color="#B22222">/* segment */</font>
+<a name="line281">281: </a>      <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"%D %D %D %D\n"</font>,mid,cid,vid[0],vid[1]);
+<a name="line282">282: </a>    }
+<a name="line283">283: </a>    <font color="#4169E1">break</font>;
+<a name="line284">284: </a>  <font color="#4169E1">case</font> 2:
+<a name="line285">285: </a>    <font color="#4169E1">for</font> (je = 0; je &lt; jen; je++) {
+<a name="line286">286: </a>      <font color="#4169E1">for</font> (ie = 0; ie &lt; ien; ie++) {
+<a name="line287">287: </a>        vid[0] =     je*(ien+1) + ie;
+<a name="line288">288: </a>        vid[1] =     je*(ien+1) + ie+1;
+<a name="line289">289: </a>        vid[2] = (je+1)*(ien+1) + ie+1;
+<a name="line290">290: </a>        vid[3] = (je+1)*(ien+1) + ie;
+<a name="line291">291: </a>        mid    = 1; <font color="#B22222">/* material id */</font>
+<a name="line292">292: </a>        cid    = 3; <font color="#B22222">/* quad */</font>
+<a name="line293">293: </a>        <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"%D %D %D %D %D %D\n"</font>,mid,cid,vid[0],vid[1],vid[2],vid[3]);
+<a name="line294">294: </a>      }
+<a name="line295">295: </a>    }
+<a name="line296">296: </a>    <font color="#4169E1">break</font>;
+<a name="line297">297: </a>  <font color="#4169E1">case</font> 3:
+<a name="line298">298: </a>    <font color="#4169E1">for</font> (ke = 0; ke &lt; ken; ke++) {
+<a name="line299">299: </a>      <font color="#4169E1">for</font> (je = 0; je &lt; jen; je++) {
+<a name="line300">300: </a>        <font color="#4169E1">for</font> (ie = 0; ie &lt; ien; ie++) {
+<a name="line301">301: </a>          vid[0] =     ke*(jen+1)*(ien+1) +     je*(ien+1) + ie;
+<a name="line302">302: </a>          vid[1] =     ke*(jen+1)*(ien+1) +     je*(ien+1) + ie+1;
+<a name="line303">303: </a>          vid[2] =     ke*(jen+1)*(ien+1) + (je+1)*(ien+1) + ie+1;
+<a name="line304">304: </a>          vid[3] =     ke*(jen+1)*(ien+1) + (je+1)*(ien+1) + ie;
+<a name="line305">305: </a>          vid[4] = (ke+1)*(jen+1)*(ien+1) +     je*(ien+1) + ie;
+<a name="line306">306: </a>          vid[5] = (ke+1)*(jen+1)*(ien+1) +     je*(ien+1) + ie+1;
+<a name="line307">307: </a>          vid[6] = (ke+1)*(jen+1)*(ien+1) + (je+1)*(ien+1) + ie+1;
+<a name="line308">308: </a>          vid[7] = (ke+1)*(jen+1)*(ien+1) + (je+1)*(ien+1) + ie;
+<a name="line309">309: </a>          mid    = 1; <font color="#B22222">/* material id */</font>
+<a name="line310">310: </a>          cid    = 5; <font color="#B22222">/* hex */</font>
+<a name="line311">311: </a>          <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"%D %D %D %D %D %D %D %D %D %D\n"</font>,mid,cid,vid[0],vid[1],vid[2],vid[3],vid[4],vid[5],vid[6],vid[7]);
+<a name="line312">312: </a>        }
+<a name="line313">313: </a>      }
+<a name="line314">314: </a>    }
+<a name="line315">315: </a>    <font color="#4169E1">break</font>;
+<a name="line316">316: </a><strong><font color="#FF0000">  default:</font></strong>
+<a name="line317">317: </a>    <a href="../../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),PETSC_ERR_SUP,<font color="#666666">"Unsupported dimension %D"</font>,dim);
+<a name="line318">318: </a>    <font color="#4169E1">break</font>;
+<a name="line319">319: </a>  }
+<a name="line320">320: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"\nboundary\n"</font>);
+<a name="line321">321: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"%D\n"</font>,0);
+
+<a name="line323">323: </a>  DMDAGetNumVerticesGhosted(da,&amp;ien,&amp;jen,&amp;ken);
+<a name="line324">324: </a>  <a href="../../../../docs/manualpages/DMDA/DMDAGetCorners.html#DMDAGetCorners">DMDAGetCorners</a>(da,&amp;sx,&amp;sy,&amp;sz,NULL,NULL,NULL);
+<a name="line325">325: </a>  <a href="../../../../docs/manualpages/DMDA/DMDAGetGhostCorners.html#DMDAGetGhostCorners">DMDAGetGhostCorners</a>(da,&amp;gsx,&amp;gsy,&amp;gsz,&amp;gm,&amp;gn,&amp;gp);
+<a name="line326">326: </a>  kst  = gsz != sz ? 1 : 0;
+<a name="line327">327: </a>  jst  = gsy != sy ? 1 : 0;
+<a name="line328">328: </a>  ist  = gsx != sx ? 1 : 0;
+<a name="line329">329: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"\nvertices\n"</font>);
+<a name="line330">330: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"%D\n"</font>,ien*jen*ken);
+<a name="line331">331: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"%D\n"</font>,sdim);
+<a name="line332">332: </a>  <a href="../../../../docs/manualpages/Vec/VecGetArrayRead.html#VecGetArrayRead">VecGetArrayRead</a>(xcoorl,&amp;array);
+<a name="line333">333: </a>  <font color="#4169E1">for</font> (ke = kst; ke &lt; kst + ken; ke++) {
+<a name="line334">334: </a>    <font color="#4169E1">for</font> (je = jst; je &lt; jst + jen; je++) {
+<a name="line335">335: </a>      <font color="#4169E1">for</font> (ie = ist; ie &lt; ist + ien; ie++) {
+<a name="line336">336: </a>        <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> d;
+
+<a name="line338">338: </a>        i = ke * gm * gn + je * gm + ie;
+<a name="line339">339: </a>        <font color="#4169E1">for</font> (d=0;d&lt;sdim-1;d++) {
+<a name="line340">340: </a>          <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"%g "</font>,PetscRealPart(array[sdim*i+d]));
+<a name="line341">341: </a>        }
+<a name="line342">342: </a>        <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"%g\n"</font>,PetscRealPart(array[sdim*i+d]));
+<a name="line343">343: </a>      }
+<a name="line344">344: </a>    }
+<a name="line345">345: </a>  }
+<a name="line346">346: </a>  <a href="../../../../docs/manualpages/Vec/VecRestoreArrayRead.html#VecRestoreArrayRead">VecRestoreArrayRead</a>(xcoorl,&amp;array);
+<a name="line347">347: </a>  <font color="#4169E1">return</font>(0);
+<a name="line348">348: </a>}
+
+<a name="line350">350: </a><font color="#B22222">/* dispatching, prints through the socket by prepending the mesh keyword to the usual ASCII dump: duplicated code as in plexglvis.c, should be merged together */</font>
+<a name="line351">351: </a><strong><font color="#4169E1"><a name="DMView_DA_GLVis"></a>PETSC_INTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMView_DA_GLVis(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm, <a href="../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer)</font></strong>
+<a name="line352">352: </a>{
+<a name="line354">354: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>      isglvis,isascii;
+
+<a name="line359">359: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,PETSCVIEWERGLVIS,&amp;isglvis);
+<a name="line360">360: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<a href="../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html#PETSCVIEWERASCII">PETSCVIEWERASCII</a>,&amp;isascii);
+<a name="line361">361: </a>  <font color="#4169E1">if</font> (!isglvis &amp;&amp; !isascii) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer),PETSC_ERR_SUP,<font color="#666666">"Viewer must be of type VIEWERGLVIS or VIEWERASCII"</font>);
+<a name="line362">362: </a>  <font color="#4169E1">if</font> (isglvis) {
+<a name="line363">363: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a>          view;
+<a name="line364">364: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerGLVisType.html#PetscViewerGLVisType">PetscViewerGLVisType</a> type;
+
+<a name="line366">366: </a>    PetscViewerGLVisGetType_Private(viewer,&amp;type);
+<a name="line367">367: </a>    PetscViewerGLVisGetDMWindow_Private(viewer,&amp;view);
+<a name="line368">368: </a>    <font color="#4169E1">if</font> (view) { <font color="#B22222">/* in the socket case, it may happen that the connection failed */</font>
+<a name="line369">369: </a>      <font color="#4169E1">if</font> (type == <a href="../../../../docs/manualpages/Viewer/PetscViewerGLVisType.html#PetscViewerGLVisType">PETSC_VIEWER_GLVIS_SOCKET</a>) {
+<a name="line370">370: </a>        <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> size,rank;
+<a name="line371">371: </a>        <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),&amp;size);
+<a name="line372">372: </a>        <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),&amp;rank);
+<a name="line373">373: </a>        <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(view,<font color="#666666">"parallel %D %D\nmesh\n"</font>,size,rank);
+<a name="line374">374: </a>      }
+<a name="line375">375: </a>      DMDAView_GLVis_ASCII(dm,view);
+<a name="line376">376: </a>      <a href="../../../../docs/manualpages/Viewer/PetscViewerFlush.html#PetscViewerFlush">PetscViewerFlush</a>(view);
+<a name="line377">377: </a>      <font color="#4169E1">if</font> (type == <a href="../../../../docs/manualpages/Viewer/PetscViewerGLVisType.html#PetscViewerGLVisType">PETSC_VIEWER_GLVIS_SOCKET</a>) {
+<a name="line378">378: </a>        <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>    dim;
+<a name="line379">379: </a>        const char* name;
+
+<a name="line381">381: </a>        <a href="../../../../docs/manualpages/Sys/PetscObjectGetName.html#PetscObjectGetName">PetscObjectGetName</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm,&amp;name);
+<a name="line382">382: </a>        <a href="../../../../docs/manualpages/DM/DMGetDimension.html#DMGetDimension">DMGetDimension</a>(dm,&amp;dim);
+<a name="line383">383: </a>        PetscViewerGLVisInitWindow_Private(view,<a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>,dim,name);
+<a name="line384">384: </a>        <a href="../../../../docs/manualpages/Sys/PetscBarrier.html#PetscBarrier">PetscBarrier</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm);
+<a name="line385">385: </a>      }
+<a name="line386">386: </a>    }
+<a name="line387">387: </a>  } <font color="#4169E1">else</font> {
+<a name="line388">388: </a>    DMDAView_GLVis_ASCII(dm,viewer);
+<a name="line389">389: </a>  }
+<a name="line390">390: </a>  <font color="#4169E1">return</font>(0);
+<a name="line391">391: </a>}
+</pre>
+</body>
+
+</html>

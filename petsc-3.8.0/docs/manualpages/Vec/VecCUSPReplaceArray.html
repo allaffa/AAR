@@ -1,0 +1,45 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML3.2 EN">
+<HTML>
+<HEAD> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/Vec/VecCUSPReplaceArray.html" />
+<META NAME="GENERATOR" CONTENT="DOCTEXT">
+<TITLE>VecCUSPReplaceArray</TITLE>
+</HEAD>
+<BODY BGCOLOR="FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 docs/manualpages/Vec/VecCUSPReplaceArray.html "><small>Report Typos and Errors</small></a></div>
+<A NAME="VecCUSPReplaceArray"><H1>VecCUSPReplaceArray</H1></A>
+Allows one to replace the CUSPARRAY in a vector with a CUSPARRAY provided by the user. This is useful to avoid copying a CUSPARRAY into a vector. 
+<H3><FONT COLOR="#CC3333">Synopsis</FONT></H3>
+<PRE>
+<A HREF="../Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</A> <A HREF="../Vec/VecCUSPReplaceArray.html#VecCUSPReplaceArray">VecCUSPReplaceArray</A>(<A HREF="../Vec/Vec.html#Vec">Vec</A> vin,CUSPARRAY *a)
+</PRE>
+Not Collective
+<P>
+<H3><FONT COLOR="#CC3333">Input Parameters</FONT></H3>
+<TABLE border="0" cellpadding="0" cellspacing="0">
+<TR><TD WIDTH=40></TD><TD ALIGN=LEFT VALIGN=TOP><B>vec </B></TD><TD>- the vector
+</TD></TR>
+<TR><TD WIDTH=40></TD><TD ALIGN=LEFT VALIGN=TOP><B>array </B></TD><TD>- the CUSPARRAY
+</TD></TR></TABLE>
+<P>
+<H3><FONT COLOR="#CC3333">Notes</FONT></H3>
+This permanently replaces the CUSPARRAY and frees the memory associated
+with the old CUSPARRAY.
+<P>
+The memory passed in CANNOT be freed by the user. It will be freed
+when the vector is destroy.
+<P>
+Not supported from Fortran
+<P>
+
+<P>
+<H3><FONT COLOR="#CC3333">See Also</FONT></H3>
+ <A HREF="../Vec/VecGetArray.html#VecGetArray">VecGetArray</A>(), <A HREF="../Vec/VecRestoreArray.html#VecRestoreArray">VecRestoreArray</A>(), <A HREF="../Vec/VecPlaceArray.html#VecPlaceArray">VecPlaceArray</A>(), <A HREF="../Vec/VecResetArray.html#VecResetArray">VecResetArray</A>(), <A HREF="../Vec/VecCUSPResetArray.html#VecCUSPResetArray">VecCUSPResetArray</A>(), <A HREF="../Vec/VecCUSPPlaceArray.html#VecCUSPPlaceArray">VecCUSPPlaceArray</A>(), <A HREF="../Vec/VecReplaceArray.html#VecReplaceArray">VecReplaceArray</A>()
+<BR>
+<P>
+<P><B><P><B><FONT COLOR="#CC3333">Level:</FONT></B>developer
+<BR><FONT COLOR="#CC3333">Location:</FONT></B><A HREF="../../../src/vec/vec/impls/seq/seqcusp/veccusp2.cu#VecCUSPReplaceArray">src/vec/vec/impls/seq/seqcusp/veccusp2.cu</A>
+<BR><A HREF="./index.html">Index of all Vec routines</A>
+<BR><A HREF="../../index.html">Table of Contents for all manual pages</A>
+<BR><A HREF="../singleindex.html">Index of all manual pages</A>
+</BODY></HTML>

@@ -1,0 +1,183 @@
+<center><a href="ex27.c">Actual source code: ex27.c</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/ksp/ksp/examples/tutorials/ex27.c.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-27T00:02:49+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/ksp/ksp/examples/tutorials/ex27.c.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+
+<a name="line2">  2: </a>static char help[] = <font color="#666666">"Reads a PETSc matrix and vector from a file and solves the normal equations.\n\n"</font>;
+<a name="line3">  3: </a><font color="#B22222">/*T</font>
+<a name="line4">  4: </a><font color="#B22222">   Concepts: <a href="../../../../../docs/manualpages/KSP/KSP.html#KSP">KSP</a>^solving a linear system</font>
+<a name="line5">  5: </a><font color="#B22222">   Concepts: Normal equations</font>
+<a name="line6">  6: </a><font color="#B22222">   Processors: n</font>
+<a name="line7">  7: </a><font color="#B22222">T*/</font>
+
+<a name="line9">  9: </a><font color="#B22222">/*</font>
+<a name="line10"> 10: </a><font color="#B22222">  Include "petscksp.h" so that we can use <a href="../../../../../docs/manualpages/KSP/KSP.html#KSP">KSP</a> solvers.  Note that this file</font>
+<a name="line11"> 11: </a><font color="#B22222">  automatically includes:</font>
+<a name="line12"> 12: </a><font color="#B22222">     petscsys.h       - base PETSc routines   petscvec.h - vectors</font>
+<a name="line13"> 13: </a><font color="#B22222">     petscmat.h - matrices</font>
+<a name="line14"> 14: </a><font color="#B22222">     petscis.h     - index sets            petscksp.h - Krylov subspace methods</font>
+<a name="line15"> 15: </a><font color="#B22222">     petscviewer.h - viewers               petscpc.h  - preconditioners</font>
+<a name="line16"> 16: </a><font color="#B22222">*/</font>
+<a name="line17"> 17: </a> #include <A href="../../../../../include/petscksp.h.html">&lt;petscksp.h&gt;</A>
+
+
+<a name="line20"> 20: </a><strong><font color="#4169E1"><a name="main"></a>int main(int argc,char **args)</font></strong>
+<a name="line21"> 21: </a>{
+<a name="line22"> 22: </a>  <a href="../../../../../docs/manualpages/KSP/KSP.html#KSP">KSP</a>            ksp;             <font color="#B22222">/* linear solver context */</font>
+<a name="line23"> 23: </a>  <a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>            A,N;                <font color="#B22222">/* matrix */</font>
+<a name="line24"> 24: </a>  <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>            x,b,u,Ab;          <font color="#B22222">/* approx solution, RHS, exact solution */</font>
+<a name="line25"> 25: </a>  <a href="../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a>    fd;               <font color="#B22222">/* viewer */</font>
+<a name="line26"> 26: </a>  char           file[PETSC_MAX_PATH_LEN];     <font color="#B22222">/* input file name */</font>
+<a name="line27"> 27: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr,ierrp;
+<a name="line28"> 28: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       its,n,m;
+<a name="line29"> 29: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>      norm;
+
+<a name="line31"> 31: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInitialize.html#PetscInitialize">PetscInitialize</a>(&amp;argc,&amp;args,(char*)0,help);<font color="#4169E1">if</font> (ierr) <font color="#4169E1">return</font> ierr;
+<a name="line32"> 32: </a>  <font color="#B22222">/*</font>
+<a name="line33"> 33: </a><font color="#B22222">     Determine files from which we read the linear system</font>
+<a name="line34"> 34: </a><font color="#B22222">     (matrix and right-hand-side vector).</font>
+<a name="line35"> 35: </a><font color="#B22222">  */</font>
+<a name="line36"> 36: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsGetString.html#PetscOptionsGetString">PetscOptionsGetString</a>(NULL,NULL,<font color="#666666">"-f"</font>,file,PETSC_MAX_PATH_LEN,NULL);
+
+<a name="line38"> 38: </a>  <font color="#B22222">/* -----------------------------------------------------------</font>
+<a name="line39"> 39: </a><font color="#B22222">                  Beginning of linear solver loop</font>
+<a name="line40"> 40: </a><font color="#B22222">     ----------------------------------------------------------- */</font>
+<a name="line41"> 41: </a>  <font color="#B22222">/*</font>
+<a name="line42"> 42: </a><font color="#B22222">     Loop through the linear solve 2 times.</font>
+<a name="line43"> 43: </a><font color="#B22222">      - The intention here is to preload and solve a small system;</font>
+<a name="line44"> 44: </a><font color="#B22222">        then load another (larger) system and solve it as well.</font>
+<a name="line45"> 45: </a><font color="#B22222">        This process preloads the instructions with the smaller</font>
+<a name="line46"> 46: </a><font color="#B22222">        system so that more accurate performance monitoring (via</font>
+<a name="line47"> 47: </a><font color="#B22222">        -log_view) can be done with the larger one (that actually</font>
+<a name="line48"> 48: </a><font color="#B22222">        is the system of interest).</font>
+<a name="line49"> 49: </a><font color="#B22222">  */</font>
+<a name="line50"> 50: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscPreLoadBegin.html#PetscPreLoadBegin">PetscPreLoadBegin</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>,<font color="#666666">"Load system"</font>);
+
+<a name="line52"> 52: </a>  <font color="#B22222">/* - - - - - - - - - - - New Stage - - - - - - - - - - - - -</font>
+<a name="line53"> 53: </a><font color="#B22222">                         Load system</font>
+<a name="line54"> 54: </a><font color="#B22222">   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */</font>
+
+<a name="line56"> 56: </a>  <font color="#B22222">/*</font>
+<a name="line57"> 57: </a><font color="#B22222">     Open binary file.  Note that we use <a href="../../../../../docs/manualpages/Sys/PetscFileMode.html#PetscFileMode">FILE_MODE_READ</a> to indicate</font>
+<a name="line58"> 58: </a><font color="#B22222">     reading from this file.</font>
+<a name="line59"> 59: </a><font color="#B22222">  */</font>
+<a name="line60"> 60: </a>  <a href="../../../../../docs/manualpages/Viewer/PetscViewerBinaryOpen.html#PetscViewerBinaryOpen">PetscViewerBinaryOpen</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,file,<a href="../../../../../docs/manualpages/Sys/PetscFileMode.html#PetscFileMode">FILE_MODE_READ</a>,&amp;fd);
+
+<a name="line62"> 62: </a>  <font color="#B22222">/*</font>
+<a name="line63"> 63: </a><font color="#B22222">     Load the matrix and vector; then destroy the viewer.</font>
+<a name="line64"> 64: </a><font color="#B22222">  */</font>
+<a name="line65"> 65: </a>  <a href="../../../../../docs/manualpages/Mat/MatCreate.html#MatCreate">MatCreate</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,&amp;A);
+<a name="line66"> 66: </a>  <a href="../../../../../docs/manualpages/Mat/MatSetType.html#MatSetType">MatSetType</a>(A,<a href="../../../../../docs/manualpages/Mat/MATMPIAIJ.html#MATMPIAIJ">MATMPIAIJ</a>);
+<a name="line67"> 67: </a>  <a href="../../../../../docs/manualpages/Mat/MatLoad.html#MatLoad">MatLoad</a>(A,fd);
+<a name="line68"> 68: </a>  <a href="../../../../../docs/manualpages/Vec/VecCreate.html#VecCreate">VecCreate</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,&amp;b);
+<a name="line69"> 69: </a>  <a href="../../../../../docs/manualpages/Sys/PetscPushErrorHandler.html#PetscPushErrorHandler">PetscPushErrorHandler</a>(<a href="../../../../../docs/manualpages/Sys/PetscIgnoreErrorHandler.html#PetscIgnoreErrorHandler">PetscIgnoreErrorHandler</a>,NULL);
+<a name="line70"> 70: </a>  ierrp = <a href="../../../../../docs/manualpages/Vec/VecLoad.html#VecLoad">VecLoad</a>(b,fd);
+<a name="line71"> 71: </a>  <a href="../../../../../docs/manualpages/Sys/PetscPopErrorHandler.html#PetscPopErrorHandler">PetscPopErrorHandler</a>();
+<a name="line72"> 72: </a>  <a href="../../../../../docs/manualpages/Mat/MatGetLocalSize.html#MatGetLocalSize">MatGetLocalSize</a>(A,&amp;m,&amp;n);
+<a name="line73"> 73: </a>  <font color="#4169E1">if</font> (ierrp) {   <font color="#B22222">/* if file contains no RHS, then use a vector of all ones */</font>
+<a name="line74"> 74: </a>    <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> one = 1.0;
+<a name="line75"> 75: </a>    <a href="../../../../../docs/manualpages/Vec/VecCreate.html#VecCreate">VecCreate</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,&amp;b);
+<a name="line76"> 76: </a>    <a href="../../../../../docs/manualpages/Vec/VecSetSizes.html#VecSetSizes">VecSetSizes</a>(b,m,<a href="../../../../../docs/manualpages/Sys/PETSC_DECIDE.html#PETSC_DECIDE">PETSC_DECIDE</a>);
+<a name="line77"> 77: </a>    <a href="../../../../../docs/manualpages/Vec/VecSetFromOptions.html#VecSetFromOptions">VecSetFromOptions</a>(b);
+<a name="line78"> 78: </a>    <a href="../../../../../docs/manualpages/Vec/VecSet.html#VecSet">VecSet</a>(b,one);
+<a name="line79"> 79: </a>  }
+<a name="line80"> 80: </a>  <a href="../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html#PetscViewerDestroy">PetscViewerDestroy</a>(&amp;fd);
+
+
+<a name="line83"> 83: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html#VecDuplicate">VecDuplicate</a>(b,&amp;u);
+<a name="line84"> 84: </a>  <a href="../../../../../docs/manualpages/Vec/VecCreateMPI.html#VecCreateMPI">VecCreateMPI</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,n,<a href="../../../../../docs/manualpages/Sys/PETSC_DECIDE.html#PETSC_DECIDE">PETSC_DECIDE</a>,&amp;x);
+<a name="line85"> 85: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html#VecDuplicate">VecDuplicate</a>(x,&amp;Ab);
+<a name="line86"> 86: </a>  <a href="../../../../../docs/manualpages/Vec/VecSet.html#VecSet">VecSet</a>(x,0.0);
+
+<a name="line88"> 88: </a>  <font color="#B22222">/* - - - - - - - - - - - New Stage - - - - - - - - - - - - -</font>
+<a name="line89"> 89: </a><font color="#B22222">                    Setup solve for system</font>
+<a name="line90"> 90: </a><font color="#B22222">   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */</font>
+
+<a name="line92"> 92: </a>  <font color="#B22222">/*</font>
+<a name="line93"> 93: </a><font color="#B22222">     Conclude profiling last stage; begin profiling next stage.</font>
+<a name="line94"> 94: </a><font color="#B22222">  */</font>
+<a name="line95"> 95: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscPreLoadStage.html#PetscPreLoadStage">PetscPreLoadStage</a>(<font color="#666666">"<a href="../../../../../docs/manualpages/KSP/KSPSetUp.html#KSPSetUp">KSPSetUp</a>"</font>);
+
+<a name="line97"> 97: </a>  <a href="../../../../../docs/manualpages/Mat/MatCreateNormal.html#MatCreateNormal">MatCreateNormal</a>(A,&amp;N);
+<a name="line98"> 98: </a>  <a href="../../../../../docs/manualpages/Mat/MatMultTranspose.html#MatMultTranspose">MatMultTranspose</a>(A,b,Ab);
+
+<a name="line100">100: </a>  <font color="#B22222">/*</font>
+<a name="line101">101: </a><font color="#B22222">     Create linear solver; set operators; set runtime options.</font>
+<a name="line102">102: </a><font color="#B22222">  */</font>
+<a name="line103">103: </a>  <a href="../../../../../docs/manualpages/KSP/KSPCreate.html#KSPCreate">KSPCreate</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,&amp;ksp);
+
+<a name="line105">105: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSetOperators.html#KSPSetOperators">KSPSetOperators</a>(ksp,N,N);
+<a name="line106">106: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSetFromOptions.html#KSPSetFromOptions">KSPSetFromOptions</a>(ksp);
+
+<a name="line108">108: </a>  <font color="#B22222">/*</font>
+<a name="line109">109: </a><font color="#B22222">     Here we explicitly call <a href="../../../../../docs/manualpages/KSP/KSPSetUp.html#KSPSetUp">KSPSetUp</a>() and <a href="../../../../../docs/manualpages/KSP/KSPSetUpOnBlocks.html#KSPSetUpOnBlocks">KSPSetUpOnBlocks</a>() to</font>
+<a name="line110">110: </a><font color="#B22222">     enable more precise profiling of setting up the preconditioner.</font>
+<a name="line111">111: </a><font color="#B22222">     These calls are optional, since both will be called within</font>
+<a name="line112">112: </a><font color="#B22222">     <a href="../../../../../docs/manualpages/KSP/KSPSolve.html#KSPSolve">KSPSolve</a>() if they haven't been called already.</font>
+<a name="line113">113: </a><font color="#B22222">  */</font>
+<a name="line114">114: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSetUp.html#KSPSetUp">KSPSetUp</a>(ksp);
+<a name="line115">115: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSetUpOnBlocks.html#KSPSetUpOnBlocks">KSPSetUpOnBlocks</a>(ksp);
+
+<a name="line117">117: </a>  <font color="#B22222">/*</font>
+<a name="line118">118: </a><font color="#B22222">                         Solve system</font>
+<a name="line119">119: </a><font color="#B22222">   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */</font>
+
+<a name="line121">121: </a>  <font color="#B22222">/*</font>
+<a name="line122">122: </a><font color="#B22222">     Begin profiling next stage</font>
+<a name="line123">123: </a><font color="#B22222">  */</font>
+<a name="line124">124: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscPreLoadStage.html#PetscPreLoadStage">PetscPreLoadStage</a>(<font color="#666666">"<a href="../../../../../docs/manualpages/KSP/KSPSolve.html#KSPSolve">KSPSolve</a>"</font>);
+
+<a name="line126">126: </a>  <font color="#B22222">/*</font>
+<a name="line127">127: </a><font color="#B22222">     Solve linear system</font>
+<a name="line128">128: </a><font color="#B22222">  */</font>
+<a name="line129">129: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSolve.html#KSPSolve">KSPSolve</a>(ksp,Ab,x);
+
+<a name="line131">131: </a>  <font color="#B22222">/*</font>
+<a name="line132">132: </a><font color="#B22222">      Conclude profiling this stage</font>
+<a name="line133">133: </a><font color="#B22222">   */</font>
+<a name="line134">134: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscPreLoadStage.html#PetscPreLoadStage">PetscPreLoadStage</a>(<font color="#666666">"Cleanup"</font>);
+
+<a name="line136">136: </a>  <font color="#B22222">/* - - - - - - - - - - - New Stage - - - - - - - - - - - - -</font>
+<a name="line137">137: </a><font color="#B22222">          Check error, print output, free data structures.</font>
+<a name="line138">138: </a><font color="#B22222">   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */</font>
+
+<a name="line140">140: </a>  <font color="#B22222">/*</font>
+<a name="line141">141: </a><font color="#B22222">     Check error</font>
+<a name="line142">142: </a><font color="#B22222">  */</font>
+<a name="line143">143: </a>  <a href="../../../../../docs/manualpages/Mat/MatMult.html#MatMult">MatMult</a>(A,x,u);
+<a name="line144">144: </a>  <a href="../../../../../docs/manualpages/Vec/VecAXPY.html#VecAXPY">VecAXPY</a>(u,-1.0,b);
+<a name="line145">145: </a>  <a href="../../../../../docs/manualpages/Vec/VecNorm.html#VecNorm">VecNorm</a>(u,<a href="../../../../../docs/manualpages/Vec/NORM_2.html#NORM_2">NORM_2</a>,&amp;norm);
+<a name="line146">146: </a>  <a href="../../../../../docs/manualpages/KSP/KSPGetIterationNumber.html#KSPGetIterationNumber">KSPGetIterationNumber</a>(ksp,&amp;its);
+<a name="line147">147: </a>  <a href="../../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<font color="#666666">"Number of iterations = %3D\n"</font>,its);
+<a name="line148">148: </a>  <a href="../../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<font color="#666666">"Residual norm %g\n"</font>,(double)norm);
+
+<a name="line150">150: </a>  <font color="#B22222">/*</font>
+<a name="line151">151: </a><font color="#B22222">     Free work space.  All PETSc objects should be destroyed when they</font>
+<a name="line152">152: </a><font color="#B22222">     are no longer needed.</font>
+<a name="line153">153: </a><font color="#B22222">  */</font>
+<a name="line154">154: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;A); <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;b);
+<a name="line155">155: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;N); <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;Ab);
+<a name="line156">156: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;u); <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;x);
+<a name="line157">157: </a>  <a href="../../../../../docs/manualpages/KSP/KSPDestroy.html#KSPDestroy">KSPDestroy</a>(&amp;ksp);
+<a name="line158">158: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscPreLoadEnd.html#PetscPreLoadEnd">PetscPreLoadEnd</a>();
+<a name="line159">159: </a>  <font color="#B22222">/* -----------------------------------------------------------</font>
+<a name="line160">160: </a><font color="#B22222">                      End of linear solver loop</font>
+<a name="line161">161: </a><font color="#B22222">     ----------------------------------------------------------- */</font>
+
+<a name="line163">163: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFinalize.html#PetscFinalize">PetscFinalize</a>();
+<a name="line164">164: </a>  <font color="#4169E1">return</font> ierr;
+<a name="line165">165: </a>}
+
+</pre>
+</body>
+
+</html>

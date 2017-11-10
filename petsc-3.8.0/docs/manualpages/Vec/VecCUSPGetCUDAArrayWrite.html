@@ -1,0 +1,49 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML3.2 EN">
+<HTML>
+<HEAD> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/Vec/VecCUSPGetCUDAArrayWrite.html" />
+<META NAME="GENERATOR" CONTENT="DOCTEXT">
+<TITLE>VecCUSPGetCUDAArrayWrite</TITLE>
+</HEAD>
+<BODY BGCOLOR="FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 docs/manualpages/Vec/VecCUSPGetCUDAArrayWrite.html "><small>Report Typos and Errors</small></a></div>
+<A NAME="VecCUSPGetCUDAArrayWrite"><H1>VecCUSPGetCUDAArrayWrite</H1></A>
+Provides write access to the CUDA buffer inside a vector. 
+<H3><FONT COLOR="#CC3333">Synopsis</FONT></H3>
+<PRE>
+PETSC_EXTERN <A HREF="../Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</A> <A HREF="../Vec/VecCUSPGetCUDAArrayWrite.html#VecCUSPGetCUDAArrayWrite">VecCUSPGetCUDAArrayWrite</A>(<A HREF="../Vec/Vec.html#Vec">Vec</A> v, <A HREF="../Sys/PetscScalar.html#PetscScalar">PetscScalar</A> **a)
+</PRE>
+The data pointed to by the device pointer is uninitialized.  The user
+may not read from this data.  Furthermore, the entire array needs to
+be filled by the user to obtain well-defined behaviour.  The device
+memory will be allocated by this function if it hasn't been allocated
+previously.  This is analogous to intent(out) in Fortran.
+<P>
+The device pointer needs to be released with
+<A HREF="../Vec/VecCUSPRestoreCUDAArrayWrite.html#VecCUSPRestoreCUDAArrayWrite">VecCUSPRestoreCUDAArrayWrite</A>().  When the pointer is released the
+host data of the vector is marked as out of data.  Subsequent access
+of the host data with e.g. <A HREF="../Vec/VecGetArray.html#VecGetArray">VecGetArray</A>() incurs a device to host data
+transfer.
+<P>
+<P>
+<H3><FONT COLOR="#CC3333">Input Parameter</FONT></H3>
+<DT><B>v </B> -the vector
+<br>
+<P>
+<H3><FONT COLOR="#CC3333">Output Parameter</FONT></H3>
+<DT><B>a </B> -the CUDA pointer
+<br>
+<P>
+<H3><FONT COLOR="#CC3333">Fortran note</FONT></H3>
+This function is not currently available from Fortran.
+<P>
+
+<P>
+<H3><FONT COLOR="#CC3333">See Also</FONT></H3>
+ <A HREF="../Vec/VecCUSPRestoreCUDAArrayWrite.html#VecCUSPRestoreCUDAArrayWrite">VecCUSPRestoreCUDAArrayWrite</A>(), <A HREF="../Vec/VecCUSPGetCUDAArrayReadWrite.html#VecCUSPGetCUDAArrayReadWrite">VecCUSPGetCUDAArrayReadWrite</A>(), <A HREF="../Vec/VecCUSPGetCUDAArrayWrite.html#VecCUSPGetCUDAArrayWrite">VecCUSPGetCUDAArrayWrite</A>(), <A HREF="../Vec/VecCUSPGetArrayReadWrite.html#VecCUSPGetArrayReadWrite">VecCUSPGetArrayReadWrite</A>(), <A HREF="../Vec/VecCUSPGetArrayRead.html#VecCUSPGetArrayRead">VecCUSPGetArrayRead</A>(), <A HREF="../Vec/VecCUSPGetArrayWrite.html#VecCUSPGetArrayWrite">VecCUSPGetArrayWrite</A>(), <A HREF="../Vec/VecGetArray.html#VecGetArray">VecGetArray</A>(), <A HREF="../Vec/VecGetArrayRead.html#VecGetArrayRead">VecGetArrayRead</A>()
+<BR><P><B><P><B><FONT COLOR="#CC3333">Level:</FONT></B>advanced
+<BR><FONT COLOR="#CC3333">Location:</FONT></B><A HREF="../../../src/vec/vec/impls/seq/seqcusp/veccusp2.cu#VecCUSPGetCUDAArrayWrite">src/vec/vec/impls/seq/seqcusp/veccusp2.cu</A>
+<BR><A HREF="./index.html">Index of all Vec routines</A>
+<BR><A HREF="../../index.html">Table of Contents for all manual pages</A>
+<BR><A HREF="../singleindex.html">Index of all manual pages</A>
+</BODY></HTML>

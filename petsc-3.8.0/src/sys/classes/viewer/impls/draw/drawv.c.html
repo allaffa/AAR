@@ -1,0 +1,782 @@
+<center><a href="drawv.c">Actual source code: drawv.c</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/sys/classes/viewer/impls/draw/drawv.c.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:03:44+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/sys/classes/viewer/impls/draw/drawv.c.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+
+<a name="line2">  2: </a> #include <A href="../../../../../../include/../src/sys/classes/viewer/impls/draw/vdraw.h.html">&lt;../src/sys/classes/viewer/impls/draw/vdraw.h&gt;</A>
+<a name="line3">  3: </a> #include <A href="../../../../../../include/petscviewer.h.html">&lt;petscviewer.h&gt;</A>
+
+<a name="line5">  5: </a><strong><font color="#4169E1"><a name="PetscViewerDestroy_Draw"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscViewerDestroy_Draw(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> v)</font></strong>
+<a name="line6">  6: </a>{
+<a name="line7">  7: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr;
+<a name="line8">  8: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>         i;
+<a name="line9">  9: </a>  PetscViewer_Draw *vdraw = (PetscViewer_Draw*)v-&gt;data;
+
+<a name="line12"> 12: </a>  <font color="#4169E1">if</font> (vdraw-&gt;singleton_made) <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ORDER,<font color="#666666">"Destroying <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> without first restoring singleton"</font>);
+<a name="line13"> 13: </a>  <font color="#4169E1">for</font> (i=0; i&lt;vdraw-&gt;draw_max; i++) {
+<a name="line14"> 14: </a>    <a href="../../../../../../docs/manualpages/Draw/PetscDrawAxisDestroy.html#PetscDrawAxisDestroy">PetscDrawAxisDestroy</a>(&amp;vdraw-&gt;drawaxis[i]);
+<a name="line15"> 15: </a>    <a href="../../../../../../docs/manualpages/Draw/PetscDrawLGDestroy.html#PetscDrawLGDestroy">PetscDrawLGDestroy</a>(&amp;vdraw-&gt;drawlg[i]);
+<a name="line16"> 16: </a>    <a href="../../../../../../docs/manualpages/Draw/PetscDrawDestroy.html#PetscDrawDestroy">PetscDrawDestroy</a>(&amp;vdraw-&gt;draw[i]);
+<a name="line17"> 17: </a>  }
+<a name="line18"> 18: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(vdraw-&gt;display);
+<a name="line19"> 19: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(vdraw-&gt;title);
+<a name="line20"> 20: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree3.html#PetscFree3">PetscFree3</a>(vdraw-&gt;draw,vdraw-&gt;drawlg,vdraw-&gt;drawaxis);
+<a name="line21"> 21: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(vdraw-&gt;bounds);
+<a name="line22"> 22: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(vdraw-&gt;drawtype);
+<a name="line23"> 23: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(v-&gt;data);
+<a name="line24"> 24: </a>  <font color="#4169E1">return</font>(0);
+<a name="line25"> 25: </a>}
+
+<a name="line27"> 27: </a><strong><font color="#4169E1"><a name="PetscViewerFlush_Draw"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscViewerFlush_Draw(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> v)</font></strong>
+<a name="line28"> 28: </a>{
+<a name="line29"> 29: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr;
+<a name="line30"> 30: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>         i;
+<a name="line31"> 31: </a>  PetscViewer_Draw *vdraw = (PetscViewer_Draw*)v-&gt;data;
+
+<a name="line34"> 34: </a>  <font color="#4169E1">for</font> (i=0; i&lt;vdraw-&gt;draw_max; i++) {
+<a name="line35"> 35: </a>    <font color="#4169E1">if</font> (vdraw-&gt;draw[i]) {<a href="../../../../../../docs/manualpages/Draw/PetscDrawFlush.html#PetscDrawFlush">PetscDrawFlush</a>(vdraw-&gt;draw[i]);}
+<a name="line36"> 36: </a>  }
+<a name="line37"> 37: </a>  <font color="#4169E1">return</font>(0);
+<a name="line38"> 38: </a>}
+
+<a name="line40"> 40: </a><font color="#B22222">/*@C</font>
+<a name="line41"> 41: </a><font color="#B22222">    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawGetDraw.html#PetscViewerDrawGetDraw">PetscViewerDrawGetDraw</a> - Returns <a href="../../../../../../docs/manualpages/Draw/PetscDraw.html#PetscDraw">PetscDraw</a> object from <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> object.</font>
+<a name="line42"> 42: </a><font color="#B22222">    This <a href="../../../../../../docs/manualpages/Draw/PetscDraw.html#PetscDraw">PetscDraw</a> object may then be used to perform graphics using</font>
+<a name="line43"> 43: </a><font color="#B22222">    PetscDrawXXX() commands.</font>
+
+<a name="line45"> 45: </a><font color="#B22222">    Collective on <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a></font>
+
+<a name="line47"> 47: </a><font color="#B22222">    Input Parameters:</font>
+<a name="line48"> 48: </a><font color="#B22222">+   viewer - the <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> (created with <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawOpen.html#PetscViewerDrawOpen">PetscViewerDrawOpen</a>())</font>
+<a name="line49"> 49: </a><font color="#B22222">-   windownumber - indicates which subwindow (usually 0)</font>
+
+<a name="line51"> 51: </a><font color="#B22222">    Ouput Parameter:</font>
+<a name="line52"> 52: </a><font color="#B22222">.   draw - the draw object</font>
+
+<a name="line54"> 54: </a><font color="#B22222">    Level: intermediate</font>
+
+<a name="line56"> 56: </a><font color="#B22222">   Concepts: drawing^accessing <a href="../../../../../../docs/manualpages/Draw/PetscDraw.html#PetscDraw">PetscDraw</a> context from <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a></font>
+<a name="line57"> 57: </a><font color="#B22222">   Concepts: graphics</font>
+
+<a name="line59"> 59: </a><font color="#B22222">.seealso: PetscViewerDrawGetLG(), PetscViewerDrawGetAxis(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawOpen.html#PetscViewerDrawOpen">PetscViewerDrawOpen</a>()</font>
+<a name="line60"> 60: </a><font color="#B22222">@*/</font>
+<a name="line61"> 61: </a><strong><font color="#4169E1"><a name="PetscViewerDrawGetDraw"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawGetDraw.html#PetscViewerDrawGetDraw">PetscViewerDrawGetDraw</a>(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> windownumber,<a href="../../../../../../docs/manualpages/Draw/PetscDraw.html#PetscDraw">PetscDraw</a> *draw)</font></strong>
+<a name="line62"> 62: </a>{
+<a name="line63"> 63: </a>  PetscViewer_Draw *vdraw;
+<a name="line64"> 64: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr;
+<a name="line65"> 65: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>        isdraw;
+
+<a name="line71"> 71: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERDRAW.html#PETSCVIEWERDRAW">PETSCVIEWERDRAW</a>,&amp;isdraw);
+<a name="line72"> 72: </a>  <font color="#4169E1">if</font> (!isdraw) <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_WRONG,<font color="#666666">"Must be draw type <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a>"</font>);
+<a name="line73"> 73: </a>  <font color="#4169E1">if</font> (windownumber &lt; 0) <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_OUTOFRANGE,<font color="#666666">"Window number cannot be negative"</font>);
+<a name="line74"> 74: </a>  vdraw = (PetscViewer_Draw*)viewer-&gt;data;
+
+<a name="line76"> 76: </a>  windownumber += vdraw-&gt;draw_base;
+<a name="line77"> 77: </a>  <font color="#4169E1">if</font> (windownumber &gt;= vdraw-&gt;draw_max) {
+<a name="line78"> 78: </a>    <font color="#B22222">/* allocate twice as many slots as needed */</font>
+<a name="line79"> 79: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>      draw_max  = vdraw-&gt;draw_max;
+<a name="line80"> 80: </a>    <a href="../../../../../../docs/manualpages/Draw/PetscDraw.html#PetscDraw">PetscDraw</a>     *tdraw    = vdraw-&gt;draw;
+<a name="line81"> 81: </a>    <a href="../../../../../../docs/manualpages/Draw/PetscDrawLG.html#PetscDrawLG">PetscDrawLG</a>   *drawlg   = vdraw-&gt;drawlg;
+<a name="line82"> 82: </a>    <a href="../../../../../../docs/manualpages/Draw/PetscDrawAxis.html#PetscDrawAxis">PetscDrawAxis</a> *drawaxis = vdraw-&gt;drawaxis;
+
+<a name="line84"> 84: </a>    vdraw-&gt;draw_max = 2*windownumber;
+
+<a name="line86"> 86: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscCalloc3.html#PetscCalloc3">PetscCalloc3</a>(vdraw-&gt;draw_max,&amp;vdraw-&gt;draw,vdraw-&gt;draw_max,&amp;vdraw-&gt;drawlg,vdraw-&gt;draw_max,&amp;vdraw-&gt;drawaxis);
+
+<a name="line88"> 88: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(vdraw-&gt;draw,tdraw,draw_max*<font color="#4169E1">sizeof</font>(<a href="../../../../../../docs/manualpages/Draw/PetscDraw.html#PetscDraw">PetscDraw</a>));
+<a name="line89"> 89: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(vdraw-&gt;drawlg,drawlg,draw_max*<font color="#4169E1">sizeof</font>(<a href="../../../../../../docs/manualpages/Draw/PetscDrawLG.html#PetscDrawLG">PetscDrawLG</a>));
+<a name="line90"> 90: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(vdraw-&gt;drawaxis,drawaxis,draw_max*<font color="#4169E1">sizeof</font>(<a href="../../../../../../docs/manualpages/Draw/PetscDrawAxis.html#PetscDrawAxis">PetscDrawAxis</a>));
+
+<a name="line92"> 92: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscFree3.html#PetscFree3">PetscFree3</a>(tdraw,drawlg,drawaxis);
+<a name="line93"> 93: </a>  }
+
+<a name="line95"> 95: </a>  <font color="#4169E1">if</font> (!vdraw-&gt;draw[windownumber]) {
+<a name="line96"> 96: </a>    char *title = vdraw-&gt;title, tmp_str[128];
+<a name="line97"> 97: </a>    <font color="#4169E1">if</font> (windownumber) {
+<a name="line98"> 98: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscSNPrintf.html#PetscSNPrintf">PetscSNPrintf</a>(tmp_str,<font color="#4169E1">sizeof</font>(tmp_str),<font color="#666666">"%s:%d"</font>,vdraw-&gt;title?vdraw-&gt;title:<font color="#666666">""</font>,windownumber);
+<a name="line99"> 99: </a>      title = tmp_str;
+<a name="line100">100: </a>    }
+<a name="line101">101: </a>    <a href="../../../../../../docs/manualpages/Draw/PetscDrawCreate.html#PetscDrawCreate">PetscDrawCreate</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer),vdraw-&gt;display,title,<a href="../../../../../../docs/manualpages/Sys/PETSC_DECIDE.html#PETSC_DECIDE">PETSC_DECIDE</a>,<a href="../../../../../../docs/manualpages/Sys/PETSC_DECIDE.html#PETSC_DECIDE">PETSC_DECIDE</a>,vdraw-&gt;w,vdraw-&gt;h,&amp;vdraw-&gt;draw[windownumber]);
+<a name="line102">102: </a>    PetscLogObjectParent((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,(<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)vdraw-&gt;draw[windownumber]);
+<a name="line103">103: </a>    <font color="#4169E1">if</font> (vdraw-&gt;drawtype) {
+<a name="line104">104: </a>      <a href="../../../../../../docs/manualpages/Draw/PetscDrawSetType.html#PetscDrawSetType">PetscDrawSetType</a>(vdraw-&gt;draw[windownumber],vdraw-&gt;drawtype);
+<a name="line105">105: </a>    }
+<a name="line106">106: </a>    <a href="../../../../../../docs/manualpages/Draw/PetscDrawSetPause.html#PetscDrawSetPause">PetscDrawSetPause</a>(vdraw-&gt;draw[windownumber],vdraw-&gt;pause);
+<a name="line107">107: </a>    <a href="../../../../../../docs/manualpages/Draw/PetscDrawSetOptionsPrefix.html#PetscDrawSetOptionsPrefix">PetscDrawSetOptionsPrefix</a>(vdraw-&gt;draw[windownumber],((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer)-&gt;prefix);
+<a name="line108">108: </a>    <a href="../../../../../../docs/manualpages/Draw/PetscDrawSetFromOptions.html#PetscDrawSetFromOptions">PetscDrawSetFromOptions</a>(vdraw-&gt;draw[windownumber]);
+<a name="line109">109: </a>  }
+<a name="line110">110: </a>  <font color="#4169E1">if</font> (draw) *draw = vdraw-&gt;draw[windownumber];
+<a name="line112">112: </a>  <font color="#4169E1">return</font>(0);
+<a name="line113">113: </a>}
+
+<a name="line115">115: </a><font color="#B22222">/*@C</font>
+<a name="line116">116: </a><font color="#B22222">    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawBaseAdd.html#PetscViewerDrawBaseAdd">PetscViewerDrawBaseAdd</a> - add to the base integer that is added to the windownumber passed to <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawGetDraw.html#PetscViewerDrawGetDraw">PetscViewerDrawGetDraw</a>()</font>
+
+<a name="line118">118: </a><font color="#B22222">    Logically Collective on <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a></font>
+
+<a name="line120">120: </a><font color="#B22222">    Input Parameters:</font>
+<a name="line121">121: </a><font color="#B22222">+  viewer - the <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> (created with <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawOpen.html#PetscViewerDrawOpen">PetscViewerDrawOpen</a>())</font>
+<a name="line122">122: </a><font color="#B22222">-   windownumber - how much to add to the base</font>
+
+<a name="line124">124: </a><font color="#B22222">    Level: developer</font>
+
+<a name="line126">126: </a><font color="#B22222">   Concepts: drawing^accessing <a href="../../../../../../docs/manualpages/Draw/PetscDraw.html#PetscDraw">PetscDraw</a> context from <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a></font>
+<a name="line127">127: </a><font color="#B22222">   Concepts: graphics</font>
+
+<a name="line129">129: </a><font color="#B22222">.seealso: PetscViewerDrawGetLG(), PetscViewerDrawGetAxis(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawOpen.html#PetscViewerDrawOpen">PetscViewerDrawOpen</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawGetDraw.html#PetscViewerDrawGetDraw">PetscViewerDrawGetDraw</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawBaseSet.html#PetscViewerDrawBaseSet">PetscViewerDrawBaseSet</a>()</font>
+<a name="line130">130: </a><font color="#B22222">@*/</font>
+<a name="line131">131: </a><strong><font color="#4169E1"><a name="PetscViewerDrawBaseAdd"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawBaseAdd.html#PetscViewerDrawBaseAdd">PetscViewerDrawBaseAdd</a>(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> windownumber)</font></strong>
+<a name="line132">132: </a>{
+<a name="line133">133: </a>  PetscViewer_Draw *vdraw;
+<a name="line134">134: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr;
+<a name="line135">135: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>        isdraw;
+
+<a name="line140">140: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERDRAW.html#PETSCVIEWERDRAW">PETSCVIEWERDRAW</a>,&amp;isdraw);
+<a name="line141">141: </a>  <font color="#4169E1">if</font> (!isdraw) <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_WRONG,<font color="#666666">"Must be draw type <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a>"</font>);
+<a name="line142">142: </a>  vdraw = (PetscViewer_Draw*)viewer-&gt;data;
+
+<a name="line144">144: </a>  <font color="#4169E1">if</font> (windownumber + vdraw-&gt;draw_base &lt; 0) <a href="../../../../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_OUTOFRANGE,<font color="#666666">"Resulting base %D cannot be negative"</font>,windownumber+vdraw-&gt;draw_base);
+<a name="line145">145: </a>  vdraw-&gt;draw_base += windownumber;
+<a name="line146">146: </a>  <font color="#4169E1">return</font>(0);
+<a name="line147">147: </a>}
+
+<a name="line149">149: </a><font color="#B22222">/*@C</font>
+<a name="line150">150: </a><font color="#B22222">    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawBaseSet.html#PetscViewerDrawBaseSet">PetscViewerDrawBaseSet</a> - sets the base integer that is added to the windownumber passed to <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawGetDraw.html#PetscViewerDrawGetDraw">PetscViewerDrawGetDraw</a>()</font>
+
+<a name="line152">152: </a><font color="#B22222">    Logically Collective on <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a></font>
+
+<a name="line154">154: </a><font color="#B22222">    Input Parameters:</font>
+<a name="line155">155: </a><font color="#B22222">+   viewer - the <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> (created with <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawOpen.html#PetscViewerDrawOpen">PetscViewerDrawOpen</a>())</font>
+<a name="line156">156: </a><font color="#B22222">-   windownumber - value to set the base</font>
+
+<a name="line158">158: </a><font color="#B22222">    Level: developer</font>
+
+<a name="line160">160: </a><font color="#B22222">   Concepts: drawing^accessing <a href="../../../../../../docs/manualpages/Draw/PetscDraw.html#PetscDraw">PetscDraw</a> context from <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a></font>
+<a name="line161">161: </a><font color="#B22222">   Concepts: graphics</font>
+
+<a name="line163">163: </a><font color="#B22222">.seealso: PetscViewerDrawGetLG(), PetscViewerDrawGetAxis(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawOpen.html#PetscViewerDrawOpen">PetscViewerDrawOpen</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawGetDraw.html#PetscViewerDrawGetDraw">PetscViewerDrawGetDraw</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawBaseAdd.html#PetscViewerDrawBaseAdd">PetscViewerDrawBaseAdd</a>()</font>
+<a name="line164">164: </a><font color="#B22222">@*/</font>
+<a name="line165">165: </a><strong><font color="#4169E1"><a name="PetscViewerDrawBaseSet"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawBaseSet.html#PetscViewerDrawBaseSet">PetscViewerDrawBaseSet</a>(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> windownumber)</font></strong>
+<a name="line166">166: </a>{
+<a name="line167">167: </a>  PetscViewer_Draw *vdraw;
+<a name="line168">168: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr;
+<a name="line169">169: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>        isdraw;
+
+<a name="line174">174: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERDRAW.html#PETSCVIEWERDRAW">PETSCVIEWERDRAW</a>,&amp;isdraw);
+<a name="line175">175: </a>  <font color="#4169E1">if</font> (!isdraw) <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_WRONG,<font color="#666666">"Must be draw type <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a>"</font>);
+<a name="line176">176: </a>  vdraw = (PetscViewer_Draw*)viewer-&gt;data;
+
+<a name="line178">178: </a>  <font color="#4169E1">if</font> (windownumber &lt; 0) <a href="../../../../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_OUTOFRANGE,<font color="#666666">"Resulting base %D cannot be negative"</font>,windownumber);
+<a name="line179">179: </a>  vdraw-&gt;draw_base = windownumber;
+<a name="line180">180: </a>  <font color="#4169E1">return</font>(0);
+<a name="line181">181: </a>}
+
+<a name="line183">183: </a><font color="#B22222">/*@C</font>
+<a name="line184">184: </a><font color="#B22222">    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawGetDrawLG.html#PetscViewerDrawGetDrawLG">PetscViewerDrawGetDrawLG</a> - Returns <a href="../../../../../../docs/manualpages/Draw/PetscDrawLG.html#PetscDrawLG">PetscDrawLG</a> object from <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> object.</font>
+<a name="line185">185: </a><font color="#B22222">    This <a href="../../../../../../docs/manualpages/Draw/PetscDrawLG.html#PetscDrawLG">PetscDrawLG</a> object may then be used to perform graphics using</font>
+<a name="line186">186: </a><font color="#B22222">    PetscDrawLGXXX() commands.</font>
+
+<a name="line188">188: </a><font color="#B22222">    Collective on <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a></font>
+
+<a name="line190">190: </a><font color="#B22222">    Input Parameter:</font>
+<a name="line191">191: </a><font color="#B22222">+   <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> - the <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> (created with <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawOpen.html#PetscViewerDrawOpen">PetscViewerDrawOpen</a>())</font>
+<a name="line192">192: </a><font color="#B22222">-   windownumber - indicates which subwindow (usually 0)</font>
+
+<a name="line194">194: </a><font color="#B22222">    Ouput Parameter:</font>
+<a name="line195">195: </a><font color="#B22222">.   draw - the draw line graph object</font>
+
+<a name="line197">197: </a><font color="#B22222">    Level: intermediate</font>
+
+<a name="line199">199: </a><font color="#B22222">  Concepts: line graph^accessing context</font>
+
+<a name="line201">201: </a><font color="#B22222">.seealso: <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawGetDraw.html#PetscViewerDrawGetDraw">PetscViewerDrawGetDraw</a>(), PetscViewerDrawGetAxis(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawOpen.html#PetscViewerDrawOpen">PetscViewerDrawOpen</a>()</font>
+<a name="line202">202: </a><font color="#B22222">@*/</font>
+<a name="line203">203: </a><strong><font color="#4169E1"><a name="PetscViewerDrawGetDrawLG"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawGetDrawLG.html#PetscViewerDrawGetDrawLG">PetscViewerDrawGetDrawLG</a>(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> windownumber,<a href="../../../../../../docs/manualpages/Draw/PetscDrawLG.html#PetscDrawLG">PetscDrawLG</a> *drawlg)</font></strong>
+<a name="line204">204: </a>{
+<a name="line205">205: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr;
+<a name="line206">206: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>        isdraw;
+<a name="line207">207: </a>  PetscViewer_Draw *vdraw;
+
+<a name="line213">213: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERDRAW.html#PETSCVIEWERDRAW">PETSCVIEWERDRAW</a>,&amp;isdraw);
+<a name="line214">214: </a>  <font color="#4169E1">if</font> (!isdraw) <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_WRONG,<font color="#666666">"Must be draw type <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a>"</font>);
+<a name="line215">215: </a>  <font color="#4169E1">if</font> (windownumber &lt; 0) <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_OUTOFRANGE,<font color="#666666">"Window number cannot be negative"</font>);
+<a name="line216">216: </a>  vdraw = (PetscViewer_Draw*)viewer-&gt;data;
+
+<a name="line218">218: </a>  <font color="#4169E1">if</font> (windownumber+vdraw-&gt;draw_base &gt;= vdraw-&gt;draw_max || !vdraw-&gt;draw[windownumber+vdraw-&gt;draw_base]) {
+<a name="line219">219: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawGetDraw.html#PetscViewerDrawGetDraw">PetscViewerDrawGetDraw</a>(viewer,windownumber,NULL);
+<a name="line220">220: </a>  }
+<a name="line221">221: </a>  <font color="#4169E1">if</font> (!vdraw-&gt;drawlg[windownumber+vdraw-&gt;draw_base]) {
+<a name="line222">222: </a>    <a href="../../../../../../docs/manualpages/Draw/PetscDrawLGCreate.html#PetscDrawLGCreate">PetscDrawLGCreate</a>(vdraw-&gt;draw[windownumber+vdraw-&gt;draw_base],1,&amp;vdraw-&gt;drawlg[windownumber+vdraw-&gt;draw_base]);
+<a name="line223">223: </a>    PetscLogObjectParent((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,(<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)vdraw-&gt;drawlg[windownumber+vdraw-&gt;draw_base]);
+<a name="line224">224: </a>    <a href="../../../../../../docs/manualpages/Draw/PetscDrawLGSetFromOptions.html#PetscDrawLGSetFromOptions">PetscDrawLGSetFromOptions</a>(vdraw-&gt;drawlg[windownumber+vdraw-&gt;draw_base]);
+<a name="line225">225: </a>  }
+<a name="line226">226: </a>  *drawlg = vdraw-&gt;drawlg[windownumber+vdraw-&gt;draw_base];
+<a name="line227">227: </a>  <font color="#4169E1">return</font>(0);
+<a name="line228">228: </a>}
+
+<a name="line230">230: </a><font color="#B22222">/*@C</font>
+<a name="line231">231: </a><font color="#B22222">    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawGetDrawAxis.html#PetscViewerDrawGetDrawAxis">PetscViewerDrawGetDrawAxis</a> - Returns <a href="../../../../../../docs/manualpages/Draw/PetscDrawAxis.html#PetscDrawAxis">PetscDrawAxis</a> object from <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> object.</font>
+<a name="line232">232: </a><font color="#B22222">    This <a href="../../../../../../docs/manualpages/Draw/PetscDrawAxis.html#PetscDrawAxis">PetscDrawAxis</a> object may then be used to perform graphics using</font>
+<a name="line233">233: </a><font color="#B22222">    PetscDrawAxisXXX() commands.</font>
+
+<a name="line235">235: </a><font color="#B22222">    Collective on <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a></font>
+
+<a name="line237">237: </a><font color="#B22222">    Input Parameter:</font>
+<a name="line238">238: </a><font color="#B22222">+   viewer - the <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> (created with <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawOpen.html#PetscViewerDrawOpen">PetscViewerDrawOpen</a>()</font>
+<a name="line239">239: </a><font color="#B22222">-   windownumber - indicates which subwindow (usually 0)</font>
+
+<a name="line241">241: </a><font color="#B22222">    Ouput Parameter:</font>
+<a name="line242">242: </a><font color="#B22222">.   drawaxis - the draw axis object</font>
+
+<a name="line244">244: </a><font color="#B22222">    Level: advanced</font>
+
+<a name="line246">246: </a><font color="#B22222">  Concepts: line graph^accessing context</font>
+
+<a name="line248">248: </a><font color="#B22222">.seealso: <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawGetDraw.html#PetscViewerDrawGetDraw">PetscViewerDrawGetDraw</a>(), PetscViewerDrawGetLG(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawOpen.html#PetscViewerDrawOpen">PetscViewerDrawOpen</a>()</font>
+<a name="line249">249: </a><font color="#B22222">@*/</font>
+<a name="line250">250: </a><strong><font color="#4169E1"><a name="PetscViewerDrawGetDrawAxis"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawGetDrawAxis.html#PetscViewerDrawGetDrawAxis">PetscViewerDrawGetDrawAxis</a>(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> windownumber,<a href="../../../../../../docs/manualpages/Draw/PetscDrawAxis.html#PetscDrawAxis">PetscDrawAxis</a> *drawaxis)</font></strong>
+<a name="line251">251: </a>{
+<a name="line252">252: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr;
+<a name="line253">253: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>        isdraw;
+<a name="line254">254: </a>  PetscViewer_Draw *vdraw;
+
+<a name="line260">260: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERDRAW.html#PETSCVIEWERDRAW">PETSCVIEWERDRAW</a>,&amp;isdraw);
+<a name="line261">261: </a>  <font color="#4169E1">if</font> (!isdraw) <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_WRONG,<font color="#666666">"Must be draw type <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a>"</font>);
+<a name="line262">262: </a>  <font color="#4169E1">if</font> (windownumber &lt; 0) <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_OUTOFRANGE,<font color="#666666">"Window number cannot be negative"</font>);
+<a name="line263">263: </a>  vdraw = (PetscViewer_Draw*)viewer-&gt;data;
+
+<a name="line265">265: </a>  <font color="#4169E1">if</font> (windownumber+vdraw-&gt;draw_base &gt;= vdraw-&gt;draw_max || !vdraw-&gt;draw[windownumber+vdraw-&gt;draw_base]) {
+<a name="line266">266: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawGetDraw.html#PetscViewerDrawGetDraw">PetscViewerDrawGetDraw</a>(viewer,windownumber,NULL);
+<a name="line267">267: </a>  }
+<a name="line268">268: </a>  <font color="#4169E1">if</font> (!vdraw-&gt;drawaxis[windownumber+vdraw-&gt;draw_base]) {
+<a name="line269">269: </a>    <a href="../../../../../../docs/manualpages/Draw/PetscDrawAxisCreate.html#PetscDrawAxisCreate">PetscDrawAxisCreate</a>(vdraw-&gt;draw[windownumber+vdraw-&gt;draw_base],&amp;vdraw-&gt;drawaxis[windownumber+vdraw-&gt;draw_base]);
+<a name="line270">270: </a>    PetscLogObjectParent((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,(<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)vdraw-&gt;drawaxis[windownumber+vdraw-&gt;draw_base]);
+<a name="line271">271: </a>  }
+<a name="line272">272: </a>  *drawaxis = vdraw-&gt;drawaxis[windownumber+vdraw-&gt;draw_base];
+<a name="line273">273: </a>  <font color="#4169E1">return</font>(0);
+<a name="line274">274: </a>}
+
+<a name="line276">276: </a><strong><font color="#4169E1"><a name="PetscViewerDrawResize"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  PetscViewerDrawResize(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> v,int w,int h)</font></strong>
+<a name="line277">277: </a>{
+<a name="line278">278: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr;
+<a name="line279">279: </a>  PetscViewer_Draw *vdraw;
+<a name="line280">280: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>        isdraw;
+
+<a name="line284">284: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)v,<a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERDRAW.html#PETSCVIEWERDRAW">PETSCVIEWERDRAW</a>,&amp;isdraw);
+<a name="line285">285: </a>  <font color="#4169E1">if</font> (!isdraw) <font color="#4169E1">return</font>(0);
+<a name="line286">286: </a>  vdraw = (PetscViewer_Draw*)v-&gt;data;
+
+<a name="line288">288: </a>  <font color="#4169E1">if</font> (w &gt;= 1) vdraw-&gt;w = w;
+<a name="line289">289: </a>  <font color="#4169E1">if</font> (h &gt;= 1) vdraw-&gt;h = h;
+<a name="line290">290: </a>  <font color="#4169E1">return</font>(0);
+<a name="line291">291: </a>}
+
+<a name="line293">293: </a><strong><font color="#4169E1"><a name="PetscViewerDrawSetInfo"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  PetscViewerDrawSetInfo(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> v,const char display[],const char title[],int x,int y,int w,int h)</font></strong>
+<a name="line294">294: </a>{
+<a name="line295">295: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr;
+<a name="line296">296: </a>  PetscViewer_Draw *vdraw;
+<a name="line297">297: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>        isdraw;
+
+<a name="line301">301: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)v,<a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERDRAW.html#PETSCVIEWERDRAW">PETSCVIEWERDRAW</a>,&amp;isdraw);
+<a name="line302">302: </a>  <font color="#4169E1">if</font> (!isdraw) <font color="#4169E1">return</font>(0);
+<a name="line303">303: </a>  vdraw = (PetscViewer_Draw*)v-&gt;data;
+
+<a name="line305">305: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscStrallocpy.html#PetscStrallocpy">PetscStrallocpy</a>(display,&amp;vdraw-&gt;display);
+<a name="line306">306: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscStrallocpy.html#PetscStrallocpy">PetscStrallocpy</a>(title,&amp;vdraw-&gt;title);
+<a name="line307">307: </a>  <font color="#4169E1">if</font> (w &gt;= 1) vdraw-&gt;w = w;
+<a name="line308">308: </a>  <font color="#4169E1">if</font> (h &gt;= 1) vdraw-&gt;h = h;
+<a name="line309">309: </a>  <font color="#4169E1">return</font>(0);
+<a name="line310">310: </a>}
+
+<a name="line312">312: </a><strong><font color="#4169E1"><a name="PetscViewerDrawSetDrawType"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  PetscViewerDrawSetDrawType(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> v,<a href="../../../../../../docs/manualpages/Draw/PetscDrawType.html#PetscDrawType">PetscDrawType</a> drawtype)</font></strong>
+<a name="line313">313: </a>{
+<a name="line314">314: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr;
+<a name="line315">315: </a>  PetscViewer_Draw *vdraw;
+<a name="line316">316: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>        isdraw;
+
+<a name="line320">320: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)v,<a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERDRAW.html#PETSCVIEWERDRAW">PETSCVIEWERDRAW</a>,&amp;isdraw);
+<a name="line321">321: </a>  <font color="#4169E1">if</font> (!isdraw) <font color="#4169E1">return</font>(0);
+<a name="line322">322: </a>  vdraw = (PetscViewer_Draw*)v-&gt;data;
+
+<a name="line324">324: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(vdraw-&gt;drawtype);
+<a name="line325">325: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscStrallocpy.html#PetscStrallocpy">PetscStrallocpy</a>(drawtype,(char**)&amp;vdraw-&gt;drawtype);
+<a name="line326">326: </a>  <font color="#4169E1">return</font>(0);
+<a name="line327">327: </a>}
+
+<a name="line329">329: </a><font color="#B22222">/*@C</font>
+<a name="line330">330: </a><font color="#B22222">   <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawOpen.html#PetscViewerDrawOpen">PetscViewerDrawOpen</a> - Opens a window for use as a <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a>. If you want to</font>
+<a name="line331">331: </a><font color="#B22222">   do graphics in this window, you must call <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawGetDraw.html#PetscViewerDrawGetDraw">PetscViewerDrawGetDraw</a>() and</font>
+<a name="line332">332: </a><font color="#B22222">   perform the graphics on the <a href="../../../../../../docs/manualpages/Draw/PetscDraw.html#PetscDraw">PetscDraw</a> object.</font>
+
+<a name="line334">334: </a><font color="#B22222">   Collective on <a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a></font>
+
+<a name="line336">336: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line337">337: </a><font color="#B22222">+  comm - communicator that will share window</font>
+<a name="line338">338: </a><font color="#B22222">.  display - the X display on which to open, or null for the local machine</font>
+<a name="line339">339: </a><font color="#B22222">.  title - the title to put in the title bar, or null for no title</font>
+<a name="line340">340: </a><font color="#B22222">.  x, y - the screen coordinates of the upper left corner of window, or use <a href="../../../../../../docs/manualpages/Sys/PETSC_DECIDE.html#PETSC_DECIDE">PETSC_DECIDE</a></font>
+<a name="line341">341: </a><font color="#B22222">-  w, h - window width and height in pixels, or may use <a href="../../../../../../docs/manualpages/Sys/PETSC_DECIDE.html#PETSC_DECIDE">PETSC_DECIDE</a> or PETSC_DRAW_FULL_SIZE, PETSC_DRAW_HALF_SIZE,</font>
+<a name="line342">342: </a><font color="#B22222">          PETSC_DRAW_THIRD_SIZE, PETSC_DRAW_QUARTER_SIZE</font>
+
+<a name="line344">344: </a><font color="#B22222">   Output Parameters:</font>
+<a name="line345">345: </a><font color="#B22222">. viewer - the <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a></font>
+
+<a name="line347">347: </a><font color="#B22222">   Format Options:</font>
+<a name="line348">348: </a><font color="#B22222">+  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerFormat.html#PetscViewerFormat">PETSC_VIEWER_DRAW_BASIC</a> - displays with basic format</font>
+<a name="line349">349: </a><font color="#B22222">-  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerFormat.html#PetscViewerFormat">PETSC_VIEWER_DRAW_LG</a>    - displays using a line graph</font>
+
+<a name="line351">351: </a><font color="#B22222">   Options Database Keys:</font>
+<a name="line352">352: </a><font color="#B22222">   <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawOpen.html#PetscViewerDrawOpen">PetscViewerDrawOpen</a>() calls <a href="../../../../../../docs/manualpages/Draw/PetscDrawCreate.html#PetscDrawCreate">PetscDrawCreate</a>(), so see the manual page for</font>
+<a name="line353">353: </a><font color="#B22222">   <a href="../../../../../../docs/manualpages/Draw/PetscDrawCreate.html#PetscDrawCreate">PetscDrawCreate</a>() for runtime options, including</font>
+<a name="line354">354: </a><font color="#B22222">+  -draw_type x or null</font>
+<a name="line355">355: </a><font color="#B22222">.  -nox - Disables all x-windows output</font>
+<a name="line356">356: </a><font color="#B22222">.  -display &lt;name&gt; - Specifies name of machine for the X display</font>
+<a name="line357">357: </a><font color="#B22222">.  -geometry &lt;x,y,w,h&gt; - allows setting the window location and size</font>
+<a name="line358">358: </a><font color="#B22222">-  -draw_pause &lt;pause&gt; - Sets time (in seconds) that the</font>
+<a name="line359">359: </a><font color="#B22222">     program pauses after <a href="../../../../../../docs/manualpages/Draw/PetscDrawPause.html#PetscDrawPause">PetscDrawPause</a>() has been called</font>
+<a name="line360">360: </a><font color="#B22222">     (0 is default, -1 implies until user input).</font>
+
+<a name="line362">362: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line364">364: </a><font color="#B22222">   Note for Fortran Programmers:</font>
+<a name="line365">365: </a><font color="#B22222">   Whenever indicating null character data in a Fortran code,</font>
+<a name="line366">366: </a><font color="#B22222">   NULL_CHARACTER must be employed; using NULL is not</font>
+<a name="line367">367: </a><font color="#B22222">   correct for character data!  Thus, NULL_CHARACTER can be</font>
+<a name="line368">368: </a><font color="#B22222">   used for the display and title input parameters.</font>
+
+<a name="line370">370: </a><font color="#B22222">  Concepts: graphics^opening <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a></font>
+<a name="line371">371: </a><font color="#B22222">  Concepts: drawing^opening <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a></font>
+
+
+<a name="line374">374: </a><font color="#B22222">.seealso: <a href="../../../../../../docs/manualpages/Draw/PetscDrawCreate.html#PetscDrawCreate">PetscDrawCreate</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html#PetscViewerDestroy">PetscViewerDestroy</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawGetDraw.html#PetscViewerDrawGetDraw">PetscViewerDrawGetDraw</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerCreate.html#PetscViewerCreate">PetscViewerCreate</a>(), <a href="../../../../../../docs/manualpages/Viewer/PETSC_VIEWER_DRAW_.html#PETSC_VIEWER_DRAW_">PETSC_VIEWER_DRAW_</a>,</font>
+<a name="line375">375: </a><font color="#B22222">          <a href="../../../../../../docs/manualpages/Viewer/PETSC_VIEWER_DRAW_WORLD.html#PETSC_VIEWER_DRAW_WORLD">PETSC_VIEWER_DRAW_WORLD</a>, <a href="../../../../../../docs/manualpages/Viewer/PETSC_VIEWER_DRAW_SELF.html#PETSC_VIEWER_DRAW_SELF">PETSC_VIEWER_DRAW_SELF</a></font>
+<a name="line376">376: </a><font color="#B22222">@*/</font>
+<a name="line377">377: </a><strong><font color="#4169E1"><a name="PetscViewerDrawOpen"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawOpen.html#PetscViewerDrawOpen">PetscViewerDrawOpen</a>(<a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a> comm,const char display[],const char title[],int x,int y,int w,int h,<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> *viewer)</font></strong>
+<a name="line378">378: </a>{
+
+<a name="line382">382: </a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerCreate.html#PetscViewerCreate">PetscViewerCreate</a>(comm,viewer);
+<a name="line383">383: </a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerSetType.html#PetscViewerSetType">PetscViewerSetType</a>(*viewer,<a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERDRAW.html#PETSCVIEWERDRAW">PETSCVIEWERDRAW</a>);
+<a name="line384">384: </a>  PetscViewerDrawSetInfo(*viewer,display,title,x,y,w,h);
+<a name="line385">385: </a>  <font color="#4169E1">return</font>(0);
+<a name="line386">386: </a>}
+
+<a name="line388">388: </a><strong><font color="#4169E1"><a name="PetscViewerGetSubViewer_Draw"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscViewerGetSubViewer_Draw(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer,<a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a> comm,<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> *sviewer)</font></strong>
+<a name="line389">389: </a>{
+<a name="line390">390: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr;
+<a name="line391">391: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>      rank;
+<a name="line392">392: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>         i;
+<a name="line393">393: </a>  PetscViewer_Draw *vdraw = (PetscViewer_Draw*)viewer-&gt;data,*svdraw;
+
+<a name="line396">396: </a>  <font color="#4169E1">if</font> (vdraw-&gt;singleton_made) <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ORDER,<font color="#666666">"Trying to get SubViewer without first restoring previous"</font>);
+<a name="line397">397: </a>  <font color="#B22222">/* only processor zero can use the <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> draw singleton */</font>
+<a name="line398">398: </a>  <font color="#4169E1">if</font> (*sviewer) *sviewer = NULL;
+<a name="line399">399: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer),&amp;rank);
+<a name="line400">400: </a>  <font color="#4169E1">if</font> (!rank) {
+<a name="line401">401: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerCreate.html#PetscViewerCreate">PetscViewerCreate</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,sviewer);
+<a name="line402">402: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerSetType.html#PetscViewerSetType">PetscViewerSetType</a>(*sviewer,<a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERDRAW.html#PETSCVIEWERDRAW">PETSCVIEWERDRAW</a>);
+<a name="line403">403: </a>    svdraw = (PetscViewer_Draw*)(*sviewer)-&gt;data;
+<a name="line404">404: </a>    (*sviewer)-&gt;format = viewer-&gt;format;
+<a name="line405">405: </a>    <font color="#4169E1">for</font> (i=0; i&lt;vdraw-&gt;draw_max; i++) { <font color="#B22222">/* XXX this is wrong if svdraw-&gt;draw_max (initially 5) &lt; vdraw-&gt;draw_max */</font>
+<a name="line406">406: </a>      <font color="#4169E1">if</font> (vdraw-&gt;draw[i]) {<a href="../../../../../../docs/manualpages/Draw/PetscDrawGetSingleton.html#PetscDrawGetSingleton">PetscDrawGetSingleton</a>(vdraw-&gt;draw[i],&amp;svdraw-&gt;draw[i]);}
+<a name="line407">407: </a>    }
+<a name="line408">408: </a>  }
+<a name="line409">409: </a>  vdraw-&gt;singleton_made = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+<a name="line410">410: </a>  <font color="#4169E1">return</font>(0);
+<a name="line411">411: </a>}
+
+<a name="line413">413: </a><strong><font color="#4169E1"><a name="PetscViewerRestoreSubViewer_Draw"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscViewerRestoreSubViewer_Draw(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer,<a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a> comm,<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> *sviewer)</font></strong>
+<a name="line414">414: </a>{
+<a name="line415">415: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr;
+<a name="line416">416: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>      rank;
+<a name="line417">417: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>         i;
+<a name="line418">418: </a>  PetscViewer_Draw *vdraw = (PetscViewer_Draw*)viewer-&gt;data,*svdraw;
+
+<a name="line421">421: </a>  <font color="#4169E1">if</font> (!vdraw-&gt;singleton_made) <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ORDER,<font color="#666666">"Trying to restore a singleton that was not gotten"</font>);
+<a name="line422">422: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer),&amp;rank);
+<a name="line423">423: </a>  <font color="#4169E1">if</font> (!rank) {
+<a name="line424">424: </a>    svdraw = (PetscViewer_Draw*)(*sviewer)-&gt;data;
+<a name="line425">425: </a>    <font color="#4169E1">for</font> (i=0; i&lt;vdraw-&gt;draw_max; i++) {
+<a name="line426">426: </a>      <font color="#4169E1">if</font> (vdraw-&gt;draw[i] &amp;&amp; svdraw-&gt;draw[i]) {
+<a name="line427">427: </a>        <a href="../../../../../../docs/manualpages/Draw/PetscDrawRestoreSingleton.html#PetscDrawRestoreSingleton">PetscDrawRestoreSingleton</a>(vdraw-&gt;draw[i],&amp;svdraw-&gt;draw[i]);
+<a name="line428">428: </a>      }
+<a name="line429">429: </a>    }
+<a name="line430">430: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscFree3.html#PetscFree3">PetscFree3</a>(svdraw-&gt;draw,svdraw-&gt;drawlg,svdraw-&gt;drawaxis);
+<a name="line431">431: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>((*sviewer)-&gt;data);
+<a name="line432">432: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscHeaderDestroy.html#PetscHeaderDestroy">PetscHeaderDestroy</a>(sviewer);
+<a name="line433">433: </a>  }
+<a name="line434">434: </a>  vdraw-&gt;singleton_made = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+<a name="line435">435: </a>  <font color="#4169E1">return</font>(0);
+<a name="line436">436: </a>}
+
+<a name="line438">438: </a><strong><font color="#4169E1"><a name="PetscViewerSetFromOptions_Draw"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscViewerSetFromOptions_Draw(PetscOptionItems *PetscOptionsObject,<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> v)</font></strong>
+<a name="line439">439: </a>{
+<a name="line441">441: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>      bounds[16];
+<a name="line442">442: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       nbounds = 16;
+<a name="line443">443: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>      flg;
+
+<a name="line446">446: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscOptionsHead.html#PetscOptionsHead">PetscOptionsHead</a>(PetscOptionsObject,<font color="#666666">"Draw <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> Options"</font>);
+<a name="line447">447: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscOptionsRealArray.html#PetscOptionsRealArray">PetscOptionsRealArray</a>(<font color="#666666">"-draw_bounds"</font>,<font color="#666666">"Bounds to put on plots axis"</font>,<font color="#666666">"<a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawSetBounds.html#PetscViewerDrawSetBounds">PetscViewerDrawSetBounds</a>"</font>,bounds,&amp;nbounds,&amp;flg);
+<a name="line448">448: </a>  <font color="#4169E1">if</font> (flg) {
+<a name="line449">449: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawSetBounds.html#PetscViewerDrawSetBounds">PetscViewerDrawSetBounds</a>(v,nbounds/2,bounds);
+<a name="line450">450: </a>  }
+<a name="line451">451: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscOptionsTail.html#PetscOptionsTail">PetscOptionsTail</a>();
+<a name="line452">452: </a>  <font color="#4169E1">return</font>(0);
+<a name="line453">453: </a>}
+
+<a name="line455">455: </a><strong><font color="#4169E1"><a name="PetscViewerView_Draw"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscViewerView_Draw(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer,<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> v)</font></strong>
+<a name="line456">456: </a>{
+<a name="line457">457: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr;
+<a name="line458">458: </a>  <a href="../../../../../../docs/manualpages/Draw/PetscDraw.html#PetscDraw">PetscDraw</a>        draw;
+<a name="line459">459: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>         i;
+<a name="line460">460: </a>  PetscViewer_Draw *vdraw = (PetscViewer_Draw*)viewer-&gt;data;
+
+<a name="line463">463: </a>  <font color="#B22222">/*  If the <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> has just been created then no vdraw-&gt;draw yet</font>
+<a name="line464">464: </a><font color="#B22222">      exists so this will not actually call the viewer on any draws. */</font>
+<a name="line465">465: </a>  <font color="#4169E1">for</font> (i=0; i&lt;vdraw-&gt;draw_base; i++) {
+<a name="line466">466: </a>    <font color="#4169E1">if</font> (vdraw-&gt;draw[i]) {
+<a name="line467">467: </a>      <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawGetDraw.html#PetscViewerDrawGetDraw">PetscViewerDrawGetDraw</a>(viewer,i,&amp;draw);
+<a name="line468">468: </a>      <a href="../../../../../../docs/manualpages/Draw/PetscDrawView.html#PetscDrawView">PetscDrawView</a>(draw,v);
+<a name="line469">469: </a>    }
+<a name="line470">470: </a>  }
+<a name="line471">471: </a>  <font color="#4169E1">return</font>(0);
+<a name="line472">472: </a>}
+
+<a name="line474">474: </a><font color="#B22222">/*MC</font>
+<a name="line475">475: </a><font color="#B22222">   <a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERDRAW.html#PETSCVIEWERDRAW">PETSCVIEWERDRAW</a> - A viewer that generates graphics, either to the screen or a file</font>
+
+
+<a name="line478">478: </a><font color="#B22222">.seealso:  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawOpen.html#PetscViewerDrawOpen">PetscViewerDrawOpen</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawGetDraw.html#PetscViewerDrawGetDraw">PetscViewerDrawGetDraw</a>(), <a href="../../../../../../docs/manualpages/Viewer/PETSC_VIEWER_DRAW_.html#PETSC_VIEWER_DRAW_">PETSC_VIEWER_DRAW_</a>(),<a href="../../../../../../docs/manualpages/Viewer/PETSC_VIEWER_DRAW_SELF.html#PETSC_VIEWER_DRAW_SELF">PETSC_VIEWER_DRAW_SELF</a>, <a href="../../../../../../docs/manualpages/Viewer/PETSC_VIEWER_DRAW_WORLD.html#PETSC_VIEWER_DRAW_WORLD">PETSC_VIEWER_DRAW_WORLD</a>,</font>
+<a name="line479">479: </a><font color="#B22222">           <a href="../../../../../../docs/manualpages/Viewer/PetscViewerCreate.html#PetscViewerCreate">PetscViewerCreate</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html#PetscViewerASCIIOpen">PetscViewerASCIIOpen</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerBinaryOpen.html#PetscViewerBinaryOpen">PetscViewerBinaryOpen</a>(), <a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERBINARY.html#PETSCVIEWERBINARY">PETSCVIEWERBINARY</a>, </font>
+<a name="line480">480: </a><font color="#B22222">           <a href="../../../../../../docs/manualpages/Viewer/PetscViewerMatlabOpen.html#PetscViewerMatlabOpen">PetscViewerMatlabOpen</a>(), <a href="../../../../../../docs/manualpages/Vec/VecView.html#VecView">VecView</a>(), <a href="../../../../../../docs/manualpages/DM/DMView.html#DMView">DMView</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerMatlabPutArray.html#PetscViewerMatlabPutArray">PetscViewerMatlabPutArray</a>(), <a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html#PETSCVIEWERASCII">PETSCVIEWERASCII</a>, <a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERMATLAB.html#PETSCVIEWERMATLAB">PETSCVIEWERMATLAB</a>,</font>
+<a name="line481">481: </a><font color="#B22222">           <a href="../../../../../../docs/manualpages/Viewer/PetscViewerFileSetName.html#PetscViewerFileSetName">PetscViewerFileSetName</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerFileSetMode.html#PetscViewerFileSetMode">PetscViewerFileSetMode</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerFormat.html#PetscViewerFormat">PetscViewerFormat</a>, <a href="../../../../../../docs/manualpages/Viewer/PetscViewerType.html#PetscViewerType">PetscViewerType</a>, <a href="../../../../../../docs/manualpages/Viewer/PetscViewerSetType.html#PetscViewerSetType">PetscViewerSetType</a>()</font>
+
+<a name="line483">483: </a><font color="#B22222">  Level: beginner</font>
+
+<a name="line485">485: </a><font color="#B22222">M*/</font>
+<a name="line486">486: </a><strong><font color="#4169E1"><a name="PetscViewerCreate_Draw"></a>PETSC_EXTERN <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscViewerCreate_Draw(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer)</font></strong>
+<a name="line487">487: </a>{
+<a name="line488">488: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr;
+<a name="line489">489: </a>  PetscViewer_Draw *vdraw;
+
+<a name="line492">492: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscNewLog.html#PetscNewLog">PetscNewLog</a>(viewer,&amp;vdraw);
+<a name="line493">493: </a>  viewer-&gt;data = (void*)vdraw;
+
+<a name="line495">495: </a>  viewer-&gt;ops-&gt;flush            = PetscViewerFlush_Draw;
+<a name="line496">496: </a>  viewer-&gt;ops-&gt;view             = PetscViewerView_Draw;
+<a name="line497">497: </a>  viewer-&gt;ops-&gt;destroy          = PetscViewerDestroy_Draw;
+<a name="line498">498: </a>  viewer-&gt;ops-&gt;setfromoptions   = PetscViewerSetFromOptions_Draw;
+<a name="line499">499: </a>  viewer-&gt;ops-&gt;getsubviewer     = PetscViewerGetSubViewer_Draw;
+<a name="line500">500: </a>  viewer-&gt;ops-&gt;restoresubviewer = PetscViewerRestoreSubViewer_Draw;
+
+<a name="line502">502: </a>  <font color="#B22222">/* these are created on the fly if requested */</font>
+<a name="line503">503: </a>  vdraw-&gt;draw_max  = 5;
+<a name="line504">504: </a>  vdraw-&gt;draw_base = 0;
+<a name="line505">505: </a>  vdraw-&gt;w         = <a href="../../../../../../docs/manualpages/Sys/PETSC_DECIDE.html#PETSC_DECIDE">PETSC_DECIDE</a>;
+<a name="line506">506: </a>  vdraw-&gt;h         = <a href="../../../../../../docs/manualpages/Sys/PETSC_DECIDE.html#PETSC_DECIDE">PETSC_DECIDE</a>;
+
+<a name="line508">508: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscCalloc3.html#PetscCalloc3">PetscCalloc3</a>(vdraw-&gt;draw_max,&amp;vdraw-&gt;draw,vdraw-&gt;draw_max,&amp;vdraw-&gt;drawlg,vdraw-&gt;draw_max,&amp;vdraw-&gt;drawaxis);
+<a name="line509">509: </a>  vdraw-&gt;singleton_made = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+<a name="line510">510: </a>  <font color="#4169E1">return</font>(0);
+<a name="line511">511: </a>}
+
+<a name="line513">513: </a><font color="#B22222">/*@</font>
+<a name="line514">514: </a><font color="#B22222">    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawClear.html#PetscViewerDrawClear">PetscViewerDrawClear</a> - Clears a <a href="../../../../../../docs/manualpages/Draw/PetscDraw.html#PetscDraw">PetscDraw</a> graphic associated with a <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a>.</font>
+
+<a name="line516">516: </a><font color="#B22222">    Not Collective</font>
+
+<a name="line518">518: </a><font color="#B22222">    Input Parameter:</font>
+<a name="line519">519: </a><font color="#B22222">.  viewer - the <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a></font>
+
+<a name="line521">521: </a><font color="#B22222">    Level: intermediate</font>
+
+<a name="line523">523: </a><font color="#B22222">.seealso: <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawOpen.html#PetscViewerDrawOpen">PetscViewerDrawOpen</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawGetDraw.html#PetscViewerDrawGetDraw">PetscViewerDrawGetDraw</a>(),</font>
+
+<a name="line525">525: </a><font color="#B22222">@*/</font>
+<a name="line526">526: </a><strong><font color="#4169E1"><a name="PetscViewerDrawClear"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawClear.html#PetscViewerDrawClear">PetscViewerDrawClear</a>(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer)</font></strong>
+<a name="line527">527: </a>{
+<a name="line528">528: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr;
+<a name="line529">529: </a>  PetscViewer_Draw *vdraw;
+<a name="line530">530: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>        isdraw;
+<a name="line531">531: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>         i;
+
+<a name="line535">535: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERDRAW.html#PETSCVIEWERDRAW">PETSCVIEWERDRAW</a>,&amp;isdraw);
+<a name="line536">536: </a>  <font color="#4169E1">if</font> (!isdraw) <font color="#4169E1">return</font>(0);
+<a name="line537">537: </a>  vdraw = (PetscViewer_Draw*)viewer-&gt;data;
+
+<a name="line539">539: </a>  <font color="#4169E1">for</font> (i=0; i&lt;vdraw-&gt;draw_max; i++) {
+<a name="line540">540: </a>    <font color="#4169E1">if</font> (vdraw-&gt;draw[i]) {<a href="../../../../../../docs/manualpages/Draw/PetscDrawClear.html#PetscDrawClear">PetscDrawClear</a>(vdraw-&gt;draw[i]);}
+<a name="line541">541: </a>  }
+<a name="line542">542: </a>  <font color="#4169E1">return</font>(0);
+<a name="line543">543: </a>}
+
+<a name="line545">545: </a><font color="#B22222">/*@</font>
+<a name="line546">546: </a><font color="#B22222">    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawGetPause.html#PetscViewerDrawGetPause">PetscViewerDrawGetPause</a> - Gets a pause for the first present draw</font>
+
+<a name="line548">548: </a><font color="#B22222">    Not Collective</font>
+
+<a name="line550">550: </a><font color="#B22222">    Input Parameter:</font>
+<a name="line551">551: </a><font color="#B22222">.  viewer - the <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a></font>
+
+<a name="line553">553: </a><font color="#B22222">    Output Parameter:</font>
+<a name="line554">554: </a><font color="#B22222">.  pause - the pause value</font>
+
+<a name="line556">556: </a><font color="#B22222">    Level: intermediate</font>
+
+<a name="line558">558: </a><font color="#B22222">.seealso: <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawOpen.html#PetscViewerDrawOpen">PetscViewerDrawOpen</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawGetDraw.html#PetscViewerDrawGetDraw">PetscViewerDrawGetDraw</a>(),</font>
+
+<a name="line560">560: </a><font color="#B22222">@*/</font>
+<a name="line561">561: </a><strong><font color="#4169E1"><a name="PetscViewerDrawGetPause"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawGetPause.html#PetscViewerDrawGetPause">PetscViewerDrawGetPause</a>(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer,<a href="../../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> *pause)</font></strong>
+<a name="line562">562: </a>{
+<a name="line563">563: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr;
+<a name="line564">564: </a>  PetscViewer_Draw *vdraw;
+<a name="line565">565: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>        isdraw;
+<a name="line566">566: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>         i;
+<a name="line567">567: </a>  <a href="../../../../../../docs/manualpages/Draw/PetscDraw.html#PetscDraw">PetscDraw</a>        draw;
+
+<a name="line571">571: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERDRAW.html#PETSCVIEWERDRAW">PETSCVIEWERDRAW</a>,&amp;isdraw);
+<a name="line572">572: </a>  <font color="#4169E1">if</font> (!isdraw) {*pause = 0.0; <font color="#4169E1">return</font>(0);}
+<a name="line573">573: </a>  vdraw = (PetscViewer_Draw*)viewer-&gt;data;
+
+<a name="line575">575: </a>  <font color="#4169E1">for</font> (i=0; i&lt;vdraw-&gt;draw_max; i++) {
+<a name="line576">576: </a>    <font color="#4169E1">if</font> (vdraw-&gt;draw[i]) {
+<a name="line577">577: </a>      <a href="../../../../../../docs/manualpages/Draw/PetscDrawGetPause.html#PetscDrawGetPause">PetscDrawGetPause</a>(vdraw-&gt;draw[i],pause);
+<a name="line578">578: </a>      <font color="#4169E1">return</font>(0);
+<a name="line579">579: </a>    }
+<a name="line580">580: </a>  }
+<a name="line581">581: </a>  <font color="#B22222">/* none exist yet so create one and get its pause */</font>
+<a name="line582">582: </a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawGetDraw.html#PetscViewerDrawGetDraw">PetscViewerDrawGetDraw</a>(viewer,0,&amp;draw);
+<a name="line583">583: </a>  <a href="../../../../../../docs/manualpages/Draw/PetscDrawGetPause.html#PetscDrawGetPause">PetscDrawGetPause</a>(draw,pause);
+<a name="line584">584: </a>  <font color="#4169E1">return</font>(0);
+<a name="line585">585: </a>}
+
+<a name="line587">587: </a><font color="#B22222">/*@</font>
+<a name="line588">588: </a><font color="#B22222">    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawSetPause.html#PetscViewerDrawSetPause">PetscViewerDrawSetPause</a> - Sets a pause for each <a href="../../../../../../docs/manualpages/Draw/PetscDraw.html#PetscDraw">PetscDraw</a> in the viewer</font>
+
+<a name="line590">590: </a><font color="#B22222">    Not Collective</font>
+
+<a name="line592">592: </a><font color="#B22222">    Input Parameters:</font>
+<a name="line593">593: </a><font color="#B22222">+  viewer - the <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a></font>
+<a name="line594">594: </a><font color="#B22222">-  pause - the pause value</font>
+
+<a name="line596">596: </a><font color="#B22222">    Level: intermediate</font>
+
+<a name="line598">598: </a><font color="#B22222">.seealso: <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawOpen.html#PetscViewerDrawOpen">PetscViewerDrawOpen</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawGetDraw.html#PetscViewerDrawGetDraw">PetscViewerDrawGetDraw</a>(),</font>
+
+<a name="line600">600: </a><font color="#B22222">@*/</font>
+<a name="line601">601: </a><strong><font color="#4169E1"><a name="PetscViewerDrawSetPause"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawSetPause.html#PetscViewerDrawSetPause">PetscViewerDrawSetPause</a>(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer,<a href="../../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> pause)</font></strong>
+<a name="line602">602: </a>{
+<a name="line603">603: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr;
+<a name="line604">604: </a>  PetscViewer_Draw *vdraw;
+<a name="line605">605: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>        isdraw;
+<a name="line606">606: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>         i;
+
+<a name="line610">610: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERDRAW.html#PETSCVIEWERDRAW">PETSCVIEWERDRAW</a>,&amp;isdraw);
+<a name="line611">611: </a>  <font color="#4169E1">if</font> (!isdraw) <font color="#4169E1">return</font>(0);
+<a name="line612">612: </a>  vdraw = (PetscViewer_Draw*)viewer-&gt;data;
+
+<a name="line614">614: </a>  vdraw-&gt;pause = pause;
+<a name="line615">615: </a>  <font color="#4169E1">for</font> (i=0; i&lt;vdraw-&gt;draw_max; i++) {
+<a name="line616">616: </a>    <font color="#4169E1">if</font> (vdraw-&gt;draw[i]) {<a href="../../../../../../docs/manualpages/Draw/PetscDrawSetPause.html#PetscDrawSetPause">PetscDrawSetPause</a>(vdraw-&gt;draw[i],pause);}
+<a name="line617">617: </a>  }
+<a name="line618">618: </a>  <font color="#4169E1">return</font>(0);
+<a name="line619">619: </a>}
+
+
+<a name="line622">622: </a><font color="#B22222">/*@</font>
+<a name="line623">623: </a><font color="#B22222">    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawSetHold.html#PetscViewerDrawSetHold">PetscViewerDrawSetHold</a> - Holds previous image when drawing new image</font>
+
+<a name="line625">625: </a><font color="#B22222">    Not Collective</font>
+
+<a name="line627">627: </a><font color="#B22222">    Input Parameters:</font>
+<a name="line628">628: </a><font color="#B22222">+  viewer - the <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a></font>
+<a name="line629">629: </a><font color="#B22222">-  hold - indicates to hold or not</font>
+
+<a name="line631">631: </a><font color="#B22222">    Level: intermediate</font>
+
+<a name="line633">633: </a><font color="#B22222">.seealso: <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawOpen.html#PetscViewerDrawOpen">PetscViewerDrawOpen</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawGetDraw.html#PetscViewerDrawGetDraw">PetscViewerDrawGetDraw</a>(),</font>
+
+<a name="line635">635: </a><font color="#B22222">@*/</font>
+<a name="line636">636: </a><strong><font color="#4169E1"><a name="PetscViewerDrawSetHold"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawSetHold.html#PetscViewerDrawSetHold">PetscViewerDrawSetHold</a>(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer,<a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> hold)</font></strong>
+<a name="line637">637: </a>{
+<a name="line638">638: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr;
+<a name="line639">639: </a>  PetscViewer_Draw *vdraw;
+<a name="line640">640: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>        isdraw;
+
+<a name="line644">644: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERDRAW.html#PETSCVIEWERDRAW">PETSCVIEWERDRAW</a>,&amp;isdraw);
+<a name="line645">645: </a>  <font color="#4169E1">if</font> (!isdraw) <font color="#4169E1">return</font>(0);
+<a name="line646">646: </a>  vdraw = (PetscViewer_Draw*)viewer-&gt;data;
+
+<a name="line648">648: </a>  vdraw-&gt;hold = hold;
+<a name="line649">649: </a>  <font color="#4169E1">return</font>(0);
+<a name="line650">650: </a>}
+
+<a name="line652">652: </a><font color="#B22222">/*@</font>
+<a name="line653">653: </a><font color="#B22222">    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawGetHold.html#PetscViewerDrawGetHold">PetscViewerDrawGetHold</a> - Checks if holds previous image when drawing new image</font>
+
+<a name="line655">655: </a><font color="#B22222">    Not Collective</font>
+
+<a name="line657">657: </a><font color="#B22222">    Input Parameter:</font>
+<a name="line658">658: </a><font color="#B22222">.  viewer - the <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a></font>
+
+<a name="line660">660: </a><font color="#B22222">    Output Parameter:</font>
+<a name="line661">661: </a><font color="#B22222">.  hold - indicates to hold or not</font>
+
+<a name="line663">663: </a><font color="#B22222">    Level: intermediate</font>
+
+<a name="line665">665: </a><font color="#B22222">.seealso: <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawOpen.html#PetscViewerDrawOpen">PetscViewerDrawOpen</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawGetDraw.html#PetscViewerDrawGetDraw">PetscViewerDrawGetDraw</a>(),</font>
+
+<a name="line667">667: </a><font color="#B22222">@*/</font>
+<a name="line668">668: </a><strong><font color="#4169E1"><a name="PetscViewerDrawGetHold"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawGetHold.html#PetscViewerDrawGetHold">PetscViewerDrawGetHold</a>(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer,<a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> *hold)</font></strong>
+<a name="line669">669: </a>{
+<a name="line670">670: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr;
+<a name="line671">671: </a>  PetscViewer_Draw *vdraw;
+<a name="line672">672: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>        isdraw;
+
+<a name="line676">676: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERDRAW.html#PETSCVIEWERDRAW">PETSCVIEWERDRAW</a>,&amp;isdraw);
+<a name="line677">677: </a>  <font color="#4169E1">if</font> (!isdraw) {*hold = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>; <font color="#4169E1">return</font>(0);}
+<a name="line678">678: </a>  vdraw = (PetscViewer_Draw*)viewer-&gt;data;
+
+<a name="line680">680: </a>  *hold = vdraw-&gt;hold;
+<a name="line681">681: </a>  <font color="#4169E1">return</font>(0);
+<a name="line682">682: </a>}
+
+<a name="line684">684: </a><font color="#B22222">/* ---------------------------------------------------------------------*/</font>
+<a name="line685">685: </a><font color="#B22222">/*</font>
+<a name="line686">686: </a><font color="#B22222">    The variable Petsc_Viewer_Draw_keyval is used to indicate an MPI attribute that</font>
+<a name="line687">687: </a><font color="#B22222">  is attached to a communicator, in this case the attribute is a <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a>.</font>
+<a name="line688">688: </a><font color="#B22222">*/</font>
+<a name="line689">689: </a><a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> Petsc_Viewer_Draw_keyval = MPI_KEYVAL_INVALID;
+
+<a name="line691">691: </a><font color="#B22222">/*@C</font>
+<a name="line692">692: </a><font color="#B22222">    <a href="../../../../../../docs/manualpages/Viewer/PETSC_VIEWER_DRAW_.html#PETSC_VIEWER_DRAW_">PETSC_VIEWER_DRAW_</a> - Creates a window <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> shared by all processors</font>
+<a name="line693">693: </a><font color="#B22222">                     in a communicator.</font>
+
+<a name="line695">695: </a><font color="#B22222">     Collective on <a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a></font>
+
+<a name="line697">697: </a><font color="#B22222">     Input Parameter:</font>
+<a name="line698">698: </a><font color="#B22222">.    comm - the MPI communicator to share the window <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a></font>
+
+<a name="line700">700: </a><font color="#B22222">     Level: intermediate</font>
+
+<a name="line702">702: </a><font color="#B22222">     Notes:</font>
+<a name="line703">703: </a><font color="#B22222">     Unlike almost all other PETSc routines, <a href="../../../../../../docs/manualpages/Viewer/PETSC_VIEWER_DRAW_.html#PETSC_VIEWER_DRAW_">PETSC_VIEWER_DRAW_</a> does not return</font>
+<a name="line704">704: </a><font color="#B22222">     an error code.  The window is usually used in the form</font>
+<a name="line705">705: </a><font color="#B22222">$       XXXView(XXX object,<a href="../../../../../../docs/manualpages/Viewer/PETSC_VIEWER_DRAW_.html#PETSC_VIEWER_DRAW_">PETSC_VIEWER_DRAW_</a>(comm));</font>
+
+<a name="line707">707: </a><font color="#B22222">.seealso: <a href="../../../../../../docs/manualpages/Viewer/PETSC_VIEWER_DRAW_WORLD.html#PETSC_VIEWER_DRAW_WORLD">PETSC_VIEWER_DRAW_WORLD</a>, <a href="../../../../../../docs/manualpages/Viewer/PETSC_VIEWER_DRAW_SELF.html#PETSC_VIEWER_DRAW_SELF">PETSC_VIEWER_DRAW_SELF</a>, <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawOpen.html#PetscViewerDrawOpen">PetscViewerDrawOpen</a>(),</font>
+<a name="line708">708: </a><font color="#B22222">@*/</font>
+<a name="line709">709: </a><strong><font color="#4169E1"><a name="PETSC_VIEWER_DRAW_"></a><a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a>  <a href="../../../../../../docs/manualpages/Viewer/PETSC_VIEWER_DRAW_.html#PETSC_VIEWER_DRAW_">PETSC_VIEWER_DRAW_</a>(<a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a> comm)</font></strong>
+<a name="line710">710: </a>{
+<a name="line712">712: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>    flag;
+<a name="line713">713: </a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a>    viewer;
+<a name="line714">714: </a>  <a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a>       ncomm;
+
+<a name="line717">717: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscCommDuplicate.html#PetscCommDuplicate">PetscCommDuplicate</a>(comm,&amp;ncomm,NULL);<font color="#4169E1">if</font> (ierr) {<a href="../../../../../../docs/manualpages/Sys/PetscError.html#PetscError">PetscError</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,__LINE__,<font color="#666666">"<a href="../../../../../../docs/manualpages/Viewer/PETSC_VIEWER_DRAW_.html#PETSC_VIEWER_DRAW_">PETSC_VIEWER_DRAW_</a>"</font>,__FILE__,PETSC_ERR_PLIB,<a href="../../../../../../docs/manualpages/Sys/PetscErrorType.html#PetscErrorType">PETSC_ERROR_INITIAL</a>,<font color="#666666">" "</font>);<font color="#4169E1">return</font>(0);}
+<a name="line718">718: </a>  <font color="#4169E1">if</font> (Petsc_Viewer_Draw_keyval == MPI_KEYVAL_INVALID) {
+<a name="line719">719: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Keyval_create.html#MPI_Keyval_create">MPI_Keyval_create</a>(MPI_NULL_COPY_FN,MPI_NULL_DELETE_FN,&amp;Petsc_Viewer_Draw_keyval,0);
+<a name="line720">720: </a>    <font color="#4169E1">if</font> (ierr) {<a href="../../../../../../docs/manualpages/Sys/PetscError.html#PetscError">PetscError</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,__LINE__,<font color="#666666">"<a href="../../../../../../docs/manualpages/Viewer/PETSC_VIEWER_DRAW_.html#PETSC_VIEWER_DRAW_">PETSC_VIEWER_DRAW_</a>"</font>,__FILE__,PETSC_ERR_PLIB,<a href="../../../../../../docs/manualpages/Sys/PetscErrorType.html#PetscErrorType">PETSC_ERROR_INITIAL</a>,<font color="#666666">" "</font>);<font color="#4169E1">return</font>(0);}
+<a name="line721">721: </a>  }
+<a name="line722">722: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Attr_get.html#MPI_Attr_get">MPI_Attr_get</a>(ncomm,Petsc_Viewer_Draw_keyval,(void**)&amp;viewer,&amp;flag);
+<a name="line723">723: </a>  <font color="#4169E1">if</font> (ierr) {<a href="../../../../../../docs/manualpages/Sys/PetscError.html#PetscError">PetscError</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,__LINE__,<font color="#666666">"<a href="../../../../../../docs/manualpages/Viewer/PETSC_VIEWER_DRAW_.html#PETSC_VIEWER_DRAW_">PETSC_VIEWER_DRAW_</a>"</font>,__FILE__,PETSC_ERR_PLIB,<a href="../../../../../../docs/manualpages/Sys/PetscErrorType.html#PetscErrorType">PETSC_ERROR_INITIAL</a>,<font color="#666666">" "</font>);<font color="#4169E1">return</font>(0);}
+<a name="line724">724: </a>  <font color="#4169E1">if</font> (!flag) { <font color="#B22222">/* <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> not yet created */</font>
+<a name="line725">725: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawOpen.html#PetscViewerDrawOpen">PetscViewerDrawOpen</a>(ncomm,0,0,<a href="../../../../../../docs/manualpages/Sys/PETSC_DECIDE.html#PETSC_DECIDE">PETSC_DECIDE</a>,<a href="../../../../../../docs/manualpages/Sys/PETSC_DECIDE.html#PETSC_DECIDE">PETSC_DECIDE</a>,300,300,&amp;viewer);
+<a name="line726">726: </a>    <font color="#4169E1">if</font> (ierr) {<a href="../../../../../../docs/manualpages/Sys/PetscError.html#PetscError">PetscError</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,__LINE__,<font color="#666666">"<a href="../../../../../../docs/manualpages/Viewer/PETSC_VIEWER_DRAW_.html#PETSC_VIEWER_DRAW_">PETSC_VIEWER_DRAW_</a>"</font>,__FILE__,PETSC_ERR_PLIB,<a href="../../../../../../docs/manualpages/Sys/PetscErrorType.html#PetscErrorType">PETSC_ERROR_INITIAL</a>,<font color="#666666">" "</font>);<font color="#4169E1">return</font>(0);}
+<a name="line727">727: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscObjectRegisterDestroy.html#PetscObjectRegisterDestroy">PetscObjectRegisterDestroy</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer);
+<a name="line728">728: </a>    <font color="#4169E1">if</font> (ierr) {<a href="../../../../../../docs/manualpages/Sys/PetscError.html#PetscError">PetscError</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,__LINE__,<font color="#666666">"<a href="../../../../../../docs/manualpages/Viewer/PETSC_VIEWER_DRAW_.html#PETSC_VIEWER_DRAW_">PETSC_VIEWER_DRAW_</a>"</font>,__FILE__,PETSC_ERR_PLIB,<a href="../../../../../../docs/manualpages/Sys/PetscErrorType.html#PetscErrorType">PETSC_ERROR_INITIAL</a>,<font color="#666666">" "</font>);<font color="#4169E1">return</font>(0);}
+<a name="line729">729: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Attr_put.html#MPI_Attr_put">MPI_Attr_put</a>(ncomm,Petsc_Viewer_Draw_keyval,(void*)viewer);
+<a name="line730">730: </a>    <font color="#4169E1">if</font> (ierr) {<a href="../../../../../../docs/manualpages/Sys/PetscError.html#PetscError">PetscError</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,__LINE__,<font color="#666666">"<a href="../../../../../../docs/manualpages/Viewer/PETSC_VIEWER_DRAW_.html#PETSC_VIEWER_DRAW_">PETSC_VIEWER_DRAW_</a>"</font>,__FILE__,PETSC_ERR_PLIB,<a href="../../../../../../docs/manualpages/Sys/PetscErrorType.html#PetscErrorType">PETSC_ERROR_INITIAL</a>,<font color="#666666">" "</font>);<font color="#4169E1">return</font>(0);}
+<a name="line731">731: </a>  }
+<a name="line732">732: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscCommDestroy.html#PetscCommDestroy">PetscCommDestroy</a>(&amp;ncomm);
+<a name="line733">733: </a>  <font color="#4169E1">if</font> (ierr) {<a href="../../../../../../docs/manualpages/Sys/PetscError.html#PetscError">PetscError</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,__LINE__,<font color="#666666">"<a href="../../../../../../docs/manualpages/Viewer/PETSC_VIEWER_DRAW_.html#PETSC_VIEWER_DRAW_">PETSC_VIEWER_DRAW_</a>"</font>,__FILE__,PETSC_ERR_PLIB,<a href="../../../../../../docs/manualpages/Sys/PetscErrorType.html#PetscErrorType">PETSC_ERROR_INITIAL</a>,<font color="#666666">" "</font>);<font color="#4169E1">return</font>(0);}
+<a name="line734">734: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFunctionReturn.html#PetscFunctionReturn">PetscFunctionReturn</a>(viewer);
+<a name="line735">735: </a>}
+
+<a name="line737">737: </a><font color="#B22222">/*@</font>
+<a name="line738">738: </a><font color="#B22222">    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawSetBounds.html#PetscViewerDrawSetBounds">PetscViewerDrawSetBounds</a> - sets the upper and lower bounds to be used in plotting</font>
+
+<a name="line740">740: </a><font color="#B22222">    Collective on <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a></font>
+
+<a name="line742">742: </a><font color="#B22222">    Input Parameters:</font>
+<a name="line743">743: </a><font color="#B22222">+   viewer - the <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> (created with <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawOpen.html#PetscViewerDrawOpen">PetscViewerDrawOpen</a>())</font>
+<a name="line744">744: </a><font color="#B22222">.   nbounds - number of plots that can be made with this viewer, for example the dof passed to <a href="../../../../../../docs/manualpages/DMDA/DMDACreate.html#DMDACreate">DMDACreate</a>()</font>
+<a name="line745">745: </a><font color="#B22222">-   bounds - the actual bounds, the size of this is 2*nbounds, the values are stored in the order min F_0, max F_0, min F_1, max F_1, .....</font>
+
+
+<a name="line748">748: </a><font color="#B22222">    Options Database:</font>
+<a name="line749">749: </a><font color="#B22222">.   -draw_bounds  minF0,maxF0,minF1,maxF1</font>
+
+<a name="line751">751: </a><font color="#B22222">    Level: intermediate</font>
+
+<a name="line753">753: </a><font color="#B22222">    Notes: this determines the colors used in 2d contour plots generated with <a href="../../../../../../docs/manualpages/Vec/VecView.html#VecView">VecView</a>() for <a href="../../../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a> in 2d. Any values in the vector below or above the</font>
+<a name="line754">754: </a><font color="#B22222">      bounds are moved to the bound value before plotting. In this way the color index from color to physical value remains the same for all plots generated with</font>
+<a name="line755">755: </a><font color="#B22222">      this viewer. Otherwise the color to physical value meaning changes with each new image if this is not set.</font>
+
+<a name="line757">757: </a><font color="#B22222">   Concepts: drawing^accessing <a href="../../../../../../docs/manualpages/Draw/PetscDraw.html#PetscDraw">PetscDraw</a> context from <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a></font>
+<a name="line758">758: </a><font color="#B22222">   Concepts: graphics</font>
+
+<a name="line760">760: </a><font color="#B22222">.seealso: PetscViewerDrawGetLG(), PetscViewerDrawGetAxis(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawOpen.html#PetscViewerDrawOpen">PetscViewerDrawOpen</a>()</font>
+<a name="line761">761: </a><font color="#B22222">@*/</font>
+<a name="line762">762: </a><strong><font color="#4169E1"><a name="PetscViewerDrawSetBounds"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawSetBounds.html#PetscViewerDrawSetBounds">PetscViewerDrawSetBounds</a>(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> nbounds,const <a href="../../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> *bounds)</font></strong>
+<a name="line763">763: </a>{
+<a name="line764">764: </a>  PetscViewer_Draw *vdraw;
+<a name="line765">765: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>        isdraw;
+<a name="line766">766: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr;
+
+
+<a name="line771">771: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERDRAW.html#PETSCVIEWERDRAW">PETSCVIEWERDRAW</a>,&amp;isdraw);
+<a name="line772">772: </a>  <font color="#4169E1">if</font> (!isdraw) <font color="#4169E1">return</font>(0);
+<a name="line773">773: </a>  vdraw = (PetscViewer_Draw*)viewer-&gt;data;
+
+<a name="line775">775: </a>  vdraw-&gt;nbounds = nbounds;
+<a name="line776">776: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(vdraw-&gt;bounds);
+<a name="line777">777: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(2*nbounds,&amp;vdraw-&gt;bounds);
+<a name="line778">778: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(vdraw-&gt;bounds,bounds,2*nbounds*<font color="#4169E1">sizeof</font>(<a href="../../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>));
+<a name="line779">779: </a>  <font color="#4169E1">return</font>(0);
+<a name="line780">780: </a>}
+
+<a name="line782">782: </a><font color="#B22222">/*@C</font>
+<a name="line783">783: </a><font color="#B22222">    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawGetBounds.html#PetscViewerDrawGetBounds">PetscViewerDrawGetBounds</a> - gets the upper and lower bounds to be used in plotting set with <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawSetBounds.html#PetscViewerDrawSetBounds">PetscViewerDrawSetBounds</a>()</font>
+
+<a name="line785">785: </a><font color="#B22222">    Collective on <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a></font>
+
+<a name="line787">787: </a><font color="#B22222">    Input Parameter:</font>
+<a name="line788">788: </a><font color="#B22222">.   viewer - the <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> (created with <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawOpen.html#PetscViewerDrawOpen">PetscViewerDrawOpen</a>())</font>
+
+<a name="line790">790: </a><font color="#B22222">    Output Paramters:</font>
+<a name="line791">791: </a><font color="#B22222">+   nbounds - number of plots that can be made with this viewer, for example the dof passed to <a href="../../../../../../docs/manualpages/DMDA/DMDACreate.html#DMDACreate">DMDACreate</a>()</font>
+<a name="line792">792: </a><font color="#B22222">-   bounds - the actual bounds, the size of this is 2*nbounds, the values are stored in the order min F_0, max F_0, min F_1, max F_1, .....</font>
+
+<a name="line794">794: </a><font color="#B22222">    Level: intermediate</font>
+
+<a name="line796">796: </a><font color="#B22222">   Concepts: drawing^accessing <a href="../../../../../../docs/manualpages/Draw/PetscDraw.html#PetscDraw">PetscDraw</a> context from <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a></font>
+<a name="line797">797: </a><font color="#B22222">   Concepts: graphics</font>
+
+<a name="line799">799: </a><font color="#B22222">.seealso: PetscViewerDrawGetLG(), PetscViewerDrawGetAxis(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawOpen.html#PetscViewerDrawOpen">PetscViewerDrawOpen</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawSetBounds.html#PetscViewerDrawSetBounds">PetscViewerDrawSetBounds</a>()</font>
+<a name="line800">800: </a><font color="#B22222">@*/</font>
+<a name="line801">801: </a><strong><font color="#4169E1"><a name="PetscViewerDrawGetBounds"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawGetBounds.html#PetscViewerDrawGetBounds">PetscViewerDrawGetBounds</a>(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *nbounds,const <a href="../../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> **bounds)</font></strong>
+<a name="line802">802: </a>{
+<a name="line803">803: </a>  PetscViewer_Draw *vdraw;
+<a name="line804">804: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>        isdraw;
+<a name="line805">805: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr;
+
+<a name="line809">809: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERDRAW.html#PETSCVIEWERDRAW">PETSCVIEWERDRAW</a>,&amp;isdraw);
+<a name="line810">810: </a>  <font color="#4169E1">if</font> (!isdraw) {<font color="#4169E1">if</font> (nbounds) *nbounds = 0; <font color="#4169E1">if</font> (bounds) *bounds = NULL; <font color="#4169E1">return</font>(0);}
+<a name="line811">811: </a>  vdraw = (PetscViewer_Draw*)viewer-&gt;data;
+
+<a name="line813">813: </a>  <font color="#4169E1">if</font> (nbounds) *nbounds = vdraw-&gt;nbounds;
+<a name="line814">814: </a>  <font color="#4169E1">if</font> (bounds)  *bounds  = vdraw-&gt;bounds;
+<a name="line815">815: </a>  <font color="#4169E1">return</font>(0);
+<a name="line816">816: </a>}
+</pre>
+</body>
+
+</html>

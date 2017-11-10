@@ -1,0 +1,24 @@
+      subroutine PetscSFDestroy(a,z)
+      use petscvecdef
+       PetscSF a ! PetscSF
+       integer z
+       end subroutine
+      subroutine PetscSFSetUp(a,z)
+      use petscvecdef
+       PetscSF a ! PetscSF
+       integer z
+       end subroutine
+      subroutine PetscSFDuplicate(a,b,c,z)
+      use petscvecdef
+       PetscSF a ! PetscSF
+       PetscSFDuplicateOption b ! PetscSFDuplicateOption
+       PetscSF c ! PetscSF
+       integer z
+       end subroutine
+      subroutine PetscSFCompose(a,b,c,z)
+      use petscvecdef
+       PetscSF a ! PetscSF
+       PetscSF b ! PetscSF
+       PetscSF c ! PetscSF
+       integer z
+       end subroutine

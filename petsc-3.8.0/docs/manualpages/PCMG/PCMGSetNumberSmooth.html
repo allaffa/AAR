@@ -1,0 +1,51 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML3.2 EN">
+<HTML>
+<HEAD> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/PCMG/PCMGSetNumberSmooth.html" />
+<META NAME="GENERATOR" CONTENT="DOCTEXT">
+<TITLE>PCMGSetNumberSmooth</TITLE>
+</HEAD>
+<BODY BGCOLOR="FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 docs/manualpages/PCMG/PCMGSetNumberSmooth.html "><small>Report Typos and Errors</small></a></div>
+<A NAME="PCMGSetNumberSmooth"><H1>PCMGSetNumberSmooth</H1></A>
+Sets the number of pre and post-smoothing steps to use on all levels. Use PCMGSetSmoothUp() and PCMGSetSmoothDown() set different numbers of pre ad post-smoothing steps 
+<H3><FONT COLOR="#CC3333">Synopsis</FONT></H3>
+<PRE>
+#include "petscksp.h" 
+<A HREF="../Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</A>  <A HREF="../PCMG/PCMGSetNumberSmooth.html#PCMGSetNumberSmooth">PCMGSetNumberSmooth</A>(<A HREF="../PC/PC.html#PC">PC</A> pc,<A HREF="../Sys/PetscInt.html#PetscInt">PetscInt</A> n)
+</PRE>
+Logically Collective on <A HREF="../PC/PC.html#PC">PC</A>
+<P>
+<H3><FONT COLOR="#CC3333">Input Parameters</FONT></H3>
+<TABLE border="0" cellpadding="0" cellspacing="0">
+<TR><TD WIDTH=40></TD><TD ALIGN=LEFT VALIGN=TOP><B>mg </B></TD><TD>- the multigrid context
+</TD></TR>
+<TR><TD WIDTH=40></TD><TD ALIGN=LEFT VALIGN=TOP><B>n </B></TD><TD>- the number of smoothing steps
+</TD></TR></TABLE>
+<P>
+<H3><FONT COLOR="#CC3333">Options Database Key</FONT></H3>
+<TABLE border="0" cellpadding="0" cellspacing="0">
+<TR><TD WIDTH=40></TD><TD ALIGN=LEFT VALIGN=TOP><B>-mg_levels_ksp_max_it &lt;n&gt; </B></TD><TD>- Sets number of pre and post-smoothing steps
+</TD></TR>
+<TR><TD WIDTH=40></TD><TD ALIGN=LEFT VALIGN=TOP><B>-pc_mg_smooth_down &lt;n&gt; </B></TD><TD>- Sets number of pre-smoothing steps (if setting different pre and post amounts)
+</TD></TR>
+<TR><TD WIDTH=40></TD><TD ALIGN=LEFT VALIGN=TOP><B>-pc_mg_smooth_up &lt;n&gt; </B></TD><TD>- Sets number of post-smoothing steps (if setting different pre and post amounts)
+</TD></TR></TABLE>
+<P>
+
+<P>
+Notes: this does not set a value on the coarsest grid, since we assume that
+there is no separate smooth up on the coarsest grid.
+<P>
+<H3><FONT COLOR="#CC3333">Keywords</FONT></H3>
+ MG, smooth, up, post-smoothing, steps, multigrid
+<BR>
+<P>
+<H3><FONT COLOR="#CC3333">See Also</FONT></H3>
+ <A HREF="../PCMG/PCMGSetNumberSmoothDown.html#PCMGSetNumberSmoothDown">PCMGSetNumberSmoothDown</A>(), <A HREF="../PCMG/PCMGSetNumberSmoothUp.html#PCMGSetNumberSmoothUp">PCMGSetNumberSmoothUp</A>()
+<BR><P><B><P><B><FONT COLOR="#CC3333">Level:</FONT></B>advanced
+<BR><FONT COLOR="#CC3333">Location:</FONT></B><A HREF="../../../src/ksp/pc/impls/mg/mg.c.html#PCMGSetNumberSmooth">src/ksp/pc/impls/mg/mg.c</A>
+<BR><A HREF="./index.html">Index of all PCMG routines</A>
+<BR><A HREF="../../index.html">Table of Contents for all manual pages</A>
+<BR><A HREF="../singleindex.html">Index of all manual pages</A>
+</BODY></HTML>

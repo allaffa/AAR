@@ -1,0 +1,38 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML3.2 EN">
+<HTML>
+<HEAD> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/DM/DMMoabPToRMapping.html" />
+<META NAME="GENERATOR" CONTENT="DOCTEXT">
+<TITLE>DMMoabPToRMapping</TITLE>
+</HEAD>
+<BODY BGCOLOR="FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 docs/manualpages/DM/DMMoabPToRMapping.html "><small>Report Typos and Errors</small></a></div>
+<A NAME="DMMoabPToRMapping"><H1>DMMoabPToRMapping</H1></A>
+Compute the mapping from the physical coordinate system for a given element to the canonical reference element. In addition to finding the inverse mapping evaluation through Newton iteration, the basis function at the parametric point is also evaluated optionally. 
+<H3><FONT COLOR="#CC3333">Synopsis</FONT></H3>
+<PRE>
+#include "petscdt.h" 
+#include "petscdmmoab.h"   
+<A HREF="../Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</A> <A HREF="../DM/DMMoabPToRMapping.html#DMMoabPToRMapping">DMMoabPToRMapping</A>( const <A HREF="../Sys/PetscInt.html#PetscInt">PetscInt</A> dim, const <A HREF="../Sys/PetscInt.html#PetscInt">PetscInt</A> nverts, const <A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A> *coordinates, const <A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A>* xphy, <A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A>* natparam, <A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A>* phi)
+</PRE>
+<H3><FONT COLOR="#CC3333">Input Parameter</FONT></H3>
+<P>
+<DT><B><A HREF="../Sys/PetscInt.html#PetscInt">PetscInt</A>  dim,          the element dimension (1=EDGE, 2=QUAD/TRI, 3=HEX/TET)</B> -.  <A HREF="../Sys/PetscInt.html#PetscInt">PetscInt</A> nverts,        the number of vertices in the physical element
+<br>
+<DT><B><A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A> coordinates,  the coordinates of vertices in the physical element</B> -.  <A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A>[3] xphy,      the coordinates of physical point for which natural coordinates (in reference frame) are sought
+<br>
+<P>
+<H3><FONT COLOR="#CC3333">Output Parameter</FONT></H3>
+<DT><B><A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A>[3] natparam,  the natural coordinates (in reference frame) corresponding to xphy</B> -.  <A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A>[nverts] phi,  the basis functions evaluated at the natural coordinates (natparam)
+<br>
+<P>
+
+<P>
+<H3><FONT COLOR="#CC3333">Keywords</FONT></H3>
+ DMMoab, Mapping, FEM
+<BR><P><B><P><B><FONT COLOR="#CC3333">Level:</FONT></B>advanced
+<BR><FONT COLOR="#CC3333">Location:</FONT></B><A HREF="../../../src/dm/impls/moab/dmmbfem.cxx#DMMoabPToRMapping">src/dm/impls/moab/dmmbfem.cxx</A>
+<BR><A HREF="./index.html">Index of all DM routines</A>
+<BR><A HREF="../../index.html">Table of Contents for all manual pages</A>
+<BR><A HREF="../singleindex.html">Index of all manual pages</A>
+</BODY></HTML>

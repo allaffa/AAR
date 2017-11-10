@@ -1,0 +1,43 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML3.2 EN">
+<HTML>
+<HEAD> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/Sys/PetscOptionsLeftGet.html" />
+<META NAME="GENERATOR" CONTENT="DOCTEXT">
+<TITLE>PetscOptionsLeftGet</TITLE>
+</HEAD>
+<BODY BGCOLOR="FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 docs/manualpages/Sys/PetscOptionsLeftGet.html "><small>Report Typos and Errors</small></a></div>
+<A NAME="PetscOptionsLeftGet"><H1>PetscOptionsLeftGet</H1></A>
+Returns all options that were set and never used. 
+<H3><FONT COLOR="#CC3333">Synopsis</FONT></H3>
+<PRE>
+#include "petscsys.h"   
+<A HREF="../Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</A>  <A HREF="../Sys/PetscOptionsLeftGet.html#PetscOptionsLeftGet">PetscOptionsLeftGet</A>(PetscOptions options,<A HREF="../Sys/PetscInt.html#PetscInt">PetscInt</A> *N,char **names[],char **values[])
+</PRE>
+Not collective
+<P>
+<H3><FONT COLOR="#CC3333">Input Parameter</FONT></H3>
+<DT><B>options </B> -options database, use NULL for default global database
+<br>
+<P>
+<H3><FONT COLOR="#CC3333">Output Parameter</FONT></H3>
+<DT><B>N </B> -count of options not used
+<br>
+<DT><B>names </B> -names of options not used
+<br>
+<DT><B>values </B> -values of options not used
+<br>
+<P>
+
+<P>
+<H3><FONT COLOR="#CC3333">Notes</FONT></H3>
+Users should call <A HREF="../Sys/PetscOptionsLeftRestore.html#PetscOptionsLeftRestore">PetscOptionsLeftRestore</A>() to free the memory allocated in this routine
+<P>
+<H3><FONT COLOR="#CC3333">See Also</FONT></H3>
+ <A HREF="../Sys/PetscOptionsAllUsed.html#PetscOptionsAllUsed">PetscOptionsAllUsed</A>(), <A HREF="../Sys/PetscOptionsLeft.html#PetscOptionsLeft">PetscOptionsLeft</A>()
+<BR><P><B><P><B><FONT COLOR="#CC3333">Level:</FONT></B>advanced
+<BR><FONT COLOR="#CC3333">Location:</FONT></B><A HREF="../../../src/sys/objects/options.c.html#PetscOptionsLeftGet">src/sys/objects/options.c</A>
+<BR><A HREF="./index.html">Index of all Sys routines</A>
+<BR><A HREF="../../index.html">Table of Contents for all manual pages</A>
+<BR><A HREF="../singleindex.html">Index of all manual pages</A>
+</BODY></HTML>

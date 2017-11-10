@@ -1,0 +1,1 @@
+#define PETSC_HAVE_FORTRAN 1

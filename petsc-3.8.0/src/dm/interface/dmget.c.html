@@ -1,0 +1,503 @@
+<center><a href="dmget.c">Actual source code: dmget.c</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/dm/interface/dmget.c.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:48:20+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/dm/interface/dmget.c.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+<a name="line1">  1: </a> #include <A href="../../../include/petsc/private/dmimpl.h.html">&lt;petsc/private/dmimpl.h&gt;</A>
+
+<a name="line3">  3: </a><font color="#B22222">/*@</font>
+<a name="line4">  4: </a><font color="#B22222">   <a href="../../../docs/manualpages/DM/DMGetLocalVector.html#DMGetLocalVector">DMGetLocalVector</a> - Gets a Seq PETSc vector that</font>
+<a name="line5">  5: </a><font color="#B22222">   may be used with the DMXXX routines. This vector has spaces for the ghost values.</font>
+
+<a name="line7">  7: </a><font color="#B22222">   Not Collective</font>
+
+<a name="line9">  9: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line10"> 10: </a><font color="#B22222">.  dm - the distributed array</font>
+
+<a name="line12"> 12: </a><font color="#B22222">   Output Parameter:</font>
+<a name="line13"> 13: </a><font color="#B22222">.  g - the local vector</font>
+
+<a name="line15"> 15: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line17"> 17: </a><font color="#B22222">   Note:</font>
+<a name="line18"> 18: </a><font color="#B22222">   The vector values are NOT initialized and may have garbage in them, so you may need</font>
+<a name="line19"> 19: </a><font color="#B22222">   to zero them.</font>
+
+<a name="line21"> 21: </a><font color="#B22222">   The output parameter, g, is a regular PETSc vector that should be returned with</font>
+<a name="line22"> 22: </a><font color="#B22222">   <a href="../../../docs/manualpages/DM/DMRestoreLocalVector.html#DMRestoreLocalVector">DMRestoreLocalVector</a>() DO NOT call <a href="../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>() on it.</font>
+
+<a name="line24"> 24: </a><font color="#B22222">   This is intended to be used for vectors you need for a short time, like within a single function call.</font>
+<a name="line25"> 25: </a><font color="#B22222">   For vectors that you intend to keep around (for example in a C struct) or pass around large parts of your</font>
+<a name="line26"> 26: </a><font color="#B22222">   code you should use <a href="../../../docs/manualpages/DM/DMCreateLocalVector.html#DMCreateLocalVector">DMCreateLocalVector</a>().</font>
+
+<a name="line28"> 28: </a><font color="#B22222">   VecStride*() operations can be useful when using <a href="../../../docs/manualpages/DM/DM.html#DM">DM</a> with dof &gt; 1</font>
+
+<a name="line30"> 30: </a><font color="#B22222">.keywords: distributed array, create, local, vector</font>
+
+<a name="line32"> 32: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/DM/DMCreateGlobalVector.html#DMCreateGlobalVector">DMCreateGlobalVector</a>(), <a href="../../../docs/manualpages/Vec/VecDuplicate.html#VecDuplicate">VecDuplicate</a>(), <a href="../../../docs/manualpages/Vec/VecDuplicateVecs.html#VecDuplicateVecs">VecDuplicateVecs</a>(),</font>
+<a name="line33"> 33: </a><font color="#B22222">          <a href="../../../docs/manualpages/DMDA/DMDACreate1d.html#DMDACreate1d">DMDACreate1d</a>(), <a href="../../../docs/manualpages/DMDA/DMDACreate2d.html#DMDACreate2d">DMDACreate2d</a>(), <a href="../../../docs/manualpages/DMDA/DMDACreate3d.html#DMDACreate3d">DMDACreate3d</a>(), <a href="../../../docs/manualpages/DM/DMGlobalToLocalBegin.html#DMGlobalToLocalBegin">DMGlobalToLocalBegin</a>(),</font>
+<a name="line34"> 34: </a><font color="#B22222">          <a href="../../../docs/manualpages/DM/DMGlobalToLocalEnd.html#DMGlobalToLocalEnd">DMGlobalToLocalEnd</a>(), <a href="../../../docs/manualpages/DM/DMLocalToGlobalBegin.html#DMLocalToGlobalBegin">DMLocalToGlobalBegin</a>(), <a href="../../../docs/manualpages/DM/DMCreateLocalVector.html#DMCreateLocalVector">DMCreateLocalVector</a>(), <a href="../../../docs/manualpages/DM/DMRestoreLocalVector.html#DMRestoreLocalVector">DMRestoreLocalVector</a>(),</font>
+<a name="line35"> 35: </a><font color="#B22222">          <a href="../../../docs/manualpages/Vec/VecStrideMax.html#VecStrideMax">VecStrideMax</a>(), <a href="../../../docs/manualpages/Vec/VecStrideMin.html#VecStrideMin">VecStrideMin</a>(), <a href="../../../docs/manualpages/Vec/VecStrideNorm.html#VecStrideNorm">VecStrideNorm</a>()</font>
+<a name="line36"> 36: </a><font color="#B22222">@*/</font>
+<a name="line37"> 37: </a><strong><font color="#4169E1"><a name="DMGetLocalVector"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../docs/manualpages/DM/DMGetLocalVector.html#DMGetLocalVector">DMGetLocalVector</a>(<a href="../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> *g)</font></strong>
+<a name="line38"> 38: </a>{
+<a name="line39"> 39: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr,i;
+
+<a name="line44"> 44: </a>  <font color="#4169E1">for</font> (i=0; i&lt;DM_MAX_WORK_VECTORS; i++) {
+<a name="line45"> 45: </a>    <font color="#4169E1">if</font> (dm-&gt;localin[i]) {
+<a name="line46"> 46: </a>      *g             = dm-&gt;localin[i];
+<a name="line47"> 47: </a>      dm-&gt;localin[i] = NULL;
+<a name="line48"> 48: </a>      <font color="#4169E1">goto</font> alldone;
+<a name="line49"> 49: </a>    }
+<a name="line50"> 50: </a>  }
+<a name="line51"> 51: </a>  <a href="../../../docs/manualpages/DM/DMCreateLocalVector.html#DMCreateLocalVector">DMCreateLocalVector</a>(dm,g);
+
+<a name="line53"> 53: </a><strong><font color="#FF0000">alldone:</font></strong>
+<a name="line54"> 54: </a>  <font color="#4169E1">for</font> (i=0; i&lt;DM_MAX_WORK_VECTORS; i++) {
+<a name="line55"> 55: </a>    <font color="#4169E1">if</font> (!dm-&gt;localout[i]) {
+<a name="line56"> 56: </a>      dm-&gt;localout[i] = *g;
+<a name="line57"> 57: </a>      <font color="#4169E1">break</font>;
+<a name="line58"> 58: </a>    }
+<a name="line59"> 59: </a>  }
+<a name="line60"> 60: </a>  <font color="#4169E1">return</font>(0);
+<a name="line61"> 61: </a>}
+
+<a name="line63"> 63: </a><font color="#B22222">/*@</font>
+<a name="line64"> 64: </a><font color="#B22222">   <a href="../../../docs/manualpages/DM/DMRestoreLocalVector.html#DMRestoreLocalVector">DMRestoreLocalVector</a> - Returns a Seq PETSc vector that</font>
+<a name="line65"> 65: </a><font color="#B22222">     obtained from <a href="../../../docs/manualpages/DM/DMGetLocalVector.html#DMGetLocalVector">DMGetLocalVector</a>(). Do not use with vector obtained via</font>
+<a name="line66"> 66: </a><font color="#B22222">     <a href="../../../docs/manualpages/DM/DMCreateLocalVector.html#DMCreateLocalVector">DMCreateLocalVector</a>().</font>
+
+<a name="line68"> 68: </a><font color="#B22222">   Not Collective</font>
+
+<a name="line70"> 70: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line71"> 71: </a><font color="#B22222">+  dm - the distributed array</font>
+<a name="line72"> 72: </a><font color="#B22222">-  g - the local vector</font>
+
+<a name="line74"> 74: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line76"> 76: </a><font color="#B22222">.keywords: distributed array, create, local, vector</font>
+
+<a name="line78"> 78: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/DM/DMCreateGlobalVector.html#DMCreateGlobalVector">DMCreateGlobalVector</a>(), <a href="../../../docs/manualpages/Vec/VecDuplicate.html#VecDuplicate">VecDuplicate</a>(), <a href="../../../docs/manualpages/Vec/VecDuplicateVecs.html#VecDuplicateVecs">VecDuplicateVecs</a>(),</font>
+<a name="line79"> 79: </a><font color="#B22222">          <a href="../../../docs/manualpages/DMDA/DMDACreate1d.html#DMDACreate1d">DMDACreate1d</a>(), <a href="../../../docs/manualpages/DMDA/DMDACreate2d.html#DMDACreate2d">DMDACreate2d</a>(), <a href="../../../docs/manualpages/DMDA/DMDACreate3d.html#DMDACreate3d">DMDACreate3d</a>(), <a href="../../../docs/manualpages/DM/DMGlobalToLocalBegin.html#DMGlobalToLocalBegin">DMGlobalToLocalBegin</a>(),</font>
+<a name="line80"> 80: </a><font color="#B22222">          <a href="../../../docs/manualpages/DM/DMGlobalToLocalEnd.html#DMGlobalToLocalEnd">DMGlobalToLocalEnd</a>(), <a href="../../../docs/manualpages/DM/DMLocalToGlobalBegin.html#DMLocalToGlobalBegin">DMLocalToGlobalBegin</a>(), <a href="../../../docs/manualpages/DM/DMCreateLocalVector.html#DMCreateLocalVector">DMCreateLocalVector</a>(), <a href="../../../docs/manualpages/DM/DMGetLocalVector.html#DMGetLocalVector">DMGetLocalVector</a>()</font>
+<a name="line81"> 81: </a><font color="#B22222">@*/</font>
+<a name="line82"> 82: </a><strong><font color="#4169E1"><a name="DMRestoreLocalVector"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../docs/manualpages/DM/DMRestoreLocalVector.html#DMRestoreLocalVector">DMRestoreLocalVector</a>(<a href="../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> *g)</font></strong>
+<a name="line83"> 83: </a>{
+<a name="line85"> 85: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       i,j;
+
+<a name="line90"> 90: </a>  <font color="#4169E1">for</font> (j=0; j&lt;DM_MAX_WORK_VECTORS; j++) {
+<a name="line91"> 91: </a>    <font color="#4169E1">if</font> (*g == dm-&gt;localout[j]) {
+<a name="line92"> 92: </a>      dm-&gt;localout[j] = NULL;
+<a name="line93"> 93: </a>      <font color="#4169E1">for</font> (i=0; i&lt;DM_MAX_WORK_VECTORS; i++) {
+<a name="line94"> 94: </a>        <font color="#4169E1">if</font> (!dm-&gt;localin[i]) {
+<a name="line95"> 95: </a>          dm-&gt;localin[i] = *g;
+<a name="line96"> 96: </a>          <font color="#4169E1">goto</font> alldone;
+<a name="line97"> 97: </a>        }
+<a name="line98"> 98: </a>      }
+<a name="line99"> 99: </a>    }
+<a name="line100">100: </a>  }
+<a name="line101">101: </a>  <a href="../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(g);
+<a name="line102">102: </a><strong><font color="#FF0000">alldone:</font></strong>
+<a name="line103">103: </a>  *g = NULL;
+<a name="line104">104: </a>  <font color="#4169E1">return</font>(0);
+<a name="line105">105: </a>}
+
+<a name="line107">107: </a><font color="#B22222">/*@</font>
+<a name="line108">108: </a><font color="#B22222">   <a href="../../../docs/manualpages/DM/DMGetGlobalVector.html#DMGetGlobalVector">DMGetGlobalVector</a> - Gets a MPI PETSc vector that</font>
+<a name="line109">109: </a><font color="#B22222">   may be used with the DMXXX routines.</font>
+
+<a name="line111">111: </a><font color="#B22222">   Collective on <a href="../../../docs/manualpages/DM/DM.html#DM">DM</a></font>
+
+<a name="line113">113: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line114">114: </a><font color="#B22222">.  dm - the distributed array</font>
+
+<a name="line116">116: </a><font color="#B22222">   Output Parameter:</font>
+<a name="line117">117: </a><font color="#B22222">.  g - the global vector</font>
+
+<a name="line119">119: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line121">121: </a><font color="#B22222">   Note:</font>
+<a name="line122">122: </a><font color="#B22222">   The vector values are NOT initialized and may have garbage in them, so you may need</font>
+<a name="line123">123: </a><font color="#B22222">   to zero them.</font>
+
+<a name="line125">125: </a><font color="#B22222">   The output parameter, g, is a regular PETSc vector that should be returned with</font>
+<a name="line126">126: </a><font color="#B22222">   <a href="../../../docs/manualpages/DM/DMRestoreGlobalVector.html#DMRestoreGlobalVector">DMRestoreGlobalVector</a>() DO NOT call <a href="../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>() on it.</font>
+
+<a name="line128">128: </a><font color="#B22222">   This is intended to be used for vectors you need for a short time, like within a single function call.</font>
+<a name="line129">129: </a><font color="#B22222">   For vectors that you intend to keep around (for example in a C struct) or pass around large parts of your</font>
+<a name="line130">130: </a><font color="#B22222">   code you should use <a href="../../../docs/manualpages/DM/DMCreateGlobalVector.html#DMCreateGlobalVector">DMCreateGlobalVector</a>().</font>
+
+<a name="line132">132: </a><font color="#B22222">   VecStride*() operations can be useful when using <a href="../../../docs/manualpages/DM/DM.html#DM">DM</a> with dof &gt; 1</font>
+
+<a name="line134">134: </a><font color="#B22222">.keywords: distributed array, create, Global, vector</font>
+
+<a name="line136">136: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/DM/DMCreateGlobalVector.html#DMCreateGlobalVector">DMCreateGlobalVector</a>(), <a href="../../../docs/manualpages/Vec/VecDuplicate.html#VecDuplicate">VecDuplicate</a>(), <a href="../../../docs/manualpages/Vec/VecDuplicateVecs.html#VecDuplicateVecs">VecDuplicateVecs</a>(),</font>
+<a name="line137">137: </a><font color="#B22222">          <a href="../../../docs/manualpages/DMDA/DMDACreate1d.html#DMDACreate1d">DMDACreate1d</a>(), <a href="../../../docs/manualpages/DMDA/DMDACreate2d.html#DMDACreate2d">DMDACreate2d</a>(), <a href="../../../docs/manualpages/DMDA/DMDACreate3d.html#DMDACreate3d">DMDACreate3d</a>(), <a href="../../../docs/manualpages/DM/DMGlobalToLocalBegin.html#DMGlobalToLocalBegin">DMGlobalToLocalBegin</a>(),</font>
+<a name="line138">138: </a><font color="#B22222">          <a href="../../../docs/manualpages/DM/DMGlobalToLocalEnd.html#DMGlobalToLocalEnd">DMGlobalToLocalEnd</a>(), <a href="../../../docs/manualpages/DM/DMLocalToGlobalBegin.html#DMLocalToGlobalBegin">DMLocalToGlobalBegin</a>(), <a href="../../../docs/manualpages/DM/DMCreateLocalVector.html#DMCreateLocalVector">DMCreateLocalVector</a>(), <a href="../../../docs/manualpages/DM/DMRestoreLocalVector.html#DMRestoreLocalVector">DMRestoreLocalVector</a>()</font>
+<a name="line139">139: </a><font color="#B22222">          <a href="../../../docs/manualpages/Vec/VecStrideMax.html#VecStrideMax">VecStrideMax</a>(), <a href="../../../docs/manualpages/Vec/VecStrideMin.html#VecStrideMin">VecStrideMin</a>(), <a href="../../../docs/manualpages/Vec/VecStrideNorm.html#VecStrideNorm">VecStrideNorm</a>()</font>
+
+<a name="line141">141: </a><font color="#B22222">@*/</font>
+<a name="line142">142: </a><strong><font color="#4169E1"><a name="DMGetGlobalVector"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../docs/manualpages/DM/DMGetGlobalVector.html#DMGetGlobalVector">DMGetGlobalVector</a>(<a href="../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> *g)</font></strong>
+<a name="line143">143: </a>{
+<a name="line145">145: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       i;
+
+<a name="line150">150: </a>  <font color="#4169E1">for</font> (i=0; i&lt;DM_MAX_WORK_VECTORS; i++) {
+<a name="line151">151: </a>    <font color="#4169E1">if</font> (dm-&gt;globalin[i]) {
+<a name="line152">152: </a>      *g              = dm-&gt;globalin[i];
+<a name="line153">153: </a>      dm-&gt;globalin[i] = NULL;
+<a name="line154">154: </a>      <font color="#4169E1">goto</font> alldone;
+<a name="line155">155: </a>    }
+<a name="line156">156: </a>  }
+<a name="line157">157: </a>  <a href="../../../docs/manualpages/DM/DMCreateGlobalVector.html#DMCreateGlobalVector">DMCreateGlobalVector</a>(dm,g);
+
+<a name="line159">159: </a><strong><font color="#FF0000">alldone:</font></strong>
+<a name="line160">160: </a>  <font color="#4169E1">for</font> (i=0; i&lt;DM_MAX_WORK_VECTORS; i++) {
+<a name="line161">161: </a>    <font color="#4169E1">if</font> (!dm-&gt;globalout[i]) {
+<a name="line162">162: </a>      dm-&gt;globalout[i] = *g;
+<a name="line163">163: </a>      <font color="#4169E1">break</font>;
+<a name="line164">164: </a>    }
+<a name="line165">165: </a>  }
+<a name="line166">166: </a>  <font color="#4169E1">return</font>(0);
+<a name="line167">167: </a>}
+
+<a name="line169">169: </a><font color="#B22222">/*@</font>
+<a name="line170">170: </a><font color="#B22222">   <a href="../../../docs/manualpages/DM/DMClearGlobalVectors.html#DMClearGlobalVectors">DMClearGlobalVectors</a> - Destroys all the global vectors that have been stashed in this <a href="../../../docs/manualpages/DM/DM.html#DM">DM</a></font>
+
+<a name="line172">172: </a><font color="#B22222">   Collective on <a href="../../../docs/manualpages/DM/DM.html#DM">DM</a></font>
+
+<a name="line174">174: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line175">175: </a><font color="#B22222">.  dm - the distributed array</font>
+
+<a name="line177">177: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line179">179: </a><font color="#B22222">.keywords: distributed array, create, Global, vector</font>
+
+<a name="line181">181: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/DM/DMCreateGlobalVector.html#DMCreateGlobalVector">DMCreateGlobalVector</a>(), <a href="../../../docs/manualpages/Vec/VecDuplicate.html#VecDuplicate">VecDuplicate</a>(), <a href="../../../docs/manualpages/Vec/VecDuplicateVecs.html#VecDuplicateVecs">VecDuplicateVecs</a>(),</font>
+<a name="line182">182: </a><font color="#B22222">          <a href="../../../docs/manualpages/DMDA/DMDACreate1d.html#DMDACreate1d">DMDACreate1d</a>(), <a href="../../../docs/manualpages/DMDA/DMDACreate2d.html#DMDACreate2d">DMDACreate2d</a>(), <a href="../../../docs/manualpages/DMDA/DMDACreate3d.html#DMDACreate3d">DMDACreate3d</a>(), <a href="../../../docs/manualpages/DM/DMGlobalToLocalBegin.html#DMGlobalToLocalBegin">DMGlobalToLocalBegin</a>(),</font>
+<a name="line183">183: </a><font color="#B22222">          <a href="../../../docs/manualpages/DM/DMGlobalToLocalEnd.html#DMGlobalToLocalEnd">DMGlobalToLocalEnd</a>(), <a href="../../../docs/manualpages/DM/DMLocalToGlobalBegin.html#DMLocalToGlobalBegin">DMLocalToGlobalBegin</a>(), <a href="../../../docs/manualpages/DM/DMCreateLocalVector.html#DMCreateLocalVector">DMCreateLocalVector</a>(), <a href="../../../docs/manualpages/DM/DMRestoreLocalVector.html#DMRestoreLocalVector">DMRestoreLocalVector</a>()</font>
+<a name="line184">184: </a><font color="#B22222">          <a href="../../../docs/manualpages/Vec/VecStrideMax.html#VecStrideMax">VecStrideMax</a>(), <a href="../../../docs/manualpages/Vec/VecStrideMin.html#VecStrideMin">VecStrideMin</a>(), <a href="../../../docs/manualpages/Vec/VecStrideNorm.html#VecStrideNorm">VecStrideNorm</a>()</font>
+
+<a name="line186">186: </a><font color="#B22222">@*/</font>
+<a name="line187">187: </a><strong><font color="#4169E1"><a name="DMClearGlobalVectors"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../docs/manualpages/DM/DMClearGlobalVectors.html#DMClearGlobalVectors">DMClearGlobalVectors</a>(<a href="../../../docs/manualpages/DM/DM.html#DM">DM</a> dm)</font></strong>
+<a name="line188">188: </a>{
+<a name="line190">190: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       i;
+
+<a name="line194">194: </a>  <font color="#4169E1">for</font> (i=0; i&lt;DM_MAX_WORK_VECTORS; i++) {
+<a name="line195">195: </a>    <a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> g;
+<a name="line196">196: </a>    <font color="#4169E1">if</font> (dm-&gt;globalout[i]) <a href="../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_WRONGSTATE,<font color="#666666">"Clearing <a href="../../../docs/manualpages/DM/DM.html#DM">DM</a> of global vectors that has a global vector obtained with <a href="../../../docs/manualpages/DM/DMGetGlobalVector.html#DMGetGlobalVector">DMGetGlobalVector</a>()"</font>);
+<a name="line197">197: </a>    g = dm-&gt;globalin[i];
+<a name="line198">198: </a>    dm-&gt;globalin[i] = NULL;
+<a name="line199">199: </a>    <a href="../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;g);
+<a name="line200">200: </a>  }
+<a name="line201">201: </a>  <font color="#4169E1">return</font>(0);
+<a name="line202">202: </a>}
+
+<a name="line204">204: </a><font color="#B22222">/*@</font>
+<a name="line205">205: </a><font color="#B22222">   <a href="../../../docs/manualpages/DM/DMClearLocalVectors.html#DMClearLocalVectors">DMClearLocalVectors</a> - Destroys all the local vectors that have been stashed in this <a href="../../../docs/manualpages/DM/DM.html#DM">DM</a></font>
+
+<a name="line207">207: </a><font color="#B22222">   Collective on <a href="../../../docs/manualpages/DM/DM.html#DM">DM</a></font>
+
+<a name="line209">209: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line210">210: </a><font color="#B22222">.  dm - the distributed array</font>
+
+<a name="line212">212: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line214">214: </a><font color="#B22222">.keywords: distributed array, create, Local, vector</font>
+
+<a name="line216">216: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/DM/DMCreateLocalVector.html#DMCreateLocalVector">DMCreateLocalVector</a>(), <a href="../../../docs/manualpages/Vec/VecDuplicate.html#VecDuplicate">VecDuplicate</a>(), <a href="../../../docs/manualpages/Vec/VecDuplicateVecs.html#VecDuplicateVecs">VecDuplicateVecs</a>(),</font>
+<a name="line217">217: </a><font color="#B22222">          <a href="../../../docs/manualpages/DMDA/DMDACreate1d.html#DMDACreate1d">DMDACreate1d</a>(), <a href="../../../docs/manualpages/DMDA/DMDACreate2d.html#DMDACreate2d">DMDACreate2d</a>(), <a href="../../../docs/manualpages/DMDA/DMDACreate3d.html#DMDACreate3d">DMDACreate3d</a>(), <a href="../../../docs/manualpages/DM/DMLocalToLocalBegin.html#DMLocalToLocalBegin">DMLocalToLocalBegin</a>(),</font>
+<a name="line218">218: </a><font color="#B22222">          <a href="../../../docs/manualpages/DM/DMLocalToLocalEnd.html#DMLocalToLocalEnd">DMLocalToLocalEnd</a>(), <a href="../../../docs/manualpages/DM/DMLocalToLocalBegin.html#DMLocalToLocalBegin">DMLocalToLocalBegin</a>(), <a href="../../../docs/manualpages/DM/DMCreateLocalVector.html#DMCreateLocalVector">DMCreateLocalVector</a>(), <a href="../../../docs/manualpages/DM/DMRestoreLocalVector.html#DMRestoreLocalVector">DMRestoreLocalVector</a>()</font>
+<a name="line219">219: </a><font color="#B22222">          <a href="../../../docs/manualpages/Vec/VecStrideMax.html#VecStrideMax">VecStrideMax</a>(), <a href="../../../docs/manualpages/Vec/VecStrideMin.html#VecStrideMin">VecStrideMin</a>(), <a href="../../../docs/manualpages/Vec/VecStrideNorm.html#VecStrideNorm">VecStrideNorm</a>()</font>
+
+<a name="line221">221: </a><font color="#B22222">@*/</font>
+<a name="line222">222: </a><strong><font color="#4169E1"><a name="DMClearLocalVectors"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../docs/manualpages/DM/DMClearLocalVectors.html#DMClearLocalVectors">DMClearLocalVectors</a>(<a href="../../../docs/manualpages/DM/DM.html#DM">DM</a> dm)</font></strong>
+<a name="line223">223: </a>{
+<a name="line225">225: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       i;
+
+<a name="line229">229: </a>  <font color="#4169E1">for</font> (i=0; i&lt;DM_MAX_WORK_VECTORS; i++) {
+<a name="line230">230: </a>    <a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> g;
+<a name="line231">231: </a>    <font color="#4169E1">if</font> (dm-&gt;localout[i]) <a href="../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_WRONGSTATE,<font color="#666666">"Clearing <a href="../../../docs/manualpages/DM/DM.html#DM">DM</a> of local vectors that has a local vector obtained with <a href="../../../docs/manualpages/DM/DMGetLocalVector.html#DMGetLocalVector">DMGetLocalVector</a>()"</font>);
+<a name="line232">232: </a>    g = dm-&gt;localin[i];
+<a name="line233">233: </a>    dm-&gt;localin[i] = NULL;
+<a name="line234">234: </a>    <a href="../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;g);
+<a name="line235">235: </a>  }
+<a name="line236">236: </a>  <font color="#4169E1">return</font>(0);
+<a name="line237">237: </a>}
+
+<a name="line239">239: </a><font color="#B22222">/*@</font>
+<a name="line240">240: </a><font color="#B22222">   <a href="../../../docs/manualpages/DM/DMRestoreGlobalVector.html#DMRestoreGlobalVector">DMRestoreGlobalVector</a> - Returns a Seq PETSc vector that</font>
+<a name="line241">241: </a><font color="#B22222">     obtained from <a href="../../../docs/manualpages/DM/DMGetGlobalVector.html#DMGetGlobalVector">DMGetGlobalVector</a>(). Do not use with vector obtained via</font>
+<a name="line242">242: </a><font color="#B22222">     <a href="../../../docs/manualpages/DM/DMCreateGlobalVector.html#DMCreateGlobalVector">DMCreateGlobalVector</a>().</font>
+
+<a name="line244">244: </a><font color="#B22222">   Not Collective</font>
+
+<a name="line246">246: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line247">247: </a><font color="#B22222">+  dm - the distributed array</font>
+<a name="line248">248: </a><font color="#B22222">-  g - the global vector</font>
+
+<a name="line250">250: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line252">252: </a><font color="#B22222">.keywords: distributed array, create, global, vector</font>
+
+<a name="line254">254: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/DM/DMCreateGlobalVector.html#DMCreateGlobalVector">DMCreateGlobalVector</a>(), <a href="../../../docs/manualpages/Vec/VecDuplicate.html#VecDuplicate">VecDuplicate</a>(), <a href="../../../docs/manualpages/Vec/VecDuplicateVecs.html#VecDuplicateVecs">VecDuplicateVecs</a>(),</font>
+<a name="line255">255: </a><font color="#B22222">          <a href="../../../docs/manualpages/DMDA/DMDACreate1d.html#DMDACreate1d">DMDACreate1d</a>(), <a href="../../../docs/manualpages/DMDA/DMDACreate2d.html#DMDACreate2d">DMDACreate2d</a>(), <a href="../../../docs/manualpages/DMDA/DMDACreate3d.html#DMDACreate3d">DMDACreate3d</a>(), DMGlobalToGlobalBegin(),</font>
+<a name="line256">256: </a><font color="#B22222">          DMGlobalToGlobalEnd(), DMGlobalToGlobal(), <a href="../../../docs/manualpages/DM/DMCreateLocalVector.html#DMCreateLocalVector">DMCreateLocalVector</a>(), <a href="../../../docs/manualpages/DM/DMGetGlobalVector.html#DMGetGlobalVector">DMGetGlobalVector</a>()</font>
+<a name="line257">257: </a><font color="#B22222">@*/</font>
+<a name="line258">258: </a><strong><font color="#4169E1"><a name="DMRestoreGlobalVector"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../docs/manualpages/DM/DMRestoreGlobalVector.html#DMRestoreGlobalVector">DMRestoreGlobalVector</a>(<a href="../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> *g)</font></strong>
+<a name="line259">259: </a>{
+<a name="line261">261: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       i,j;
+
+<a name="line266">266: </a>  <font color="#4169E1">for</font> (j=0; j&lt;DM_MAX_WORK_VECTORS; j++) {
+<a name="line267">267: </a>    <font color="#4169E1">if</font> (*g == dm-&gt;globalout[j]) {
+<a name="line268">268: </a>      dm-&gt;globalout[j] = NULL;
+<a name="line269">269: </a>      <font color="#4169E1">for</font> (i=0; i&lt;DM_MAX_WORK_VECTORS; i++) {
+<a name="line270">270: </a>        <font color="#4169E1">if</font> (!dm-&gt;globalin[i]) {
+<a name="line271">271: </a>          dm-&gt;globalin[i] = *g;
+<a name="line272">272: </a>          <font color="#4169E1">goto</font> alldone;
+<a name="line273">273: </a>        }
+<a name="line274">274: </a>      }
+<a name="line275">275: </a>    }
+<a name="line276">276: </a>  }
+<a name="line277">277: </a>  <a href="../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(g);
+<a name="line278">278: </a><strong><font color="#FF0000">alldone:</font></strong>
+<a name="line279">279: </a>  *g = NULL;
+<a name="line280">280: </a>  <font color="#4169E1">return</font>(0);
+<a name="line281">281: </a>}
+
+<a name="line283">283: </a><font color="#B22222">/*@C</font>
+<a name="line284">284: </a><font color="#B22222">   <a href="../../../docs/manualpages/DM/DMHasNamedGlobalVector.html#DMHasNamedGlobalVector">DMHasNamedGlobalVector</a> - check for a named, persistent global vector</font>
+
+<a name="line286">286: </a><font color="#B22222">   Not Collective</font>
+
+<a name="line288">288: </a><font color="#B22222">   Input Arguments:</font>
+<a name="line289">289: </a><font color="#B22222">+  dm - <a href="../../../docs/manualpages/DM/DM.html#DM">DM</a> to hold named vectors</font>
+<a name="line290">290: </a><font color="#B22222">-  name - unique name for <a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a></font>
+
+<a name="line292">292: </a><font color="#B22222">   Output Arguments:</font>
+<a name="line293">293: </a><font color="#B22222">.  exists - true if the vector was previously created</font>
+
+<a name="line295">295: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line297">297: </a><font color="#B22222">   Note: If a <a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> with the given name does not exist, it is created.</font>
+
+<a name="line299">299: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/DM/DMGetNamedGlobalVector.html#DMGetNamedGlobalVector">DMGetNamedGlobalVector</a>(),<a href="../../../docs/manualpages/DM/DMRestoreNamedLocalVector.html#DMRestoreNamedLocalVector">DMRestoreNamedLocalVector</a>()</font>
+<a name="line300">300: </a><font color="#B22222">@*/</font>
+<a name="line301">301: </a><strong><font color="#4169E1"><a name="DMHasNamedGlobalVector"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../docs/manualpages/DM/DMHasNamedGlobalVector.html#DMHasNamedGlobalVector">DMHasNamedGlobalVector</a>(<a href="../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,const char *name,<a href="../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> *exists)</font></strong>
+<a name="line302">302: </a>{
+<a name="line304">304: </a>  DMNamedVecLink link;
+
+<a name="line310">310: </a>  *exists = <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+<a name="line311">311: </a>  <font color="#4169E1">for</font> (link=dm-&gt;namedglobal; link; link=link-&gt;next) {
+<a name="line312">312: </a>    <a href="../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> match;
+<a name="line313">313: </a>    <a href="../../../docs/manualpages/Sys/PetscStrcmp.html#PetscStrcmp">PetscStrcmp</a>(name,link-&gt;name,&amp;match);
+<a name="line314">314: </a>    <font color="#4169E1">if</font> (match) {
+<a name="line315">315: </a>      *exists = <a href="../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+<a name="line316">316: </a>      <font color="#4169E1">break</font>;
+<a name="line317">317: </a>    }
+<a name="line318">318: </a>  }
+<a name="line319">319: </a>  <font color="#4169E1">return</font>(0);
+<a name="line320">320: </a>}
+
+<a name="line322">322: </a><font color="#B22222">/*@C</font>
+<a name="line323">323: </a><font color="#B22222">   <a href="../../../docs/manualpages/DM/DMGetNamedGlobalVector.html#DMGetNamedGlobalVector">DMGetNamedGlobalVector</a> - get access to a named, persistent global vector</font>
+
+<a name="line325">325: </a><font color="#B22222">   Collective on <a href="../../../docs/manualpages/DM/DM.html#DM">DM</a></font>
+
+<a name="line327">327: </a><font color="#B22222">   Input Arguments:</font>
+<a name="line328">328: </a><font color="#B22222">+  dm - <a href="../../../docs/manualpages/DM/DM.html#DM">DM</a> to hold named vectors</font>
+<a name="line329">329: </a><font color="#B22222">-  name - unique name for <a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a></font>
+
+<a name="line331">331: </a><font color="#B22222">   Output Arguments:</font>
+<a name="line332">332: </a><font color="#B22222">.  X - named <a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a></font>
+
+<a name="line334">334: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line336">336: </a><font color="#B22222">   Note: If a <a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> with the given name does not exist, it is created.</font>
+
+<a name="line338">338: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/DM/DMRestoreNamedGlobalVector.html#DMRestoreNamedGlobalVector">DMRestoreNamedGlobalVector</a>()</font>
+<a name="line339">339: </a><font color="#B22222">@*/</font>
+<a name="line340">340: </a><strong><font color="#4169E1"><a name="DMGetNamedGlobalVector"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../docs/manualpages/DM/DMGetNamedGlobalVector.html#DMGetNamedGlobalVector">DMGetNamedGlobalVector</a>(<a href="../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,const char *name,<a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> *X)</font></strong>
+<a name="line341">341: </a>{
+<a name="line343">343: </a>  DMNamedVecLink link;
+
+<a name="line349">349: </a>  <font color="#4169E1">for</font> (link=dm-&gt;namedglobal; link; link=link-&gt;next) {
+<a name="line350">350: </a>    <a href="../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> match;
+<a name="line351">351: </a>    <a href="../../../docs/manualpages/Sys/PetscStrcmp.html#PetscStrcmp">PetscStrcmp</a>(name,link-&gt;name,&amp;match);
+<a name="line352">352: </a>    <font color="#4169E1">if</font> (match) {
+<a name="line353">353: </a>      <font color="#4169E1">if</font> (link-&gt;status != DMVEC_STATUS_IN) <a href="../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_ARG_WRONGSTATE,<font color="#666666">"<a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> name '%s' already checked out"</font>,name);
+<a name="line354">354: </a>      <font color="#4169E1">goto</font> found;
+<a name="line355">355: </a>    }
+<a name="line356">356: </a>  }
+
+<a name="line358">358: </a>  <font color="#B22222">/* Create the <a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> */</font>
+<a name="line359">359: </a>  <a href="../../../docs/manualpages/Sys/PetscNew.html#PetscNew">PetscNew</a>(&amp;link);
+<a name="line360">360: </a>  <a href="../../../docs/manualpages/Sys/PetscStrallocpy.html#PetscStrallocpy">PetscStrallocpy</a>(name,&amp;link-&gt;name);
+<a name="line361">361: </a>  <a href="../../../docs/manualpages/DM/DMCreateGlobalVector.html#DMCreateGlobalVector">DMCreateGlobalVector</a>(dm,&amp;link-&gt;X);
+<a name="line362">362: </a>  link-&gt;next      = dm-&gt;namedglobal;
+<a name="line363">363: </a>  dm-&gt;namedglobal = link;
+
+<a name="line365">365: </a><strong><font color="#FF0000">found:</font></strong>
+<a name="line366">366: </a>  *X           = link-&gt;X;
+<a name="line367">367: </a>  link-&gt;status = DMVEC_STATUS_OUT;
+<a name="line368">368: </a>  <font color="#4169E1">return</font>(0);
+<a name="line369">369: </a>}
+
+<a name="line371">371: </a><font color="#B22222">/*@C</font>
+<a name="line372">372: </a><font color="#B22222">   <a href="../../../docs/manualpages/DM/DMRestoreNamedGlobalVector.html#DMRestoreNamedGlobalVector">DMRestoreNamedGlobalVector</a> - restore access to a named, persistent global vector</font>
+
+<a name="line374">374: </a><font color="#B22222">   Collective on <a href="../../../docs/manualpages/DM/DM.html#DM">DM</a></font>
+
+<a name="line376">376: </a><font color="#B22222">   Input Arguments:</font>
+<a name="line377">377: </a><font color="#B22222">+  dm - <a href="../../../docs/manualpages/DM/DM.html#DM">DM</a> on which the vector was gotten</font>
+<a name="line378">378: </a><font color="#B22222">.  name - name under which the vector was gotten</font>
+<a name="line379">379: </a><font color="#B22222">-  X - <a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> to restore</font>
+
+<a name="line381">381: </a><font color="#B22222">   Output Arguments:</font>
+
+<a name="line383">383: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line385">385: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/DM/DMGetNamedGlobalVector.html#DMGetNamedGlobalVector">DMGetNamedGlobalVector</a>()</font>
+<a name="line386">386: </a><font color="#B22222">@*/</font>
+<a name="line387">387: </a><strong><font color="#4169E1"><a name="DMRestoreNamedGlobalVector"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../docs/manualpages/DM/DMRestoreNamedGlobalVector.html#DMRestoreNamedGlobalVector">DMRestoreNamedGlobalVector</a>(<a href="../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,const char *name,<a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> *X)</font></strong>
+<a name="line388">388: </a>{
+<a name="line390">390: </a>  DMNamedVecLink link;
+
+<a name="line397">397: </a>  <font color="#4169E1">for</font> (link=dm-&gt;namedglobal; link; link=link-&gt;next) {
+<a name="line398">398: </a>    <a href="../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> match;
+<a name="line399">399: </a>    <a href="../../../docs/manualpages/Sys/PetscStrcmp.html#PetscStrcmp">PetscStrcmp</a>(name,link-&gt;name,&amp;match);
+<a name="line400">400: </a>    <font color="#4169E1">if</font> (match) {
+<a name="line401">401: </a>      <font color="#4169E1">if</font> (link-&gt;status != DMVEC_STATUS_OUT) <a href="../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_ARG_WRONGSTATE,<font color="#666666">"<a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> name '%s' was not checked out"</font>,name);
+<a name="line402">402: </a>      <font color="#4169E1">if</font> (link-&gt;X != *X) <a href="../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_ARG_INCOMP,<font color="#666666">"Attempt to restore <a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> name '%s', but <a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> does not match the cache"</font>,name);
+<a name="line403">403: </a>      link-&gt;status = DMVEC_STATUS_IN;
+<a name="line404">404: </a>      *X           = NULL;
+<a name="line405">405: </a>      <font color="#4169E1">return</font>(0);
+<a name="line406">406: </a>    }
+<a name="line407">407: </a>  }
+<a name="line408">408: </a>  <a href="../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_ARG_INCOMP,<font color="#666666">"Could not find <a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> name '%s' to restore"</font>,name);
+<a name="line409">409: </a>  <font color="#4169E1">return</font>(0);
+<a name="line410">410: </a>}
+
+<a name="line412">412: </a><font color="#B22222">/*@C</font>
+<a name="line413">413: </a><font color="#B22222">   <a href="../../../docs/manualpages/DM/DMHasNamedLocalVector.html#DMHasNamedLocalVector">DMHasNamedLocalVector</a> - check for a named, persistent local vector</font>
+
+<a name="line415">415: </a><font color="#B22222">   Not Collective</font>
+
+<a name="line417">417: </a><font color="#B22222">   Input Arguments:</font>
+<a name="line418">418: </a><font color="#B22222">+  dm - <a href="../../../docs/manualpages/DM/DM.html#DM">DM</a> to hold named vectors</font>
+<a name="line419">419: </a><font color="#B22222">-  name - unique name for <a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a></font>
+
+<a name="line421">421: </a><font color="#B22222">   Output Arguments:</font>
+<a name="line422">422: </a><font color="#B22222">.  exists - true if the vector was previously created</font>
+
+<a name="line424">424: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line426">426: </a><font color="#B22222">   Note: If a <a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> with the given name does not exist, it is created.</font>
+
+<a name="line428">428: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/DM/DMGetNamedGlobalVector.html#DMGetNamedGlobalVector">DMGetNamedGlobalVector</a>(),<a href="../../../docs/manualpages/DM/DMRestoreNamedLocalVector.html#DMRestoreNamedLocalVector">DMRestoreNamedLocalVector</a>()</font>
+<a name="line429">429: </a><font color="#B22222">@*/</font>
+<a name="line430">430: </a><strong><font color="#4169E1"><a name="DMHasNamedLocalVector"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../docs/manualpages/DM/DMHasNamedLocalVector.html#DMHasNamedLocalVector">DMHasNamedLocalVector</a>(<a href="../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,const char *name,<a href="../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> *exists)</font></strong>
+<a name="line431">431: </a>{
+<a name="line433">433: </a>  DMNamedVecLink link;
+
+<a name="line439">439: </a>  *exists = <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+<a name="line440">440: </a>  <font color="#4169E1">for</font> (link=dm-&gt;namedlocal; link; link=link-&gt;next) {
+<a name="line441">441: </a>    <a href="../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> match;
+<a name="line442">442: </a>    <a href="../../../docs/manualpages/Sys/PetscStrcmp.html#PetscStrcmp">PetscStrcmp</a>(name,link-&gt;name,&amp;match);
+<a name="line443">443: </a>    <font color="#4169E1">if</font> (match) {
+<a name="line444">444: </a>      *exists = <a href="../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+<a name="line445">445: </a>      <font color="#4169E1">break</font>;
+<a name="line446">446: </a>    }
+<a name="line447">447: </a>  }
+<a name="line448">448: </a>  <font color="#4169E1">return</font>(0);
+<a name="line449">449: </a>}
+
+<a name="line451">451: </a><font color="#B22222">/*@C</font>
+<a name="line452">452: </a><font color="#B22222">   <a href="../../../docs/manualpages/DM/DMGetNamedLocalVector.html#DMGetNamedLocalVector">DMGetNamedLocalVector</a> - get access to a named, persistent local vector</font>
+
+<a name="line454">454: </a><font color="#B22222">   Not Collective</font>
+
+<a name="line456">456: </a><font color="#B22222">   Input Arguments:</font>
+<a name="line457">457: </a><font color="#B22222">+  dm - <a href="../../../docs/manualpages/DM/DM.html#DM">DM</a> to hold named vectors</font>
+<a name="line458">458: </a><font color="#B22222">-  name - unique name for <a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a></font>
+
+<a name="line460">460: </a><font color="#B22222">   Output Arguments:</font>
+<a name="line461">461: </a><font color="#B22222">.  X - named <a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a></font>
+
+<a name="line463">463: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line465">465: </a><font color="#B22222">   Note: If a <a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> with the given name does not exist, it is created.</font>
+
+<a name="line467">467: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/DM/DMGetNamedGlobalVector.html#DMGetNamedGlobalVector">DMGetNamedGlobalVector</a>(),<a href="../../../docs/manualpages/DM/DMRestoreNamedLocalVector.html#DMRestoreNamedLocalVector">DMRestoreNamedLocalVector</a>()</font>
+<a name="line468">468: </a><font color="#B22222">@*/</font>
+<a name="line469">469: </a><strong><font color="#4169E1"><a name="DMGetNamedLocalVector"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../docs/manualpages/DM/DMGetNamedLocalVector.html#DMGetNamedLocalVector">DMGetNamedLocalVector</a>(<a href="../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,const char *name,<a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> *X)</font></strong>
+<a name="line470">470: </a>{
+<a name="line472">472: </a>  DMNamedVecLink link;
+
+<a name="line478">478: </a>  <font color="#4169E1">for</font> (link=dm-&gt;namedlocal; link; link=link-&gt;next) {
+<a name="line479">479: </a>    <a href="../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> match;
+<a name="line480">480: </a>    <a href="../../../docs/manualpages/Sys/PetscStrcmp.html#PetscStrcmp">PetscStrcmp</a>(name,link-&gt;name,&amp;match);
+<a name="line481">481: </a>    <font color="#4169E1">if</font> (match) {
+<a name="line482">482: </a>      <font color="#4169E1">if</font> (link-&gt;status != DMVEC_STATUS_IN) <a href="../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_ARG_WRONGSTATE,<font color="#666666">"<a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> name '%s' already checked out"</font>,name);
+<a name="line483">483: </a>      <font color="#4169E1">goto</font> found;
+<a name="line484">484: </a>    }
+<a name="line485">485: </a>  }
+
+<a name="line487">487: </a>  <font color="#B22222">/* Create the <a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> */</font>
+<a name="line488">488: </a>  <a href="../../../docs/manualpages/Sys/PetscNew.html#PetscNew">PetscNew</a>(&amp;link);
+<a name="line489">489: </a>  <a href="../../../docs/manualpages/Sys/PetscStrallocpy.html#PetscStrallocpy">PetscStrallocpy</a>(name,&amp;link-&gt;name);
+<a name="line490">490: </a>  <a href="../../../docs/manualpages/DM/DMCreateLocalVector.html#DMCreateLocalVector">DMCreateLocalVector</a>(dm,&amp;link-&gt;X);
+<a name="line491">491: </a>  link-&gt;next     = dm-&gt;namedlocal;
+<a name="line492">492: </a>  dm-&gt;namedlocal = link;
+
+<a name="line494">494: </a><strong><font color="#FF0000">found:</font></strong>
+<a name="line495">495: </a>  *X           = link-&gt;X;
+<a name="line496">496: </a>  link-&gt;status = DMVEC_STATUS_OUT;
+<a name="line497">497: </a>  <font color="#4169E1">return</font>(0);
+<a name="line498">498: </a>}
+
+<a name="line500">500: </a><font color="#B22222">/*@C</font>
+<a name="line501">501: </a><font color="#B22222">   <a href="../../../docs/manualpages/DM/DMRestoreNamedLocalVector.html#DMRestoreNamedLocalVector">DMRestoreNamedLocalVector</a> - restore access to a named, persistent local vector</font>
+
+<a name="line503">503: </a><font color="#B22222">   Not Collective</font>
+
+<a name="line505">505: </a><font color="#B22222">   Input Arguments:</font>
+<a name="line506">506: </a><font color="#B22222">+  dm - <a href="../../../docs/manualpages/DM/DM.html#DM">DM</a> on which the vector was gotten</font>
+<a name="line507">507: </a><font color="#B22222">.  name - name under which the vector was gotten</font>
+<a name="line508">508: </a><font color="#B22222">-  X - <a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> to restore</font>
+
+<a name="line510">510: </a><font color="#B22222">   Output Arguments:</font>
+
+<a name="line512">512: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line514">514: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/DM/DMRestoreNamedGlobalVector.html#DMRestoreNamedGlobalVector">DMRestoreNamedGlobalVector</a>(),<a href="../../../docs/manualpages/DM/DMGetNamedLocalVector.html#DMGetNamedLocalVector">DMGetNamedLocalVector</a>()</font>
+<a name="line515">515: </a><font color="#B22222">@*/</font>
+<a name="line516">516: </a><strong><font color="#4169E1"><a name="DMRestoreNamedLocalVector"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../docs/manualpages/DM/DMRestoreNamedLocalVector.html#DMRestoreNamedLocalVector">DMRestoreNamedLocalVector</a>(<a href="../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,const char *name,<a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> *X)</font></strong>
+<a name="line517">517: </a>{
+<a name="line519">519: </a>  DMNamedVecLink link;
+
+<a name="line526">526: </a>  <font color="#4169E1">for</font> (link=dm-&gt;namedlocal; link; link=link-&gt;next) {
+<a name="line527">527: </a>    <a href="../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> match;
+<a name="line528">528: </a>    <a href="../../../docs/manualpages/Sys/PetscStrcmp.html#PetscStrcmp">PetscStrcmp</a>(name,link-&gt;name,&amp;match);
+<a name="line529">529: </a>    <font color="#4169E1">if</font> (match) {
+<a name="line530">530: </a>      <font color="#4169E1">if</font> (link-&gt;status != DMVEC_STATUS_OUT) <a href="../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_ARG_WRONGSTATE,<font color="#666666">"<a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> name '%s' was not checked out"</font>,name);
+<a name="line531">531: </a>      <font color="#4169E1">if</font> (link-&gt;X != *X) <a href="../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_ARG_INCOMP,<font color="#666666">"Attempt to restore <a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> name '%s', but <a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> does not match the cache"</font>,name);
+<a name="line532">532: </a>      link-&gt;status = DMVEC_STATUS_IN;
+<a name="line533">533: </a>      *X           = NULL;
+<a name="line534">534: </a>      <font color="#4169E1">return</font>(0);
+<a name="line535">535: </a>    }
+<a name="line536">536: </a>  }
+<a name="line537">537: </a>  <a href="../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_ARG_INCOMP,<font color="#666666">"Could not find <a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> name '%s' to restore"</font>,name);
+<a name="line538">538: </a>  <font color="#4169E1">return</font>(0);
+<a name="line539">539: </a>}
+</pre>
+</body>
+
+</html>

@@ -1,0 +1,467 @@
+<HTML>
+<HEAD> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/DM/index.html" />
+<TITLE>DM Manual Pages</TITLE>
+</HEAD>
+<BODY BGCOLOR="FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 docs/manualpages/DM/index.html "><small>Report Typos and Errors</small></a></div>
+
+<H2> DM <A HREF="../../../src/dm/examples/tutorials/index.html">Examples</A></H2>
+
+DM objects are used to manage communication between the algebraic structures in PETSc (Vec and Mat) and mesh data structures
+in PDE-based (or other) simulations. See, for example, DMDACreate().
+<P>
+
+<P>
+<TABLE>
+<TR><TD WIDTH=250 COLSPAN="3"><B>Beginner - Basic usage</B></TD></TR>
+ <TD WIDTH=250><A HREF="./DMBoundaryConditionType.html">DMBoundaryConditionType</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabCreateBoxMesh.html">DMMoabCreateBoxMesh</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabRestoreVertexConnectivity.html">DMMoabRestoreVertexConnectivity</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMBoundaryType.html">DMBoundaryType</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabCreateElement.html">DMMoabCreateElement</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabSetBlockSize.html">DMMoabSetBlockSize</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMClearLabelStratum.html">DMClearLabelStratum</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabCreateVector.html">DMMoabCreateVector</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabSetInterface.html">DMMoabSetInterface</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMClearLabelValue.html">DMClearLabelValue</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabCreateVertices.html">DMMoabCreateVertices</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabSetLocalElements.html">DMMoabSetLocalElements</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMClone.html">DMClone</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabGenerateHierarchy.html">DMMoabGenerateHierarchy</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabSetLocalToGlobalTag.html">DMMoabSetLocalToGlobalTag</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCoarsenHierarchy_Moab.html">DMCoarsenHierarchy_Moab</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabGetAllVertices.html">DMMoabGetAllVertices</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabSetLocalVertices.html">DMMoabSetLocalVertices</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCompositeGetNumberDM.html">DMCompositeGetNumberDM</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabGetBlockSize.html">DMMoabGetBlockSize</A></TD>
+ <TD WIDTH=250><A HREF="./DMPointLocationType.html">DMPointLocationType</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCreate.html">DMCreate</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabGetBoundaryMarkers.html">DMMoabGetBoundaryMarkers</A></TD>
+ <TD WIDTH=250><A HREF="./DMRefineHierarchy_Moab.html">DMRefineHierarchy_Moab</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCreateGlobalVector.html">DMCreateGlobalVector</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabGetDimension.html">DMMoabGetDimension</A></TD>
+ <TD WIDTH=250><A HREF="./DMRestoreGlobalVector.html">DMRestoreGlobalVector</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCreateInjection_Moab.html">DMCreateInjection_Moab</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabGetElementConnectivity.html">DMMoabGetElementConnectivity</A></TD>
+ <TD WIDTH=250><A HREF="./DMRestoreLocalVector.html">DMRestoreLocalVector</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCreateLocalVector.html">DMCreateLocalVector</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabGetFieldDof.html">DMMoabGetFieldDof</A></TD>
+ <TD WIDTH=250><A HREF="./DMSetDimension.html">DMSetDimension</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCreateMatrix.html">DMCreateMatrix</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabGetHierarchyLevel.html">DMMoabGetHierarchyLevel</A></TD>
+ <TD WIDTH=250><A HREF="./DMSetLabelValue.html">DMSetLabelValue</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGetDimension.html">DMGetDimension</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabGetInterface.html">DMMoabGetInterface</A></TD>
+ <TD WIDTH=250><A HREF="./DMSetUseNatural.html">DMSetUseNatural</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGetGlobalVector.html">DMGetGlobalVector</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabGetLocalElements.html">DMMoabGetLocalElements</A></TD>
+ <TD WIDTH=250><A HREF="./DMType.html">DMType</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGetLabelIdIS.html">DMGetLabelIdIS</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabGetLocalSize.html">DMMoabGetLocalSize</A></TD>
+ <TD WIDTH=250><A HREF="./DMView.html">DMView</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGetLabelSize.html">DMGetLabelSize</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabGetLocalToGlobalTag.html">DMMoabGetLocalToGlobalTag</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDSType.html">PetscDSType</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGetLabelValue.html">DMGetLabelValue</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabGetLocalVertices.html">DMMoabGetLocalVertices</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDualSpaceType.html">PetscDualSpaceType</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGetLocalVector.html">DMGetLocalVector</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabGetMaterialBlock.html">DMMoabGetMaterialBlock</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFEType.html">PetscFEType</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGetNeighbors.html">DMGetNeighbors</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabGetOffset.html">DMMoabGetOffset</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFVCellGeom.html">PetscFVCellGeom</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGetStratumIS.html">DMGetStratumIS</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabGetParallelComm.html">DMMoabGetParallelComm</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFVFaceGeom.html">PetscFVFaceGeom</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGetStratumSize.html">DMGetStratumSize</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabGetSize.html">DMMoabGetSize</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFVType.html">PetscFVType</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGetUseNatural.html">DMGetUseNatural</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabGetVecRange.html">DMMoabGetVecRange</A></TD>
+ <TD WIDTH=250><A HREF="./PetscLimiterType.html">PetscLimiterType</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGlobalToLocalBegin.html">DMGlobalToLocalBegin</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabGetVecTag.html">DMMoabGetVecTag</A></TD>
+ <TD WIDTH=250><A HREF="./PetscPartitionerType.html">PetscPartitionerType</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGlobalToLocalEnd.html">DMGlobalToLocalEnd</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabGetVertexConnectivity.html">DMMoabGetVertexConnectivity</A></TD>
+ <TD WIDTH=250><A HREF="./PetscSpaceType.html">PetscSpaceType</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMLocalToGlobalBegin.html">DMLocalToGlobalBegin</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabGetVertexCoordinates.html">DMMoabGetVertexCoordinates</A></TD>
+ <TD WIDTH=250><A HREF="./PetscUnit.html">PetscUnit</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMLocalToGlobalEnd.html">DMLocalToGlobalEnd</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabIsEntityOnBoundary.html">DMMoabIsEntityOnBoundary</A></TD>
+ <TD WIDTH=250><A HREF="./"></A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMMoabCreate.html">DMMoabCreate</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabLoadFromFile.html">DMMoabLoadFromFile</A></TD>
+ <TD WIDTH=250><A HREF="./"></A></TD>
+<TR>
+<TR><TD WIDTH=250 COLSPAN="3"><B>Intermediate - Setting options for algorithms and data structures</B></TD></TR>
+ <TD WIDTH=250><A HREF="./DM.html">DM</A></TD>
+ <TD WIDTH=250><A HREF="./DMGetNumLabels.html">DMGetNumLabels</A></TD>
+ <TD WIDTH=250><A HREF="./DMSLICED.html">DMSLICED</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMAdaptLabel.html">DMAdaptLabel</A></TD>
+ <TD WIDTH=250><A HREF="./DMGetOutputDM.html">DMGetOutputDM</A></TD>
+ <TD WIDTH=250><A HREF="./DMSetApplicationContext.html">DMSetApplicationContext</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCOMPOSITE.html">DMCOMPOSITE</A></TD>
+ <TD WIDTH=250><A HREF="./DMGetOutputSequenceNumber.html">DMGetOutputSequenceNumber</A></TD>
+ <TD WIDTH=250><A HREF="./DMSetApplicationContextDestroy.html">DMSetApplicationContextDestroy</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCompositeGetLocalISs.html">DMCompositeGetLocalISs</A></TD>
+ <TD WIDTH=250><A HREF="./DMGetPointSF.html">DMGetPointSF</A></TD>
+ <TD WIDTH=250><A HREF="./DMSetCoarseDM.html">DMSetCoarseDM</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMConvert.html">DMConvert</A></TD>
+ <TD WIDTH=250><A HREF="./DMGetType.html">DMGetType</A></TD>
+ <TD WIDTH=250><A HREF="./DMSetCoordinateDM.html">DMSetCoordinateDM</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCopyLabels.html">DMCopyLabels</A></TD>
+ <TD WIDTH=250><A HREF="./DMGetVecType.html">DMGetVecType</A></TD>
+ <TD WIDTH=250><A HREF="./DMSetCoordinateDim.html">DMSetCoordinateDim</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCreateAggregates.html">DMCreateAggregates</A></TD>
+ <TD WIDTH=250><A HREF="./DMHasLabel.html">DMHasLabel</A></TD>
+ <TD WIDTH=250><A HREF="./DMSetCoordinateSection.html">DMSetCoordinateSection</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCreateDefaultSF.html">DMCreateDefaultSF</A></TD>
+ <TD WIDTH=250><A HREF="./DMLoad.html">DMLoad</A></TD>
+ <TD WIDTH=250><A HREF="./DMSetCoordinates.html">DMSetCoordinates</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCreateDomainDecomposition.html">DMCreateDomainDecomposition</A></TD>
+ <TD WIDTH=250><A HREF="./DMLocalToLocalBegin.html">DMLocalToLocalBegin</A></TD>
+ <TD WIDTH=250><A HREF="./DMSetCoordinatesLocal.html">DMSetCoordinatesLocal</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCreateFieldDecomposition.html">DMCreateFieldDecomposition</A></TD>
+ <TD WIDTH=250><A HREF="./DMLocalToLocalEnd.html">DMLocalToLocalEnd</A></TD>
+ <TD WIDTH=250><A HREF="./DMSetDefaultGlobalSection.html">DMSetDefaultGlobalSection</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCreateFieldIS.html">DMCreateFieldIS</A></TD>
+ <TD WIDTH=250><A HREF="./DMMOAB.html">DMMOAB</A></TD>
+ <TD WIDTH=250><A HREF="./DMSetDefaultSF.html">DMSetDefaultSF</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCreateLabel.html">DMCreateLabel</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabCreateMoab.html">DMMoabCreateMoab</A></TD>
+ <TD WIDTH=250><A HREF="./DMSetDefaultSection.html">DMSetDefaultSection</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCreateSubDM.html">DMCreateSubDM</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabGetDofs.html">DMMoabGetDofs</A></TD>
+ <TD WIDTH=250><A HREF="./DMSetFineDM.html">DMSetFineDM</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGetApplicationContext.html">DMGetApplicationContext</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabGetDofsBlocked.html">DMMoabGetDofsBlocked</A></TD>
+ <TD WIDTH=250><A HREF="./DMSetMatType.html">DMSetMatType</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGetBlockSize.html">DMGetBlockSize</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabGetDofsBlockedLocal.html">DMMoabGetDofsBlockedLocal</A></TD>
+ <TD WIDTH=250><A HREF="./DMSetOutputSequenceNumber.html">DMSetOutputSequenceNumber</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGetCoarseDM.html">DMGetCoarseDM</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabGetDofsLocal.html">DMMoabGetDofsLocal</A></TD>
+ <TD WIDTH=250><A HREF="./DMSetPointSF.html">DMSetPointSF</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGetCoordinateDM.html">DMGetCoordinateDM</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabGetFieldDofs.html">DMMoabGetFieldDofs</A></TD>
+ <TD WIDTH=250><A HREF="./DMSetType.html">DMSetType</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGetCoordinateDim.html">DMGetCoordinateDim</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabGetFieldDofsLocal.html">DMMoabGetFieldDofsLocal</A></TD>
+ <TD WIDTH=250><A HREF="./DMSetVariableBounds.html">DMSetVariableBounds</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGetCoordinateSection.html">DMGetCoordinateSection</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabGetFieldName.html">DMMoabGetFieldName</A></TD>
+ <TD WIDTH=250><A HREF="./DMSetVecType.html">DMSetVecType</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGetCoordinates.html">DMGetCoordinates</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabGetVertexDofsBlocked.html">DMMoabGetVertexDofsBlocked</A></TD>
+ <TD WIDTH=250><A HREF="./MatGetDM.html">MatGetDM</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGetCoordinatesLocal.html">DMGetCoordinatesLocal</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabGetVertexDofsBlockedLocal.html">DMMoabGetVertexDofsBlockedLocal</A></TD>
+ <TD WIDTH=250><A HREF="./MatSetDM.html">MatSetDM</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGetDefaultGlobalSection.html">DMGetDefaultGlobalSection</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabOutput.html">DMMoabOutput</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDS.html">PetscDS</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGetDefaultSF.html">DMGetDefaultSF</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabSetFieldName.html">DMMoabSetFieldName</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDualSpace.html">PetscDualSpace</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGetDefaultSection.html">DMGetDefaultSection</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabSetFieldNames.html">DMMoabSetFieldNames</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFE.html">PetscFE</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGetDimPoints.html">DMGetDimPoints</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabSetFieldVector.html">DMMoabSetFieldVector</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFEJacobianType.html">PetscFEJacobianType</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGetFineDM.html">DMGetFineDM</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabSetGlobalFieldVector.html">DMMoabSetGlobalFieldVector</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFV.html">PetscFV</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGetLabel.html">DMGetLabel</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabVecGetArray.html">DMMoabVecGetArray</A></TD>
+ <TD WIDTH=250><A HREF="./PetscLimiter.html">PetscLimiter</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGetLabelByNum.html">DMGetLabelByNum</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabVecGetArrayRead.html">DMMoabVecGetArrayRead</A></TD>
+ <TD WIDTH=250><A HREF="./PetscPartitioner.html">PetscPartitioner</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGetLabelName.html">DMGetLabelName</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabVecRestoreArray.html">DMMoabVecRestoreArray</A></TD>
+ <TD WIDTH=250><A HREF="./PetscSpace.html">PetscSpace</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGetLocalToGlobalMapping.html">DMGetLocalToGlobalMapping</A></TD>
+ <TD WIDTH=250><A HREF="./DMOutputSequenceLoad.html">DMOutputSequenceLoad</A></TD>
+ <TD WIDTH=250><A HREF="./VecGetDM.html">VecGetDM</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGetMatType.html">DMGetMatType</A></TD>
+ <TD WIDTH=250><A HREF="./DMPATCH.html">DMPATCH</A></TD>
+ <TD WIDTH=250><A HREF="./VecSetDM.html">VecSetDM</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGetNumBoundary.html">DMGetNumBoundary</A></TD>
+ <TD WIDTH=250><A HREF="./DMREDUNDANT.html">DMREDUNDANT</A></TD>
+ <TD WIDTH=250><A HREF="./"></A></TD>
+<TR>
+<TR><TD WIDTH=250 COLSPAN="3"><B>Advanced - Setting more advanced options and customization</B></TD></TR>
+ <TD WIDTH=250><A HREF="./Compute_Lagrange_Basis_1D_Internal.html">Compute_Lagrange_Basis_1D_Internal</A></TD>
+ <TD WIDTH=250><A HREF="./DMGlobalToLocalEndDefaultShell.html">DMGlobalToLocalEndDefaultShell</A></TD>
+ <TD WIDTH=250><A HREF="./DMShellSetCreateInjection.html">DMShellSetCreateInjection</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./Compute_Lagrange_Basis_2D_Internal.html">Compute_Lagrange_Basis_2D_Internal</A></TD>
+ <TD WIDTH=250><A HREF="./DMGlobalToLocalHookAdd.html">DMGlobalToLocalHookAdd</A></TD>
+ <TD WIDTH=250><A HREF="./DMShellSetCreateInterpolation.html">DMShellSetCreateInterpolation</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./Compute_Lagrange_Basis_3D_Internal.html">Compute_Lagrange_Basis_3D_Internal</A></TD>
+ <TD WIDTH=250><A HREF="./DMLocalToGlobalBeginDefaultShell.html">DMLocalToGlobalBeginDefaultShell</A></TD>
+ <TD WIDTH=250><A HREF="./DMShellSetCreateLocalVector.html">DMShellSetCreateLocalVector</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMAdaptMetric.html">DMAdaptMetric</A></TD>
+ <TD WIDTH=250><A HREF="./DMLocalToGlobalEndDefaultShell.html">DMLocalToGlobalEndDefaultShell</A></TD>
+ <TD WIDTH=250><A HREF="./DMShellSetCreateMatrix.html">DMShellSetCreateMatrix</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMAppendOptionsPrefix.html">DMAppendOptionsPrefix</A></TD>
+ <TD WIDTH=250><A HREF="./DMLocalToGlobalHookAdd.html">DMLocalToGlobalHookAdd</A></TD>
+ <TD WIDTH=250><A HREF="./DMShellSetCreateRestriction.html">DMShellSetCreateRestriction</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCoarsenHookAdd.html">DMCoarsenHookAdd</A></TD>
+ <TD WIDTH=250><A HREF="./DMLocalToLocalBeginDefaultShell.html">DMLocalToLocalBeginDefaultShell</A></TD>
+ <TD WIDTH=250><A HREF="./DMShellSetCreateSubDM.html">DMShellSetCreateSubDM</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCompositeAddDM.html">DMCompositeAddDM</A></TD>
+ <TD WIDTH=250><A HREF="./DMLocalToLocalEndDefaultShell.html">DMLocalToLocalEndDefaultShell</A></TD>
+ <TD WIDTH=250><A HREF="./DMShellSetGlobalToLocal.html">DMShellSetGlobalToLocal</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCompositeCreate.html">DMCompositeCreate</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabCreateSubmesh.html">DMMoabCreateSubmesh</A></TD>
+ <TD WIDTH=250><A HREF="./DMShellSetGlobalToLocalVecScatter.html">DMShellSetGlobalToLocalVecScatter</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCompositeGather.html">DMCompositeGather</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabFEMComputeBasis.html">DMMoabFEMComputeBasis</A></TD>
+ <TD WIDTH=250><A HREF="./DMShellSetGlobalVector.html">DMShellSetGlobalVector</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCompositeGatherArray.html">DMCompositeGatherArray</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabFEMCreateQuadratureDefault.html">DMMoabFEMCreateQuadratureDefault</A></TD>
+ <TD WIDTH=250><A HREF="./DMShellSetLocalToGlobal.html">DMShellSetLocalToGlobal</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCompositeGetAccess.html">DMCompositeGetAccess</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabPToRMapping.html">DMMoabPToRMapping</A></TD>
+ <TD WIDTH=250><A HREF="./DMShellSetLocalToGlobalVecScatter.html">DMShellSetLocalToGlobalVecScatter</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCompositeGetAccessArray.html">DMCompositeGetAccessArray</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabRenumberMeshEntities.html">DMMoabRenumberMeshEntities</A></TD>
+ <TD WIDTH=250><A HREF="./DMShellSetLocalToLocal.html">DMShellSetLocalToLocal</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCompositeGetEntries.html">DMCompositeGetEntries</A></TD>
+ <TD WIDTH=250><A HREF="./DMRedundantCreate.html">DMRedundantCreate</A></TD>
+ <TD WIDTH=250><A HREF="./DMShellSetLocalToLocalVecScatter.html">DMShellSetLocalToLocalVecScatter</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCompositeGetEntriesArray.html">DMCompositeGetEntriesArray</A></TD>
+ <TD WIDTH=250><A HREF="./DMRedundantGetSize.html">DMRedundantGetSize</A></TD>
+ <TD WIDTH=250><A HREF="./DMShellSetLocalVector.html">DMShellSetLocalVector</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCompositeGetGlobalISs.html">DMCompositeGetGlobalISs</A></TD>
+ <TD WIDTH=250><A HREF="./DMRedundantSetSize.html">DMRedundantSetSize</A></TD>
+ <TD WIDTH=250><A HREF="./DMShellSetMatrix.html">DMShellSetMatrix</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCompositeGetISLocalToGlobalMappings.html">DMCompositeGetISLocalToGlobalMappings</A></TD>
+ <TD WIDTH=250><A HREF="./DMRefineHookAdd.html">DMRefineHookAdd</A></TD>
+ <TD WIDTH=250><A HREF="./DMShellSetRefine.html">DMShellSetRefine</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCompositeGetLocalAccessArray.html">DMCompositeGetLocalAccessArray</A></TD>
+ <TD WIDTH=250><A HREF="./DMRegister.html">DMRegister</A></TD>
+ <TD WIDTH=250><A HREF="./DMSlicedCreate.html">DMSlicedCreate</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCompositeGetLocalVectors.html">DMCompositeGetLocalVectors</A></TD>
+ <TD WIDTH=250><A HREF="./DMRegisterAll.html">DMRegisterAll</A></TD>
+ <TD WIDTH=250><A HREF="./DMSlicedSetBlockFills.html">DMSlicedSetBlockFills</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCompositeRestoreAccess.html">DMCompositeRestoreAccess</A></TD>
+ <TD WIDTH=250><A HREF="./DMSetDefaultConstraints.html">DMSetDefaultConstraints</A></TD>
+ <TD WIDTH=250><A HREF="./DMSlicedSetGhosts.html">DMSlicedSetGhosts</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCompositeRestoreAccessArray.html">DMCompositeRestoreAccessArray</A></TD>
+ <TD WIDTH=250><A HREF="./DMSetOptionsPrefix.html">DMSetOptionsPrefix</A></TD>
+ <TD WIDTH=250><A HREF="./DMSlicedSetPreallocation.html">DMSlicedSetPreallocation</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCompositeRestoreLocalAccessArray.html">DMCompositeRestoreLocalAccessArray</A></TD>
+ <TD WIDTH=250><A HREF="./DMSetRefineLevel.html">DMSetRefineLevel</A></TD>
+ <TD WIDTH=250><A HREF="./DMSubDomainHookAdd.html">DMSubDomainHookAdd</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCompositeRestoreLocalVectors.html">DMCompositeRestoreLocalVectors</A></TD>
+ <TD WIDTH=250><A HREF="./DMShellCreate.html">DMShellCreate</A></TD>
+ <TD WIDTH=250><A HREF="./MatFDColoringUseDM.html">MatFDColoringUseDM</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCompositeScatter.html">DMCompositeScatter</A></TD>
+ <TD WIDTH=250><A HREF="./DMShellGetContext.html">DMShellGetContext</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDSRegisterAll.html">PetscDSRegisterAll</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCompositeScatterArray.html">DMCompositeScatterArray</A></TD>
+ <TD WIDTH=250><A HREF="./DMShellSetCoarsen.html">DMShellSetCoarsen</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDualSpaceRegisterAll.html">PetscDualSpaceRegisterAll</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCompositeSetCoupling.html">DMCompositeSetCoupling</A></TD>
+ <TD WIDTH=250><A HREF="./DMShellSetContext.html">DMShellSetContext</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFERegisterAll.html">PetscFERegisterAll</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMComputeVariableBounds.html">DMComputeVariableBounds</A></TD>
+ <TD WIDTH=250><A HREF="./DMShellSetCreateDomainDecomposition.html">DMShellSetCreateDomainDecomposition</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFVRegisterAll.html">PetscFVRegisterAll</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGetDefaultConstraints.html">DMGetDefaultConstraints</A></TD>
+ <TD WIDTH=250><A HREF="./DMShellSetCreateDomainDecompositionScatters.html">DMShellSetCreateDomainDecompositionScatters</A></TD>
+ <TD WIDTH=250><A HREF="./PetscLimiterRegisterAll.html">PetscLimiterRegisterAll</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGetOptionsPrefix.html">DMGetOptionsPrefix</A></TD>
+ <TD WIDTH=250><A HREF="./DMShellSetCreateFieldDecomposition.html">DMShellSetCreateFieldDecomposition</A></TD>
+ <TD WIDTH=250><A HREF="./PetscPartitionerRegisterAll.html">PetscPartitionerRegisterAll</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGlobalToLocalBeginDefaultShell.html">DMGlobalToLocalBeginDefaultShell</A></TD>
+ <TD WIDTH=250><A HREF="./DMShellSetCreateGlobalVector.html">DMShellSetCreateGlobalVector</A></TD>
+ <TD WIDTH=250><A HREF="./PetscSpaceRegisterAll.html">PetscSpaceRegisterAll</A></TD>
+<TR>
+<TR><TD WIDTH=250 COLSPAN="3"><B>Developer - Interfaces intended primarily for library developers, not for typical applications programmers</B></TD></TR>
+ <TD WIDTH=250><A HREF="./DMAddBoundary.html">DMAddBoundary</A></TD>
+ <TD WIDTH=250><A HREF="./DMGetLabelOutput.html">DMGetLabelOutput</A></TD>
+ <TD WIDTH=250><A HREF="./DMRestoreNamedGlobalVector.html">DMRestoreNamedGlobalVector</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMAddLabel.html">DMAddLabel</A></TD>
+ <TD WIDTH=250><A HREF="./DMGetNamedGlobalVector.html">DMGetNamedGlobalVector</A></TD>
+ <TD WIDTH=250><A HREF="./DMRestoreNamedLocalVector.html">DMRestoreNamedLocalVector</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMClearGlobalVectors.html">DMClearGlobalVectors</A></TD>
+ <TD WIDTH=250><A HREF="./DMGetNamedLocalVector.html">DMGetNamedLocalVector</A></TD>
+ <TD WIDTH=250><A HREF="./DMRestoreWorkArray.html">DMRestoreWorkArray</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMClearLocalVectors.html">DMClearLocalVectors</A></TD>
+ <TD WIDTH=250><A HREF="./DMGetPeriodicity.html">DMGetPeriodicity</A></TD>
+ <TD WIDTH=250><A HREF="./DMRestrict.html">DMRestrict</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCoarsen.html">DMCoarsen</A></TD>
+ <TD WIDTH=250><A HREF="./DMGetRefineLevel.html">DMGetRefineLevel</A></TD>
+ <TD WIDTH=250><A HREF="./DMSetDS.html">DMSetDS</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCoarsenHierarchy.html">DMCoarsenHierarchy</A></TD>
+ <TD WIDTH=250><A HREF="./DMGetWorkArray.html">DMGetWorkArray</A></TD>
+ <TD WIDTH=250><A HREF="./DMSetField.html">DMSetField</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCoarsen_Moab.html">DMCoarsen_Moab</A></TD>
+ <TD WIDTH=250><A HREF="./DMHasColoring.html">DMHasColoring</A></TD>
+ <TD WIDTH=250><A HREF="./DMSetFromOptions.html">DMSetFromOptions</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMComputeL2Diff.html">DMComputeL2Diff</A></TD>
+ <TD WIDTH=250><A HREF="./DMHasCreateRestriction.html">DMHasCreateRestriction</A></TD>
+ <TD WIDTH=250><A HREF="./DMSetLabelOutput.html">DMSetLabelOutput</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMComputeL2FieldDiff.html">DMComputeL2FieldDiff</A></TD>
+ <TD WIDTH=250><A HREF="./DMHasNamedGlobalVector.html">DMHasNamedGlobalVector</A></TD>
+ <TD WIDTH=250><A HREF="./DMSetMatrixPreallocateOnly.html">DMSetMatrixPreallocateOnly</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMComputeL2GradientDiff.html">DMComputeL2GradientDiff</A></TD>
+ <TD WIDTH=250><A HREF="./DMHasNamedLocalVector.html">DMHasNamedLocalVector</A></TD>
+ <TD WIDTH=250><A HREF="./DMSetMatrixStructureOnly.html">DMSetMatrixStructureOnly</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCreateColoring.html">DMCreateColoring</A></TD>
+ <TD WIDTH=250><A HREF="./DMHasVariableBounds.html">DMHasVariableBounds</A></TD>
+ <TD WIDTH=250><A HREF="./DMSetPeriodicity.html">DMSetPeriodicity</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCreateDomainDecompositionScatters.html">DMCreateDomainDecompositionScatters</A></TD>
+ <TD WIDTH=250><A HREF="./DMInitializePackage.html">DMInitializePackage</A></TD>
+ <TD WIDTH=250><A HREF="./DMSetUp.html">DMSetUp</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCreateInjection.html">DMCreateInjection</A></TD>
+ <TD WIDTH=250><A HREF="./DMInterpolate.html">DMInterpolate</A></TD>
+ <TD WIDTH=250><A HREF="./DMSetVec.html">DMSetVec</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCreateInterpolation.html">DMCreateInterpolation</A></TD>
+ <TD WIDTH=250><A HREF="./DMLabel.html">DMLabel</A></TD>
+ <TD WIDTH=250><A HREF="./DMSubDomainRestrict.html">DMSubDomainRestrict</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCreateInterpolation_Moab.html">DMCreateInterpolation_Moab</A></TD>
+ <TD WIDTH=250><A HREF="./DMLocalizeCoordinate.html">DMLocalizeCoordinate</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDSFinalizePackage.html">PetscDSFinalizePackage</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMCreateRestriction.html">DMCreateRestriction</A></TD>
+ <TD WIDTH=250><A HREF="./DMLocalizeCoordinates.html">DMLocalizeCoordinates</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDSInitializePackage.html">PetscDSInitializePackage</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMDestroy.html">DMDestroy</A></TD>
+ <TD WIDTH=250><A HREF="./DMLocatePoints.html">DMLocatePoints</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFEFinalizePackage.html">PetscFEFinalizePackage</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMFinalizePackage.html">DMFinalizePackage</A></TD>
+ <TD WIDTH=250><A HREF="./DMMoabSetBlockFills.html">DMMoabSetBlockFills</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFEInitializePackage.html">PetscFEInitializePackage</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGetBoundary.html">DMGetBoundary</A></TD>
+ <TD WIDTH=250><A HREF="./DMProjectFunction.html">DMProjectFunction</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFVFinalizePackage.html">PetscFVFinalizePackage</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGetCoarsenLevel.html">DMGetCoarsenLevel</A></TD>
+ <TD WIDTH=250><A HREF="./DMRefine.html">DMRefine</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFVInitializePackage.html">PetscFVInitializePackage</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGetCoordinatesLocalized.html">DMGetCoordinatesLocalized</A></TD>
+ <TD WIDTH=250><A HREF="./DMRefineHierarchy.html">DMRefineHierarchy</A></TD>
+ <TD WIDTH=250><A HREF="./PetscQuadrature.html">PetscQuadrature</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGetDS.html">DMGetDS</A></TD>
+ <TD WIDTH=250><A HREF="./DMRefine_Moab.html">DMRefine_Moab</A></TD>
+ <TD WIDTH=250><A HREF="./"></A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./DMGetField.html">DMGetField</A></TD>
+ <TD WIDTH=250><A HREF="./DMRemoveLabel.html">DMRemoveLabel</A></TD>
+ <TD WIDTH=250><A HREF="./"></A></TD>
+<TR>
+<TR><TD WIDTH=250 COLSPAN="3"><B>No deprecated routines</B></TD></TR>
+</TABLE>
+<BR><A HREF="../../index.html">Table of Contents</A>

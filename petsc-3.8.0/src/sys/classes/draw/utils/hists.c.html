@@ -1,0 +1,655 @@
+<center><a href="hists.c">Actual source code: hists.c</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/sys/classes/draw/utils/hists.c.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:05:48+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/sys/classes/draw/utils/hists.c.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+
+<a name="line2">  2: </a><font color="#B22222">/*</font>
+<a name="line3">  3: </a><font color="#B22222">  Contains the data structure for plotting a histogram in a window with an axis.</font>
+<a name="line4">  4: </a><font color="#B22222">*/</font>
+<a name="line5">  5: </a> #include <A href="../../../../../include/petscdraw.h.html">&lt;petscdraw.h&gt;</A>
+<a name="line6">  6: </a> #include <A href="../../../../../include/petsc/private/petscimpl.h.html">&lt;petsc/private/petscimpl.h&gt;</A>
+<a name="line7">  7: </a> #include <A href="../../../../../include/petscviewer.h.html">&lt;petscviewer.h&gt;</A>
+
+<a name="line9">  9: </a><a href="../../../../../docs/manualpages/Sys/PetscClassId.html#PetscClassId">PetscClassId</a> PETSC_DRAWHG_CLASSID = 0;
+
+<a name="line11"> 11: </a><font color="#4169E1"><a name="_p_PetscDrawHG"></a>struct _p_PetscDrawHG </font>{
+<a name="line12"> 12: </a>  PETSCHEADER(int);
+<a name="line13"> 13: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> (*destroy)(<a href="../../../../../docs/manualpages/Draw/PetscDrawSP.html#PetscDrawSP">PetscDrawSP</a>);
+<a name="line14"> 14: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> (*view)(<a href="../../../../../docs/manualpages/Draw/PetscDrawSP.html#PetscDrawSP">PetscDrawSP</a>,<a href="../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a>);
+<a name="line15"> 15: </a>  <a href="../../../../../docs/manualpages/Draw/PetscDraw.html#PetscDraw">PetscDraw</a>      win;
+<a name="line16"> 16: </a>  <a href="../../../../../docs/manualpages/Draw/PetscDrawAxis.html#PetscDrawAxis">PetscDrawAxis</a>  axis;
+<a name="line17"> 17: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>      xmin,xmax;
+<a name="line18"> 18: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>      ymin,ymax;
+<a name="line19"> 19: </a>  int            numBins;
+<a name="line20"> 20: </a>  int            maxBins;
+<a name="line21"> 21: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>      *bins;
+<a name="line22"> 22: </a>  int            numValues;
+<a name="line23"> 23: </a>  int            maxValues;
+<a name="line24"> 24: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>      *values;
+<a name="line25"> 25: </a>  int            color;
+<a name="line26"> 26: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>      calcStats;
+<a name="line27"> 27: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>      integerBins;
+<a name="line28"> 28: </a>};
+
+<a name="line30"> 30: </a><strong><font color="#228B22">#define CHUNKSIZE 100</font></strong>
+
+<a name="line32"> 32: </a><font color="#B22222">/*@C</font>
+<a name="line33"> 33: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/Draw/PetscDrawHGCreate.html#PetscDrawHGCreate">PetscDrawHGCreate</a> - Creates a histogram data structure.</font>
+
+<a name="line35"> 35: </a><font color="#B22222">   Collective on <a href="../../../../../docs/manualpages/Draw/PetscDraw.html#PetscDraw">PetscDraw</a></font>
+
+<a name="line37"> 37: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line38"> 38: </a><font color="#B22222">+  draw  - The window where the graph will be made</font>
+<a name="line39"> 39: </a><font color="#B22222">-  bins - The number of bins to use</font>
+
+<a name="line41"> 41: </a><font color="#B22222">   Output Parameters:</font>
+<a name="line42"> 42: </a><font color="#B22222">.  hist - The histogram context</font>
+
+<a name="line44"> 44: </a><font color="#B22222">   Notes: The difference between a bar chart, <a href="../../../../../docs/manualpages/Draw/PetscDrawBar.html#PetscDrawBar">PetscDrawBar</a>, and a histogram, <a href="../../../../../docs/manualpages/Draw/PetscDrawHG.html#PetscDrawHG">PetscDrawHG</a>, is explained here http://stattrek.com/statistics/charts/histogram.aspx?Tutorial=AP</font>
+
+<a name="line46"> 46: </a><font color="#B22222">   The histogram is only displayed when <a href="../../../../../docs/manualpages/Draw/PetscDrawHGDraw.html#PetscDrawHGDraw">PetscDrawHGDraw</a>() is called.</font>
+
+<a name="line48"> 48: </a><font color="#B22222">   The MPI communicator that owns the <a href="../../../../../docs/manualpages/Draw/PetscDraw.html#PetscDraw">PetscDraw</a> owns this <a href="../../../../../docs/manualpages/Draw/PetscDrawHG.html#PetscDrawHG">PetscDrawHG</a>, but the calls to set options and add data are ignored on all processes except the</font>
+<a name="line49"> 49: </a><font color="#B22222">   zeroth MPI process in the communicator. All MPI processes in the communicator must call <a href="../../../../../docs/manualpages/Draw/PetscDrawHGDraw.html#PetscDrawHGDraw">PetscDrawHGDraw</a>() to display the updated graph.</font>
+
+<a name="line51"> 51: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line53"> 53: </a><font color="#B22222">   Concepts: histogram^creating</font>
+
+<a name="line55"> 55: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/Draw/PetscDrawHGDestroy.html#PetscDrawHGDestroy">PetscDrawHGDestroy</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHG.html#PetscDrawHG">PetscDrawHG</a>, <a href="../../../../../docs/manualpages/Draw/PetscDrawBarCreate.html#PetscDrawBarCreate">PetscDrawBarCreate</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawBar.html#PetscDrawBar">PetscDrawBar</a>, <a href="../../../../../docs/manualpages/Draw/PetscDrawLGCreate.html#PetscDrawLGCreate">PetscDrawLGCreate</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawLG.html#PetscDrawLG">PetscDrawLG</a>, <a href="../../../../../docs/manualpages/Draw/PetscDrawSPCreate.html#PetscDrawSPCreate">PetscDrawSPCreate</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawSP.html#PetscDrawSP">PetscDrawSP</a>,</font>
+<a name="line56"> 56: </a><font color="#B22222">          <a href="../../../../../docs/manualpages/Draw/PetscDrawHGSetNumberBins.html#PetscDrawHGSetNumberBins">PetscDrawHGSetNumberBins</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGReset.html#PetscDrawHGReset">PetscDrawHGReset</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGAddValue.html#PetscDrawHGAddValue">PetscDrawHGAddValue</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGDraw.html#PetscDrawHGDraw">PetscDrawHGDraw</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGSave.html#PetscDrawHGSave">PetscDrawHGSave</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGView.html#PetscDrawHGView">PetscDrawHGView</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGSetColor.html#PetscDrawHGSetColor">PetscDrawHGSetColor</a>(),</font>
+<a name="line57"> 57: </a><font color="#B22222">          <a href="../../../../../docs/manualpages/Draw/PetscDrawHGSetLimits.html#PetscDrawHGSetLimits">PetscDrawHGSetLimits</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGCalcStats.html#PetscDrawHGCalcStats">PetscDrawHGCalcStats</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGIntegerBins.html#PetscDrawHGIntegerBins">PetscDrawHGIntegerBins</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGGetAxis.html#PetscDrawHGGetAxis">PetscDrawHGGetAxis</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawAxis.html#PetscDrawAxis">PetscDrawAxis</a>, <a href="../../../../../docs/manualpages/Draw/PetscDrawHGGetDraw.html#PetscDrawHGGetDraw">PetscDrawHGGetDraw</a>() </font>
+
+<a name="line59"> 59: </a><font color="#B22222">@*/</font>
+<a name="line60"> 60: </a><strong><font color="#4169E1"><a name="PetscDrawHGCreate"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../docs/manualpages/Draw/PetscDrawHGCreate.html#PetscDrawHGCreate">PetscDrawHGCreate</a>(<a href="../../../../../docs/manualpages/Draw/PetscDraw.html#PetscDraw">PetscDraw</a> draw,int bins,<a href="../../../../../docs/manualpages/Draw/PetscDrawHG.html#PetscDrawHG">PetscDrawHG</a> *hist)</font></strong>
+<a name="line61"> 61: </a>{
+<a name="line62"> 62: </a>  <a href="../../../../../docs/manualpages/Draw/PetscDrawHG.html#PetscDrawHG">PetscDrawHG</a>    h;
+
+
+<a name="line70"> 70: </a>  <a href="../../../../../docs/manualpages/Sys/PetscHeaderCreate.html#PetscHeaderCreate">PetscHeaderCreate</a>(h,PETSC_DRAWHG_CLASSID,<font color="#666666">"DrawHG"</font>,<font color="#666666">"Histogram"</font>,<font color="#666666">"Draw"</font>,<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)draw),<a href="../../../../../docs/manualpages/Draw/PetscDrawHGDestroy.html#PetscDrawHGDestroy">PetscDrawHGDestroy</a>,NULL);
+<a name="line71"> 71: </a>  PetscLogObjectParent((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)draw,(<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)h);
+
+<a name="line73"> 73: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html#PetscObjectReference">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)draw);
+<a name="line74"> 74: </a>  h-&gt;win = draw;
+
+<a name="line76"> 76: </a>  h-&gt;view        = NULL;
+<a name="line77"> 77: </a>  h-&gt;destroy     = NULL;
+<a name="line78"> 78: </a>  h-&gt;color       = PETSC_DRAW_GREEN;
+<a name="line79"> 79: </a>  h-&gt;xmin        = PETSC_MAX_REAL;
+<a name="line80"> 80: </a>  h-&gt;xmax        = PETSC_MIN_REAL;
+<a name="line81"> 81: </a>  h-&gt;ymin        = 0.;
+<a name="line82"> 82: </a>  h-&gt;ymax        = 1.;
+<a name="line83"> 83: </a>  h-&gt;numBins     = bins;
+<a name="line84"> 84: </a>  h-&gt;maxBins     = bins;
+
+<a name="line86"> 86: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(h-&gt;maxBins,&amp;h-&gt;bins);
+
+<a name="line88"> 88: </a>  h-&gt;numValues   = 0;
+<a name="line89"> 89: </a>  h-&gt;maxValues   = CHUNKSIZE;
+<a name="line90"> 90: </a>  h-&gt;calcStats   = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+<a name="line91"> 91: </a>  h-&gt;integerBins = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+
+<a name="line93"> 93: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(h-&gt;maxValues,&amp;h-&gt;values);
+<a name="line94"> 94: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscLogObjectMemory.html#PetscLogObjectMemory">PetscLogObjectMemory</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)h,(h-&gt;maxBins + h-&gt;maxValues)*<font color="#4169E1">sizeof</font>(<a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>));
+
+<a name="line96"> 96: </a>  <a href="../../../../../docs/manualpages/Draw/PetscDrawAxisCreate.html#PetscDrawAxisCreate">PetscDrawAxisCreate</a>(draw,&amp;h-&gt;axis);
+<a name="line97"> 97: </a>  PetscLogObjectParent((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)h,(<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)h-&gt;axis);
+
+<a name="line99"> 99: </a>  *hist = h;
+<a name="line100">100: </a>  <font color="#4169E1">return</font>(0);
+<a name="line101">101: </a>}
+
+<a name="line103">103: </a><font color="#B22222">/*@</font>
+<a name="line104">104: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/Draw/PetscDrawHGSetNumberBins.html#PetscDrawHGSetNumberBins">PetscDrawHGSetNumberBins</a> - Change the number of bins that are to be drawn.</font>
+
+<a name="line106">106: </a><font color="#B22222">   Logically Collective on <a href="../../../../../docs/manualpages/Draw/PetscDrawHG.html#PetscDrawHG">PetscDrawHG</a></font>
+
+<a name="line108">108: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line109">109: </a><font color="#B22222">+  hist - The histogram context.</font>
+<a name="line110">110: </a><font color="#B22222">-  bins  - The number of bins.</font>
+
+<a name="line112">112: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line114">114: </a><font color="#B22222">   Concepts: histogram^setting number of bins</font>
+
+<a name="line116">116: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/Draw/PetscDrawHGCreate.html#PetscDrawHGCreate">PetscDrawHGCreate</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHG.html#PetscDrawHG">PetscDrawHG</a>, <a href="../../../../../docs/manualpages/Draw/PetscDrawHGDraw.html#PetscDrawHGDraw">PetscDrawHGDraw</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGIntegerBins.html#PetscDrawHGIntegerBins">PetscDrawHGIntegerBins</a>()</font>
+
+<a name="line118">118: </a><font color="#B22222">@*/</font>
+<a name="line119">119: </a><strong><font color="#4169E1"><a name="PetscDrawHGSetNumberBins"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../docs/manualpages/Draw/PetscDrawHGSetNumberBins.html#PetscDrawHGSetNumberBins">PetscDrawHGSetNumberBins</a>(<a href="../../../../../docs/manualpages/Draw/PetscDrawHG.html#PetscDrawHG">PetscDrawHG</a> hist, int bins)</font></strong>
+<a name="line120">120: </a>{
+
+
+<a name="line127">127: </a>  <font color="#4169E1">if</font> (hist-&gt;maxBins &lt; bins) {
+<a name="line128">128: </a>    <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(hist-&gt;bins);
+<a name="line129">129: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(bins, &amp;hist-&gt;bins);
+<a name="line130">130: </a>    <a href="../../../../../docs/manualpages/Profiling/PetscLogObjectMemory.html#PetscLogObjectMemory">PetscLogObjectMemory</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)hist, (bins - hist-&gt;maxBins) * <font color="#4169E1">sizeof</font>(<a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>));
+<a name="line131">131: </a>    hist-&gt;maxBins = bins;
+<a name="line132">132: </a>  }
+<a name="line133">133: </a>  hist-&gt;numBins = bins;
+<a name="line134">134: </a>  <font color="#4169E1">return</font>(0);
+<a name="line135">135: </a>}
+
+<a name="line137">137: </a><font color="#B22222">/*@</font>
+<a name="line138">138: </a><font color="#B22222">  <a href="../../../../../docs/manualpages/Draw/PetscDrawHGReset.html#PetscDrawHGReset">PetscDrawHGReset</a> - Clears histogram to allow for reuse with new data.</font>
+
+<a name="line140">140: </a><font color="#B22222">  Logically Collective on <a href="../../../../../docs/manualpages/Draw/PetscDrawHG.html#PetscDrawHG">PetscDrawHG</a></font>
+
+<a name="line142">142: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line143">143: </a><font color="#B22222">. hist - The histogram context.</font>
+
+<a name="line145">145: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line147">147: </a><font color="#B22222">  Concepts: histogram^resetting</font>
+
+<a name="line149">149: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/Draw/PetscDrawHGCreate.html#PetscDrawHGCreate">PetscDrawHGCreate</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHG.html#PetscDrawHG">PetscDrawHG</a>, <a href="../../../../../docs/manualpages/Draw/PetscDrawHGDraw.html#PetscDrawHGDraw">PetscDrawHGDraw</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGAddValue.html#PetscDrawHGAddValue">PetscDrawHGAddValue</a>()</font>
+
+<a name="line151">151: </a><font color="#B22222">@*/</font>
+<a name="line152">152: </a><strong><font color="#4169E1"><a name="PetscDrawHGReset"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../docs/manualpages/Draw/PetscDrawHGReset.html#PetscDrawHGReset">PetscDrawHGReset</a>(<a href="../../../../../docs/manualpages/Draw/PetscDrawHG.html#PetscDrawHG">PetscDrawHG</a> hist)</font></strong>
+<a name="line153">153: </a>{
+
+<a name="line157">157: </a>  hist-&gt;xmin      = PETSC_MAX_REAL;
+<a name="line158">158: </a>  hist-&gt;xmax      = PETSC_MIN_REAL;
+<a name="line159">159: </a>  hist-&gt;ymin      = 0.0;
+<a name="line160">160: </a>  hist-&gt;ymax      = 0.0;
+<a name="line161">161: </a>  hist-&gt;numValues = 0;
+<a name="line162">162: </a>  <font color="#4169E1">return</font>(0);
+<a name="line163">163: </a>}
+
+<a name="line165">165: </a><font color="#B22222">/*@C</font>
+<a name="line166">166: </a><font color="#B22222">  <a href="../../../../../docs/manualpages/Draw/PetscDrawHGDestroy.html#PetscDrawHGDestroy">PetscDrawHGDestroy</a> - Frees all space taken up by histogram data structure.</font>
+
+<a name="line168">168: </a><font color="#B22222">  Collective on <a href="../../../../../docs/manualpages/Draw/PetscDrawHG.html#PetscDrawHG">PetscDrawHG</a></font>
+
+<a name="line170">170: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line171">171: </a><font color="#B22222">. hist - The histogram context</font>
+
+<a name="line173">173: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line175">175: </a><font color="#B22222">.seealso:  <a href="../../../../../docs/manualpages/Draw/PetscDrawHGCreate.html#PetscDrawHGCreate">PetscDrawHGCreate</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHG.html#PetscDrawHG">PetscDrawHG</a></font>
+<a name="line176">176: </a><font color="#B22222">@*/</font>
+<a name="line177">177: </a><strong><font color="#4169E1"><a name="PetscDrawHGDestroy"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../docs/manualpages/Draw/PetscDrawHGDestroy.html#PetscDrawHGDestroy">PetscDrawHGDestroy</a>(<a href="../../../../../docs/manualpages/Draw/PetscDrawHG.html#PetscDrawHG">PetscDrawHG</a> *hist)</font></strong>
+<a name="line178">178: </a>{
+
+<a name="line182">182: </a>  <font color="#4169E1">if</font> (!*hist) <font color="#4169E1">return</font>(0);
+<a name="line184">184: </a>  <font color="#4169E1">if</font> (--((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)(*hist))-&gt;refct &gt; 0) {*hist = NULL; <font color="#4169E1">return</font>(0);}
+
+<a name="line186">186: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>((*hist)-&gt;bins);
+<a name="line187">187: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>((*hist)-&gt;values);
+<a name="line188">188: </a>  <a href="../../../../../docs/manualpages/Draw/PetscDrawAxisDestroy.html#PetscDrawAxisDestroy">PetscDrawAxisDestroy</a>(&amp;(*hist)-&gt;axis);
+<a name="line189">189: </a>  <a href="../../../../../docs/manualpages/Draw/PetscDrawDestroy.html#PetscDrawDestroy">PetscDrawDestroy</a>(&amp;(*hist)-&gt;win);
+<a name="line190">190: </a>  <a href="../../../../../docs/manualpages/Sys/PetscHeaderDestroy.html#PetscHeaderDestroy">PetscHeaderDestroy</a>(hist);
+<a name="line191">191: </a>  <font color="#4169E1">return</font>(0);
+<a name="line192">192: </a>}
+
+<a name="line194">194: </a><font color="#B22222">/*@</font>
+<a name="line195">195: </a><font color="#B22222">  <a href="../../../../../docs/manualpages/Draw/PetscDrawHGAddValue.html#PetscDrawHGAddValue">PetscDrawHGAddValue</a> - Adds another value to the histogram.</font>
+
+<a name="line197">197: </a><font color="#B22222">  Logically Collective on <a href="../../../../../docs/manualpages/Draw/PetscDrawHG.html#PetscDrawHG">PetscDrawHG</a></font>
+
+<a name="line199">199: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line200">200: </a><font color="#B22222">+ hist  - The histogram</font>
+<a name="line201">201: </a><font color="#B22222">- value - The value</font>
+
+<a name="line203">203: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line205">205: </a><font color="#B22222">  Concepts: histogram^adding values</font>
+
+<a name="line207">207: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/Draw/PetscDrawHGCreate.html#PetscDrawHGCreate">PetscDrawHGCreate</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHG.html#PetscDrawHG">PetscDrawHG</a>, <a href="../../../../../docs/manualpages/Draw/PetscDrawHGDraw.html#PetscDrawHGDraw">PetscDrawHGDraw</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGAddValue.html#PetscDrawHGAddValue">PetscDrawHGAddValue</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGReset.html#PetscDrawHGReset">PetscDrawHGReset</a>()</font>
+<a name="line208">208: </a><font color="#B22222">@*/</font>
+<a name="line209">209: </a><strong><font color="#4169E1"><a name="PetscDrawHGAddValue"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../docs/manualpages/Draw/PetscDrawHGAddValue.html#PetscDrawHGAddValue">PetscDrawHGAddValue</a>(<a href="../../../../../docs/manualpages/Draw/PetscDrawHG.html#PetscDrawHG">PetscDrawHG</a> hist, <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> value)</font></strong>
+<a name="line210">210: </a>{
+
+<a name="line214">214: </a>  <font color="#B22222">/* Allocate more memory if necessary */</font>
+<a name="line215">215: </a>  <font color="#4169E1">if</font> (hist-&gt;numValues &gt;= hist-&gt;maxValues) {
+<a name="line216">216: </a>    <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>      *tmp;
+
+<a name="line219">219: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(hist-&gt;maxValues+CHUNKSIZE, &amp;tmp);
+<a name="line220">220: </a>    <a href="../../../../../docs/manualpages/Profiling/PetscLogObjectMemory.html#PetscLogObjectMemory">PetscLogObjectMemory</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)hist, CHUNKSIZE * <font color="#4169E1">sizeof</font>(<a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>));
+<a name="line221">221: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(tmp, hist-&gt;values, hist-&gt;maxValues * <font color="#4169E1">sizeof</font>(<a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>));
+<a name="line222">222: </a>    <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(hist-&gt;values);
+
+<a name="line224">224: </a>    hist-&gt;values     = tmp;
+<a name="line225">225: </a>    hist-&gt;maxValues += CHUNKSIZE;
+<a name="line226">226: </a>  }
+<a name="line227">227: </a>  <font color="#B22222">/* I disagree with the original Petsc implementation here. There should be no overshoot, but rather the</font>
+<a name="line228">228: </a><font color="#B22222">     stated convention of using half-open intervals (always the way to go) */</font>
+<a name="line229">229: </a>  <font color="#4169E1">if</font> (!hist-&gt;numValues) {
+<a name="line230">230: </a>    hist-&gt;xmin = value;
+<a name="line231">231: </a>    hist-&gt;xmax = value;
+<a name="line232">232: </a><font color="#A020F0">#if 1</font>
+<a name="line233">233: </a>  } <font color="#4169E1">else</font> {
+<a name="line234">234: </a>    <font color="#B22222">/* Update limits */</font>
+<a name="line235">235: </a>    <font color="#4169E1">if</font> (value &gt; hist-&gt;xmax) hist-&gt;xmax = value;
+<a name="line236">236: </a>    <font color="#4169E1">if</font> (value &lt; hist-&gt;xmin) hist-&gt;xmin = value;
+<a name="line237">237: </a><font color="#A020F0">#else</font>
+<a name="line238">238: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (hist-&gt;numValues == 1) {
+<a name="line239">239: </a>    <font color="#B22222">/* Update limits -- We need to overshoot the largest value somewhat */</font>
+<a name="line240">240: </a>    <font color="#4169E1">if</font> (value &gt; hist-&gt;xmax) hist-&gt;xmax = value + 0.001*(value - hist-&gt;xmin)/hist-&gt;numBins;
+<a name="line241">241: </a>    <font color="#4169E1">if</font> (value &lt; hist-&gt;xmin) {
+<a name="line242">242: </a>      hist-&gt;xmin = value;
+<a name="line243">243: </a>      hist-&gt;xmax = hist-&gt;xmax + 0.001*(hist-&gt;xmax - hist-&gt;xmin)/hist-&gt;numBins;
+<a name="line244">244: </a>    }
+<a name="line245">245: </a>  } <font color="#4169E1">else</font> {
+<a name="line246">246: </a>    <font color="#B22222">/* Update limits -- We need to overshoot the largest value somewhat */</font>
+<a name="line247">247: </a>    <font color="#4169E1">if</font> (value &gt; hist-&gt;xmax) hist-&gt;xmax = value + 0.001*(hist-&gt;xmax - hist-&gt;xmin)/hist-&gt;numBins;
+<a name="line248">248: </a>    <font color="#4169E1">if</font> (value &lt; hist-&gt;xmin) hist-&gt;xmin = value;
+<a name="line249">249: </a><font color="#A020F0">#endif</font>
+<a name="line250">250: </a>  }
+
+<a name="line252">252: </a>  hist-&gt;values[hist-&gt;numValues++] = value;
+<a name="line253">253: </a>  <font color="#4169E1">return</font>(0);
+<a name="line254">254: </a>}
+
+<a name="line256">256: </a><font color="#B22222">/*@</font>
+<a name="line257">257: </a><font color="#B22222">  <a href="../../../../../docs/manualpages/Draw/PetscDrawHGDraw.html#PetscDrawHGDraw">PetscDrawHGDraw</a> - Redraws a histogram.</font>
+
+<a name="line259">259: </a><font color="#B22222">  Collective on <a href="../../../../../docs/manualpages/Draw/PetscDrawHG.html#PetscDrawHG">PetscDrawHG</a></font>
+
+<a name="line261">261: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line262">262: </a><font color="#B22222">. hist - The histogram context</font>
+
+<a name="line264">264: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line266">266: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/Draw/PetscDrawHGCreate.html#PetscDrawHGCreate">PetscDrawHGCreate</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHG.html#PetscDrawHG">PetscDrawHG</a>, <a href="../../../../../docs/manualpages/Draw/PetscDrawHGDraw.html#PetscDrawHGDraw">PetscDrawHGDraw</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGAddValue.html#PetscDrawHGAddValue">PetscDrawHGAddValue</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGReset.html#PetscDrawHGReset">PetscDrawHGReset</a>()</font>
+
+<a name="line268">268: </a><font color="#B22222">@*/</font>
+<a name="line269">269: </a><strong><font color="#4169E1"><a name="PetscDrawHGDraw"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../docs/manualpages/Draw/PetscDrawHGDraw.html#PetscDrawHGDraw">PetscDrawHGDraw</a>(<a href="../../../../../docs/manualpages/Draw/PetscDrawHG.html#PetscDrawHG">PetscDrawHG</a> hist)</font></strong>
+<a name="line270">270: </a>{
+<a name="line271">271: </a>  <a href="../../../../../docs/manualpages/Draw/PetscDraw.html#PetscDraw">PetscDraw</a>      draw;
+<a name="line272">272: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>      isnull;
+<a name="line273">273: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>      xmin,xmax,ymin,ymax,*bins,*values,binSize,binLeft,binRight,maxHeight,mean,var;
+<a name="line274">274: </a>  char           title[256];
+<a name="line275">275: </a>  char           xlabel[256];
+<a name="line276">276: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       numBins,numBinsOld,numValues,initSize,i,p,bcolor,color;
+<a name="line277">277: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>    rank;
+
+<a name="line282">282: </a>  <a href="../../../../../docs/manualpages/Draw/PetscDrawIsNull.html#PetscDrawIsNull">PetscDrawIsNull</a>(hist-&gt;win,&amp;isnull);
+<a name="line283">283: </a>  <font color="#4169E1">if</font> (isnull) <font color="#4169E1">return</font>(0);
+<a name="line284">284: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)hist),&amp;rank);
+
+<a name="line286">286: </a>  <font color="#4169E1">if</font> ((hist-&gt;xmin &gt;= hist-&gt;xmax) || (hist-&gt;ymin &gt;= hist-&gt;ymax)) <font color="#4169E1">return</font>(0);
+<a name="line287">287: </a>  <font color="#4169E1">if</font> (hist-&gt;numValues &lt; 1) <font color="#4169E1">return</font>(0);
+
+<a name="line289">289: </a>  color = hist-&gt;color;
+<a name="line290">290: </a>  <font color="#4169E1">if</font> (color == PETSC_DRAW_ROTATE) bcolor = PETSC_DRAW_BLACK+1;
+<a name="line291">291: </a>  <font color="#4169E1">else</font> bcolor = color;
+
+<a name="line293">293: </a>  xmin      = hist-&gt;xmin;
+<a name="line294">294: </a>  xmax      = hist-&gt;xmax;
+<a name="line295">295: </a>  ymin      = hist-&gt;ymin;
+<a name="line296">296: </a>  ymax      = hist-&gt;ymax;
+<a name="line297">297: </a>  numValues = hist-&gt;numValues;
+<a name="line298">298: </a>  values    = hist-&gt;values;
+<a name="line299">299: </a>  mean      = 0.0;
+<a name="line300">300: </a>  var       = 0.0;
+
+<a name="line302">302: </a>  draw = hist-&gt;win;
+<a name="line303">303: </a>  <a href="../../../../../docs/manualpages/Draw/PetscDrawCheckResizedWindow.html#PetscDrawCheckResizedWindow">PetscDrawCheckResizedWindow</a>(draw);
+<a name="line304">304: </a>  <a href="../../../../../docs/manualpages/Draw/PetscDrawClear.html#PetscDrawClear">PetscDrawClear</a>(draw);
+
+<a name="line306">306: </a>  <font color="#4169E1">if</font> (xmin == xmax) {
+<a name="line307">307: </a>    <font color="#B22222">/* Calculate number of points in each bin */</font>
+<a name="line308">308: </a>    bins    = hist-&gt;bins;
+<a name="line309">309: </a>    bins[0] = 0.;
+<a name="line310">310: </a>    <font color="#4169E1">for</font> (p = 0; p &lt; numValues; p++) {
+<a name="line311">311: </a>      <font color="#4169E1">if</font> (values[p] == xmin) bins[0]++;
+<a name="line312">312: </a>      mean += values[p];
+<a name="line313">313: </a>      var  += values[p]*values[p];
+<a name="line314">314: </a>    }
+<a name="line315">315: </a>    maxHeight = bins[0];
+<a name="line316">316: </a>    <font color="#4169E1">if</font> (maxHeight &gt; ymax) ymax = hist-&gt;ymax = maxHeight;
+<a name="line317">317: </a>    xmax = xmin + 1;
+<a name="line318">318: </a>    <a href="../../../../../docs/manualpages/Draw/PetscDrawAxisSetLimits.html#PetscDrawAxisSetLimits">PetscDrawAxisSetLimits</a>(hist-&gt;axis, xmin, xmax, ymin, ymax);
+<a name="line319">319: </a>    <font color="#4169E1">if</font> (hist-&gt;calcStats) {
+<a name="line320">320: </a>      mean /= numValues;
+<a name="line321">321: </a>      <font color="#4169E1">if</font> (numValues &gt; 1) var = (var - numValues*mean*mean) / (numValues-1);
+<a name="line322">322: </a>      <font color="#4169E1">else</font> var = 0.0;
+<a name="line323">323: </a>      <a href="../../../../../docs/manualpages/Sys/PetscSNPrintf.html#PetscSNPrintf">PetscSNPrintf</a>(title, 256, <font color="#666666">"Mean: %g  Var: %g"</font>, (double)mean, (double)var);
+<a name="line324">324: </a>      <a href="../../../../../docs/manualpages/Sys/PetscSNPrintf.html#PetscSNPrintf">PetscSNPrintf</a>(xlabel,256, <font color="#666666">"Total: %D"</font>, numValues);
+<a name="line325">325: </a>      <a href="../../../../../docs/manualpages/Draw/PetscDrawAxisSetLabels.html#PetscDrawAxisSetLabels">PetscDrawAxisSetLabels</a>(hist-&gt;axis, title, xlabel, NULL);
+<a name="line326">326: </a>    }
+<a name="line327">327: </a>    <a href="../../../../../docs/manualpages/Draw/PetscDrawAxisDraw.html#PetscDrawAxisDraw">PetscDrawAxisDraw</a>(hist-&gt;axis);
+<a name="line328">328: </a>    PetscDrawCollectiveBegin(draw);
+<a name="line329">329: </a>    <font color="#4169E1">if</font> (!rank) { <font color="#B22222">/* Draw bins */</font>
+<a name="line330">330: </a>      binLeft  = xmin;
+<a name="line331">331: </a>      binRight = xmax;
+<a name="line332">332: </a>      <a href="../../../../../docs/manualpages/Draw/PetscDrawRectangle.html#PetscDrawRectangle">PetscDrawRectangle</a>(draw,binLeft,ymin,binRight,bins[0],bcolor,bcolor,bcolor,bcolor);
+<a name="line333">333: </a>      <a href="../../../../../docs/manualpages/Draw/PetscDrawLine.html#PetscDrawLine">PetscDrawLine</a>(draw,binLeft,ymin,binLeft,bins[0],PETSC_DRAW_BLACK);
+<a name="line334">334: </a>      <a href="../../../../../docs/manualpages/Draw/PetscDrawLine.html#PetscDrawLine">PetscDrawLine</a>(draw,binRight,ymin,binRight,bins[0],PETSC_DRAW_BLACK);
+<a name="line335">335: </a>      <a href="../../../../../docs/manualpages/Draw/PetscDrawLine.html#PetscDrawLine">PetscDrawLine</a>(draw,binLeft,bins[0],binRight,bins[0],PETSC_DRAW_BLACK);
+<a name="line336">336: </a>    }
+<a name="line337">337: </a>    PetscDrawCollectiveEnd(draw);
+<a name="line338">338: </a>  } <font color="#4169E1">else</font> {
+<a name="line339">339: </a>    numBins    = hist-&gt;numBins;
+<a name="line340">340: </a>    numBinsOld = hist-&gt;numBins;
+<a name="line341">341: </a>    <font color="#4169E1">if</font> (hist-&gt;integerBins &amp;&amp; (((int) xmax - xmin) + 1.0e-05 &gt; xmax - xmin)) {
+<a name="line342">342: </a>      initSize = (int) ((int) xmax - xmin)/numBins;
+<a name="line343">343: </a>      <font color="#4169E1">while</font> (initSize*numBins != (int) xmax - xmin) {
+<a name="line344">344: </a>        initSize = <a href="../../../../../docs/manualpages/Sys/PetscMax.html#PetscMax">PetscMax</a>(initSize - 1, 1);
+<a name="line345">345: </a>        numBins  = (int) ((int) xmax - xmin)/initSize;
+<a name="line346">346: </a>        <a href="../../../../../docs/manualpages/Draw/PetscDrawHGSetNumberBins.html#PetscDrawHGSetNumberBins">PetscDrawHGSetNumberBins</a>(hist, numBins);
+<a name="line347">347: </a>      }
+<a name="line348">348: </a>    }
+<a name="line349">349: </a>    binSize = (xmax - xmin)/numBins;
+<a name="line350">350: </a>    bins    = hist-&gt;bins;
+
+<a name="line352">352: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMemzero.html#PetscMemzero">PetscMemzero</a>(bins, numBins * <font color="#4169E1">sizeof</font>(<a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>));
+
+<a name="line354">354: </a>    maxHeight = 0.0;
+<a name="line355">355: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; numBins; i++) {
+<a name="line356">356: </a>      binLeft  = xmin + binSize*i;
+<a name="line357">357: </a>      binRight = xmin + binSize*(i+1);
+<a name="line358">358: </a>      <font color="#4169E1">for</font> (p = 0; p &lt; numValues; p++) {
+<a name="line359">359: </a>        <font color="#4169E1">if</font> ((values[p] &gt;= binLeft) &amp;&amp; (values[p] &lt; binRight)) bins[i]++;
+<a name="line360">360: </a>        <font color="#B22222">/* Handle last bin separately */</font>
+<a name="line361">361: </a>        <font color="#4169E1">if</font> ((i == numBins-1) &amp;&amp; (values[p] == binRight)) bins[i]++;
+<a name="line362">362: </a>        <font color="#4169E1">if</font> (!i) {
+<a name="line363">363: </a>          mean += values[p];
+<a name="line364">364: </a>          var  += values[p]*values[p];
+<a name="line365">365: </a>        }
+<a name="line366">366: </a>      }
+<a name="line367">367: </a>      maxHeight = <a href="../../../../../docs/manualpages/Sys/PetscMax.html#PetscMax">PetscMax</a>(maxHeight, bins[i]);
+<a name="line368">368: </a>    }
+<a name="line369">369: </a>    <font color="#4169E1">if</font> (maxHeight &gt; ymax) ymax = hist-&gt;ymax = maxHeight;
+
+<a name="line371">371: </a>    <a href="../../../../../docs/manualpages/Draw/PetscDrawAxisSetLimits.html#PetscDrawAxisSetLimits">PetscDrawAxisSetLimits</a>(hist-&gt;axis, xmin, xmax, ymin, ymax);
+<a name="line372">372: </a>    <font color="#4169E1">if</font> (hist-&gt;calcStats) {
+<a name="line373">373: </a>      mean /= numValues;
+<a name="line374">374: </a>      <font color="#4169E1">if</font> (numValues &gt; 1) var = (var - numValues*mean*mean) / (numValues-1);
+<a name="line375">375: </a>      <font color="#4169E1">else</font> var = 0.0;
+<a name="line376">376: </a>      <a href="../../../../../docs/manualpages/Sys/PetscSNPrintf.html#PetscSNPrintf">PetscSNPrintf</a>(title, 256,<font color="#666666">"Mean: %g  Var: %g"</font>, (double)mean, (double)var);
+<a name="line377">377: </a>      <a href="../../../../../docs/manualpages/Sys/PetscSNPrintf.html#PetscSNPrintf">PetscSNPrintf</a>(xlabel,256, <font color="#666666">"Total: %D"</font>, numValues);
+<a name="line378">378: </a>      <a href="../../../../../docs/manualpages/Draw/PetscDrawAxisSetLabels.html#PetscDrawAxisSetLabels">PetscDrawAxisSetLabels</a>(hist-&gt;axis, title, xlabel, NULL);
+<a name="line379">379: </a>    }
+<a name="line380">380: </a>    <a href="../../../../../docs/manualpages/Draw/PetscDrawAxisDraw.html#PetscDrawAxisDraw">PetscDrawAxisDraw</a>(hist-&gt;axis);
+<a name="line381">381: </a>    PetscDrawCollectiveBegin(draw);
+<a name="line382">382: </a>    <font color="#4169E1">if</font> (!rank) { <font color="#B22222">/* Draw bins */</font>
+<a name="line383">383: </a>      <font color="#4169E1">for</font> (i = 0; i &lt; numBins; i++) {
+<a name="line384">384: </a>        binLeft  = xmin + binSize*i;
+<a name="line385">385: </a>        binRight = xmin + binSize*(i+1);
+<a name="line386">386: </a>        <a href="../../../../../docs/manualpages/Draw/PetscDrawRectangle.html#PetscDrawRectangle">PetscDrawRectangle</a>(draw,binLeft,ymin,binRight,bins[i],bcolor,bcolor,bcolor,bcolor);
+<a name="line387">387: </a>        <a href="../../../../../docs/manualpages/Draw/PetscDrawLine.html#PetscDrawLine">PetscDrawLine</a>(draw,binLeft,ymin,binLeft,bins[i],PETSC_DRAW_BLACK);
+<a name="line388">388: </a>        <a href="../../../../../docs/manualpages/Draw/PetscDrawLine.html#PetscDrawLine">PetscDrawLine</a>(draw,binRight,ymin,binRight,bins[i],PETSC_DRAW_BLACK);
+<a name="line389">389: </a>        <a href="../../../../../docs/manualpages/Draw/PetscDrawLine.html#PetscDrawLine">PetscDrawLine</a>(draw,binLeft,bins[i],binRight,bins[i],PETSC_DRAW_BLACK);
+<a name="line390">390: </a>        <font color="#4169E1">if</font> (color == PETSC_DRAW_ROTATE &amp;&amp; bins[i]) bcolor++;
+<a name="line391">391: </a>        <font color="#4169E1">if</font> (bcolor &gt; PETSC_DRAW_BASIC_COLORS-1) bcolor = PETSC_DRAW_BLACK+1;
+<a name="line392">392: </a>      }
+<a name="line393">393: </a>    }
+<a name="line394">394: </a>    PetscDrawCollectiveEnd(draw);
+<a name="line395">395: </a>    <a href="../../../../../docs/manualpages/Draw/PetscDrawHGSetNumberBins.html#PetscDrawHGSetNumberBins">PetscDrawHGSetNumberBins</a>(hist,numBinsOld);
+<a name="line396">396: </a>  }
+
+<a name="line398">398: </a>  <a href="../../../../../docs/manualpages/Draw/PetscDrawFlush.html#PetscDrawFlush">PetscDrawFlush</a>(draw);
+<a name="line399">399: </a>  <a href="../../../../../docs/manualpages/Draw/PetscDrawPause.html#PetscDrawPause">PetscDrawPause</a>(draw);
+<a name="line400">400: </a>  <font color="#4169E1">return</font>(0);
+<a name="line401">401: </a>}
+
+<a name="line403">403: </a><font color="#B22222">/*@</font>
+<a name="line404">404: </a><font color="#B22222">  <a href="../../../../../docs/manualpages/Draw/PetscDrawHGSave.html#PetscDrawHGSave">PetscDrawHGSave</a> - Saves a drawn image</font>
+
+<a name="line406">406: </a><font color="#B22222">  Collective on <a href="../../../../../docs/manualpages/Draw/PetscDrawHG.html#PetscDrawHG">PetscDrawHG</a></font>
+
+<a name="line408">408: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line409">409: </a><font color="#B22222">. hist - The histogram context</font>
+
+<a name="line411">411: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line413">413: </a><font color="#B22222">  Concepts: histogram^saving</font>
+
+<a name="line415">415: </a><font color="#B22222">.seealso:  <a href="../../../../../docs/manualpages/Draw/PetscDrawHGCreate.html#PetscDrawHGCreate">PetscDrawHGCreate</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGGetDraw.html#PetscDrawHGGetDraw">PetscDrawHGGetDraw</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawSetSave.html#PetscDrawSetSave">PetscDrawSetSave</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawSave.html#PetscDrawSave">PetscDrawSave</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGDraw.html#PetscDrawHGDraw">PetscDrawHGDraw</a>()</font>
+<a name="line416">416: </a><font color="#B22222">@*/</font>
+<a name="line417">417: </a><strong><font color="#4169E1"><a name="PetscDrawHGSave"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../docs/manualpages/Draw/PetscDrawHGSave.html#PetscDrawHGSave">PetscDrawHGSave</a>(<a href="../../../../../docs/manualpages/Draw/PetscDrawHG.html#PetscDrawHG">PetscDrawHG</a> hg)</font></strong>
+<a name="line418">418: </a>{
+
+<a name="line423">423: </a>  <a href="../../../../../docs/manualpages/Draw/PetscDrawSave.html#PetscDrawSave">PetscDrawSave</a>(hg-&gt;win);
+<a name="line424">424: </a>  <font color="#4169E1">return</font>(0);
+<a name="line425">425: </a>}
+
+<a name="line427">427: </a><font color="#B22222">/*@</font>
+<a name="line428">428: </a><font color="#B22222">  <a href="../../../../../docs/manualpages/Draw/PetscDrawHGView.html#PetscDrawHGView">PetscDrawHGView</a> - Prints the histogram information.</font>
+
+<a name="line430">430: </a><font color="#B22222">  Not collective</font>
+
+<a name="line432">432: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line433">433: </a><font color="#B22222">. hist - The histogram context</font>
+
+<a name="line435">435: </a><font color="#B22222">  Level: beginner</font>
+
+<a name="line437">437: </a><font color="#B22222">.seealso:  <a href="../../../../../docs/manualpages/Draw/PetscDrawHGCreate.html#PetscDrawHGCreate">PetscDrawHGCreate</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGGetDraw.html#PetscDrawHGGetDraw">PetscDrawHGGetDraw</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawSetSave.html#PetscDrawSetSave">PetscDrawSetSave</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawSave.html#PetscDrawSave">PetscDrawSave</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGDraw.html#PetscDrawHGDraw">PetscDrawHGDraw</a>()</font>
+
+<a name="line439">439: </a><font color="#B22222">.keywords:  draw, histogram</font>
+<a name="line440">440: </a><font color="#B22222">@*/</font>
+<a name="line441">441: </a><strong><font color="#4169E1"><a name="PetscDrawHGView"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../docs/manualpages/Draw/PetscDrawHGView.html#PetscDrawHGView">PetscDrawHGView</a>(<a href="../../../../../docs/manualpages/Draw/PetscDrawHG.html#PetscDrawHG">PetscDrawHG</a> hist,<a href="../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer)</font></strong>
+<a name="line442">442: </a>{
+<a name="line443">443: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>      xmax,xmin,*bins,*values,binSize,binLeft,binRight,mean,var;
+<a name="line445">445: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       numBins,numBinsOld,numValues,initSize,i,p;
+
+
+<a name="line450">450: </a>  <font color="#4169E1">if</font> ((hist-&gt;xmin &gt; hist-&gt;xmax) || (hist-&gt;ymin &gt;= hist-&gt;ymax)) <font color="#4169E1">return</font>(0);
+<a name="line451">451: </a>  <font color="#4169E1">if</font> (hist-&gt;numValues &lt; 1) <font color="#4169E1">return</font>(0);
+
+<a name="line453">453: </a>  <font color="#4169E1">if</font> (!viewer){
+<a name="line454">454: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIGetStdout.html#PetscViewerASCIIGetStdout">PetscViewerASCIIGetStdout</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)hist),&amp;viewer);
+<a name="line455">455: </a>  }
+<a name="line456">456: </a>  PetscObjectPrintClassNamePrefixType((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)hist,viewer);
+<a name="line457">457: </a>  xmax      = hist-&gt;xmax;
+<a name="line458">458: </a>  xmin      = hist-&gt;xmin;
+<a name="line459">459: </a>  numValues = hist-&gt;numValues;
+<a name="line460">460: </a>  values    = hist-&gt;values;
+<a name="line461">461: </a>  mean      = 0.0;
+<a name="line462">462: </a>  var       = 0.0;
+<a name="line463">463: </a>  <font color="#4169E1">if</font> (xmax == xmin) {
+<a name="line464">464: </a>    <font color="#B22222">/* Calculate number of points in the bin */</font>
+<a name="line465">465: </a>    bins    = hist-&gt;bins;
+<a name="line466">466: </a>    bins[0] = 0.;
+<a name="line467">467: </a>    <font color="#4169E1">for</font> (p = 0; p &lt; numValues; p++) {
+<a name="line468">468: </a>      <font color="#4169E1">if</font> (values[p] == xmin) bins[0]++;
+<a name="line469">469: </a>      mean += values[p];
+<a name="line470">470: </a>      var  += values[p]*values[p];
+<a name="line471">471: </a>    }
+<a name="line472">472: </a>    <font color="#B22222">/* Draw bins */</font>
+<a name="line473">473: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"Bin %2d (%6.2g - %6.2g): %.0g\n"</font>, 0, (double)xmin, (double)xmax, (double)bins[0]);
+<a name="line474">474: </a>  } <font color="#4169E1">else</font> {
+<a name="line475">475: </a>    numBins    = hist-&gt;numBins;
+<a name="line476">476: </a>    numBinsOld = hist-&gt;numBins;
+<a name="line477">477: </a>    <font color="#4169E1">if</font> (hist-&gt;integerBins &amp;&amp; (((int) xmax - xmin) + 1.0e-05 &gt; xmax - xmin)) {
+<a name="line478">478: </a>      initSize = (int) ((int) xmax - xmin)/numBins;
+<a name="line479">479: </a>      <font color="#4169E1">while</font> (initSize*numBins != (int) xmax - xmin) {
+<a name="line480">480: </a>        initSize = <a href="../../../../../docs/manualpages/Sys/PetscMax.html#PetscMax">PetscMax</a>(initSize - 1, 1);
+<a name="line481">481: </a>        numBins  = (int) ((int) xmax - xmin)/initSize;
+<a name="line482">482: </a>        <a href="../../../../../docs/manualpages/Draw/PetscDrawHGSetNumberBins.html#PetscDrawHGSetNumberBins">PetscDrawHGSetNumberBins</a>(hist, numBins);
+<a name="line483">483: </a>      }
+<a name="line484">484: </a>    }
+<a name="line485">485: </a>    binSize = (xmax - xmin)/numBins;
+<a name="line486">486: </a>    bins    = hist-&gt;bins;
+
+<a name="line488">488: </a>    <font color="#B22222">/* Calculate number of points in each bin */</font>
+<a name="line489">489: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMemzero.html#PetscMemzero">PetscMemzero</a>(bins, numBins * <font color="#4169E1">sizeof</font>(<a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>));
+<a name="line490">490: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; numBins; i++) {
+<a name="line491">491: </a>      binLeft  = xmin + binSize*i;
+<a name="line492">492: </a>      binRight = xmin + binSize*(i+1);
+<a name="line493">493: </a>      <font color="#4169E1">for</font> (p = 0; p &lt; numValues; p++) {
+<a name="line494">494: </a>        <font color="#4169E1">if</font> ((values[p] &gt;= binLeft) &amp;&amp; (values[p] &lt; binRight)) bins[i]++;
+<a name="line495">495: </a>        <font color="#B22222">/* Handle last bin separately */</font>
+<a name="line496">496: </a>        <font color="#4169E1">if</font> ((i == numBins-1) &amp;&amp; (values[p] == binRight)) bins[i]++;
+<a name="line497">497: </a>        <font color="#4169E1">if</font> (!i) {
+<a name="line498">498: </a>          mean += values[p];
+<a name="line499">499: </a>          var  += values[p]*values[p];
+<a name="line500">500: </a>        }
+<a name="line501">501: </a>      }
+<a name="line502">502: </a>    }
+<a name="line503">503: </a>    <font color="#B22222">/* Draw bins */</font>
+<a name="line504">504: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; numBins; i++) {
+<a name="line505">505: </a>      binLeft  = xmin + binSize*i;
+<a name="line506">506: </a>      binRight = xmin + binSize*(i+1);
+<a name="line507">507: </a>      <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"Bin %2d (%6.2g - %6.2g): %.0g\n"</font>, (int)i, (double)binLeft, (double)binRight, (double)bins[i]);
+<a name="line508">508: </a>    }
+<a name="line509">509: </a>    <a href="../../../../../docs/manualpages/Draw/PetscDrawHGSetNumberBins.html#PetscDrawHGSetNumberBins">PetscDrawHGSetNumberBins</a>(hist, numBinsOld);
+<a name="line510">510: </a>  }
+
+<a name="line512">512: </a>  <font color="#4169E1">if</font> (hist-&gt;calcStats) {
+<a name="line513">513: </a>    mean /= numValues;
+<a name="line514">514: </a>    <font color="#4169E1">if</font> (numValues &gt; 1) var = (var - numValues*mean*mean) / (numValues-1);
+<a name="line515">515: </a>    <font color="#4169E1">else</font> var = 0.0;
+<a name="line516">516: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"Mean: %g  Var: %g\n"</font>, (double)mean, (double)var);
+<a name="line517">517: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"Total: %D\n"</font>, numValues);
+<a name="line518">518: </a>  }
+<a name="line519">519: </a>  <font color="#4169E1">return</font>(0);
+<a name="line520">520: </a>}
+
+<a name="line522">522: </a><font color="#B22222">/*@</font>
+<a name="line523">523: </a><font color="#B22222">  <a href="../../../../../docs/manualpages/Draw/PetscDrawHGSetColor.html#PetscDrawHGSetColor">PetscDrawHGSetColor</a> - Sets the color the bars will be drawn with.</font>
+
+<a name="line525">525: </a><font color="#B22222">  Logically Collective on <a href="../../../../../docs/manualpages/Draw/PetscDrawHG.html#PetscDrawHG">PetscDrawHG</a></font>
+
+<a name="line527">527: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line528">528: </a><font color="#B22222">+ hist - The histogram context</font>
+<a name="line529">529: </a><font color="#B22222">- color - one of the colors defined in petscdraw.h or PETSC_DRAW_ROTATE to make each bar a</font>
+<a name="line530">530: </a><font color="#B22222">          different color</font>
+
+<a name="line532">532: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line534">534: </a><font color="#B22222">.seealso:  <a href="../../../../../docs/manualpages/Draw/PetscDrawHGCreate.html#PetscDrawHGCreate">PetscDrawHGCreate</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGGetDraw.html#PetscDrawHGGetDraw">PetscDrawHGGetDraw</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawSetSave.html#PetscDrawSetSave">PetscDrawSetSave</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawSave.html#PetscDrawSave">PetscDrawSave</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGDraw.html#PetscDrawHGDraw">PetscDrawHGDraw</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGGetAxis.html#PetscDrawHGGetAxis">PetscDrawHGGetAxis</a>()</font>
+
+<a name="line536">536: </a><font color="#B22222">@*/</font>
+<a name="line537">537: </a><strong><font color="#4169E1"><a name="PetscDrawHGSetColor"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../docs/manualpages/Draw/PetscDrawHGSetColor.html#PetscDrawHGSetColor">PetscDrawHGSetColor</a>(<a href="../../../../../docs/manualpages/Draw/PetscDrawHG.html#PetscDrawHG">PetscDrawHG</a> hist,int color)</font></strong>
+<a name="line538">538: </a>{
+
+<a name="line542">542: </a>  hist-&gt;color = color;
+<a name="line543">543: </a>  <font color="#4169E1">return</font>(0);
+<a name="line544">544: </a>}
+
+<a name="line546">546: </a><font color="#B22222">/*@</font>
+<a name="line547">547: </a><font color="#B22222">  <a href="../../../../../docs/manualpages/Draw/PetscDrawHGSetLimits.html#PetscDrawHGSetLimits">PetscDrawHGSetLimits</a> - Sets the axis limits for a histogram. If more</font>
+<a name="line548">548: </a><font color="#B22222">  points are added after this call, the limits will be adjusted to</font>
+<a name="line549">549: </a><font color="#B22222">  include those additional points.</font>
+
+<a name="line551">551: </a><font color="#B22222">  Logically Collective on <a href="../../../../../docs/manualpages/Draw/PetscDrawHG.html#PetscDrawHG">PetscDrawHG</a></font>
+
+<a name="line553">553: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line554">554: </a><font color="#B22222">+ hist - The histogram context</font>
+<a name="line555">555: </a><font color="#B22222">- x_min,x_max,y_min,y_max - The limits</font>
+
+<a name="line557">557: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line559">559: </a><font color="#B22222">  Concepts: histogram^setting axis</font>
+
+<a name="line561">561: </a><font color="#B22222">.seealso:  <a href="../../../../../docs/manualpages/Draw/PetscDrawHGCreate.html#PetscDrawHGCreate">PetscDrawHGCreate</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGGetDraw.html#PetscDrawHGGetDraw">PetscDrawHGGetDraw</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawSetSave.html#PetscDrawSetSave">PetscDrawSetSave</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawSave.html#PetscDrawSave">PetscDrawSave</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGDraw.html#PetscDrawHGDraw">PetscDrawHGDraw</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGGetAxis.html#PetscDrawHGGetAxis">PetscDrawHGGetAxis</a>()</font>
+
+<a name="line563">563: </a><font color="#B22222">@*/</font>
+<a name="line564">564: </a><strong><font color="#4169E1"><a name="PetscDrawHGSetLimits"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../docs/manualpages/Draw/PetscDrawHGSetLimits.html#PetscDrawHGSetLimits">PetscDrawHGSetLimits</a>(<a href="../../../../../docs/manualpages/Draw/PetscDrawHG.html#PetscDrawHG">PetscDrawHG</a> hist, <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> x_min, <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> x_max, int y_min, int y_max)</font></strong>
+<a name="line565">565: </a>{
+
+<a name="line569">569: </a>  hist-&gt;xmin = x_min;
+<a name="line570">570: </a>  hist-&gt;xmax = x_max;
+<a name="line571">571: </a>  hist-&gt;ymin = y_min;
+<a name="line572">572: </a>  hist-&gt;ymax = y_max;
+<a name="line573">573: </a>  <font color="#4169E1">return</font>(0);
+<a name="line574">574: </a>}
+
+<a name="line576">576: </a><font color="#B22222">/*@</font>
+<a name="line577">577: </a><font color="#B22222">  <a href="../../../../../docs/manualpages/Draw/PetscDrawHGCalcStats.html#PetscDrawHGCalcStats">PetscDrawHGCalcStats</a> - Turns on calculation of descriptive statistics</font>
+
+<a name="line579">579: </a><font color="#B22222">  Not collective</font>
+
+<a name="line581">581: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line582">582: </a><font color="#B22222">+ hist - The histogram context</font>
+<a name="line583">583: </a><font color="#B22222">- calc - Flag for calculation</font>
+
+<a name="line585">585: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line587">587: </a><font color="#B22222">.keywords:  draw, histogram, statistics</font>
+
+<a name="line589">589: </a><font color="#B22222">.seealso:  <a href="../../../../../docs/manualpages/Draw/PetscDrawHGCreate.html#PetscDrawHGCreate">PetscDrawHGCreate</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGAddValue.html#PetscDrawHGAddValue">PetscDrawHGAddValue</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGView.html#PetscDrawHGView">PetscDrawHGView</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGDraw.html#PetscDrawHGDraw">PetscDrawHGDraw</a>()</font>
+
+<a name="line591">591: </a><font color="#B22222">@*/</font>
+<a name="line592">592: </a><strong><font color="#4169E1"><a name="PetscDrawHGCalcStats"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../docs/manualpages/Draw/PetscDrawHGCalcStats.html#PetscDrawHGCalcStats">PetscDrawHGCalcStats</a>(<a href="../../../../../docs/manualpages/Draw/PetscDrawHG.html#PetscDrawHG">PetscDrawHG</a> hist, <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> calc)</font></strong>
+<a name="line593">593: </a>{
+
+<a name="line597">597: </a>  hist-&gt;calcStats = calc;
+<a name="line598">598: </a>  <font color="#4169E1">return</font>(0);
+<a name="line599">599: </a>}
+
+<a name="line601">601: </a><font color="#B22222">/*@</font>
+<a name="line602">602: </a><font color="#B22222">  <a href="../../../../../docs/manualpages/Draw/PetscDrawHGIntegerBins.html#PetscDrawHGIntegerBins">PetscDrawHGIntegerBins</a> - Turns on integer width bins</font>
+
+<a name="line604">604: </a><font color="#B22222">  Not collective</font>
+
+<a name="line606">606: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line607">607: </a><font color="#B22222">+ hist - The histogram context</font>
+<a name="line608">608: </a><font color="#B22222">- ints - Flag for integer width bins</font>
+
+<a name="line610">610: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line612">612: </a><font color="#B22222">.keywords:  draw, histogram, statistics</font>
+
+<a name="line614">614: </a><font color="#B22222">.seealso:  <a href="../../../../../docs/manualpages/Draw/PetscDrawHGCreate.html#PetscDrawHGCreate">PetscDrawHGCreate</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGAddValue.html#PetscDrawHGAddValue">PetscDrawHGAddValue</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGView.html#PetscDrawHGView">PetscDrawHGView</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGDraw.html#PetscDrawHGDraw">PetscDrawHGDraw</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGSetColor.html#PetscDrawHGSetColor">PetscDrawHGSetColor</a>()</font>
+
+<a name="line616">616: </a><font color="#B22222">@*/</font>
+<a name="line617">617: </a><strong><font color="#4169E1"><a name="PetscDrawHGIntegerBins"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../docs/manualpages/Draw/PetscDrawHGIntegerBins.html#PetscDrawHGIntegerBins">PetscDrawHGIntegerBins</a>(<a href="../../../../../docs/manualpages/Draw/PetscDrawHG.html#PetscDrawHG">PetscDrawHG</a> hist, <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> ints)</font></strong>
+<a name="line618">618: </a>{
+
+<a name="line622">622: </a>  hist-&gt;integerBins = ints;
+<a name="line623">623: </a>  <font color="#4169E1">return</font>(0);
+<a name="line624">624: </a>}
+
+<a name="line626">626: </a><font color="#B22222">/*@C</font>
+<a name="line627">627: </a><font color="#B22222">  <a href="../../../../../docs/manualpages/Draw/PetscDrawHGGetAxis.html#PetscDrawHGGetAxis">PetscDrawHGGetAxis</a> - Gets the axis context associated with a histogram.</font>
+<a name="line628">628: </a><font color="#B22222">  This is useful if one wants to change some axis property, such as</font>
+<a name="line629">629: </a><font color="#B22222">  labels, color, etc. The axis context should not be destroyed by the</font>
+<a name="line630">630: </a><font color="#B22222">  application code.</font>
+
+<a name="line632">632: </a><font color="#B22222">  Not Collective, <a href="../../../../../docs/manualpages/Draw/PetscDrawAxis.html#PetscDrawAxis">PetscDrawAxis</a> is parallel if <a href="../../../../../docs/manualpages/Draw/PetscDrawHG.html#PetscDrawHG">PetscDrawHG</a> is parallel</font>
+
+<a name="line634">634: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line635">635: </a><font color="#B22222">. hist - The histogram context</font>
+
+<a name="line637">637: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line638">638: </a><font color="#B22222">. axis - The axis context</font>
+
+<a name="line640">640: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line642">642: </a><font color="#B22222">.seealso:  <a href="../../../../../docs/manualpages/Draw/PetscDrawHGCreate.html#PetscDrawHGCreate">PetscDrawHGCreate</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGAddValue.html#PetscDrawHGAddValue">PetscDrawHGAddValue</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGView.html#PetscDrawHGView">PetscDrawHGView</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGDraw.html#PetscDrawHGDraw">PetscDrawHGDraw</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGSetColor.html#PetscDrawHGSetColor">PetscDrawHGSetColor</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawAxis.html#PetscDrawAxis">PetscDrawAxis</a>, <a href="../../../../../docs/manualpages/Draw/PetscDrawHGSetLimits.html#PetscDrawHGSetLimits">PetscDrawHGSetLimits</a>()</font>
+
+<a name="line644">644: </a><font color="#B22222">@*/</font>
+<a name="line645">645: </a><strong><font color="#4169E1"><a name="PetscDrawHGGetAxis"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../docs/manualpages/Draw/PetscDrawHGGetAxis.html#PetscDrawHGGetAxis">PetscDrawHGGetAxis</a>(<a href="../../../../../docs/manualpages/Draw/PetscDrawHG.html#PetscDrawHG">PetscDrawHG</a> hist,<a href="../../../../../docs/manualpages/Draw/PetscDrawAxis.html#PetscDrawAxis">PetscDrawAxis</a> *axis)</font></strong>
+<a name="line646">646: </a>{
+<a name="line650">650: </a>  *axis = hist-&gt;axis;
+<a name="line651">651: </a>  <font color="#4169E1">return</font>(0);
+<a name="line652">652: </a>}
+
+<a name="line654">654: </a><font color="#B22222">/*@C</font>
+<a name="line655">655: </a><font color="#B22222">  <a href="../../../../../docs/manualpages/Draw/PetscDrawHGGetDraw.html#PetscDrawHGGetDraw">PetscDrawHGGetDraw</a> - Gets the draw context associated with a histogram.</font>
+
+<a name="line657">657: </a><font color="#B22222">  Not Collective, <a href="../../../../../docs/manualpages/Draw/PetscDraw.html#PetscDraw">PetscDraw</a> is parallel if <a href="../../../../../docs/manualpages/Draw/PetscDrawHG.html#PetscDrawHG">PetscDrawHG</a> is parallel</font>
+
+<a name="line659">659: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line660">660: </a><font color="#B22222">. hist - The histogram context</font>
+
+<a name="line662">662: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line663">663: </a><font color="#B22222">. draw  - The draw context</font>
+
+<a name="line665">665: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line667">667: </a><font color="#B22222">.seealso:  <a href="../../../../../docs/manualpages/Draw/PetscDrawHGCreate.html#PetscDrawHGCreate">PetscDrawHGCreate</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGAddValue.html#PetscDrawHGAddValue">PetscDrawHGAddValue</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGView.html#PetscDrawHGView">PetscDrawHGView</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGDraw.html#PetscDrawHGDraw">PetscDrawHGDraw</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawHGSetColor.html#PetscDrawHGSetColor">PetscDrawHGSetColor</a>(), <a href="../../../../../docs/manualpages/Draw/PetscDrawAxis.html#PetscDrawAxis">PetscDrawAxis</a>, <a href="../../../../../docs/manualpages/Draw/PetscDrawHGSetLimits.html#PetscDrawHGSetLimits">PetscDrawHGSetLimits</a>()</font>
+
+<a name="line669">669: </a><font color="#B22222">@*/</font>
+<a name="line670">670: </a><strong><font color="#4169E1"><a name="PetscDrawHGGetDraw"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../docs/manualpages/Draw/PetscDrawHGGetDraw.html#PetscDrawHGGetDraw">PetscDrawHGGetDraw</a>(<a href="../../../../../docs/manualpages/Draw/PetscDrawHG.html#PetscDrawHG">PetscDrawHG</a> hist,<a href="../../../../../docs/manualpages/Draw/PetscDraw.html#PetscDraw">PetscDraw</a> *draw)</font></strong>
+<a name="line671">671: </a>{
+<a name="line675">675: </a>  *draw = hist-&gt;win;
+<a name="line676">676: </a>  <font color="#4169E1">return</font>(0);
+<a name="line677">677: </a>}
+
+</pre>
+</body>
+
+</html>

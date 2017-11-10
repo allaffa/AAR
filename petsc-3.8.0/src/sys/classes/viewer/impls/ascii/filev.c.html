@@ -1,0 +1,1000 @@
+<center><a href="filev.c">Actual source code: filev.c</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/sys/classes/viewer/impls/ascii/filev.c.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:03:23+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/sys/classes/viewer/impls/ascii/filev.c.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+
+<a name="line2">  2: </a> #include <A href="../../../../../../include/../src/sys/classes/viewer/impls/ascii/asciiimpl.h.html">&lt;../src/sys/classes/viewer/impls/ascii/asciiimpl.h&gt;</A>
+
+<a name="line4">  4: </a><strong><font color="#228B22">#define QUEUESTRINGSIZE 8192</font></strong>
+
+<a name="line6">  6: </a><strong><font color="#4169E1"><a name="PetscViewerFileClose_ASCII"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscViewerFileClose_ASCII(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer)</font></strong>
+<a name="line7">  7: </a>{
+<a name="line8">  8: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+<a name="line9">  9: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>       rank;
+<a name="line10"> 10: </a>  PetscViewer_ASCII *vascii = (PetscViewer_ASCII*)viewer-&gt;data;
+<a name="line11"> 11: </a>  int               err;
+
+<a name="line14"> 14: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer),&amp;rank);
+<a name="line15"> 15: </a>  <font color="#4169E1">if</font> (!rank &amp;&amp; vascii-&gt;fd != stderr &amp;&amp; vascii-&gt;fd != PETSC_STDOUT) {
+<a name="line16"> 16: </a>    <font color="#4169E1">if</font> (vascii-&gt;fd &amp;&amp; vascii-&gt;closefile) {
+<a name="line17"> 17: </a>      err = fclose(vascii-&gt;fd);
+<a name="line18"> 18: </a>      <font color="#4169E1">if</font> (err) <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_SYS,<font color="#666666">"fclose() failed on file"</font>);
+<a name="line19"> 19: </a>    }
+<a name="line20"> 20: </a>    <font color="#4169E1">if</font> (vascii-&gt;storecompressed) {
+<a name="line21"> 21: </a>      char par[PETSC_MAX_PATH_LEN],buf[PETSC_MAX_PATH_LEN];
+<a name="line22"> 22: </a>      FILE *fp;
+<a name="line23"> 23: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscStrcpy.html#PetscStrcpy">PetscStrcpy</a>(par,<font color="#666666">"gzip "</font>);
+<a name="line24"> 24: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscStrcat.html#PetscStrcat">PetscStrcat</a>(par,vascii-&gt;filename);
+<a name="line25"> 25: </a><font color="#A020F0">#if defined(PETSC_HAVE_POPEN)</font>
+<a name="line26"> 26: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscPOpen.html#PetscPOpen">PetscPOpen</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,NULL,par,<font color="#666666">"r"</font>,&amp;fp);
+<a name="line27"> 27: </a>      <font color="#4169E1">if</font> (fgets(buf,1024,fp)) <a href="../../../../../../docs/manualpages/Sys/SETERRQ2.html#SETERRQ2">SETERRQ2</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_LIB,<font color="#666666">"Error from compression command %s\n%s"</font>,par,buf);
+<a name="line28"> 28: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscPClose.html#PetscPClose">PetscPClose</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,fp,NULL);
+<a name="line29"> 29: </a><font color="#A020F0">#else</font>
+<a name="line30"> 30: </a>      <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_SUP_SYS,<font color="#666666">"Cannot run external programs on this machine"</font>);
+<a name="line31"> 31: </a><font color="#A020F0">#endif</font>
+<a name="line32"> 32: </a>    }
+<a name="line33"> 33: </a>  }
+<a name="line34"> 34: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(vascii-&gt;filename);
+<a name="line35"> 35: </a>  <font color="#4169E1">return</font>(0);
+<a name="line36"> 36: </a>}
+
+<a name="line38"> 38: </a><font color="#B22222">/* ----------------------------------------------------------------------*/</font>
+<a name="line39"> 39: </a><strong><font color="#4169E1"><a name="PetscViewerDestroy_ASCII"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscViewerDestroy_ASCII(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer)</font></strong>
+<a name="line40"> 40: </a>{
+<a name="line41"> 41: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+<a name="line42"> 42: </a>  PetscViewer_ASCII *vascii = (PetscViewer_ASCII*)viewer-&gt;data;
+<a name="line43"> 43: </a>  PetscViewerLink   *vlink;
+<a name="line44"> 44: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>         flg;
+
+<a name="line47"> 47: </a>  <font color="#4169E1">if</font> (vascii-&gt;sviewer) <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ORDER,<font color="#666666">"ASCII <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> destroyed before restoring singleton or subcomm <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a>"</font>);
+<a name="line48"> 48: </a>  PetscViewerFileClose_ASCII(viewer);
+<a name="line49"> 49: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(vascii);
+
+<a name="line51"> 51: </a>  <font color="#B22222">/* remove the viewer from the list in the MPI Communicator */</font>
+<a name="line52"> 52: </a>  <font color="#4169E1">if</font> (Petsc_Viewer_keyval == MPI_KEYVAL_INVALID) {
+<a name="line53"> 53: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Keyval_create.html#MPI_Keyval_create">MPI_Keyval_create</a>(MPI_NULL_COPY_FN,Petsc_DelViewer,&amp;Petsc_Viewer_keyval,(void*)0);
+<a name="line54"> 54: </a>  }
+
+<a name="line56"> 56: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Attr_get.html#MPI_Attr_get">MPI_Attr_get</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer),Petsc_Viewer_keyval,(void**)&amp;vlink,(<a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>*)&amp;flg);
+<a name="line57"> 57: </a>  <font color="#4169E1">if</font> (flg) {
+<a name="line58"> 58: </a>    <font color="#4169E1">if</font> (vlink &amp;&amp; vlink-&gt;viewer == viewer) {
+<a name="line59"> 59: </a>      <font color="#4169E1">if</font> (vlink-&gt;next) {
+<a name="line60"> 60: </a>        <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Attr_put.html#MPI_Attr_put">MPI_Attr_put</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer),Petsc_Viewer_keyval,vlink-&gt;next);
+<a name="line61"> 61: </a>      } <font color="#4169E1">else</font> {
+<a name="line62"> 62: </a>        <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Attr_delete.html#MPI_Attr_delete">MPI_Attr_delete</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer),Petsc_Viewer_keyval);
+<a name="line63"> 63: </a>      }
+<a name="line64"> 64: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(vlink);
+<a name="line65"> 65: </a>    } <font color="#4169E1">else</font> {
+<a name="line66"> 66: </a>      <font color="#4169E1">while</font> (vlink &amp;&amp; vlink-&gt;next) {
+<a name="line67"> 67: </a>        <font color="#4169E1">if</font> (vlink-&gt;next-&gt;viewer == viewer) {
+<a name="line68"> 68: </a>          PetscViewerLink *nv = vlink-&gt;next;
+<a name="line69"> 69: </a>          vlink-&gt;next = vlink-&gt;next-&gt;next;
+<a name="line70"> 70: </a>          <a href="../../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(nv);
+<a name="line71"> 71: </a>        }
+<a name="line72"> 72: </a>        vlink = vlink-&gt;next;
+<a name="line73"> 73: </a>      }
+<a name="line74"> 74: </a>    }
+<a name="line75"> 75: </a>  }
+<a name="line76"> 76: </a>  <font color="#4169E1">return</font>(0);
+<a name="line77"> 77: </a>}
+
+<a name="line79"> 79: </a><strong><font color="#4169E1"><a name="PetscViewerDestroy_ASCII_SubViewer"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscViewerDestroy_ASCII_SubViewer(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer)</font></strong>
+<a name="line80"> 80: </a>{
+<a name="line81"> 81: </a>  PetscViewer_ASCII *vascii = (PetscViewer_ASCII*)viewer-&gt;data;
+<a name="line82"> 82: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+
+<a name="line85"> 85: </a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerRestoreSubViewer.html#PetscViewerRestoreSubViewer">PetscViewerRestoreSubViewer</a>(vascii-&gt;bviewer,0,&amp;viewer);
+<a name="line86"> 86: </a>  <font color="#4169E1">return</font>(0);
+<a name="line87"> 87: </a>}
+
+<a name="line89"> 89: </a><strong><font color="#4169E1"><a name="PetscViewerFlush_ASCII"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscViewerFlush_ASCII(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer)</font></strong>
+<a name="line90"> 90: </a>{
+<a name="line91"> 91: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+<a name="line92"> 92: </a>  PetscViewer_ASCII *vascii = (PetscViewer_ASCII*)viewer-&gt;data;
+<a name="line93"> 93: </a>  int               err;
+<a name="line94"> 94: </a>  <a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a>          comm;
+<a name="line95"> 95: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>       rank,size;
+<a name="line96"> 96: </a>  FILE              *fd = vascii-&gt;fd;
+
+<a name="line99"> 99: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectGetComm.html#PetscObjectGetComm">PetscObjectGetComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,&amp;comm);
+<a name="line100">100: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm,&amp;rank);
+<a name="line101">101: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm,&amp;size);
+
+<a name="line103">103: </a>  <font color="#4169E1">if</font> (!vascii-&gt;bviewer &amp;&amp; !rank &amp;&amp; (vascii-&gt;mode != <a href="../../../../../../docs/manualpages/Sys/PetscFileMode.html#PetscFileMode">FILE_MODE_READ</a>)) {
+<a name="line104">104: </a>    err = fflush(vascii-&gt;fd);
+<a name="line105">105: </a>    <font color="#4169E1">if</font> (err) <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_SYS,<font color="#666666">"fflush() call failed"</font>);
+<a name="line106">106: </a>  }
+
+<a name="line108">108: </a>  <font color="#4169E1">if</font> (vascii-&gt;allowsynchronized) {
+<a name="line109">109: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>   tag,i,j,n = 0,dummy = 0;
+<a name="line110">110: </a>    char          *message;
+<a name="line111">111: </a>    MPI_Status    status;
+
+<a name="line113">113: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscCommDuplicate.html#PetscCommDuplicate">PetscCommDuplicate</a>(comm,&amp;comm,&amp;tag);
+
+<a name="line115">115: </a>    <font color="#B22222">/* First processor waits for messages from all other processors */</font>
+<a name="line116">116: </a>    <font color="#4169E1">if</font> (!rank) {
+<a name="line117">117: </a>      <font color="#B22222">/* flush my own messages that I may have queued up */</font>
+<a name="line118">118: </a>      PrintfQueue next = vascii-&gt;petsc_printfqueuebase,previous;
+<a name="line119">119: </a>      <font color="#4169E1">for</font> (i=0; i&lt;vascii-&gt;petsc_printfqueuelength; i++) {
+<a name="line120">120: </a>        <font color="#4169E1">if</font> (!vascii-&gt;bviewer) {
+<a name="line121">121: </a>          <a href="../../../../../../docs/manualpages/Sys/PetscFPrintf.html#PetscFPrintf">PetscFPrintf</a>(comm,fd,<font color="#666666">"%s"</font>,next-&gt;string);
+<a name="line122">122: </a>        } <font color="#4169E1">else</font> {
+<a name="line123">123: </a>          <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIISynchronizedPrintf.html#PetscViewerASCIISynchronizedPrintf">PetscViewerASCIISynchronizedPrintf</a>(vascii-&gt;bviewer,<font color="#666666">"%s"</font>,next-&gt;string);
+<a name="line124">124: </a>        }
+<a name="line125">125: </a>        previous = next;
+<a name="line126">126: </a>        next     = next-&gt;next;
+<a name="line127">127: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(previous-&gt;string);
+<a name="line128">128: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(previous);
+<a name="line129">129: </a>      }
+<a name="line130">130: </a>      vascii-&gt;petsc_printfqueue       = 0;
+<a name="line131">131: </a>      vascii-&gt;petsc_printfqueuelength = 0;
+<a name="line132">132: </a>      <font color="#4169E1">for</font> (i=1; i&lt;size; i++) {
+<a name="line133">133: </a>        <font color="#B22222">/* to prevent a flood of messages to process zero, request each message separately */</font>
+<a name="line134">134: </a>        <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Send.html#MPI_Send">MPI_Send</a>(&amp;dummy,1,MPI_INT,i,tag,comm);
+<a name="line135">135: </a>        <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Recv.html#MPI_Recv">MPI_Recv</a>(&amp;n,1,MPI_INT,i,tag,comm,&amp;status);
+<a name="line136">136: </a>        <font color="#4169E1">for</font> (j=0; j&lt;n; j++) {
+<a name="line137">137: </a>          <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> size = 0;
+
+<a name="line139">139: </a>          <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Recv.html#MPI_Recv">MPI_Recv</a>(&amp;size,1,MPI_INT,i,tag,comm,&amp;status);
+<a name="line140">140: </a>          <a href="../../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(size, &amp;message);
+<a name="line141">141: </a>          <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Recv.html#MPI_Recv">MPI_Recv</a>(message,size,MPI_CHAR,i,tag,comm,&amp;status);
+<a name="line142">142: </a>          <font color="#4169E1">if</font> (!vascii-&gt;bviewer) {
+<a name="line143">143: </a>            <a href="../../../../../../docs/manualpages/Sys/PetscFPrintf.html#PetscFPrintf">PetscFPrintf</a>(comm,fd,<font color="#666666">"%s"</font>,message);
+<a name="line144">144: </a>          } <font color="#4169E1">else</font> {
+<a name="line145">145: </a>            <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIISynchronizedPrintf.html#PetscViewerASCIISynchronizedPrintf">PetscViewerASCIISynchronizedPrintf</a>(vascii-&gt;bviewer,<font color="#666666">"%s"</font>,message);
+<a name="line146">146: </a>          }
+<a name="line147">147: </a>          <a href="../../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(message);
+<a name="line148">148: </a>        }
+<a name="line149">149: </a>      }
+<a name="line150">150: </a>    } <font color="#4169E1">else</font> { <font color="#B22222">/* other processors send queue to processor 0 */</font>
+<a name="line151">151: </a>      PrintfQueue next = vascii-&gt;petsc_printfqueuebase,previous;
+
+<a name="line153">153: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Recv.html#MPI_Recv">MPI_Recv</a>(&amp;dummy,1,MPI_INT,0,tag,comm,&amp;status);
+<a name="line154">154: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Send.html#MPI_Send">MPI_Send</a>(&amp;vascii-&gt;petsc_printfqueuelength,1,MPI_INT,0,tag,comm);
+<a name="line155">155: </a>      <font color="#4169E1">for</font> (i=0; i&lt;vascii-&gt;petsc_printfqueuelength; i++) {
+<a name="line156">156: </a>        <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Send.html#MPI_Send">MPI_Send</a>(&amp;next-&gt;size,1,MPI_INT,0,tag,comm);
+<a name="line157">157: </a>        <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Send.html#MPI_Send">MPI_Send</a>(next-&gt;string,next-&gt;size,MPI_CHAR,0,tag,comm);
+<a name="line158">158: </a>        previous = next;
+<a name="line159">159: </a>        next     = next-&gt;next;
+<a name="line160">160: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(previous-&gt;string);
+<a name="line161">161: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(previous);
+<a name="line162">162: </a>      }
+<a name="line163">163: </a>      vascii-&gt;petsc_printfqueue       = 0;
+<a name="line164">164: </a>      vascii-&gt;petsc_printfqueuelength = 0;
+<a name="line165">165: </a>    }
+<a name="line166">166: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscCommDestroy.html#PetscCommDestroy">PetscCommDestroy</a>(&amp;comm);
+<a name="line167">167: </a>  }
+<a name="line168">168: </a>  <font color="#4169E1">return</font>(0);
+<a name="line169">169: </a>}
+
+<a name="line171">171: </a><font color="#B22222">/*@C</font>
+<a name="line172">172: </a><font color="#B22222">    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIGetPointer.html#PetscViewerASCIIGetPointer">PetscViewerASCIIGetPointer</a> - Extracts the file pointer from an ASCII <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a>.</font>
+
+<a name="line174">174: </a><font color="#B22222">    Not Collective</font>
+
+<a name="line176">176: </a><font color="#B22222">+   viewer - <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> context, obtained from <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html#PetscViewerASCIIOpen">PetscViewerASCIIOpen</a>()</font>
+<a name="line177">177: </a><font color="#B22222">-   fd - file pointer</font>
+
+<a name="line179">179: </a><font color="#B22222">    Level: intermediate</font>
+
+<a name="line181">181: </a><font color="#B22222">    Fortran Note:</font>
+<a name="line182">182: </a><font color="#B22222">    This routine is not supported in Fortran.</font>
+
+<a name="line184">184: </a><font color="#B22222">  Concepts: <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a>^file pointer</font>
+<a name="line185">185: </a><font color="#B22222">  Concepts: file pointer^getting from <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a></font>
+
+<a name="line187">187: </a><font color="#B22222">.seealso: <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html#PetscViewerASCIIOpen">PetscViewerASCIIOpen</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html#PetscViewerDestroy">PetscViewerDestroy</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerSetType.html#PetscViewerSetType">PetscViewerSetType</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerCreate.html#PetscViewerCreate">PetscViewerCreate</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(),</font>
+<a name="line188">188: </a><font color="#B22222">          <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIISynchronizedPrintf.html#PetscViewerASCIISynchronizedPrintf">PetscViewerASCIISynchronizedPrintf</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerFlush.html#PetscViewerFlush">PetscViewerFlush</a>()</font>
+<a name="line189">189: </a><font color="#B22222">@*/</font>
+<a name="line190">190: </a><strong><font color="#4169E1"><a name="PetscViewerASCIIGetPointer"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIGetPointer.html#PetscViewerASCIIGetPointer">PetscViewerASCIIGetPointer</a>(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer,FILE **fd)</font></strong>
+<a name="line191">191: </a>{
+<a name="line192">192: </a>  PetscViewer_ASCII *vascii = (PetscViewer_ASCII*)viewer-&gt;data;
+
+<a name="line195">195: </a>  *fd = vascii-&gt;fd;
+<a name="line196">196: </a>  <font color="#4169E1">return</font>(0);
+<a name="line197">197: </a>}
+
+<a name="line199">199: </a><strong><font color="#4169E1"><a name="PetscViewerFileGetMode_ASCII"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  PetscViewerFileGetMode_ASCII(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer, <a href="../../../../../../docs/manualpages/Sys/PetscFileMode.html#PetscFileMode">PetscFileMode</a> *mode)</font></strong>
+<a name="line200">200: </a>{
+<a name="line201">201: </a>  PetscViewer_ASCII *vascii = (PetscViewer_ASCII*)viewer-&gt;data;
+
+<a name="line204">204: </a>  *mode = vascii-&gt;mode;
+<a name="line205">205: </a>  <font color="#4169E1">return</font>(0);
+<a name="line206">206: </a>}
+
+<a name="line208">208: </a><strong><font color="#4169E1"><a name="PetscViewerFileSetMode_ASCII"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  PetscViewerFileSetMode_ASCII(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer, <a href="../../../../../../docs/manualpages/Sys/PetscFileMode.html#PetscFileMode">PetscFileMode</a> mode)</font></strong>
+<a name="line209">209: </a>{
+<a name="line210">210: </a>  PetscViewer_ASCII *vascii = (PetscViewer_ASCII*)viewer-&gt;data;
+
+<a name="line213">213: </a>  vascii-&gt;mode = mode;
+<a name="line214">214: </a>  <font color="#4169E1">return</font>(0);
+<a name="line215">215: </a>}
+
+<a name="line217">217: </a><font color="#B22222">/*</font>
+<a name="line218">218: </a><font color="#B22222">   If petsc_history is on, then all Petsc*Printf() results are saved</font>
+<a name="line219">219: </a><font color="#B22222">   if the appropriate (usually .petschistory) file.</font>
+<a name="line220">220: </a><font color="#B22222">*/</font>
+<a name="line221">221: </a>extern FILE *petsc_history;
+
+<a name="line223">223: </a><font color="#B22222">/*@</font>
+<a name="line224">224: </a><font color="#B22222">    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIISetTab.html#PetscViewerASCIISetTab">PetscViewerASCIISetTab</a> - Causes <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> to tab in a number of times</font>
+
+<a name="line226">226: </a><font color="#B22222">    Not Collective, but only first processor in set has any effect</font>
+
+<a name="line228">228: </a><font color="#B22222">    Input Parameters:</font>
+<a name="line229">229: </a><font color="#B22222">+    viewer - obtained with <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html#PetscViewerASCIIOpen">PetscViewerASCIIOpen</a>()</font>
+<a name="line230">230: </a><font color="#B22222">-    tabs - number of tabs</font>
+
+<a name="line232">232: </a><font color="#B22222">    Level: developer</font>
+
+<a name="line234">234: </a><font color="#B22222">    Fortran Note:</font>
+<a name="line235">235: </a><font color="#B22222">    This routine is not supported in Fortran.</font>
+
+<a name="line237">237: </a><font color="#B22222">  Concepts: PetscViewerASCII^formating</font>
+<a name="line238">238: </a><font color="#B22222">  Concepts: tab^setting</font>
+
+<a name="line240">240: </a><font color="#B22222">.seealso: <a href="../../../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(), <a href="../../../../../../docs/manualpages/Sys/PetscSynchronizedPrintf.html#PetscSynchronizedPrintf">PetscSynchronizedPrintf</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIGetTab.html#PetscViewerASCIIGetTab">PetscViewerASCIIGetTab</a>(),</font>
+<a name="line241">241: </a><font color="#B22222">          <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPopTab.html#PetscViewerASCIIPopTab">PetscViewerASCIIPopTab</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIISynchronizedPrintf.html#PetscViewerASCIISynchronizedPrintf">PetscViewerASCIISynchronizedPrintf</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html#PetscViewerASCIIOpen">PetscViewerASCIIOpen</a>(),</font>
+<a name="line242">242: </a><font color="#B22222">          <a href="../../../../../../docs/manualpages/Viewer/PetscViewerCreate.html#PetscViewerCreate">PetscViewerCreate</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html#PetscViewerDestroy">PetscViewerDestroy</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerSetType.html#PetscViewerSetType">PetscViewerSetType</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIGetPointer.html#PetscViewerASCIIGetPointer">PetscViewerASCIIGetPointer</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPushTab.html#PetscViewerASCIIPushTab">PetscViewerASCIIPushTab</a>()</font>
+<a name="line243">243: </a><font color="#B22222">@*/</font>
+<a name="line244">244: </a><strong><font color="#4169E1"><a name="PetscViewerASCIISetTab"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIISetTab.html#PetscViewerASCIISetTab">PetscViewerASCIISetTab</a>(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> tabs)</font></strong>
+<a name="line245">245: </a>{
+<a name="line246">246: </a>  PetscViewer_ASCII *ascii = (PetscViewer_ASCII*)viewer-&gt;data;
+<a name="line247">247: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>         iascii;
+<a name="line248">248: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+
+<a name="line252">252: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html#PETSCVIEWERASCII">PETSCVIEWERASCII</a>,&amp;iascii);
+<a name="line253">253: </a>  <font color="#4169E1">if</font> (iascii) ascii-&gt;tab = tabs;
+<a name="line254">254: </a>  <font color="#4169E1">return</font>(0);
+<a name="line255">255: </a>}
+
+<a name="line257">257: </a><font color="#B22222">/*@</font>
+<a name="line258">258: </a><font color="#B22222">    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIGetTab.html#PetscViewerASCIIGetTab">PetscViewerASCIIGetTab</a> - Return the number of tabs used by <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a>.</font>
+
+<a name="line260">260: </a><font color="#B22222">    Not Collective, meaningful on first processor only.</font>
+
+<a name="line262">262: </a><font color="#B22222">    Input Parameters:</font>
+<a name="line263">263: </a><font color="#B22222">.    viewer - obtained with <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html#PetscViewerASCIIOpen">PetscViewerASCIIOpen</a>()</font>
+<a name="line264">264: </a><font color="#B22222">    Output Parameters:</font>
+<a name="line265">265: </a><font color="#B22222">.    tabs - number of tabs</font>
+
+<a name="line267">267: </a><font color="#B22222">    Level: developer</font>
+
+<a name="line269">269: </a><font color="#B22222">    Fortran Note:</font>
+<a name="line270">270: </a><font color="#B22222">    This routine is not supported in Fortran.</font>
+
+<a name="line272">272: </a><font color="#B22222">  Concepts: PetscViewerASCII^formating</font>
+<a name="line273">273: </a><font color="#B22222">  Concepts: tab^retrieval</font>
+
+<a name="line275">275: </a><font color="#B22222">.seealso: <a href="../../../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(), <a href="../../../../../../docs/manualpages/Sys/PetscSynchronizedPrintf.html#PetscSynchronizedPrintf">PetscSynchronizedPrintf</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIISetTab.html#PetscViewerASCIISetTab">PetscViewerASCIISetTab</a>(),</font>
+<a name="line276">276: </a><font color="#B22222">          <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPopTab.html#PetscViewerASCIIPopTab">PetscViewerASCIIPopTab</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIISynchronizedPrintf.html#PetscViewerASCIISynchronizedPrintf">PetscViewerASCIISynchronizedPrintf</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html#PetscViewerASCIIOpen">PetscViewerASCIIOpen</a>(),</font>
+<a name="line277">277: </a><font color="#B22222">          <a href="../../../../../../docs/manualpages/Viewer/PetscViewerCreate.html#PetscViewerCreate">PetscViewerCreate</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html#PetscViewerDestroy">PetscViewerDestroy</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerSetType.html#PetscViewerSetType">PetscViewerSetType</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIGetPointer.html#PetscViewerASCIIGetPointer">PetscViewerASCIIGetPointer</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPushTab.html#PetscViewerASCIIPushTab">PetscViewerASCIIPushTab</a>()</font>
+<a name="line278">278: </a><font color="#B22222">@*/</font>
+<a name="line279">279: </a><strong><font color="#4169E1"><a name="PetscViewerASCIIGetTab"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIGetTab.html#PetscViewerASCIIGetTab">PetscViewerASCIIGetTab</a>(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *tabs)</font></strong>
+<a name="line280">280: </a>{
+<a name="line281">281: </a>  PetscViewer_ASCII *ascii = (PetscViewer_ASCII*)viewer-&gt;data;
+<a name="line282">282: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>         iascii;
+<a name="line283">283: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+
+<a name="line287">287: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html#PETSCVIEWERASCII">PETSCVIEWERASCII</a>,&amp;iascii);
+<a name="line288">288: </a>  <font color="#4169E1">if</font> (iascii &amp;&amp; tabs) *tabs = ascii-&gt;tab;
+<a name="line289">289: </a>  <font color="#4169E1">return</font>(0);
+<a name="line290">290: </a>}
+
+<a name="line292">292: </a><font color="#B22222">/*@</font>
+<a name="line293">293: </a><font color="#B22222">    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIAddTab.html#PetscViewerASCIIAddTab">PetscViewerASCIIAddTab</a> - Add to the number of times an ASCII viewer tabs before printing</font>
+
+<a name="line295">295: </a><font color="#B22222">    Not Collective, but only first processor in set has any effect</font>
+
+<a name="line297">297: </a><font color="#B22222">    Input Parameters:</font>
+<a name="line298">298: </a><font color="#B22222">+    viewer - obtained with <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html#PetscViewerASCIIOpen">PetscViewerASCIIOpen</a>()</font>
+<a name="line299">299: </a><font color="#B22222">-    tabs - number of tabs</font>
+
+<a name="line301">301: </a><font color="#B22222">    Level: developer</font>
+
+<a name="line303">303: </a><font color="#B22222">    Fortran Note:</font>
+<a name="line304">304: </a><font color="#B22222">    This routine is not supported in Fortran.</font>
+
+<a name="line306">306: </a><font color="#B22222">  Concepts: PetscViewerASCII^formating</font>
+<a name="line307">307: </a><font color="#B22222">  Concepts: tab^setting</font>
+
+<a name="line309">309: </a><font color="#B22222">.seealso: <a href="../../../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(), <a href="../../../../../../docs/manualpages/Sys/PetscSynchronizedPrintf.html#PetscSynchronizedPrintf">PetscSynchronizedPrintf</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(),</font>
+<a name="line310">310: </a><font color="#B22222">          <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPopTab.html#PetscViewerASCIIPopTab">PetscViewerASCIIPopTab</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIISynchronizedPrintf.html#PetscViewerASCIISynchronizedPrintf">PetscViewerASCIISynchronizedPrintf</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html#PetscViewerASCIIOpen">PetscViewerASCIIOpen</a>(),</font>
+<a name="line311">311: </a><font color="#B22222">          <a href="../../../../../../docs/manualpages/Viewer/PetscViewerCreate.html#PetscViewerCreate">PetscViewerCreate</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html#PetscViewerDestroy">PetscViewerDestroy</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerSetType.html#PetscViewerSetType">PetscViewerSetType</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIGetPointer.html#PetscViewerASCIIGetPointer">PetscViewerASCIIGetPointer</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPushTab.html#PetscViewerASCIIPushTab">PetscViewerASCIIPushTab</a>()</font>
+<a name="line312">312: </a><font color="#B22222">@*/</font>
+<a name="line313">313: </a><strong><font color="#4169E1"><a name="PetscViewerASCIIAddTab"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIAddTab.html#PetscViewerASCIIAddTab">PetscViewerASCIIAddTab</a>(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> tabs)</font></strong>
+<a name="line314">314: </a>{
+<a name="line315">315: </a>  PetscViewer_ASCII *ascii = (PetscViewer_ASCII*)viewer-&gt;data;
+<a name="line316">316: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>         iascii;
+<a name="line317">317: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+
+<a name="line321">321: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html#PETSCVIEWERASCII">PETSCVIEWERASCII</a>,&amp;iascii);
+<a name="line322">322: </a>  <font color="#4169E1">if</font> (iascii) ascii-&gt;tab += tabs;
+<a name="line323">323: </a>  <font color="#4169E1">return</font>(0);
+<a name="line324">324: </a>}
+
+<a name="line326">326: </a><font color="#B22222">/*@</font>
+<a name="line327">327: </a><font color="#B22222">    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIISubtractTab.html#PetscViewerASCIISubtractTab">PetscViewerASCIISubtractTab</a> - Subtracts from the number of times an ASCII viewer tabs before printing</font>
+
+<a name="line329">329: </a><font color="#B22222">    Not Collective, but only first processor in set has any effect</font>
+
+<a name="line331">331: </a><font color="#B22222">    Input Parameters:</font>
+<a name="line332">332: </a><font color="#B22222">+    viewer - obtained with <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html#PetscViewerASCIIOpen">PetscViewerASCIIOpen</a>()</font>
+<a name="line333">333: </a><font color="#B22222">-    tabs - number of tabs</font>
+
+<a name="line335">335: </a><font color="#B22222">    Level: developer</font>
+
+<a name="line337">337: </a><font color="#B22222">    Fortran Note:</font>
+<a name="line338">338: </a><font color="#B22222">    This routine is not supported in Fortran.</font>
+
+<a name="line340">340: </a><font color="#B22222">  Concepts: PetscViewerASCII^formating</font>
+<a name="line341">341: </a><font color="#B22222">  Concepts: tab^setting</font>
+
+<a name="line343">343: </a><font color="#B22222">.seealso: <a href="../../../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(), <a href="../../../../../../docs/manualpages/Sys/PetscSynchronizedPrintf.html#PetscSynchronizedPrintf">PetscSynchronizedPrintf</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(),</font>
+<a name="line344">344: </a><font color="#B22222">          <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPopTab.html#PetscViewerASCIIPopTab">PetscViewerASCIIPopTab</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIISynchronizedPrintf.html#PetscViewerASCIISynchronizedPrintf">PetscViewerASCIISynchronizedPrintf</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html#PetscViewerASCIIOpen">PetscViewerASCIIOpen</a>(),</font>
+<a name="line345">345: </a><font color="#B22222">          <a href="../../../../../../docs/manualpages/Viewer/PetscViewerCreate.html#PetscViewerCreate">PetscViewerCreate</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html#PetscViewerDestroy">PetscViewerDestroy</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerSetType.html#PetscViewerSetType">PetscViewerSetType</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIGetPointer.html#PetscViewerASCIIGetPointer">PetscViewerASCIIGetPointer</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPushTab.html#PetscViewerASCIIPushTab">PetscViewerASCIIPushTab</a>()</font>
+<a name="line346">346: </a><font color="#B22222">@*/</font>
+<a name="line347">347: </a><strong><font color="#4169E1"><a name="PetscViewerASCIISubtractTab"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIISubtractTab.html#PetscViewerASCIISubtractTab">PetscViewerASCIISubtractTab</a>(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> tabs)</font></strong>
+<a name="line348">348: </a>{
+<a name="line349">349: </a>  PetscViewer_ASCII *ascii = (PetscViewer_ASCII*)viewer-&gt;data;
+<a name="line350">350: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>         iascii;
+<a name="line351">351: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+
+<a name="line355">355: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html#PETSCVIEWERASCII">PETSCVIEWERASCII</a>,&amp;iascii);
+<a name="line356">356: </a>  <font color="#4169E1">if</font> (iascii) ascii-&gt;tab -= tabs;
+<a name="line357">357: </a>  <font color="#4169E1">return</font>(0);
+<a name="line358">358: </a>}
+
+<a name="line360">360: </a><font color="#B22222">/*@C</font>
+<a name="line361">361: </a><font color="#B22222">    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPushSynchronized.html#PetscViewerASCIIPushSynchronized">PetscViewerASCIIPushSynchronized</a> - Allows calls to <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIISynchronizedPrintf.html#PetscViewerASCIISynchronizedPrintf">PetscViewerASCIISynchronizedPrintf</a>() for this viewer</font>
+
+<a name="line363">363: </a><font color="#B22222">    Collective on <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a></font>
+
+<a name="line365">365: </a><font color="#B22222">    Input Parameters:</font>
+<a name="line366">366: </a><font color="#B22222">.    viewer - obtained with <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html#PetscViewerASCIIOpen">PetscViewerASCIIOpen</a>()</font>
+
+<a name="line368">368: </a><font color="#B22222">    Level: intermediate</font>
+
+<a name="line370">370: </a><font color="#B22222">  Concepts: PetscViewerASCII^formating</font>
+<a name="line371">371: </a><font color="#B22222">  Concepts: tab^setting</font>
+
+<a name="line373">373: </a><font color="#B22222">.seealso: <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPopSynchronized.html#PetscViewerASCIIPopSynchronized">PetscViewerASCIIPopSynchronized</a>(), <a href="../../../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(), <a href="../../../../../../docs/manualpages/Sys/PetscSynchronizedPrintf.html#PetscSynchronizedPrintf">PetscSynchronizedPrintf</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(),</font>
+<a name="line374">374: </a><font color="#B22222">          <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPopTab.html#PetscViewerASCIIPopTab">PetscViewerASCIIPopTab</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIISynchronizedPrintf.html#PetscViewerASCIISynchronizedPrintf">PetscViewerASCIISynchronizedPrintf</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html#PetscViewerASCIIOpen">PetscViewerASCIIOpen</a>(),</font>
+<a name="line375">375: </a><font color="#B22222">          <a href="../../../../../../docs/manualpages/Viewer/PetscViewerCreate.html#PetscViewerCreate">PetscViewerCreate</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html#PetscViewerDestroy">PetscViewerDestroy</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerSetType.html#PetscViewerSetType">PetscViewerSetType</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIGetPointer.html#PetscViewerASCIIGetPointer">PetscViewerASCIIGetPointer</a>()</font>
+<a name="line376">376: </a><font color="#B22222">@*/</font>
+<a name="line377">377: </a><strong><font color="#4169E1"><a name="PetscViewerASCIIPushSynchronized"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPushSynchronized.html#PetscViewerASCIIPushSynchronized">PetscViewerASCIIPushSynchronized</a>(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer)</font></strong>
+<a name="line378">378: </a>{
+<a name="line379">379: </a>  PetscViewer_ASCII *ascii = (PetscViewer_ASCII*)viewer-&gt;data;
+<a name="line380">380: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>         iascii;
+<a name="line381">381: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+
+<a name="line385">385: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html#PETSCVIEWERASCII">PETSCVIEWERASCII</a>,&amp;iascii);
+<a name="line386">386: </a>  <font color="#4169E1">if</font> (iascii) ascii-&gt;allowsynchronized++;
+<a name="line387">387: </a>  <font color="#4169E1">return</font>(0);
+<a name="line388">388: </a>}
+
+<a name="line390">390: </a><font color="#B22222">/*@C</font>
+<a name="line391">391: </a><font color="#B22222">    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPopSynchronized.html#PetscViewerASCIIPopSynchronized">PetscViewerASCIIPopSynchronized</a> - Undoes most recent <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPushSynchronized.html#PetscViewerASCIIPushSynchronized">PetscViewerASCIIPushSynchronized</a>() for this viewer</font>
+
+<a name="line393">393: </a><font color="#B22222">    Collective on <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a></font>
+
+<a name="line395">395: </a><font color="#B22222">    Input Parameters:</font>
+<a name="line396">396: </a><font color="#B22222">.    viewer - obtained with <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html#PetscViewerASCIIOpen">PetscViewerASCIIOpen</a>()</font>
+
+<a name="line398">398: </a><font color="#B22222">    Level: intermediate</font>
+
+<a name="line400">400: </a><font color="#B22222">  Concepts: PetscViewerASCII^formating</font>
+<a name="line401">401: </a><font color="#B22222">  Concepts: tab^setting</font>
+
+<a name="line403">403: </a><font color="#B22222">.seealso: <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPushSynchronized.html#PetscViewerASCIIPushSynchronized">PetscViewerASCIIPushSynchronized</a>(), <a href="../../../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(), <a href="../../../../../../docs/manualpages/Sys/PetscSynchronizedPrintf.html#PetscSynchronizedPrintf">PetscSynchronizedPrintf</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(),</font>
+<a name="line404">404: </a><font color="#B22222">          <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPopTab.html#PetscViewerASCIIPopTab">PetscViewerASCIIPopTab</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIISynchronizedPrintf.html#PetscViewerASCIISynchronizedPrintf">PetscViewerASCIISynchronizedPrintf</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html#PetscViewerASCIIOpen">PetscViewerASCIIOpen</a>(),</font>
+<a name="line405">405: </a><font color="#B22222">          <a href="../../../../../../docs/manualpages/Viewer/PetscViewerCreate.html#PetscViewerCreate">PetscViewerCreate</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html#PetscViewerDestroy">PetscViewerDestroy</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerSetType.html#PetscViewerSetType">PetscViewerSetType</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIGetPointer.html#PetscViewerASCIIGetPointer">PetscViewerASCIIGetPointer</a>()</font>
+<a name="line406">406: </a><font color="#B22222">@*/</font>
+<a name="line407">407: </a><strong><font color="#4169E1"><a name="PetscViewerASCIIPopSynchronized"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPopSynchronized.html#PetscViewerASCIIPopSynchronized">PetscViewerASCIIPopSynchronized</a>(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer)</font></strong>
+<a name="line408">408: </a>{
+<a name="line409">409: </a>  PetscViewer_ASCII *ascii = (PetscViewer_ASCII*)viewer-&gt;data;
+<a name="line410">410: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>         iascii;
+<a name="line411">411: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+
+<a name="line415">415: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html#PETSCVIEWERASCII">PETSCVIEWERASCII</a>,&amp;iascii);
+<a name="line416">416: </a>  <font color="#4169E1">if</font> (iascii) {
+<a name="line417">417: </a>    ascii-&gt;allowsynchronized--;
+<a name="line418">418: </a>    <font color="#4169E1">if</font> (ascii-&gt;allowsynchronized &lt; 0) <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_PLIB,<font color="#666666">"Called more times than <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPushSynchronized.html#PetscViewerASCIIPushSynchronized">PetscViewerASCIIPushSynchronized</a>()"</font>);
+<a name="line419">419: </a>  }
+<a name="line420">420: </a>  <font color="#4169E1">return</font>(0);
+<a name="line421">421: </a>}
+
+<a name="line423">423: </a><font color="#B22222">/*@C</font>
+<a name="line424">424: </a><font color="#B22222">    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPushTab.html#PetscViewerASCIIPushTab">PetscViewerASCIIPushTab</a> - Adds one more tab to the amount that <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>()</font>
+<a name="line425">425: </a><font color="#B22222">     lines are tabbed.</font>
+
+<a name="line427">427: </a><font color="#B22222">    Not Collective, but only first processor in set has any effect</font>
+
+<a name="line429">429: </a><font color="#B22222">    Input Parameters:</font>
+<a name="line430">430: </a><font color="#B22222">.    viewer - obtained with <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html#PetscViewerASCIIOpen">PetscViewerASCIIOpen</a>()</font>
+
+<a name="line432">432: </a><font color="#B22222">    Level: developer</font>
+
+<a name="line434">434: </a><font color="#B22222">    Fortran Note:</font>
+<a name="line435">435: </a><font color="#B22222">    This routine is not supported in Fortran.</font>
+
+<a name="line437">437: </a><font color="#B22222">  Concepts: PetscViewerASCII^formating</font>
+<a name="line438">438: </a><font color="#B22222">  Concepts: tab^setting</font>
+
+<a name="line440">440: </a><font color="#B22222">.seealso: <a href="../../../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(), <a href="../../../../../../docs/manualpages/Sys/PetscSynchronizedPrintf.html#PetscSynchronizedPrintf">PetscSynchronizedPrintf</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(),</font>
+<a name="line441">441: </a><font color="#B22222">          <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPopTab.html#PetscViewerASCIIPopTab">PetscViewerASCIIPopTab</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIISynchronizedPrintf.html#PetscViewerASCIISynchronizedPrintf">PetscViewerASCIISynchronizedPrintf</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html#PetscViewerASCIIOpen">PetscViewerASCIIOpen</a>(),</font>
+<a name="line442">442: </a><font color="#B22222">          <a href="../../../../../../docs/manualpages/Viewer/PetscViewerCreate.html#PetscViewerCreate">PetscViewerCreate</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html#PetscViewerDestroy">PetscViewerDestroy</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerSetType.html#PetscViewerSetType">PetscViewerSetType</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIGetPointer.html#PetscViewerASCIIGetPointer">PetscViewerASCIIGetPointer</a>()</font>
+<a name="line443">443: </a><font color="#B22222">@*/</font>
+<a name="line444">444: </a><strong><font color="#4169E1"><a name="PetscViewerASCIIPushTab"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPushTab.html#PetscViewerASCIIPushTab">PetscViewerASCIIPushTab</a>(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer)</font></strong>
+<a name="line445">445: </a>{
+<a name="line446">446: </a>  PetscViewer_ASCII *ascii = (PetscViewer_ASCII*)viewer-&gt;data;
+<a name="line447">447: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>         iascii;
+<a name="line448">448: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+
+<a name="line452">452: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html#PETSCVIEWERASCII">PETSCVIEWERASCII</a>,&amp;iascii);
+<a name="line453">453: </a>  <font color="#4169E1">if</font> (iascii) ascii-&gt;tab++;
+<a name="line454">454: </a>  <font color="#4169E1">return</font>(0);
+<a name="line455">455: </a>}
+
+<a name="line457">457: </a><font color="#B22222">/*@C</font>
+<a name="line458">458: </a><font color="#B22222">    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPopTab.html#PetscViewerASCIIPopTab">PetscViewerASCIIPopTab</a> - Removes one tab from the amount that <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>()</font>
+<a name="line459">459: </a><font color="#B22222">     lines are tabbed.</font>
+
+<a name="line461">461: </a><font color="#B22222">    Not Collective, but only first processor in set has any effect</font>
+
+<a name="line463">463: </a><font color="#B22222">    Input Parameters:</font>
+<a name="line464">464: </a><font color="#B22222">.    viewer - obtained with <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html#PetscViewerASCIIOpen">PetscViewerASCIIOpen</a>()</font>
+
+<a name="line466">466: </a><font color="#B22222">    Level: developer</font>
+
+<a name="line468">468: </a><font color="#B22222">    Fortran Note:</font>
+<a name="line469">469: </a><font color="#B22222">    This routine is not supported in Fortran.</font>
+
+<a name="line471">471: </a><font color="#B22222">  Concepts: PetscViewerASCII^formating</font>
+<a name="line472">472: </a><font color="#B22222">  Concepts: tab^setting</font>
+
+<a name="line474">474: </a><font color="#B22222">.seealso: <a href="../../../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(), <a href="../../../../../../docs/manualpages/Sys/PetscSynchronizedPrintf.html#PetscSynchronizedPrintf">PetscSynchronizedPrintf</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(),</font>
+<a name="line475">475: </a><font color="#B22222">          <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPushTab.html#PetscViewerASCIIPushTab">PetscViewerASCIIPushTab</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIISynchronizedPrintf.html#PetscViewerASCIISynchronizedPrintf">PetscViewerASCIISynchronizedPrintf</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html#PetscViewerASCIIOpen">PetscViewerASCIIOpen</a>(),</font>
+<a name="line476">476: </a><font color="#B22222">          <a href="../../../../../../docs/manualpages/Viewer/PetscViewerCreate.html#PetscViewerCreate">PetscViewerCreate</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html#PetscViewerDestroy">PetscViewerDestroy</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerSetType.html#PetscViewerSetType">PetscViewerSetType</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIGetPointer.html#PetscViewerASCIIGetPointer">PetscViewerASCIIGetPointer</a>()</font>
+<a name="line477">477: </a><font color="#B22222">@*/</font>
+<a name="line478">478: </a><strong><font color="#4169E1"><a name="PetscViewerASCIIPopTab"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPopTab.html#PetscViewerASCIIPopTab">PetscViewerASCIIPopTab</a>(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer)</font></strong>
+<a name="line479">479: </a>{
+<a name="line480">480: </a>  PetscViewer_ASCII *ascii = (PetscViewer_ASCII*)viewer-&gt;data;
+<a name="line481">481: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+<a name="line482">482: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>         iascii;
+
+<a name="line486">486: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html#PETSCVIEWERASCII">PETSCVIEWERASCII</a>,&amp;iascii);
+<a name="line487">487: </a>  <font color="#4169E1">if</font> (iascii) {
+<a name="line488">488: </a>    <font color="#4169E1">if</font> (ascii-&gt;tab &lt;= 0) <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_WRONGSTATE,<font color="#666666">"More tabs popped than pushed"</font>);
+<a name="line489">489: </a>    ascii-&gt;tab--;
+<a name="line490">490: </a>  }
+<a name="line491">491: </a>  <font color="#4169E1">return</font>(0);
+<a name="line492">492: </a>}
+
+<a name="line494">494: </a><font color="#B22222">/*@</font>
+<a name="line495">495: </a><font color="#B22222">    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIUseTabs.html#PetscViewerASCIIUseTabs">PetscViewerASCIIUseTabs</a> - Turns on or off the use of tabs with the ASCII <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a></font>
+
+<a name="line497">497: </a><font color="#B22222">    Not Collective, but only first processor in set has any effect</font>
+
+<a name="line499">499: </a><font color="#B22222">    Input Parameters:</font>
+<a name="line500">500: </a><font color="#B22222">+    viewer - obtained with <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html#PetscViewerASCIIOpen">PetscViewerASCIIOpen</a>()</font>
+<a name="line501">501: </a><font color="#B22222">-    flg - <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a> or <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a></font>
+
+<a name="line503">503: </a><font color="#B22222">    Level: developer</font>
+
+<a name="line505">505: </a><font color="#B22222">    Fortran Note:</font>
+<a name="line506">506: </a><font color="#B22222">    This routine is not supported in Fortran.</font>
+
+<a name="line508">508: </a><font color="#B22222">  Concepts: PetscViewerASCII^formating</font>
+<a name="line509">509: </a><font color="#B22222">  Concepts: tab^setting</font>
+
+<a name="line511">511: </a><font color="#B22222">.seealso: <a href="../../../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(), <a href="../../../../../../docs/manualpages/Sys/PetscSynchronizedPrintf.html#PetscSynchronizedPrintf">PetscSynchronizedPrintf</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(),</font>
+<a name="line512">512: </a><font color="#B22222">          <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPopTab.html#PetscViewerASCIIPopTab">PetscViewerASCIIPopTab</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIISynchronizedPrintf.html#PetscViewerASCIISynchronizedPrintf">PetscViewerASCIISynchronizedPrintf</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPushTab.html#PetscViewerASCIIPushTab">PetscViewerASCIIPushTab</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html#PetscViewerASCIIOpen">PetscViewerASCIIOpen</a>(),</font>
+<a name="line513">513: </a><font color="#B22222">          <a href="../../../../../../docs/manualpages/Viewer/PetscViewerCreate.html#PetscViewerCreate">PetscViewerCreate</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html#PetscViewerDestroy">PetscViewerDestroy</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerSetType.html#PetscViewerSetType">PetscViewerSetType</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIGetPointer.html#PetscViewerASCIIGetPointer">PetscViewerASCIIGetPointer</a>()</font>
+<a name="line514">514: </a><font color="#B22222">@*/</font>
+<a name="line515">515: </a><strong><font color="#4169E1"><a name="PetscViewerASCIIUseTabs"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIUseTabs.html#PetscViewerASCIIUseTabs">PetscViewerASCIIUseTabs</a>(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer,<a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> flg)</font></strong>
+<a name="line516">516: </a>{
+<a name="line517">517: </a>  PetscViewer_ASCII *ascii = (PetscViewer_ASCII*)viewer-&gt;data;
+<a name="line518">518: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>         iascii;
+<a name="line519">519: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+
+<a name="line523">523: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html#PETSCVIEWERASCII">PETSCVIEWERASCII</a>,&amp;iascii);
+<a name="line524">524: </a>  <font color="#4169E1">if</font> (iascii) {
+<a name="line525">525: </a>    <font color="#4169E1">if</font> (flg) ascii-&gt;tab = ascii-&gt;tab_store;
+<a name="line526">526: </a>    <font color="#4169E1">else</font> {
+<a name="line527">527: </a>      ascii-&gt;tab_store = ascii-&gt;tab;
+<a name="line528">528: </a>      ascii-&gt;tab       = 0;
+<a name="line529">529: </a>    }
+<a name="line530">530: </a>  }
+<a name="line531">531: </a>  <font color="#4169E1">return</font>(0);
+<a name="line532">532: </a>}
+
+<a name="line534">534: </a><font color="#B22222">/* ----------------------------------------------------------------------- */</font>
+
+
+<a name="line537">537: </a><font color="#B22222">/*@C</font>
+<a name="line538">538: </a><font color="#B22222">    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a> - Prints to a file, only from the first</font>
+<a name="line539">539: </a><font color="#B22222">    processor in the <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a></font>
+
+<a name="line541">541: </a><font color="#B22222">    Not Collective, but only first processor in set has any effect</font>
+
+<a name="line543">543: </a><font color="#B22222">    Input Parameters:</font>
+<a name="line544">544: </a><font color="#B22222">+    viewer - obtained with <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html#PetscViewerASCIIOpen">PetscViewerASCIIOpen</a>()</font>
+<a name="line545">545: </a><font color="#B22222">-    format - the usual printf() format string</font>
+
+<a name="line547">547: </a><font color="#B22222">    Level: developer</font>
+
+<a name="line549">549: </a><font color="#B22222">    Fortran Note:</font>
+<a name="line550">550: </a><font color="#B22222">    The call sequence is <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a>, character(*), int ierr) from Fortran.</font>
+<a name="line551">551: </a><font color="#B22222">    That is, you can only pass a single character string from Fortran.</font>
+
+<a name="line553">553: </a><font color="#B22222">  Concepts: PetscViewerASCII^printing</font>
+<a name="line554">554: </a><font color="#B22222">  Concepts: printing^to file</font>
+<a name="line555">555: </a><font color="#B22222">  Concepts: printf</font>
+
+<a name="line557">557: </a><font color="#B22222">.seealso: <a href="../../../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(), <a href="../../../../../../docs/manualpages/Sys/PetscSynchronizedPrintf.html#PetscSynchronizedPrintf">PetscSynchronizedPrintf</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html#PetscViewerASCIIOpen">PetscViewerASCIIOpen</a>(),</font>
+<a name="line558">558: </a><font color="#B22222">          <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPushTab.html#PetscViewerASCIIPushTab">PetscViewerASCIIPushTab</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPopTab.html#PetscViewerASCIIPopTab">PetscViewerASCIIPopTab</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIISynchronizedPrintf.html#PetscViewerASCIISynchronizedPrintf">PetscViewerASCIISynchronizedPrintf</a>(),</font>
+<a name="line559">559: </a><font color="#B22222">          <a href="../../../../../../docs/manualpages/Viewer/PetscViewerCreate.html#PetscViewerCreate">PetscViewerCreate</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html#PetscViewerDestroy">PetscViewerDestroy</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerSetType.html#PetscViewerSetType">PetscViewerSetType</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIGetPointer.html#PetscViewerASCIIGetPointer">PetscViewerASCIIGetPointer</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPushSynchronized.html#PetscViewerASCIIPushSynchronized">PetscViewerASCIIPushSynchronized</a>()</font>
+<a name="line560">560: </a><font color="#B22222">@*/</font>
+<a name="line561">561: </a><strong><font color="#4169E1"><a name="PetscViewerASCIIPrintf"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer,const char format[],...)</font></strong>
+<a name="line562">562: </a>{
+<a name="line563">563: </a>  PetscViewer_ASCII *ascii = (PetscViewer_ASCII*)viewer-&gt;data;
+<a name="line564">564: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>       rank;
+<a name="line565">565: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          tab,intab = ascii-&gt;tab;
+<a name="line566">566: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+<a name="line567">567: </a>  FILE              *fd = ascii-&gt;fd;
+<a name="line568">568: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>         iascii;
+<a name="line569">569: </a>  int               err;
+
+<a name="line574">574: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html#PETSCVIEWERASCII">PETSCVIEWERASCII</a>,&amp;iascii);
+<a name="line575">575: </a>  <font color="#4169E1">if</font> (!iascii) <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_WRONG,<font color="#666666">"Not ASCII <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a>"</font>);
+<a name="line576">576: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer),&amp;rank);
+<a name="line577">577: </a>  <font color="#4169E1">if</font> (rank) <font color="#4169E1">return</font>(0);
+
+<a name="line579">579: </a>  <font color="#4169E1">if</font> (ascii-&gt;bviewer) { <font color="#B22222">/* pass string up to parent viewer */</font>
+<a name="line580">580: </a>    char        *string;
+<a name="line581">581: </a>    va_list     Argp;
+<a name="line582">582: </a>    size_t      fullLength;
+
+<a name="line584">584: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscCalloc1.html#PetscCalloc1">PetscCalloc1</a>(QUEUESTRINGSIZE, &amp;string);
+<a name="line585">585: </a>    va_start(Argp,format);
+<a name="line586">586: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscVSNPrintf.html#PetscVSNPrintf">PetscVSNPrintf</a>(string,QUEUESTRINGSIZE,format,&amp;fullLength,Argp);
+<a name="line587">587: </a>    va_end(Argp);
+<a name="line588">588: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIISynchronizedPrintf.html#PetscViewerASCIISynchronizedPrintf">PetscViewerASCIISynchronizedPrintf</a>(viewer,<font color="#666666">"%s"</font>,string);
+<a name="line589">589: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(string);
+<a name="line590">590: </a>  } <font color="#4169E1">else</font> { <font color="#B22222">/* write directly to file */</font>
+<a name="line591">591: </a>    va_list Argp;
+<a name="line592">592: </a>    <font color="#B22222">/* flush my own messages that I may have queued up */</font>
+<a name="line593">593: </a>    PrintfQueue next = ascii-&gt;petsc_printfqueuebase,previous;
+<a name="line594">594: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>    i;
+<a name="line595">595: </a>    <font color="#4169E1">for</font> (i=0; i&lt;ascii-&gt;petsc_printfqueuelength; i++) {
+<a name="line596">596: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscFPrintf.html#PetscFPrintf">PetscFPrintf</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,fd,<font color="#666666">"%s"</font>,next-&gt;string);
+<a name="line597">597: </a>      previous = next;
+<a name="line598">598: </a>      next     = next-&gt;next;
+<a name="line599">599: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(previous-&gt;string);
+<a name="line600">600: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(previous);
+<a name="line601">601: </a>    }
+<a name="line602">602: </a>    ascii-&gt;petsc_printfqueue       = 0;
+<a name="line603">603: </a>    ascii-&gt;petsc_printfqueuelength = 0;
+<a name="line604">604: </a>    tab = intab;
+<a name="line605">605: </a>    <font color="#4169E1">while</font> (tab--) {
+<a name="line606">606: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscFPrintf.html#PetscFPrintf">PetscFPrintf</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,fd,<font color="#666666">"  "</font>);
+<a name="line607">607: </a>    }
+
+<a name="line609">609: </a>    va_start(Argp,format);
+<a name="line610">610: </a>    (*<a href="../../../../../../docs/manualpages/Sys/PetscVFPrintf.html#PetscVFPrintf">PetscVFPrintf</a>)(fd,format,Argp);
+<a name="line611">611: </a>    err  = fflush(fd);
+<a name="line612">612: </a>    <font color="#4169E1">if</font> (err) <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_SYS,<font color="#666666">"fflush() failed on file"</font>);
+<a name="line613">613: </a>    <font color="#4169E1">if</font> (petsc_history) {
+<a name="line614">614: </a>      va_start(Argp,format);
+<a name="line615">615: </a>      tab = intab;
+<a name="line616">616: </a>      <font color="#4169E1">while</font> (tab--) {
+<a name="line617">617: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscFPrintf.html#PetscFPrintf">PetscFPrintf</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,petsc_history,<font color="#666666">"  "</font>);
+<a name="line618">618: </a>      }
+<a name="line619">619: </a>      (*<a href="../../../../../../docs/manualpages/Sys/PetscVFPrintf.html#PetscVFPrintf">PetscVFPrintf</a>)(petsc_history,format,Argp);
+<a name="line620">620: </a>      err  = fflush(petsc_history);
+<a name="line621">621: </a>      <font color="#4169E1">if</font> (err) <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_SYS,<font color="#666666">"fflush() failed on file"</font>);
+<a name="line622">622: </a>    }
+<a name="line623">623: </a>    va_end(Argp);
+<a name="line624">624: </a>  }
+<a name="line625">625: </a>  <font color="#4169E1">return</font>(0);
+<a name="line626">626: </a>}
+
+<a name="line628">628: </a><font color="#B22222">/*@C</font>
+<a name="line629">629: </a><font color="#B22222">     <a href="../../../../../../docs/manualpages/Viewer/PetscViewerFileSetName.html#PetscViewerFileSetName">PetscViewerFileSetName</a> - Sets the name of the file the <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> uses.</font>
+
+<a name="line631">631: </a><font color="#B22222">    Collective on <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a></font>
+
+<a name="line633">633: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line634">634: </a><font color="#B22222">+  viewer - the <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a>; either ASCII or binary</font>
+<a name="line635">635: </a><font color="#B22222">-  name - the name of the file it should use</font>
+
+<a name="line637">637: </a><font color="#B22222">    Level: advanced</font>
+
+<a name="line639">639: </a><font color="#B22222">.seealso: <a href="../../../../../../docs/manualpages/Viewer/PetscViewerCreate.html#PetscViewerCreate">PetscViewerCreate</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerSetType.html#PetscViewerSetType">PetscViewerSetType</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html#PetscViewerASCIIOpen">PetscViewerASCIIOpen</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerBinaryOpen.html#PetscViewerBinaryOpen">PetscViewerBinaryOpen</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html#PetscViewerDestroy">PetscViewerDestroy</a>(),</font>
+<a name="line640">640: </a><font color="#B22222">          <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIGetPointer.html#PetscViewerASCIIGetPointer">PetscViewerASCIIGetPointer</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIISynchronizedPrintf.html#PetscViewerASCIISynchronizedPrintf">PetscViewerASCIISynchronizedPrintf</a>()</font>
+
+<a name="line642">642: </a><font color="#B22222">@*/</font>
+<a name="line643">643: </a><strong><font color="#4169E1"><a name="PetscViewerFileSetName"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerFileSetName.html#PetscViewerFileSetName">PetscViewerFileSetName</a>(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer,const char name[])</font></strong>
+<a name="line644">644: </a>{
+
+<a name="line650">650: </a>  PetscTryMethod(viewer,<font color="#666666">"PetscViewerFileSetName_C"</font>,(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a>,const char[]),(viewer,name));
+<a name="line651">651: </a>  <font color="#4169E1">return</font>(0);
+<a name="line652">652: </a>}
+
+<a name="line654">654: </a><font color="#B22222">/*@C</font>
+<a name="line655">655: </a><font color="#B22222">     <a href="../../../../../../docs/manualpages/Viewer/PetscViewerFileGetName.html#PetscViewerFileGetName">PetscViewerFileGetName</a> - Gets the name of the file the <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> uses.</font>
+
+<a name="line657">657: </a><font color="#B22222">    Not Collective</font>
+
+<a name="line659">659: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line660">660: </a><font color="#B22222">.  viewer - the <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a>; either ASCII or binary</font>
+
+<a name="line662">662: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line663">663: </a><font color="#B22222">.  name - the name of the file it is using</font>
+
+<a name="line665">665: </a><font color="#B22222">    Level: advanced</font>
+
+<a name="line667">667: </a><font color="#B22222">.seealso: <a href="../../../../../../docs/manualpages/Viewer/PetscViewerCreate.html#PetscViewerCreate">PetscViewerCreate</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerSetType.html#PetscViewerSetType">PetscViewerSetType</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html#PetscViewerASCIIOpen">PetscViewerASCIIOpen</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerBinaryOpen.html#PetscViewerBinaryOpen">PetscViewerBinaryOpen</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerFileSetName.html#PetscViewerFileSetName">PetscViewerFileSetName</a>()</font>
+
+<a name="line669">669: </a><font color="#B22222">@*/</font>
+<a name="line670">670: </a><strong><font color="#4169E1"><a name="PetscViewerFileGetName"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerFileGetName.html#PetscViewerFileGetName">PetscViewerFileGetName</a>(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer,const char **name)</font></strong>
+<a name="line671">671: </a>{
+
+<a name="line676">676: </a>  PetscUseMethod(viewer,<font color="#666666">"PetscViewerFileGetName_C"</font>,(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a>,const char**),(viewer,name));
+<a name="line677">677: </a>  <font color="#4169E1">return</font>(0);
+<a name="line678">678: </a>}
+
+<a name="line680">680: </a><strong><font color="#4169E1"><a name="PetscViewerFileGetName_ASCII"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  PetscViewerFileGetName_ASCII(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer,const char **name)</font></strong>
+<a name="line681">681: </a>{
+<a name="line682">682: </a>  PetscViewer_ASCII *vascii = (PetscViewer_ASCII*)viewer-&gt;data;
+
+<a name="line685">685: </a>  *name = vascii-&gt;filename;
+<a name="line686">686: </a>  <font color="#4169E1">return</font>(0);
+<a name="line687">687: </a>}
+
+<a name="line689">689: </a><strong><font color="#4169E1"><a name="PetscViewerFileSetName_ASCII"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  PetscViewerFileSetName_ASCII(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer,const char name[])</font></strong>
+<a name="line690">690: </a>{
+<a name="line691">691: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+<a name="line692">692: </a>  size_t            len;
+<a name="line693">693: </a>  char              fname[PETSC_MAX_PATH_LEN],*gz;
+<a name="line694">694: </a>  PetscViewer_ASCII *vascii = (PetscViewer_ASCII*)viewer-&gt;data;
+<a name="line695">695: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>         isstderr,isstdout;
+<a name="line696">696: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>       rank;
+
+<a name="line699">699: </a>  PetscViewerFileClose_ASCII(viewer);
+<a name="line700">700: </a>  <font color="#4169E1">if</font> (!name) <font color="#4169E1">return</font>(0);
+<a name="line701">701: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscStrallocpy.html#PetscStrallocpy">PetscStrallocpy</a>(name,&amp;vascii-&gt;filename);
+
+<a name="line703">703: </a>  <font color="#B22222">/* Is this file to be compressed */</font>
+<a name="line704">704: </a>  vascii-&gt;storecompressed = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+
+<a name="line706">706: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscStrstr.html#PetscStrstr">PetscStrstr</a>(vascii-&gt;filename,<font color="#666666">".gz"</font>,&amp;gz);
+<a name="line707">707: </a>  <font color="#4169E1">if</font> (gz) {
+<a name="line708">708: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscStrlen.html#PetscStrlen">PetscStrlen</a>(gz,&amp;len);
+<a name="line709">709: </a>    <font color="#4169E1">if</font> (len == 3) {
+<a name="line710">710: </a>      <font color="#4169E1">if</font> (vascii-&gt;mode != <a href="../../../../../../docs/manualpages/Sys/PetscFileMode.html#PetscFileMode">FILE_MODE_WRITE</a>) <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer),PETSC_ERR_SUP,<font color="#666666">"Cannot open ASCII <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> file that is compressed; uncompress it manually first"</font>);
+<a name="line711">711: </a>      *gz = 0;
+<a name="line712">712: </a>      vascii-&gt;storecompressed = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+<a name="line713">713: </a>    }
+<a name="line714">714: </a>  }
+<a name="line715">715: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer),&amp;rank);
+<a name="line716">716: </a>  <font color="#4169E1">if</font> (!rank) {
+<a name="line717">717: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscStrcmp.html#PetscStrcmp">PetscStrcmp</a>(name,<font color="#666666">"stderr"</font>,&amp;isstderr);
+<a name="line718">718: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscStrcmp.html#PetscStrcmp">PetscStrcmp</a>(name,<font color="#666666">"stdout"</font>,&amp;isstdout);
+<a name="line719">719: </a>    <font color="#B22222">/* empty filename means stdout */</font>
+<a name="line720">720: </a>    <font color="#4169E1">if</font> (name[0] == 0)  isstdout = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+<a name="line721">721: </a>    <font color="#4169E1">if</font> (isstderr)      vascii-&gt;fd = PETSC_STDERR;
+<a name="line722">722: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (isstdout) vascii-&gt;fd = PETSC_STDOUT;
+<a name="line723">723: </a>    <font color="#4169E1">else</font> {
+
+
+<a name="line726">726: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscFixFilename.html#PetscFixFilename">PetscFixFilename</a>(name,fname);
+<a name="line727">727: </a>      <font color="#4169E1">switch</font> (vascii-&gt;mode) {
+<a name="line728">728: </a>      <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/Sys/PetscFileMode.html#PetscFileMode">FILE_MODE_READ</a>:
+<a name="line729">729: </a>        vascii-&gt;fd = fopen(fname,<font color="#666666">"r"</font>);
+<a name="line730">730: </a>        <font color="#4169E1">break</font>;
+<a name="line731">731: </a>      <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/Sys/PetscFileMode.html#PetscFileMode">FILE_MODE_WRITE</a>:
+<a name="line732">732: </a>        vascii-&gt;fd = fopen(fname,<font color="#666666">"w"</font>);
+<a name="line733">733: </a>        <font color="#4169E1">break</font>;
+<a name="line734">734: </a>      <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/Sys/PetscFileMode.html#PetscFileMode">FILE_MODE_APPEND</a>:
+<a name="line735">735: </a>        vascii-&gt;fd = fopen(fname,<font color="#666666">"a"</font>);
+<a name="line736">736: </a>        <font color="#4169E1">break</font>;
+<a name="line737">737: </a>      <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/Sys/PetscFileMode.html#PetscFileMode">FILE_MODE_UPDATE</a>:
+<a name="line738">738: </a>        vascii-&gt;fd = fopen(fname,<font color="#666666">"r+"</font>);
+<a name="line739">739: </a>        <font color="#4169E1">if</font> (!vascii-&gt;fd) vascii-&gt;fd = fopen(fname,<font color="#666666">"w+"</font>);
+<a name="line740">740: </a>        <font color="#4169E1">break</font>;
+<a name="line741">741: </a>      <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/Sys/PetscFileMode.html#PetscFileMode">FILE_MODE_APPEND_UPDATE</a>:
+<a name="line742">742: </a>        <font color="#B22222">/* I really want a file which is opened at the end for updating,</font>
+<a name="line743">743: </a><font color="#B22222">           not a+, which opens at the beginning, but makes writes at the end.</font>
+<a name="line744">744: </a><font color="#B22222">        */</font>
+<a name="line745">745: </a>        vascii-&gt;fd = fopen(fname,<font color="#666666">"r+"</font>);
+<a name="line746">746: </a>        <font color="#4169E1">if</font> (!vascii-&gt;fd) vascii-&gt;fd = fopen(fname,<font color="#666666">"w+"</font>);
+<a name="line747">747: </a>        <font color="#4169E1">else</font> {
+<a name="line748">748: </a>          fseek(vascii-&gt;fd, 0, SEEK_END);
+<a name="line749">749: </a>        }
+<a name="line750">750: </a>        <font color="#4169E1">break</font>;
+<a name="line751">751: </a><strong><font color="#FF0000">      default:</font></strong>
+<a name="line752">752: </a>        <a href="../../../../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_WRONG, <font color="#666666">"Invalid file mode %d"</font>, vascii-&gt;mode);
+<a name="line753">753: </a>      }
+<a name="line754">754: </a>      <font color="#4169E1">if</font> (!vascii-&gt;fd) <a href="../../../../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_FILE_OPEN,<font color="#666666">"Cannot open <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> file: %s"</font>,fname);
+<a name="line755">755: </a>    }
+<a name="line756">756: </a>  }
+<a name="line757">757: </a><font color="#A020F0">#if defined(PETSC_USE_LOG)</font>
+<a name="line758">758: </a>  PetscLogObjectState((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<font color="#666666">"File: %s"</font>,name);
+<a name="line759">759: </a><font color="#A020F0">#endif</font>
+<a name="line760">760: </a>  <font color="#4169E1">return</font>(0);
+<a name="line761">761: </a>}
+
+<a name="line763">763: </a><strong><font color="#4169E1"><a name="PetscViewerGetSubViewer_ASCII"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscViewerGetSubViewer_ASCII(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer,<a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a> subcomm,<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> *outviewer)</font></strong>
+<a name="line764">764: </a>{
+<a name="line765">765: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>       rank;
+<a name="line766">766: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+<a name="line767">767: </a>  PetscViewer_ASCII *vascii = (PetscViewer_ASCII*)viewer-&gt;data,*ovascii;
+
+<a name="line770">770: </a>  <font color="#4169E1">if</font> (vascii-&gt;sviewer) <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ORDER,<font color="#666666">"SubViewer already obtained from <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> and not restored"</font>);
+<a name="line771">771: </a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPushSynchronized.html#PetscViewerASCIIPushSynchronized">PetscViewerASCIIPushSynchronized</a>(viewer);
+<a name="line772">772: </a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerCreate.html#PetscViewerCreate">PetscViewerCreate</a>(subcomm,outviewer);
+<a name="line773">773: </a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerSetType.html#PetscViewerSetType">PetscViewerSetType</a>(*outviewer,<a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html#PETSCVIEWERASCII">PETSCVIEWERASCII</a>);
+<a name="line774">774: </a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPushSynchronized.html#PetscViewerASCIIPushSynchronized">PetscViewerASCIIPushSynchronized</a>(*outviewer);
+<a name="line775">775: </a>  ovascii      = (PetscViewer_ASCII*)(*outviewer)-&gt;data;
+<a name="line776">776: </a>  ovascii-&gt;fd  = vascii-&gt;fd;
+<a name="line777">777: </a>  ovascii-&gt;tab = vascii-&gt;tab;
+<a name="line778">778: </a>  ovascii-&gt;closefile = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+
+<a name="line780">780: </a>  vascii-&gt;sviewer = *outviewer;
+
+<a name="line782">782: </a>  (*outviewer)-&gt;format  = viewer-&gt;format;
+
+<a name="line784">784: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer),&amp;rank);
+<a name="line785">785: </a>  ((PetscViewer_ASCII*)((*outviewer)-&gt;data))-&gt;bviewer = viewer;
+<a name="line786">786: </a>  (*outviewer)-&gt;ops-&gt;destroy = PetscViewerDestroy_ASCII_SubViewer;
+<a name="line787">787: </a>  <font color="#4169E1">return</font>(0);
+<a name="line788">788: </a>}
+
+<a name="line790">790: </a><strong><font color="#4169E1"><a name="PetscViewerRestoreSubViewer_ASCII"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscViewerRestoreSubViewer_ASCII(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer,<a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a> comm,<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> *outviewer)</font></strong>
+<a name="line791">791: </a>{
+<a name="line792">792: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+<a name="line793">793: </a>  PetscViewer_ASCII *ascii  = (PetscViewer_ASCII*)viewer-&gt;data;
+
+<a name="line796">796: </a>  <font color="#4169E1">if</font> (!ascii-&gt;sviewer) <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ORDER,<font color="#666666">"SubViewer never obtained from <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a>"</font>);
+<a name="line797">797: </a>  <font color="#4169E1">if</font> (ascii-&gt;sviewer != *outviewer) <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_WRONG,<font color="#666666">"This <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> did not generate this SubViewer"</font>);
+
+<a name="line799">799: </a>  ascii-&gt;sviewer             = 0;
+<a name="line800">800: </a>  (*outviewer)-&gt;ops-&gt;destroy = PetscViewerDestroy_ASCII;
+<a name="line801">801: </a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html#PetscViewerDestroy">PetscViewerDestroy</a>(outviewer);
+<a name="line802">802: </a>  <font color="#4169E1">return</font>(0);
+<a name="line803">803: </a>}
+
+<a name="line805">805: </a><strong><font color="#4169E1"><a name="PetscViewerView_ASCII"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  PetscViewerView_ASCII(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> v,<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer)</font></strong>
+<a name="line806">806: </a>{
+<a name="line807">807: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+<a name="line808">808: </a>  PetscViewer_ASCII *ascii = (PetscViewer_ASCII*)v-&gt;data;
+
+<a name="line811">811: </a>  <font color="#4169E1">if</font> (ascii-&gt;filename) {
+<a name="line812">812: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"Filename: %s\n"</font>,ascii-&gt;filename);
+<a name="line813">813: </a>  }
+<a name="line814">814: </a>  <font color="#4169E1">return</font>(0);
+<a name="line815">815: </a>}
+
+<a name="line817">817: </a><font color="#B22222">/*MC</font>
+<a name="line818">818: </a><font color="#B22222">   <a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html#PETSCVIEWERASCII">PETSCVIEWERASCII</a> - A viewer that prints to stdout or an ASCII file</font>
+
+
+<a name="line821">821: </a><font color="#B22222">.seealso:  <a href="../../../../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_.html#PETSC_VIEWER_STDOUT_">PETSC_VIEWER_STDOUT_</a>(),<a href="../../../../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_SELF.html#PETSC_VIEWER_STDOUT_SELF">PETSC_VIEWER_STDOUT_SELF</a>, <a href="../../../../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html#PETSC_VIEWER_STDOUT_WORLD">PETSC_VIEWER_STDOUT_WORLD</a>,<a href="../../../../../../docs/manualpages/Viewer/PetscViewerCreate.html#PetscViewerCreate">PetscViewerCreate</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html#PetscViewerASCIIOpen">PetscViewerASCIIOpen</a>(),</font>
+<a name="line822">822: </a><font color="#B22222">           <a href="../../../../../../docs/manualpages/Viewer/PetscViewerMatlabOpen.html#PetscViewerMatlabOpen">PetscViewerMatlabOpen</a>(), <a href="../../../../../../docs/manualpages/Vec/VecView.html#VecView">VecView</a>(), <a href="../../../../../../docs/manualpages/DM/DMView.html#DMView">DMView</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerMatlabPutArray.html#PetscViewerMatlabPutArray">PetscViewerMatlabPutArray</a>(), <a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERBINARY.html#PETSCVIEWERBINARY">PETSCVIEWERBINARY</a>, <a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERMATLAB.html#PETSCVIEWERMATLAB">PETSCVIEWERMATLAB</a>,</font>
+<a name="line823">823: </a><font color="#B22222">           <a href="../../../../../../docs/manualpages/Viewer/PetscViewerFileSetName.html#PetscViewerFileSetName">PetscViewerFileSetName</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerFileSetMode.html#PetscViewerFileSetMode">PetscViewerFileSetMode</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerFormat.html#PetscViewerFormat">PetscViewerFormat</a>, <a href="../../../../../../docs/manualpages/Viewer/PetscViewerType.html#PetscViewerType">PetscViewerType</a>, <a href="../../../../../../docs/manualpages/Viewer/PetscViewerSetType.html#PetscViewerSetType">PetscViewerSetType</a>()</font>
+
+<a name="line825">825: </a><font color="#B22222">  Level: beginner</font>
+
+<a name="line827">827: </a><font color="#B22222">M*/</font>
+<a name="line828">828: </a><strong><font color="#4169E1"><a name="PetscViewerCreate_ASCII"></a>PETSC_EXTERN <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscViewerCreate_ASCII(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer)</font></strong>
+<a name="line829">829: </a>{
+<a name="line830">830: </a>  PetscViewer_ASCII *vascii;
+<a name="line831">831: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+
+<a name="line834">834: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscNewLog.html#PetscNewLog">PetscNewLog</a>(viewer,&amp;vascii);
+<a name="line835">835: </a>  viewer-&gt;data = (void*)vascii;
+
+<a name="line837">837: </a>  viewer-&gt;ops-&gt;destroy          = PetscViewerDestroy_ASCII;
+<a name="line838">838: </a>  viewer-&gt;ops-&gt;flush            = PetscViewerFlush_ASCII;
+<a name="line839">839: </a>  viewer-&gt;ops-&gt;getsubviewer     = PetscViewerGetSubViewer_ASCII;
+<a name="line840">840: </a>  viewer-&gt;ops-&gt;restoresubviewer = PetscViewerRestoreSubViewer_ASCII;
+<a name="line841">841: </a>  viewer-&gt;ops-&gt;view             = PetscViewerView_ASCII;
+<a name="line842">842: </a>  viewer-&gt;ops-&gt;read             = <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIRead.html#PetscViewerASCIIRead">PetscViewerASCIIRead</a>;
+
+<a name="line844">844: </a>  <font color="#B22222">/* defaults to stdout unless set with <a href="../../../../../../docs/manualpages/Viewer/PetscViewerFileSetName.html#PetscViewerFileSetName">PetscViewerFileSetName</a>() */</font>
+<a name="line845">845: </a>  vascii-&gt;fd        = PETSC_STDOUT;
+<a name="line846">846: </a>  vascii-&gt;mode      = <a href="../../../../../../docs/manualpages/Sys/PetscFileMode.html#PetscFileMode">FILE_MODE_WRITE</a>;
+<a name="line847">847: </a>  vascii-&gt;bviewer   = 0;
+<a name="line848">848: </a>  vascii-&gt;subviewer = 0;
+<a name="line849">849: </a>  vascii-&gt;sviewer   = 0;
+<a name="line850">850: </a>  vascii-&gt;tab       = 0;
+<a name="line851">851: </a>  vascii-&gt;tab_store = 0;
+<a name="line852">852: </a>  vascii-&gt;filename  = 0;
+<a name="line853">853: </a>  vascii-&gt;closefile = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+
+<a name="line855">855: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html#PetscObjectComposeFunction">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<font color="#666666">"PetscViewerFileSetName_C"</font>,PetscViewerFileSetName_ASCII);
+<a name="line856">856: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html#PetscObjectComposeFunction">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<font color="#666666">"PetscViewerFileGetName_C"</font>,PetscViewerFileGetName_ASCII);
+<a name="line857">857: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html#PetscObjectComposeFunction">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<font color="#666666">"PetscViewerFileGetMode_C"</font>,PetscViewerFileGetMode_ASCII);
+<a name="line858">858: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html#PetscObjectComposeFunction">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<font color="#666666">"PetscViewerFileSetMode_C"</font>,PetscViewerFileSetMode_ASCII);
+<a name="line859">859: </a>  <font color="#4169E1">return</font>(0);
+<a name="line860">860: </a>}
+
+<a name="line862">862: </a><font color="#B22222">/*@C</font>
+<a name="line863">863: </a><font color="#B22222">    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIISynchronizedPrintf.html#PetscViewerASCIISynchronizedPrintf">PetscViewerASCIISynchronizedPrintf</a> - Prints synchronized output to the specified file from</font>
+<a name="line864">864: </a><font color="#B22222">    several processors.  Output of the first processor is followed by that of the</font>
+<a name="line865">865: </a><font color="#B22222">    second, etc.</font>
+
+<a name="line867">867: </a><font color="#B22222">    Not Collective, must call collective <a href="../../../../../../docs/manualpages/Viewer/PetscViewerFlush.html#PetscViewerFlush">PetscViewerFlush</a>() to get the results out</font>
+
+<a name="line869">869: </a><font color="#B22222">    Input Parameters:</font>
+<a name="line870">870: </a><font color="#B22222">+   viewer - the ASCII <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a></font>
+<a name="line871">871: </a><font color="#B22222">-   format - the usual printf() format string</font>
+
+<a name="line873">873: </a><font color="#B22222">    Level: intermediate</font>
+
+<a name="line875">875: </a><font color="#B22222">    Notes: You must have previously called PetscViewerASCIISynchronizeAllow() to allow this routine to be called.</font>
+
+<a name="line877">877: </a><font color="#B22222">    Fortran Note:</font>
+<a name="line878">878: </a><font color="#B22222">      Can only print a single character* string</font>
+
+<a name="line880">880: </a><font color="#B22222">.seealso: <a href="../../../../../../docs/manualpages/Sys/PetscSynchronizedPrintf.html#PetscSynchronizedPrintf">PetscSynchronizedPrintf</a>(), <a href="../../../../../../docs/manualpages/Sys/PetscSynchronizedFlush.html#PetscSynchronizedFlush">PetscSynchronizedFlush</a>(), <a href="../../../../../../docs/manualpages/Sys/PetscFPrintf.html#PetscFPrintf">PetscFPrintf</a>(),</font>
+<a name="line881">881: </a><font color="#B22222">          <a href="../../../../../../docs/manualpages/Sys/PetscFOpen.html#PetscFOpen">PetscFOpen</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerFlush.html#PetscViewerFlush">PetscViewerFlush</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIGetPointer.html#PetscViewerASCIIGetPointer">PetscViewerASCIIGetPointer</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html#PetscViewerDestroy">PetscViewerDestroy</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html#PetscViewerASCIIOpen">PetscViewerASCIIOpen</a>(),</font>
+<a name="line882">882: </a><font color="#B22222">          <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPushSynchronized.html#PetscViewerASCIIPushSynchronized">PetscViewerASCIIPushSynchronized</a>()</font>
+
+<a name="line884">884: </a><font color="#B22222">@*/</font>
+<a name="line885">885: </a><strong><font color="#4169E1"><a name="PetscViewerASCIISynchronizedPrintf"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIISynchronizedPrintf.html#PetscViewerASCIISynchronizedPrintf">PetscViewerASCIISynchronizedPrintf</a>(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer,const char format[],...)</font></strong>
+<a name="line886">886: </a>{
+<a name="line887">887: </a>  PetscViewer_ASCII *vascii = (PetscViewer_ASCII*)viewer-&gt;data;
+<a name="line888">888: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+<a name="line889">889: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>       rank;
+<a name="line890">890: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          tab = vascii-&gt;tab;
+<a name="line891">891: </a>  <a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a>          comm;
+<a name="line892">892: </a>  FILE              *fp;
+<a name="line893">893: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>         iascii,hasbviewer = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+<a name="line894">894: </a>  int               err;
+
+<a name="line899">899: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html#PETSCVIEWERASCII">PETSCVIEWERASCII</a>,&amp;iascii);
+<a name="line900">900: </a>  <font color="#4169E1">if</font> (!iascii) <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_WRONG,<font color="#666666">"Not ASCII <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a>"</font>);
+<a name="line901">901: </a>  <font color="#4169E1">if</font> (!vascii-&gt;allowsynchronized) <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_WRONGSTATE,<font color="#666666">"First call <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPushSynchronized.html#PetscViewerASCIIPushSynchronized">PetscViewerASCIIPushSynchronized</a>() to allow this call"</font>);
+
+<a name="line903">903: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectGetComm.html#PetscObjectGetComm">PetscObjectGetComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,&amp;comm);
+<a name="line904">904: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm,&amp;rank);
+
+<a name="line906">906: </a>  <font color="#4169E1">if</font> (vascii-&gt;bviewer) {
+<a name="line907">907: </a>    hasbviewer = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+<a name="line908">908: </a>    <font color="#4169E1">if</font> (!rank) {
+<a name="line909">909: </a>      vascii = (PetscViewer_ASCII*)vascii-&gt;bviewer-&gt;data;
+<a name="line910">910: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscObjectGetComm.html#PetscObjectGetComm">PetscObjectGetComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,&amp;comm);
+<a name="line911">911: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm,&amp;rank);
+<a name="line912">912: </a>    }
+<a name="line913">913: </a>  }
+
+<a name="line915">915: </a>  fp   = vascii-&gt;fd;
+
+<a name="line917">917: </a>  <font color="#4169E1">if</font> (!rank &amp;&amp; !hasbviewer) {   <font color="#B22222">/* First processor prints immediately to fp */</font>
+<a name="line918">918: </a>    va_list Argp;
+<a name="line919">919: </a>    <font color="#B22222">/* flush my own messages that I may have queued up */</font>
+<a name="line920">920: </a>    PrintfQueue next = vascii-&gt;petsc_printfqueuebase,previous;
+<a name="line921">921: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>    i;
+<a name="line922">922: </a>    <font color="#4169E1">for</font> (i=0; i&lt;vascii-&gt;petsc_printfqueuelength; i++) {
+<a name="line923">923: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscFPrintf.html#PetscFPrintf">PetscFPrintf</a>(comm,fp,<font color="#666666">"%s"</font>,next-&gt;string);
+<a name="line924">924: </a>      previous = next;
+<a name="line925">925: </a>      next     = next-&gt;next;
+<a name="line926">926: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(previous-&gt;string);
+<a name="line927">927: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(previous);
+<a name="line928">928: </a>    }
+<a name="line929">929: </a>    vascii-&gt;petsc_printfqueue       = 0;
+<a name="line930">930: </a>    vascii-&gt;petsc_printfqueuelength = 0;
+
+<a name="line932">932: </a>    <font color="#4169E1">while</font> (tab--) {
+<a name="line933">933: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscFPrintf.html#PetscFPrintf">PetscFPrintf</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,fp,<font color="#666666">"  "</font>);
+<a name="line934">934: </a>    }
+
+<a name="line936">936: </a>    va_start(Argp,format);
+<a name="line937">937: </a>    (*<a href="../../../../../../docs/manualpages/Sys/PetscVFPrintf.html#PetscVFPrintf">PetscVFPrintf</a>)(fp,format,Argp);
+<a name="line938">938: </a>    err  = fflush(fp);
+<a name="line939">939: </a>    <font color="#4169E1">if</font> (err) <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_SYS,<font color="#666666">"fflush() failed on file"</font>);
+<a name="line940">940: </a>    <font color="#4169E1">if</font> (petsc_history) {
+<a name="line941">941: </a>      va_start(Argp,format);
+<a name="line942">942: </a>      (*<a href="../../../../../../docs/manualpages/Sys/PetscVFPrintf.html#PetscVFPrintf">PetscVFPrintf</a>)(petsc_history,format,Argp);
+<a name="line943">943: </a>      err  = fflush(petsc_history);
+<a name="line944">944: </a>      <font color="#4169E1">if</font> (err) <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_SYS,<font color="#666666">"fflush() failed on file"</font>);
+<a name="line945">945: </a>    }
+<a name="line946">946: </a>    va_end(Argp);
+<a name="line947">947: </a>  } <font color="#4169E1">else</font> { <font color="#B22222">/* other processors add to queue */</font>
+<a name="line948">948: </a>    char        *string;
+<a name="line949">949: </a>    va_list     Argp;
+<a name="line950">950: </a>    size_t      fullLength;
+<a name="line951">951: </a>    PrintfQueue next;
+
+<a name="line953">953: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscNew.html#PetscNew">PetscNew</a>(&amp;next);
+<a name="line954">954: </a>    <font color="#4169E1">if</font> (vascii-&gt;petsc_printfqueue) {
+<a name="line955">955: </a>      vascii-&gt;petsc_printfqueue-&gt;next = next;
+<a name="line956">956: </a>      vascii-&gt;petsc_printfqueue       = next;
+<a name="line957">957: </a>    } <font color="#4169E1">else</font> {
+<a name="line958">958: </a>      vascii-&gt;petsc_printfqueuebase = vascii-&gt;petsc_printfqueue = next;
+<a name="line959">959: </a>    }
+<a name="line960">960: </a>    vascii-&gt;petsc_printfqueuelength++;
+<a name="line961">961: </a>    next-&gt;size = QUEUESTRINGSIZE;
+<a name="line962">962: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(next-&gt;size, &amp;next-&gt;string);
+<a name="line963">963: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscMemzero.html#PetscMemzero">PetscMemzero</a>(next-&gt;string,next-&gt;size);
+<a name="line964">964: </a>    string     = next-&gt;string;
+<a name="line965">965: </a>    tab       *= 2;
+<a name="line966">966: </a>    <font color="#4169E1">while</font> (tab--) {
+<a name="line967">967: </a>      *string++ = ' ';
+<a name="line968">968: </a>    }
+<a name="line969">969: </a>    va_start(Argp,format);
+<a name="line970">970: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscVSNPrintf.html#PetscVSNPrintf">PetscVSNPrintf</a>(string,next-&gt;size-2*vascii-&gt;tab,format,&amp;fullLength,Argp);
+<a name="line971">971: </a>    va_end(Argp);
+<a name="line972">972: </a>  }
+<a name="line973">973: </a>  <font color="#4169E1">return</font>(0);
+<a name="line974">974: </a>}
+
+<a name="line976">976: </a><font color="#B22222">/*@C</font>
+<a name="line977">977: </a><font color="#B22222">   <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIRead.html#PetscViewerASCIIRead">PetscViewerASCIIRead</a> - Reads from am ASCII file</font>
+
+<a name="line979">979: </a><font color="#B22222">   Collective on <a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a></font>
+
+<a name="line981">981: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line982">982: </a><font color="#B22222">+  viewer - the ascii viewer</font>
+<a name="line983">983: </a><font color="#B22222">.  data - location to write the data</font>
+<a name="line984">984: </a><font color="#B22222">.  num - number of items of data to read</font>
+<a name="line985">985: </a><font color="#B22222">-  datatype - type of data to read</font>
+
+<a name="line987">987: </a><font color="#B22222">   Output Parameters:</font>
+<a name="line988">988: </a><font color="#B22222">.  count - number of items of data actually read, or NULL</font>
+
+<a name="line990">990: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line992">992: </a><font color="#B22222">   Concepts: ascii files</font>
+
+<a name="line994">994: </a><font color="#B22222">.seealso: <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html#PetscViewerASCIIOpen">PetscViewerASCIIOpen</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerPushFormat.html#PetscViewerPushFormat">PetscViewerPushFormat</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html#PetscViewerDestroy">PetscViewerDestroy</a>(),</font>
+<a name="line995">995: </a><font color="#B22222">          <a href="../../../../../../docs/manualpages/Vec/VecView.html#VecView">VecView</a>(), <a href="../../../../../../docs/manualpages/Mat/MatView.html#MatView">MatView</a>(), <a href="../../../../../../docs/manualpages/Vec/VecLoad.html#VecLoad">VecLoad</a>(), <a href="../../../../../../docs/manualpages/Mat/MatLoad.html#MatLoad">MatLoad</a>(), <a href="../../../../../../docs/manualpages/Viewer/PetscViewerBinaryGetDescriptor.html#PetscViewerBinaryGetDescriptor">PetscViewerBinaryGetDescriptor</a>(),</font>
+<a name="line996">996: </a><font color="#B22222">          <a href="../../../../../../docs/manualpages/Viewer/PetscViewerBinaryGetInfoPointer.html#PetscViewerBinaryGetInfoPointer">PetscViewerBinaryGetInfoPointer</a>(), <a href="../../../../../../docs/manualpages/Sys/PetscFileMode.html#PetscFileMode">PetscFileMode</a>, <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a>, PetscBinaryViewerRead()</font>
+<a name="line997">997: </a><font color="#B22222">@*/</font>
+<a name="line998">998: </a><strong><font color="#4169E1"><a name="PetscViewerASCIIRead"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIRead.html#PetscViewerASCIIRead">PetscViewerASCIIRead</a>(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer,void *data,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> num,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *count,<a href="../../../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PetscDataType</a> dtype)</font></strong>
+<a name="line999">999: </a>{
+<a name="line1000">1000: </a>  PetscViewer_ASCII *vascii = (PetscViewer_ASCII*)viewer-&gt;data;
+<a name="line1001">1001: </a>  FILE              *fd = vascii-&gt;fd;
+<a name="line1002">1002: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>           i;
+<a name="line1003">1003: </a>  int                ret = 0;
+
+<a name="line1007">1007: </a>  <font color="#4169E1">for</font> (i=0; i&lt;num; i++) {
+<a name="line1008">1008: </a>    <font color="#4169E1">if</font> (dtype == <a href="../../../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_CHAR</a>)         ret = fscanf(fd, <font color="#666666">"%c"</font>,  &amp;(((char*)data)[i]));
+<a name="line1009">1009: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dtype == <a href="../../../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_STRING</a>)  ret = fscanf(fd, <font color="#666666">"%s"</font>,  &amp;(((char*)data)[i]));
+<a name="line1010">1010: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dtype == <a href="../../../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_INT</a>)     ret = fscanf(fd, <font color="#666666">"%"</font> PetscInt_FMT,  &amp;(((<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>*)data)[i]));
+<a name="line1011">1011: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dtype == <a href="../../../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_ENUM</a>)    ret = fscanf(fd, <font color="#666666">"%d"</font>,  &amp;(((int*)data)[i]));
+<a name="line1012">1012: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dtype == <a href="../../../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_FLOAT</a>)   ret = fscanf(fd, <font color="#666666">"%f"</font>,  &amp;(((float*)data)[i]));
+<a name="line1013">1013: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dtype == <a href="../../../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_DOUBLE</a>)  ret = fscanf(fd, <font color="#666666">"%lg"</font>, &amp;(((double*)data)[i]));
+<a name="line1014">1014: </a><font color="#A020F0">#if defined(PETSC_USE_REAL___FLOAT128)</font>
+<a name="line1015">1015: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dtype == <a href="../../../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC___FLOAT128</a>) {
+<a name="line1016">1016: </a>      double tmp;
+<a name="line1017">1017: </a>      ret = fscanf(fd, <font color="#666666">"%lg"</font>, &amp;tmp);
+<a name="line1018">1018: </a>      ((__float128*)data)[i] = tmp;
+<a name="line1019">1019: </a>    }
+<a name="line1020">1020: </a><font color="#A020F0">#endif</font>
+<a name="line1021">1021: </a>    <font color="#4169E1">else</font> {<a href="../../../../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_WRONG,<font color="#666666">"Data type %d not supported"</font>, (int) dtype);}
+<a name="line1022">1022: </a>    <font color="#4169E1">if</font> (!ret) <a href="../../../../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>, PETSC_ERR_ARG_WRONG, <font color="#666666">"Conversion error for data type %d"</font>, (int) dtype);
+<a name="line1023">1023: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ret &lt; 0) <font color="#4169E1">break</font>; <font color="#B22222">/* Proxy for EOF, need to check for it in configure */</font>
+<a name="line1024">1024: </a>  }
+<a name="line1025">1025: </a>  <font color="#4169E1">if</font> (count) *count = i;
+<a name="line1026">1026: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ret &lt; 0) <a href="../../../../../../docs/manualpages/Sys/SETERRQ2.html#SETERRQ2">SETERRQ2</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>, PETSC_ERR_ARG_WRONG, <font color="#666666">"Insufficient data, read only %D &lt; %D items"</font>, i, num);
+<a name="line1027">1027: </a>  <font color="#4169E1">return</font>(0);
+<a name="line1028">1028: </a>}
+
+</pre>
+</body>
+
+</html>

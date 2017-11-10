@@ -1,0 +1,1253 @@
+<center><a href="da.c">Actual source code: da.c</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/dm/impls/da/da.c.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:39:08+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/dm/impls/da/da.c.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+<a name="line1">  1: </a> #include <A href="../../../../include/petsc/private/dmdaimpl.h.html">&lt;petsc/private/dmdaimpl.h&gt;</A>
+
+<a name="line3">  3: </a><font color="#B22222">/*@</font>
+<a name="line4">  4: </a><font color="#B22222">  <a href="../../../../docs/manualpages/DMDA/DMDASetSizes.html#DMDASetSizes">DMDASetSizes</a> - Sets the global sizes</font>
+
+<a name="line6">  6: </a><font color="#B22222">  Logically Collective on <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+
+<a name="line8">  8: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line9">  9: </a><font color="#B22222">+ da - the <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+<a name="line10"> 10: </a><font color="#B22222">. M - the global X size (or <a href="../../../../docs/manualpages/Sys/PETSC_DECIDE.html#PETSC_DECIDE">PETSC_DECIDE</a>)</font>
+<a name="line11"> 11: </a><font color="#B22222">. N - the global Y size (or <a href="../../../../docs/manualpages/Sys/PETSC_DECIDE.html#PETSC_DECIDE">PETSC_DECIDE</a>)</font>
+<a name="line12"> 12: </a><font color="#B22222">- P - the global Z size (or <a href="../../../../docs/manualpages/Sys/PETSC_DECIDE.html#PETSC_DECIDE">PETSC_DECIDE</a>)</font>
+
+<a name="line14"> 14: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line16"> 16: </a><font color="#B22222">.seealso: DMDAGetSize(), <a href="../../../../docs/manualpages/Sys/PetscSplitOwnership.html#PetscSplitOwnership">PetscSplitOwnership</a>()</font>
+<a name="line17"> 17: </a><font color="#B22222">@*/</font>
+<a name="line18"> 18: </a><strong><font color="#4169E1"><a name="DMDASetSizes"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../docs/manualpages/DMDA/DMDASetSizes.html#DMDASetSizes">DMDASetSizes</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> da, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> M, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> N, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> P)</font></strong>
+<a name="line19"> 19: </a>{
+<a name="line20"> 20: </a>  DM_DA *dd = (DM_DA*)da-&gt;data;
+
+<a name="line27"> 27: </a>  <font color="#4169E1">if</font> (da-&gt;setupcalled) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),PETSC_ERR_ARG_WRONGSTATE,<font color="#666666">"This function must be called before <a href="../../../../docs/manualpages/DM/DMSetUp.html#DMSetUp">DMSetUp</a>()"</font>);
+
+<a name="line29"> 29: </a>  dd-&gt;M = M;
+<a name="line30"> 30: </a>  dd-&gt;N = N;
+<a name="line31"> 31: </a>  dd-&gt;P = P;
+<a name="line32"> 32: </a>  <font color="#4169E1">return</font>(0);
+<a name="line33"> 33: </a>}
+
+<a name="line35"> 35: </a><font color="#B22222">/*@</font>
+<a name="line36"> 36: </a><font color="#B22222">  <a href="../../../../docs/manualpages/DMDA/DMDASetNumProcs.html#DMDASetNumProcs">DMDASetNumProcs</a> - Sets the number of processes in each dimension</font>
+
+<a name="line38"> 38: </a><font color="#B22222">  Logically Collective on <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+
+<a name="line40"> 40: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line41"> 41: </a><font color="#B22222">+ da - the <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+<a name="line42"> 42: </a><font color="#B22222">. m - the number of X procs (or <a href="../../../../docs/manualpages/Sys/PETSC_DECIDE.html#PETSC_DECIDE">PETSC_DECIDE</a>)</font>
+<a name="line43"> 43: </a><font color="#B22222">. n - the number of Y procs (or <a href="../../../../docs/manualpages/Sys/PETSC_DECIDE.html#PETSC_DECIDE">PETSC_DECIDE</a>)</font>
+<a name="line44"> 44: </a><font color="#B22222">- p - the number of Z procs (or <a href="../../../../docs/manualpages/Sys/PETSC_DECIDE.html#PETSC_DECIDE">PETSC_DECIDE</a>)</font>
+
+<a name="line46"> 46: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line48"> 48: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMDA/DMDASetSizes.html#DMDASetSizes">DMDASetSizes</a>(), DMDAGetSize(), <a href="../../../../docs/manualpages/Sys/PetscSplitOwnership.html#PetscSplitOwnership">PetscSplitOwnership</a>()</font>
+<a name="line49"> 49: </a><font color="#B22222">@*/</font>
+<a name="line50"> 50: </a><strong><font color="#4169E1"><a name="DMDASetNumProcs"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../docs/manualpages/DMDA/DMDASetNumProcs.html#DMDASetNumProcs">DMDASetNumProcs</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> da, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> m, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> n, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> p)</font></strong>
+<a name="line51"> 51: </a>{
+<a name="line52"> 52: </a>  DM_DA          *dd = (DM_DA*)da-&gt;data;
+
+<a name="line60"> 60: </a>  <font color="#4169E1">if</font> (da-&gt;setupcalled) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),PETSC_ERR_ARG_WRONGSTATE,<font color="#666666">"This function must be called before <a href="../../../../docs/manualpages/DM/DMSetUp.html#DMSetUp">DMSetUp</a>()"</font>);
+<a name="line61"> 61: </a>  dd-&gt;m = m;
+<a name="line62"> 62: </a>  dd-&gt;n = n;
+<a name="line63"> 63: </a>  dd-&gt;p = p;
+<a name="line64"> 64: </a>  <font color="#4169E1">if</font> (da-&gt;dim == 2) {
+<a name="line65"> 65: </a>    <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> size;
+<a name="line66"> 66: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),&amp;size);
+<a name="line67"> 67: </a>    <font color="#4169E1">if</font> ((dd-&gt;m &gt; 0) &amp;&amp; (dd-&gt;n &lt; 0)) {
+<a name="line68"> 68: </a>      dd-&gt;n = size/dd-&gt;m;
+<a name="line69"> 69: </a>      <font color="#4169E1">if</font> (dd-&gt;n*dd-&gt;m != size) <a href="../../../../docs/manualpages/Sys/SETERRQ2.html#SETERRQ2">SETERRQ2</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),PETSC_ERR_ARG_OUTOFRANGE,<font color="#666666">"%D processes in X direction not divisible into comm size %d"</font>,m,size);
+<a name="line70"> 70: </a>    }
+<a name="line71"> 71: </a>    <font color="#4169E1">if</font> ((dd-&gt;n &gt; 0) &amp;&amp; (dd-&gt;m &lt; 0)) {
+<a name="line72"> 72: </a>      dd-&gt;m = size/dd-&gt;n;
+<a name="line73"> 73: </a>      <font color="#4169E1">if</font> (dd-&gt;n*dd-&gt;m != size) <a href="../../../../docs/manualpages/Sys/SETERRQ2.html#SETERRQ2">SETERRQ2</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),PETSC_ERR_ARG_OUTOFRANGE,<font color="#666666">"%D processes in Y direction not divisible into comm size %d"</font>,n,size);
+<a name="line74"> 74: </a>    }
+<a name="line75"> 75: </a>  }
+<a name="line76"> 76: </a>  <font color="#4169E1">return</font>(0);
+<a name="line77"> 77: </a>}
+
+<a name="line79"> 79: </a><font color="#B22222">/*@</font>
+<a name="line80"> 80: </a><font color="#B22222">  <a href="../../../../docs/manualpages/DMDA/DMDASetBoundaryType.html#DMDASetBoundaryType">DMDASetBoundaryType</a> - Sets the type of ghost nodes on domain boundaries.</font>
+
+<a name="line82"> 82: </a><font color="#B22222">  Not collective</font>
+
+<a name="line84"> 84: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line85"> 85: </a><font color="#B22222">+ da    - The <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+<a name="line86"> 86: </a><font color="#B22222">- bx,by,bz - One of <a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_NONE</a>, <a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_GHOSTED</a>, <a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_PERIODIC</a></font>
+
+<a name="line88"> 88: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line90"> 90: </a><font color="#B22222">.keywords:  distributed array, periodicity</font>
+<a name="line91"> 91: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMDA/DMDACreate.html#DMDACreate">DMDACreate</a>(), <a href="../../../../docs/manualpages/DM/DMDestroy.html#DMDestroy">DMDestroy</a>(), <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a>, <a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DMBoundaryType</a></font>
+<a name="line92"> 92: </a><font color="#B22222">@*/</font>
+<a name="line93"> 93: </a><strong><font color="#4169E1"><a name="DMDASetBoundaryType"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../docs/manualpages/DMDA/DMDASetBoundaryType.html#DMDASetBoundaryType">DMDASetBoundaryType</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> da,<a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DMBoundaryType</a> bx,<a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DMBoundaryType</a> by,<a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DMBoundaryType</a> bz)</font></strong>
+<a name="line94"> 94: </a>{
+<a name="line95"> 95: </a>  DM_DA *dd = (DM_DA*)da-&gt;data;
+
+<a name="line102">102: </a>  <font color="#4169E1">if</font> (da-&gt;setupcalled) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),PETSC_ERR_ARG_WRONGSTATE,<font color="#666666">"This function must be called before <a href="../../../../docs/manualpages/DM/DMSetUp.html#DMSetUp">DMSetUp</a>()"</font>);
+<a name="line103">103: </a>  dd-&gt;bx = bx;
+<a name="line104">104: </a>  dd-&gt;by = by;
+<a name="line105">105: </a>  dd-&gt;bz = bz;
+<a name="line106">106: </a>  <font color="#4169E1">return</font>(0);
+<a name="line107">107: </a>}
+
+<a name="line109">109: </a><font color="#B22222">/*@</font>
+<a name="line110">110: </a><font color="#B22222">  <a href="../../../../docs/manualpages/DMDA/DMDASetDof.html#DMDASetDof">DMDASetDof</a> - Sets the number of degrees of freedom per vertex</font>
+
+<a name="line112">112: </a><font color="#B22222">  Not collective</font>
+
+<a name="line114">114: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line115">115: </a><font color="#B22222">+ da  - The <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+<a name="line116">116: </a><font color="#B22222">- dof - Number of degrees of freedom</font>
+
+<a name="line118">118: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line120">120: </a><font color="#B22222">.keywords:  distributed array, degrees of freedom</font>
+<a name="line121">121: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMDA/DMDAGetDof.html#DMDAGetDof">DMDAGetDof</a>(), <a href="../../../../docs/manualpages/DMDA/DMDACreate.html#DMDACreate">DMDACreate</a>(), <a href="../../../../docs/manualpages/DM/DMDestroy.html#DMDestroy">DMDestroy</a>(), <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+<a name="line122">122: </a><font color="#B22222">@*/</font>
+<a name="line123">123: </a><strong><font color="#4169E1"><a name="DMDASetDof"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../docs/manualpages/DMDA/DMDASetDof.html#DMDASetDof">DMDASetDof</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> da, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> dof)</font></strong>
+<a name="line124">124: </a>{
+<a name="line125">125: </a>  DM_DA *dd = (DM_DA*)da-&gt;data;
+
+<a name="line130">130: </a>  <font color="#4169E1">if</font> (da-&gt;setupcalled) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),PETSC_ERR_ARG_WRONGSTATE,<font color="#666666">"This function must be called before <a href="../../../../docs/manualpages/DM/DMSetUp.html#DMSetUp">DMSetUp</a>()"</font>);
+<a name="line131">131: </a>  dd-&gt;w  = dof;
+<a name="line132">132: </a>  da-&gt;bs = dof;
+<a name="line133">133: </a>  <font color="#4169E1">return</font>(0);
+<a name="line134">134: </a>}
+
+<a name="line136">136: </a><font color="#B22222">/*@</font>
+<a name="line137">137: </a><font color="#B22222">  <a href="../../../../docs/manualpages/DMDA/DMDAGetDof.html#DMDAGetDof">DMDAGetDof</a> - Gets the number of degrees of freedom per vertex</font>
+
+<a name="line139">139: </a><font color="#B22222">  Not collective</font>
+
+<a name="line141">141: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line142">142: </a><font color="#B22222">. da  - The <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+
+<a name="line144">144: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line145">145: </a><font color="#B22222">. dof - Number of degrees of freedom</font>
+
+<a name="line147">147: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line149">149: </a><font color="#B22222">.keywords:  distributed array, degrees of freedom</font>
+<a name="line150">150: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMDA/DMDASetDof.html#DMDASetDof">DMDASetDof</a>(), <a href="../../../../docs/manualpages/DMDA/DMDACreate.html#DMDACreate">DMDACreate</a>(), <a href="../../../../docs/manualpages/DM/DMDestroy.html#DMDestroy">DMDestroy</a>(), <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+<a name="line151">151: </a><font color="#B22222">@*/</font>
+<a name="line152">152: </a><strong><font color="#4169E1"><a name="DMDAGetDof"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMDA/DMDAGetDof.html#DMDAGetDof">DMDAGetDof</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> da, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *dof)</font></strong>
+<a name="line153">153: </a>{
+<a name="line154">154: </a>  DM_DA *dd = (DM_DA *) da-&gt;data;
+
+<a name="line159">159: </a>  *dof = dd-&gt;w;
+<a name="line160">160: </a>  <font color="#4169E1">return</font>(0);
+<a name="line161">161: </a>}
+
+<a name="line163">163: </a><font color="#B22222">/*@</font>
+<a name="line164">164: </a><font color="#B22222">  <a href="../../../../docs/manualpages/DMDA/DMDAGetOverlap.html#DMDAGetOverlap">DMDAGetOverlap</a> - Gets the size of the per-processor overlap.</font>
+
+<a name="line166">166: </a><font color="#B22222">  Not collective</font>
+
+<a name="line168">168: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line169">169: </a><font color="#B22222">. da  - The <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+
+<a name="line171">171: </a><font color="#B22222">  Output Parameters:</font>
+<a name="line172">172: </a><font color="#B22222">+ x   - Overlap in the x direction</font>
+<a name="line173">173: </a><font color="#B22222">. y   - Overlap in the y direction</font>
+<a name="line174">174: </a><font color="#B22222">- z   - Overlap in the z direction</font>
+
+<a name="line176">176: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line178">178: </a><font color="#B22222">.keywords:  distributed array, overlap, domain decomposition</font>
+<a name="line179">179: </a><font color="#B22222">.seealso: DMDACreateDomainDecomposition(), <a href="../../../../docs/manualpages/DMDA/DMDASetOverlap.html#DMDASetOverlap">DMDASetOverlap</a>(), <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+<a name="line180">180: </a><font color="#B22222">@*/</font>
+<a name="line181">181: </a><strong><font color="#4169E1"><a name="DMDAGetOverlap"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../docs/manualpages/DMDA/DMDAGetOverlap.html#DMDAGetOverlap">DMDAGetOverlap</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> da,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *x,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *y,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *z)</font></strong>
+<a name="line182">182: </a>{
+<a name="line183">183: </a>  DM_DA *dd = (DM_DA*)da-&gt;data;
+
+<a name="line187">187: </a>  <font color="#4169E1">if</font> (x) *x = dd-&gt;xol;
+<a name="line188">188: </a>  <font color="#4169E1">if</font> (y) *y = dd-&gt;yol;
+<a name="line189">189: </a>  <font color="#4169E1">if</font> (z) *z = dd-&gt;zol;
+<a name="line190">190: </a>  <font color="#4169E1">return</font>(0);
+<a name="line191">191: </a>}
+
+<a name="line193">193: </a><font color="#B22222">/*@</font>
+<a name="line194">194: </a><font color="#B22222">  <a href="../../../../docs/manualpages/DMDA/DMDASetOverlap.html#DMDASetOverlap">DMDASetOverlap</a> - Sets the size of the per-processor overlap.</font>
+
+<a name="line196">196: </a><font color="#B22222">  Not collective</font>
+
+<a name="line198">198: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line199">199: </a><font color="#B22222">+ da  - The <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+<a name="line200">200: </a><font color="#B22222">. x   - Overlap in the x direction</font>
+<a name="line201">201: </a><font color="#B22222">. y   - Overlap in the y direction</font>
+<a name="line202">202: </a><font color="#B22222">- z   - Overlap in the z direction</font>
+
+<a name="line204">204: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line206">206: </a><font color="#B22222">.keywords:  distributed array, overlap, domain decomposition</font>
+<a name="line207">207: </a><font color="#B22222">.seealso: DMDACreateDomainDecomposition(), <a href="../../../../docs/manualpages/DMDA/DMDAGetOverlap.html#DMDAGetOverlap">DMDAGetOverlap</a>(), <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+<a name="line208">208: </a><font color="#B22222">@*/</font>
+<a name="line209">209: </a><strong><font color="#4169E1"><a name="DMDASetOverlap"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../docs/manualpages/DMDA/DMDASetOverlap.html#DMDASetOverlap">DMDASetOverlap</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> da,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> x,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> y,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> z)</font></strong>
+<a name="line210">210: </a>{
+<a name="line211">211: </a>  DM_DA *dd = (DM_DA*)da-&gt;data;
+
+<a name="line218">218: </a>  dd-&gt;xol = x;
+<a name="line219">219: </a>  dd-&gt;yol = y;
+<a name="line220">220: </a>  dd-&gt;zol = z;
+<a name="line221">221: </a>  <font color="#4169E1">return</font>(0);
+<a name="line222">222: </a>}
+
+
+<a name="line225">225: </a><font color="#B22222">/*@</font>
+<a name="line226">226: </a><font color="#B22222">  <a href="../../../../docs/manualpages/DMDA/DMDAGetNumLocalSubDomains.html#DMDAGetNumLocalSubDomains">DMDAGetNumLocalSubDomains</a> - Gets the number of local subdomains created upon decomposition.</font>
+
+<a name="line228">228: </a><font color="#B22222">  Not collective</font>
+
+<a name="line230">230: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line231">231: </a><font color="#B22222">. da  - The <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+
+<a name="line233">233: </a><font color="#B22222">  Output Parameters:</font>
+<a name="line234">234: </a><font color="#B22222">+ Nsub   - Number of local subdomains created upon decomposition</font>
+
+<a name="line236">236: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line238">238: </a><font color="#B22222">.keywords:  distributed array, domain decomposition</font>
+<a name="line239">239: </a><font color="#B22222">.seealso: DMDACreateDomainDecomposition(), <a href="../../../../docs/manualpages/DMDA/DMDASetNumLocalSubDomains.html#DMDASetNumLocalSubDomains">DMDASetNumLocalSubDomains</a>(), <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+<a name="line240">240: </a><font color="#B22222">@*/</font>
+<a name="line241">241: </a><strong><font color="#4169E1"><a name="DMDAGetNumLocalSubDomains"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../docs/manualpages/DMDA/DMDAGetNumLocalSubDomains.html#DMDAGetNumLocalSubDomains">DMDAGetNumLocalSubDomains</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> da,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *Nsub)</font></strong>
+<a name="line242">242: </a>{
+<a name="line243">243: </a>  DM_DA *dd = (DM_DA*)da-&gt;data;
+
+<a name="line247">247: </a>  <font color="#4169E1">if</font> (Nsub) *Nsub = dd-&gt;Nsub;
+<a name="line248">248: </a>  <font color="#4169E1">return</font>(0);
+<a name="line249">249: </a>}
+
+<a name="line251">251: </a><font color="#B22222">/*@</font>
+<a name="line252">252: </a><font color="#B22222">  <a href="../../../../docs/manualpages/DMDA/DMDASetNumLocalSubDomains.html#DMDASetNumLocalSubDomains">DMDASetNumLocalSubDomains</a> - Sets the number of local subdomains created upon decomposition.</font>
+
+<a name="line254">254: </a><font color="#B22222">  Not collective</font>
+
+<a name="line256">256: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line257">257: </a><font color="#B22222">+ da  - The <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+<a name="line258">258: </a><font color="#B22222">- Nsub - The number of local subdomains requested</font>
+
+<a name="line260">260: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line262">262: </a><font color="#B22222">.keywords:  distributed array, domain decomposition</font>
+<a name="line263">263: </a><font color="#B22222">.seealso: DMDACreateDomainDecomposition(), <a href="../../../../docs/manualpages/DMDA/DMDAGetNumLocalSubDomains.html#DMDAGetNumLocalSubDomains">DMDAGetNumLocalSubDomains</a>(), <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+<a name="line264">264: </a><font color="#B22222">@*/</font>
+<a name="line265">265: </a><strong><font color="#4169E1"><a name="DMDASetNumLocalSubDomains"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../docs/manualpages/DMDA/DMDASetNumLocalSubDomains.html#DMDASetNumLocalSubDomains">DMDASetNumLocalSubDomains</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> da,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> Nsub)</font></strong>
+<a name="line266">266: </a>{
+<a name="line267">267: </a>  DM_DA *dd = (DM_DA*)da-&gt;data;
+
+<a name="line272">272: </a>  dd-&gt;Nsub = Nsub;
+<a name="line273">273: </a>  <font color="#4169E1">return</font>(0);
+<a name="line274">274: </a>}
+
+<a name="line276">276: </a><font color="#B22222">/*@</font>
+<a name="line277">277: </a><font color="#B22222">  <a href="../../../../docs/manualpages/DMDA/DMDASetOffset.html#DMDASetOffset">DMDASetOffset</a> - Sets the index offset of the DA.</font>
+
+<a name="line279">279: </a><font color="#B22222">  Collective on DA</font>
+
+<a name="line281">281: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line282">282: </a><font color="#B22222">+ da  - The <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+<a name="line283">283: </a><font color="#B22222">. xo  - The offset in the x direction</font>
+<a name="line284">284: </a><font color="#B22222">. yo  - The offset in the y direction</font>
+<a name="line285">285: </a><font color="#B22222">- zo  - The offset in the z direction</font>
+
+<a name="line287">287: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line289">289: </a><font color="#B22222">  Notes: This is used primarily to overlap a computation on a local DA with that on a global DA without</font>
+<a name="line290">290: </a><font color="#B22222">  changing boundary conditions or subdomain features that depend upon the global offsets.</font>
+
+<a name="line292">292: </a><font color="#B22222">.keywords:  distributed array, degrees of freedom</font>
+<a name="line293">293: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMDA/DMDAGetOffset.html#DMDAGetOffset">DMDAGetOffset</a>(), <a href="../../../../docs/manualpages/DMDA/DMDAVecGetArray.html#DMDAVecGetArray">DMDAVecGetArray</a>()</font>
+<a name="line294">294: </a><font color="#B22222">@*/</font>
+<a name="line295">295: </a><strong><font color="#4169E1"><a name="DMDASetOffset"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../docs/manualpages/DMDA/DMDASetOffset.html#DMDASetOffset">DMDASetOffset</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> da, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> xo, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> yo, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> zo, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> Mo, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> No, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> Po)</font></strong>
+<a name="line296">296: </a>{
+<a name="line298">298: </a>  DM_DA          *dd = (DM_DA*)da-&gt;data;
+
+<a name="line308">308: </a>  dd-&gt;xo = xo;
+<a name="line309">309: </a>  dd-&gt;yo = yo;
+<a name="line310">310: </a>  dd-&gt;zo = zo;
+<a name="line311">311: </a>  dd-&gt;Mo = Mo;
+<a name="line312">312: </a>  dd-&gt;No = No;
+<a name="line313">313: </a>  dd-&gt;Po = Po;
+
+<a name="line315">315: </a>  <font color="#4169E1">if</font> (da-&gt;coordinateDM) {
+<a name="line316">316: </a>    <a href="../../../../docs/manualpages/DMDA/DMDASetOffset.html#DMDASetOffset">DMDASetOffset</a>(da-&gt;coordinateDM,xo,yo,zo,Mo,No,Po);
+<a name="line317">317: </a>  }
+<a name="line318">318: </a>  <font color="#4169E1">return</font>(0);
+<a name="line319">319: </a>}
+
+<a name="line321">321: </a><font color="#B22222">/*@</font>
+<a name="line322">322: </a><font color="#B22222">  <a href="../../../../docs/manualpages/DMDA/DMDAGetOffset.html#DMDAGetOffset">DMDAGetOffset</a> - Gets the index offset of the DA.</font>
+
+<a name="line324">324: </a><font color="#B22222">  Not collective</font>
+
+<a name="line326">326: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line327">327: </a><font color="#B22222">. da  - The <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+
+<a name="line329">329: </a><font color="#B22222">  Output Parameters:</font>
+<a name="line330">330: </a><font color="#B22222">+ xo  - The offset in the x direction</font>
+<a name="line331">331: </a><font color="#B22222">. yo  - The offset in the y direction</font>
+<a name="line332">332: </a><font color="#B22222">. zo  - The offset in the z direction</font>
+<a name="line333">333: </a><font color="#B22222">. Mo  - The global size in the x direction</font>
+<a name="line334">334: </a><font color="#B22222">. No  - The global size in the y direction</font>
+<a name="line335">335: </a><font color="#B22222">- Po  - The global size in the z direction</font>
+
+<a name="line337">337: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line339">339: </a><font color="#B22222">.keywords:  distributed array, degrees of freedom</font>
+<a name="line340">340: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMDA/DMDASetOffset.html#DMDASetOffset">DMDASetOffset</a>(), <a href="../../../../docs/manualpages/DMDA/DMDAVecGetArray.html#DMDAVecGetArray">DMDAVecGetArray</a>()</font>
+<a name="line341">341: </a><font color="#B22222">@*/</font>
+<a name="line342">342: </a><strong><font color="#4169E1"><a name="DMDAGetOffset"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../docs/manualpages/DMDA/DMDAGetOffset.html#DMDAGetOffset">DMDAGetOffset</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> da,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *xo,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *yo,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *zo,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *Mo,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *No,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *Po)</font></strong>
+<a name="line343">343: </a>{
+<a name="line344">344: </a>  DM_DA *dd = (DM_DA*)da-&gt;data;
+
+<a name="line348">348: </a>  <font color="#4169E1">if</font> (xo) *xo = dd-&gt;xo;
+<a name="line349">349: </a>  <font color="#4169E1">if</font> (yo) *yo = dd-&gt;yo;
+<a name="line350">350: </a>  <font color="#4169E1">if</font> (zo) *zo = dd-&gt;zo;
+<a name="line351">351: </a>  <font color="#4169E1">if</font> (Mo) *Mo = dd-&gt;Mo;
+<a name="line352">352: </a>  <font color="#4169E1">if</font> (No) *No = dd-&gt;No;
+<a name="line353">353: </a>  <font color="#4169E1">if</font> (Po) *Po = dd-&gt;Po;
+<a name="line354">354: </a>  <font color="#4169E1">return</font>(0);
+<a name="line355">355: </a>}
+
+<a name="line357">357: </a><font color="#B22222">/*@</font>
+<a name="line358">358: </a><font color="#B22222">  <a href="../../../../docs/manualpages/DMDA/DMDAGetNonOverlappingRegion.html#DMDAGetNonOverlappingRegion">DMDAGetNonOverlappingRegion</a> - Gets the indices of the nonoverlapping region of a subdomain <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a>.</font>
+
+<a name="line360">360: </a><font color="#B22222">  Not collective</font>
+
+<a name="line362">362: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line363">363: </a><font color="#B22222">. da  - The <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+
+<a name="line365">365: </a><font color="#B22222">  Output Parameters:</font>
+<a name="line366">366: </a><font color="#B22222">+ xs  - The start of the region in x</font>
+<a name="line367">367: </a><font color="#B22222">. ys  - The start of the region in y</font>
+<a name="line368">368: </a><font color="#B22222">. zs  - The start of the region in z</font>
+<a name="line369">369: </a><font color="#B22222">. xs  - The size of the region in x</font>
+<a name="line370">370: </a><font color="#B22222">. ys  - The size of the region in y</font>
+<a name="line371">371: </a><font color="#B22222">. zs  - The size of the region in z</font>
+
+<a name="line373">373: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line375">375: </a><font color="#B22222">.keywords:  distributed array, degrees of freedom</font>
+<a name="line376">376: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMDA/DMDAGetOffset.html#DMDAGetOffset">DMDAGetOffset</a>(), <a href="../../../../docs/manualpages/DMDA/DMDAVecGetArray.html#DMDAVecGetArray">DMDAVecGetArray</a>()</font>
+<a name="line377">377: </a><font color="#B22222">@*/</font>
+<a name="line378">378: </a><strong><font color="#4169E1"><a name="DMDAGetNonOverlappingRegion"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../docs/manualpages/DMDA/DMDAGetNonOverlappingRegion.html#DMDAGetNonOverlappingRegion">DMDAGetNonOverlappingRegion</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> da, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *xs, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *ys, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *zs, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *xm, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *ym, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *zm)</font></strong>
+<a name="line379">379: </a>{
+<a name="line380">380: </a>  DM_DA          *dd = (DM_DA*)da-&gt;data;
+
+<a name="line384">384: </a>  <font color="#4169E1">if</font> (xs) *xs = dd-&gt;nonxs;
+<a name="line385">385: </a>  <font color="#4169E1">if</font> (ys) *ys = dd-&gt;nonys;
+<a name="line386">386: </a>  <font color="#4169E1">if</font> (zs) *zs = dd-&gt;nonzs;
+<a name="line387">387: </a>  <font color="#4169E1">if</font> (xm) *xm = dd-&gt;nonxm;
+<a name="line388">388: </a>  <font color="#4169E1">if</font> (ym) *ym = dd-&gt;nonym;
+<a name="line389">389: </a>  <font color="#4169E1">if</font> (zm) *zm = dd-&gt;nonzm;
+<a name="line390">390: </a>  <font color="#4169E1">return</font>(0);
+<a name="line391">391: </a>}
+
+
+<a name="line394">394: </a><font color="#B22222">/*@</font>
+<a name="line395">395: </a><font color="#B22222">  <a href="../../../../docs/manualpages/DMDA/DMDASetNonOverlappingRegion.html#DMDASetNonOverlappingRegion">DMDASetNonOverlappingRegion</a> - Sets the indices of the nonoverlapping region of a subdomain <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a>.</font>
+
+<a name="line397">397: </a><font color="#B22222">  Collective on DA</font>
+
+<a name="line399">399: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line400">400: </a><font color="#B22222">+ da  - The <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+<a name="line401">401: </a><font color="#B22222">. xs  - The start of the region in x</font>
+<a name="line402">402: </a><font color="#B22222">. ys  - The start of the region in y</font>
+<a name="line403">403: </a><font color="#B22222">. zs  - The start of the region in z</font>
+<a name="line404">404: </a><font color="#B22222">. xs  - The size of the region in x</font>
+<a name="line405">405: </a><font color="#B22222">. ys  - The size of the region in y</font>
+<a name="line406">406: </a><font color="#B22222">. zs  - The size of the region in z</font>
+
+<a name="line408">408: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line410">410: </a><font color="#B22222">.keywords:  distributed array, degrees of freedom</font>
+<a name="line411">411: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMDA/DMDAGetOffset.html#DMDAGetOffset">DMDAGetOffset</a>(), <a href="../../../../docs/manualpages/DMDA/DMDAVecGetArray.html#DMDAVecGetArray">DMDAVecGetArray</a>()</font>
+<a name="line412">412: </a><font color="#B22222">@*/</font>
+<a name="line413">413: </a><strong><font color="#4169E1"><a name="DMDASetNonOverlappingRegion"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../docs/manualpages/DMDA/DMDASetNonOverlappingRegion.html#DMDASetNonOverlappingRegion">DMDASetNonOverlappingRegion</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> da, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> xs, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> ys, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> zs, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> xm, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> ym, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> zm)</font></strong>
+<a name="line414">414: </a>{
+<a name="line415">415: </a>  DM_DA          *dd = (DM_DA*)da-&gt;data;
+
+<a name="line425">425: </a>  dd-&gt;nonxs = xs;
+<a name="line426">426: </a>  dd-&gt;nonys = ys;
+<a name="line427">427: </a>  dd-&gt;nonzs = zs;
+<a name="line428">428: </a>  dd-&gt;nonxm = xm;
+<a name="line429">429: </a>  dd-&gt;nonym = ym;
+<a name="line430">430: </a>  dd-&gt;nonzm = zm;
+
+<a name="line432">432: </a>  <font color="#4169E1">return</font>(0);
+<a name="line433">433: </a>}
+
+<a name="line435">435: </a><font color="#B22222">/*@</font>
+<a name="line436">436: </a><font color="#B22222">  <a href="../../../../docs/manualpages/DMDA/DMDASetStencilType.html#DMDASetStencilType">DMDASetStencilType</a> - Sets the type of the communication stencil</font>
+
+<a name="line438">438: </a><font color="#B22222">  Logically Collective on <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+
+<a name="line440">440: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line441">441: </a><font color="#B22222">+ da    - The <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+<a name="line442">442: </a><font color="#B22222">- stype - The stencil type, use either <a href="../../../../docs/manualpages/DMDA/DMDAStencilType.html#DMDAStencilType">DMDA_STENCIL_BOX</a> or <a href="../../../../docs/manualpages/DMDA/DMDAStencilType.html#DMDAStencilType">DMDA_STENCIL_STAR</a>.</font>
+
+<a name="line444">444: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line446">446: </a><font color="#B22222">.keywords:  distributed array, stencil</font>
+<a name="line447">447: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMDA/DMDACreate.html#DMDACreate">DMDACreate</a>(), <a href="../../../../docs/manualpages/DM/DMDestroy.html#DMDestroy">DMDestroy</a>(), <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+<a name="line448">448: </a><font color="#B22222">@*/</font>
+<a name="line449">449: </a><strong><font color="#4169E1"><a name="DMDASetStencilType"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../docs/manualpages/DMDA/DMDASetStencilType.html#DMDASetStencilType">DMDASetStencilType</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> da, <a href="../../../../docs/manualpages/DMDA/DMDAStencilType.html#DMDAStencilType">DMDAStencilType</a> stype)</font></strong>
+<a name="line450">450: </a>{
+<a name="line451">451: </a>  DM_DA *dd = (DM_DA*)da-&gt;data;
+
+<a name="line456">456: </a>  <font color="#4169E1">if</font> (da-&gt;setupcalled) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),PETSC_ERR_ARG_WRONGSTATE,<font color="#666666">"This function must be called before <a href="../../../../docs/manualpages/DM/DMSetUp.html#DMSetUp">DMSetUp</a>()"</font>);
+<a name="line457">457: </a>  dd-&gt;stencil_type = stype;
+<a name="line458">458: </a>  <font color="#4169E1">return</font>(0);
+<a name="line459">459: </a>}
+
+<a name="line461">461: </a><font color="#B22222">/*@</font>
+<a name="line462">462: </a><font color="#B22222">  <a href="../../../../docs/manualpages/DMDA/DMDAGetStencilType.html#DMDAGetStencilType">DMDAGetStencilType</a> - Gets the type of the communication stencil</font>
+
+<a name="line464">464: </a><font color="#B22222">  Not collective</font>
+
+<a name="line466">466: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line467">467: </a><font color="#B22222">. da    - The <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+
+<a name="line469">469: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line470">470: </a><font color="#B22222">. stype - The stencil type, use either <a href="../../../../docs/manualpages/DMDA/DMDAStencilType.html#DMDAStencilType">DMDA_STENCIL_BOX</a> or <a href="../../../../docs/manualpages/DMDA/DMDAStencilType.html#DMDAStencilType">DMDA_STENCIL_STAR</a>.</font>
+
+<a name="line472">472: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line474">474: </a><font color="#B22222">.keywords:  distributed array, stencil</font>
+<a name="line475">475: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMDA/DMDACreate.html#DMDACreate">DMDACreate</a>(), <a href="../../../../docs/manualpages/DM/DMDestroy.html#DMDestroy">DMDestroy</a>(), <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+<a name="line476">476: </a><font color="#B22222">@*/</font>
+<a name="line477">477: </a><strong><font color="#4169E1"><a name="DMDAGetStencilType"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMDA/DMDAGetStencilType.html#DMDAGetStencilType">DMDAGetStencilType</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> da, <a href="../../../../docs/manualpages/DMDA/DMDAStencilType.html#DMDAStencilType">DMDAStencilType</a> *stype)</font></strong>
+<a name="line478">478: </a>{
+<a name="line479">479: </a>  DM_DA *dd = (DM_DA*)da-&gt;data;
+
+<a name="line484">484: </a>  *stype = dd-&gt;stencil_type;
+<a name="line485">485: </a>  <font color="#4169E1">return</font>(0);
+<a name="line486">486: </a>}
+
+<a name="line488">488: </a><font color="#B22222">/*@</font>
+<a name="line489">489: </a><font color="#B22222">  <a href="../../../../docs/manualpages/DMDA/DMDASetStencilWidth.html#DMDASetStencilWidth">DMDASetStencilWidth</a> - Sets the width of the communication stencil</font>
+
+<a name="line491">491: </a><font color="#B22222">  Logically Collective on <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+
+<a name="line493">493: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line494">494: </a><font color="#B22222">+ da    - The <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+<a name="line495">495: </a><font color="#B22222">- width - The stencil width</font>
+
+<a name="line497">497: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line499">499: </a><font color="#B22222">.keywords:  distributed array, stencil</font>
+<a name="line500">500: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMDA/DMDACreate.html#DMDACreate">DMDACreate</a>(), <a href="../../../../docs/manualpages/DM/DMDestroy.html#DMDestroy">DMDestroy</a>(), <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+<a name="line501">501: </a><font color="#B22222">@*/</font>
+<a name="line502">502: </a><strong><font color="#4169E1"><a name="DMDASetStencilWidth"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../docs/manualpages/DMDA/DMDASetStencilWidth.html#DMDASetStencilWidth">DMDASetStencilWidth</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> da, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> width)</font></strong>
+<a name="line503">503: </a>{
+<a name="line504">504: </a>  DM_DA *dd = (DM_DA*)da-&gt;data;
+
+<a name="line509">509: </a>  <font color="#4169E1">if</font> (da-&gt;setupcalled) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),PETSC_ERR_ARG_WRONGSTATE,<font color="#666666">"This function must be called before <a href="../../../../docs/manualpages/DM/DMSetUp.html#DMSetUp">DMSetUp</a>()"</font>);
+<a name="line510">510: </a>  dd-&gt;s = width;
+<a name="line511">511: </a>  <font color="#4169E1">return</font>(0);
+<a name="line512">512: </a>}
+
+<a name="line514">514: </a><font color="#B22222">/*@</font>
+<a name="line515">515: </a><font color="#B22222">  <a href="../../../../docs/manualpages/DMDA/DMDAGetStencilWidth.html#DMDAGetStencilWidth">DMDAGetStencilWidth</a> - Gets the width of the communication stencil</font>
+
+<a name="line517">517: </a><font color="#B22222">  Not collective</font>
+
+<a name="line519">519: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line520">520: </a><font color="#B22222">. da    - The <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+
+<a name="line522">522: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line523">523: </a><font color="#B22222">. width - The stencil width</font>
+
+<a name="line525">525: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line527">527: </a><font color="#B22222">.keywords:  distributed array, stencil</font>
+<a name="line528">528: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMDA/DMDACreate.html#DMDACreate">DMDACreate</a>(), <a href="../../../../docs/manualpages/DM/DMDestroy.html#DMDestroy">DMDestroy</a>(), <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+<a name="line529">529: </a><font color="#B22222">@*/</font>
+<a name="line530">530: </a><strong><font color="#4169E1"><a name="DMDAGetStencilWidth"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMDA/DMDAGetStencilWidth.html#DMDAGetStencilWidth">DMDAGetStencilWidth</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> da, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *width)</font></strong>
+<a name="line531">531: </a>{
+<a name="line532">532: </a>  DM_DA *dd = (DM_DA *) da-&gt;data;
+
+<a name="line537">537: </a>  *width = dd-&gt;s;
+<a name="line538">538: </a>  <font color="#4169E1">return</font>(0);
+<a name="line539">539: </a>}
+
+<a name="line541">541: </a><strong><font color="#4169E1"><a name="DMDACheckOwnershipRanges_Private"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMDACheckOwnershipRanges_Private(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> da,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> M,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> m,const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> lx[])</font></strong>
+<a name="line542">542: </a>{
+<a name="line543">543: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i,sum;
+
+<a name="line546">546: </a>  <font color="#4169E1">if</font> (M &lt; 0) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),PETSC_ERR_ARG_WRONGSTATE,<font color="#666666">"Global dimension not set"</font>);
+<a name="line547">547: </a>  <font color="#4169E1">for</font> (i=sum=0; i&lt;m; i++) sum += lx[i];
+<a name="line548">548: </a>  <font color="#4169E1">if</font> (sum != M) <a href="../../../../docs/manualpages/Sys/SETERRQ2.html#SETERRQ2">SETERRQ2</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),PETSC_ERR_ARG_INCOMP,<font color="#666666">"Ownership ranges sum to %D but global dimension is %D"</font>,sum,M);
+<a name="line549">549: </a>  <font color="#4169E1">return</font>(0);
+<a name="line550">550: </a>}
+
+<a name="line552">552: </a><font color="#B22222">/*@</font>
+<a name="line553">553: </a><font color="#B22222">  <a href="../../../../docs/manualpages/DMDA/DMDASetOwnershipRanges.html#DMDASetOwnershipRanges">DMDASetOwnershipRanges</a> - Sets the number of nodes in each direction on each process</font>
+
+<a name="line555">555: </a><font color="#B22222">  Logically Collective on <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+
+<a name="line557">557: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line558">558: </a><font color="#B22222">+ da - The <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+<a name="line559">559: </a><font color="#B22222">. lx - array containing number of nodes in the X direction on each process, or NULL. If non-null, must be of length da-&gt;m</font>
+<a name="line560">560: </a><font color="#B22222">. ly - array containing number of nodes in the Y direction on each process, or NULL. If non-null, must be of length da-&gt;n</font>
+<a name="line561">561: </a><font color="#B22222">- lz - array containing number of nodes in the Z direction on each process, or NULL. If non-null, must be of length da-&gt;p.</font>
+
+<a name="line563">563: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line565">565: </a><font color="#B22222">  Note: these numbers are NOT multiplied by the number of dof per node.</font>
+
+<a name="line567">567: </a><font color="#B22222">.keywords:  distributed array</font>
+<a name="line568">568: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMDA/DMDACreate.html#DMDACreate">DMDACreate</a>(), <a href="../../../../docs/manualpages/DM/DMDestroy.html#DMDestroy">DMDestroy</a>(), <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+<a name="line569">569: </a><font color="#B22222">@*/</font>
+<a name="line570">570: </a><strong><font color="#4169E1"><a name="DMDASetOwnershipRanges"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../docs/manualpages/DMDA/DMDASetOwnershipRanges.html#DMDASetOwnershipRanges">DMDASetOwnershipRanges</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> da, const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> lx[], const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> ly[], const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> lz[])</font></strong>
+<a name="line571">571: </a>{
+<a name="line573">573: </a>  DM_DA          *dd = (DM_DA*)da-&gt;data;
+
+<a name="line577">577: </a>  <font color="#4169E1">if</font> (da-&gt;setupcalled) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),PETSC_ERR_ARG_WRONGSTATE,<font color="#666666">"This function must be called before <a href="../../../../docs/manualpages/DM/DMSetUp.html#DMSetUp">DMSetUp</a>()"</font>);
+<a name="line578">578: </a>  <font color="#4169E1">if</font> (lx) {
+<a name="line579">579: </a>    <font color="#4169E1">if</font> (dd-&gt;m &lt; 0) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),PETSC_ERR_ARG_WRONGSTATE,<font color="#666666">"Cannot set ownership ranges before setting number of procs"</font>);
+<a name="line580">580: </a>    DMDACheckOwnershipRanges_Private(da,dd-&gt;M,dd-&gt;m,lx);
+<a name="line581">581: </a>    <font color="#4169E1">if</font> (!dd-&gt;lx) {
+<a name="line582">582: </a>      <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(dd-&gt;m, &amp;dd-&gt;lx);
+<a name="line583">583: </a>    }
+<a name="line584">584: </a>    <a href="../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(dd-&gt;lx, lx, dd-&gt;m*<font color="#4169E1">sizeof</font>(<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>));
+<a name="line585">585: </a>  }
+<a name="line586">586: </a>  <font color="#4169E1">if</font> (ly) {
+<a name="line587">587: </a>    <font color="#4169E1">if</font> (dd-&gt;n &lt; 0) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),PETSC_ERR_ARG_WRONGSTATE,<font color="#666666">"Cannot set ownership ranges before setting number of procs"</font>);
+<a name="line588">588: </a>    DMDACheckOwnershipRanges_Private(da,dd-&gt;N,dd-&gt;n,ly);
+<a name="line589">589: </a>    <font color="#4169E1">if</font> (!dd-&gt;ly) {
+<a name="line590">590: </a>      <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(dd-&gt;n, &amp;dd-&gt;ly);
+<a name="line591">591: </a>    }
+<a name="line592">592: </a>    <a href="../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(dd-&gt;ly, ly, dd-&gt;n*<font color="#4169E1">sizeof</font>(<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>));
+<a name="line593">593: </a>  }
+<a name="line594">594: </a>  <font color="#4169E1">if</font> (lz) {
+<a name="line595">595: </a>    <font color="#4169E1">if</font> (dd-&gt;p &lt; 0) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),PETSC_ERR_ARG_WRONGSTATE,<font color="#666666">"Cannot set ownership ranges before setting number of procs"</font>);
+<a name="line596">596: </a>    DMDACheckOwnershipRanges_Private(da,dd-&gt;P,dd-&gt;p,lz);
+<a name="line597">597: </a>    <font color="#4169E1">if</font> (!dd-&gt;lz) {
+<a name="line598">598: </a>      <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(dd-&gt;p, &amp;dd-&gt;lz);
+<a name="line599">599: </a>    }
+<a name="line600">600: </a>    <a href="../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(dd-&gt;lz, lz, dd-&gt;p*<font color="#4169E1">sizeof</font>(<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>));
+<a name="line601">601: </a>  }
+<a name="line602">602: </a>  <font color="#4169E1">return</font>(0);
+<a name="line603">603: </a>}
+
+<a name="line605">605: </a><font color="#B22222">/*@</font>
+<a name="line606">606: </a><font color="#B22222">       <a href="../../../../docs/manualpages/DMDA/DMDASetInterpolationType.html#DMDASetInterpolationType">DMDASetInterpolationType</a> - Sets the type of interpolation that will be</font>
+<a name="line607">607: </a><font color="#B22222">          returned by <a href="../../../../docs/manualpages/DM/DMCreateInterpolation.html#DMCreateInterpolation">DMCreateInterpolation</a>()</font>
+
+<a name="line609">609: </a><font color="#B22222">   Logically Collective on <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+
+<a name="line611">611: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line612">612: </a><font color="#B22222">+  da - initial distributed array</font>
+<a name="line613">613: </a><font color="#B22222">.  ctype - <a href="../../../../docs/manualpages/DMDA/DMDAInterpolationType.html#DMDAInterpolationType">DMDA_Q1</a> and <a href="../../../../docs/manualpages/DMDA/DMDAInterpolationType.html#DMDAInterpolationType">DMDA_Q0</a> are currently the only supported forms</font>
+
+<a name="line615">615: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line617">617: </a><font color="#B22222">   Notes: you should call this on the coarser of the two DMDAs you pass to <a href="../../../../docs/manualpages/DM/DMCreateInterpolation.html#DMCreateInterpolation">DMCreateInterpolation</a>()</font>
+
+<a name="line619">619: </a><font color="#B22222">.keywords:  distributed array, interpolation</font>
+
+<a name="line621">621: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMDA/DMDACreate1d.html#DMDACreate1d">DMDACreate1d</a>(), <a href="../../../../docs/manualpages/DMDA/DMDACreate2d.html#DMDACreate2d">DMDACreate2d</a>(), <a href="../../../../docs/manualpages/DMDA/DMDACreate3d.html#DMDACreate3d">DMDACreate3d</a>(), <a href="../../../../docs/manualpages/DM/DMDestroy.html#DMDestroy">DMDestroy</a>(), <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a>, <a href="../../../../docs/manualpages/DMDA/DMDAInterpolationType.html#DMDAInterpolationType">DMDAInterpolationType</a></font>
+<a name="line622">622: </a><font color="#B22222">@*/</font>
+<a name="line623">623: </a><strong><font color="#4169E1"><a name="DMDASetInterpolationType"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../docs/manualpages/DMDA/DMDASetInterpolationType.html#DMDASetInterpolationType">DMDASetInterpolationType</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> da,<a href="../../../../docs/manualpages/DMDA/DMDAInterpolationType.html#DMDAInterpolationType">DMDAInterpolationType</a> ctype)</font></strong>
+<a name="line624">624: </a>{
+<a name="line625">625: </a>  DM_DA *dd = (DM_DA*)da-&gt;data;
+
+<a name="line630">630: </a>  dd-&gt;interptype = ctype;
+<a name="line631">631: </a>  <font color="#4169E1">return</font>(0);
+<a name="line632">632: </a>}
+
+<a name="line634">634: </a><font color="#B22222">/*@</font>
+<a name="line635">635: </a><font color="#B22222">       <a href="../../../../docs/manualpages/DMDA/DMDAGetInterpolationType.html#DMDAGetInterpolationType">DMDAGetInterpolationType</a> - Gets the type of interpolation that will be</font>
+<a name="line636">636: </a><font color="#B22222">          used by <a href="../../../../docs/manualpages/DM/DMCreateInterpolation.html#DMCreateInterpolation">DMCreateInterpolation</a>()</font>
+
+<a name="line638">638: </a><font color="#B22222">   Not Collective</font>
+
+<a name="line640">640: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line641">641: </a><font color="#B22222">.  da - distributed array</font>
+
+<a name="line643">643: </a><font color="#B22222">   Output Parameter:</font>
+<a name="line644">644: </a><font color="#B22222">.  ctype - interpolation type (<a href="../../../../docs/manualpages/DMDA/DMDAInterpolationType.html#DMDAInterpolationType">DMDA_Q1</a> and <a href="../../../../docs/manualpages/DMDA/DMDAInterpolationType.html#DMDAInterpolationType">DMDA_Q0</a> are currently the only supported forms)</font>
+
+<a name="line646">646: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line648">648: </a><font color="#B22222">.keywords:  distributed array, interpolation</font>
+
+<a name="line650">650: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a>, <a href="../../../../docs/manualpages/DMDA/DMDAInterpolationType.html#DMDAInterpolationType">DMDAInterpolationType</a>, <a href="../../../../docs/manualpages/DMDA/DMDASetInterpolationType.html#DMDASetInterpolationType">DMDASetInterpolationType</a>(), <a href="../../../../docs/manualpages/DM/DMCreateInterpolation.html#DMCreateInterpolation">DMCreateInterpolation</a>()</font>
+<a name="line651">651: </a><font color="#B22222">@*/</font>
+<a name="line652">652: </a><strong><font color="#4169E1"><a name="DMDAGetInterpolationType"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../docs/manualpages/DMDA/DMDAGetInterpolationType.html#DMDAGetInterpolationType">DMDAGetInterpolationType</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> da,<a href="../../../../docs/manualpages/DMDA/DMDAInterpolationType.html#DMDAInterpolationType">DMDAInterpolationType</a> *ctype)</font></strong>
+<a name="line653">653: </a>{
+<a name="line654">654: </a>  DM_DA *dd = (DM_DA*)da-&gt;data;
+
+<a name="line659">659: </a>  *ctype = dd-&gt;interptype;
+<a name="line660">660: </a>  <font color="#4169E1">return</font>(0);
+<a name="line661">661: </a>}
+
+<a name="line663">663: </a><font color="#B22222">/*@C</font>
+<a name="line664">664: </a><font color="#B22222">      <a href="../../../../docs/manualpages/DMDA/DMDAGetNeighbors.html#DMDAGetNeighbors">DMDAGetNeighbors</a> - Gets an array containing the MPI rank of all the current</font>
+<a name="line665">665: </a><font color="#B22222">        processes neighbors.</font>
+
+<a name="line667">667: </a><font color="#B22222">    Not Collective</font>
+
+<a name="line669">669: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line670">670: </a><font color="#B22222">.     da - the <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a> object</font>
+
+<a name="line672">672: </a><font color="#B22222">   Output Parameters:</font>
+<a name="line673">673: </a><font color="#B22222">.     ranks - the neighbors ranks, stored with the x index increasing most rapidly.</font>
+<a name="line674">674: </a><font color="#B22222">              this process itself is in the list</font>
+
+<a name="line676">676: </a><font color="#B22222">   Notes: In 2d the array is of length 9, in 3d of length 27</font>
+<a name="line677">677: </a><font color="#B22222">          Not supported in 1d</font>
+<a name="line678">678: </a><font color="#B22222">          Do not free the array, it is freed when the <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a> is destroyed.</font>
+
+<a name="line680">680: </a><font color="#B22222">   Fortran Notes: In fortran you must pass in an array of the appropriate length.</font>
+
+<a name="line682">682: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line684">684: </a><font color="#B22222">@*/</font>
+<a name="line685">685: </a><strong><font color="#4169E1"><a name="DMDAGetNeighbors"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../docs/manualpages/DMDA/DMDAGetNeighbors.html#DMDAGetNeighbors">DMDAGetNeighbors</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> da,const <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> *ranks[])</font></strong>
+<a name="line686">686: </a>{
+<a name="line687">687: </a>  DM_DA *dd = (DM_DA*)da-&gt;data;
+
+<a name="line691">691: </a>  *ranks = dd-&gt;neighbors;
+<a name="line692">692: </a>  <font color="#4169E1">return</font>(0);
+<a name="line693">693: </a>}
+
+<a name="line695">695: </a><font color="#B22222">/*@C</font>
+<a name="line696">696: </a><font color="#B22222">      <a href="../../../../docs/manualpages/DMDA/DMDAGetOwnershipRanges.html#DMDAGetOwnershipRanges">DMDAGetOwnershipRanges</a> - Gets the ranges of indices in the x, y and z direction that are owned by each process</font>
+
+<a name="line698">698: </a><font color="#B22222">    Not Collective</font>
+
+<a name="line700">700: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line701">701: </a><font color="#B22222">.     da - the <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a> object</font>
+
+<a name="line703">703: </a><font color="#B22222">   Output Parameter:</font>
+<a name="line704">704: </a><font color="#B22222">+     lx - ownership along x direction (optional)</font>
+<a name="line705">705: </a><font color="#B22222">.     ly - ownership along y direction (optional)</font>
+<a name="line706">706: </a><font color="#B22222">-     lz - ownership along z direction (optional)</font>
+
+<a name="line708">708: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line710">710: </a><font color="#B22222">    Note: these correspond to the optional final arguments passed to <a href="../../../../docs/manualpages/DMDA/DMDACreate.html#DMDACreate">DMDACreate</a>(), <a href="../../../../docs/manualpages/DMDA/DMDACreate2d.html#DMDACreate2d">DMDACreate2d</a>(), <a href="../../../../docs/manualpages/DMDA/DMDACreate3d.html#DMDACreate3d">DMDACreate3d</a>()</font>
+
+<a name="line712">712: </a><font color="#B22222">    In Fortran one must pass in arrays lx, ly, and lz that are long enough to hold the values; the sixth, seventh and</font>
+<a name="line713">713: </a><font color="#B22222">    eighth arguments from <a href="../../../../docs/manualpages/DMDA/DMDAGetInfo.html#DMDAGetInfo">DMDAGetInfo</a>()</font>
+
+<a name="line715">715: </a><font color="#B22222">     In C you should not free these arrays, nor change the values in them. They will only have valid values while the</font>
+<a name="line716">716: </a><font color="#B22222">    <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a> they came from still exists (has not been destroyed).</font>
+
+<a name="line718">718: </a><font color="#B22222">    These numbers are NOT multiplied by the number of dof per node.</font>
+
+<a name="line720">720: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMDA/DMDAGetCorners.html#DMDAGetCorners">DMDAGetCorners</a>(), <a href="../../../../docs/manualpages/DMDA/DMDAGetGhostCorners.html#DMDAGetGhostCorners">DMDAGetGhostCorners</a>(), <a href="../../../../docs/manualpages/DMDA/DMDACreate.html#DMDACreate">DMDACreate</a>(), <a href="../../../../docs/manualpages/DMDA/DMDACreate1d.html#DMDACreate1d">DMDACreate1d</a>(), <a href="../../../../docs/manualpages/DMDA/DMDACreate2d.html#DMDACreate2d">DMDACreate2d</a>(), <a href="../../../../docs/manualpages/DMDA/DMDACreate3d.html#DMDACreate3d">DMDACreate3d</a>(), <a href="../../../../docs/manualpages/Vec/VecGetOwnershipRanges.html#VecGetOwnershipRanges">VecGetOwnershipRanges</a>()</font>
+<a name="line721">721: </a><font color="#B22222">@*/</font>
+<a name="line722">722: </a><strong><font color="#4169E1"><a name="DMDAGetOwnershipRanges"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../docs/manualpages/DMDA/DMDAGetOwnershipRanges.html#DMDAGetOwnershipRanges">DMDAGetOwnershipRanges</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> da,const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *lx[],const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *ly[],const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *lz[])</font></strong>
+<a name="line723">723: </a>{
+<a name="line724">724: </a>  DM_DA *dd = (DM_DA*)da-&gt;data;
+
+<a name="line728">728: </a>  <font color="#4169E1">if</font> (lx) *lx = dd-&gt;lx;
+<a name="line729">729: </a>  <font color="#4169E1">if</font> (ly) *ly = dd-&gt;ly;
+<a name="line730">730: </a>  <font color="#4169E1">if</font> (lz) *lz = dd-&gt;lz;
+<a name="line731">731: </a>  <font color="#4169E1">return</font>(0);
+<a name="line732">732: </a>}
+
+<a name="line734">734: </a><font color="#B22222">/*@</font>
+<a name="line735">735: </a><font color="#B22222">     <a href="../../../../docs/manualpages/DMDA/DMDASetRefinementFactor.html#DMDASetRefinementFactor">DMDASetRefinementFactor</a> - Set the ratios that the <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a> grid is refined</font>
+
+<a name="line737">737: </a><font color="#B22222">    Logically Collective on <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+
+<a name="line739">739: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line740">740: </a><font color="#B22222">+    da - the <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a> object</font>
+<a name="line741">741: </a><font color="#B22222">.    refine_x - ratio of fine grid to coarse in x direction (2 by default)</font>
+<a name="line742">742: </a><font color="#B22222">.    refine_y - ratio of fine grid to coarse in y direction (2 by default)</font>
+<a name="line743">743: </a><font color="#B22222">-    refine_z - ratio of fine grid to coarse in z direction (2 by default)</font>
+
+<a name="line745">745: </a><font color="#B22222">  Options Database:</font>
+<a name="line746">746: </a><font color="#B22222">+  -da_refine_x - refinement ratio in x direction</font>
+<a name="line747">747: </a><font color="#B22222">.  -da_refine_y - refinement ratio in y direction</font>
+<a name="line748">748: </a><font color="#B22222">-  -da_refine_z - refinement ratio in z direction</font>
+
+<a name="line750">750: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line752">752: </a><font color="#B22222">    Notes: Pass <a href="../../../../docs/manualpages/Sys/PETSC_IGNORE.html#PETSC_IGNORE">PETSC_IGNORE</a> to leave a value unchanged</font>
+
+<a name="line754">754: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DM/DMRefine.html#DMRefine">DMRefine</a>(), <a href="../../../../docs/manualpages/DMDA/DMDAGetRefinementFactor.html#DMDAGetRefinementFactor">DMDAGetRefinementFactor</a>()</font>
+<a name="line755">755: </a><font color="#B22222">@*/</font>
+<a name="line756">756: </a><strong><font color="#4169E1"><a name="DMDASetRefinementFactor"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../docs/manualpages/DMDA/DMDASetRefinementFactor.html#DMDASetRefinementFactor">DMDASetRefinementFactor</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> da, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> refine_x, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> refine_y,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> refine_z)</font></strong>
+<a name="line757">757: </a>{
+<a name="line758">758: </a>  DM_DA *dd = (DM_DA*)da-&gt;data;
+
+
+<a name="line766">766: </a>  <font color="#4169E1">if</font> (refine_x &gt; 0) dd-&gt;refine_x = refine_x;
+<a name="line767">767: </a>  <font color="#4169E1">if</font> (refine_y &gt; 0) dd-&gt;refine_y = refine_y;
+<a name="line768">768: </a>  <font color="#4169E1">if</font> (refine_z &gt; 0) dd-&gt;refine_z = refine_z;
+<a name="line769">769: </a>  <font color="#4169E1">return</font>(0);
+<a name="line770">770: </a>}
+
+<a name="line772">772: </a><font color="#B22222">/*@C</font>
+<a name="line773">773: </a><font color="#B22222">     <a href="../../../../docs/manualpages/DMDA/DMDAGetRefinementFactor.html#DMDAGetRefinementFactor">DMDAGetRefinementFactor</a> - Gets the ratios that the <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a> grid is refined</font>
+
+<a name="line775">775: </a><font color="#B22222">    Not Collective</font>
+
+<a name="line777">777: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line778">778: </a><font color="#B22222">.    da - the <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a> object</font>
+
+<a name="line780">780: </a><font color="#B22222">  Output Parameters:</font>
+<a name="line781">781: </a><font color="#B22222">+    refine_x - ratio of fine grid to coarse in x direction (2 by default)</font>
+<a name="line782">782: </a><font color="#B22222">.    refine_y - ratio of fine grid to coarse in y direction (2 by default)</font>
+<a name="line783">783: </a><font color="#B22222">-    refine_z - ratio of fine grid to coarse in z direction (2 by default)</font>
+
+<a name="line785">785: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line787">787: </a><font color="#B22222">    Notes: Pass NULL for values you do not need</font>
+
+<a name="line789">789: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DM/DMRefine.html#DMRefine">DMRefine</a>(), <a href="../../../../docs/manualpages/DMDA/DMDASetRefinementFactor.html#DMDASetRefinementFactor">DMDASetRefinementFactor</a>()</font>
+<a name="line790">790: </a><font color="#B22222">@*/</font>
+<a name="line791">791: </a><strong><font color="#4169E1"><a name="DMDAGetRefinementFactor"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../docs/manualpages/DMDA/DMDAGetRefinementFactor.html#DMDAGetRefinementFactor">DMDAGetRefinementFactor</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> da, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *refine_x, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *refine_y,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *refine_z)</font></strong>
+<a name="line792">792: </a>{
+<a name="line793">793: </a>  DM_DA *dd = (DM_DA*)da-&gt;data;
+
+<a name="line797">797: </a>  <font color="#4169E1">if</font> (refine_x) *refine_x = dd-&gt;refine_x;
+<a name="line798">798: </a>  <font color="#4169E1">if</font> (refine_y) *refine_y = dd-&gt;refine_y;
+<a name="line799">799: </a>  <font color="#4169E1">if</font> (refine_z) *refine_z = dd-&gt;refine_z;
+<a name="line800">800: </a>  <font color="#4169E1">return</font>(0);
+<a name="line801">801: </a>}
+
+<a name="line803">803: </a><font color="#B22222">/*@C</font>
+<a name="line804">804: </a><font color="#B22222">     <a href="../../../../docs/manualpages/DMDA/DMDASetGetMatrix.html#DMDASetGetMatrix">DMDASetGetMatrix</a> - Sets the routine used by the <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a> to allocate a matrix.</font>
+
+<a name="line806">806: </a><font color="#B22222">    Logically Collective on <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+
+<a name="line808">808: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line809">809: </a><font color="#B22222">+    da - the <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a> object</font>
+<a name="line810">810: </a><font color="#B22222">-    f - the function that allocates the matrix for that specific <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a></font>
+
+<a name="line812">812: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line814">814: </a><font color="#B22222">   Notes: See <a href="../../../../docs/manualpages/DMDA/DMDASetBlockFills.html#DMDASetBlockFills">DMDASetBlockFills</a>() that provides a simple way to provide the nonzero structure for</font>
+<a name="line815">815: </a><font color="#B22222">       the diagonal and off-diagonal blocks of the matrix</font>
+
+<a name="line817">817: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DM/DMCreateMatrix.html#DMCreateMatrix">DMCreateMatrix</a>(), <a href="../../../../docs/manualpages/DMDA/DMDASetBlockFills.html#DMDASetBlockFills">DMDASetBlockFills</a>()</font>
+<a name="line818">818: </a><font color="#B22222">@*/</font>
+<a name="line819">819: </a><strong><font color="#4169E1"><a name="DMDASetGetMatrix"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../docs/manualpages/DMDA/DMDASetGetMatrix.html#DMDASetGetMatrix">DMDASetGetMatrix</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> da,<a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> (*f)(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a>, <a href="../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>*))</font></strong>
+<a name="line820">820: </a>{
+<a name="line823">823: </a>  da-&gt;ops-&gt;creatematrix = f;
+<a name="line824">824: </a>  <font color="#4169E1">return</font>(0);
+<a name="line825">825: </a>}
+
+<a name="line827">827: </a><font color="#B22222">/*</font>
+<a name="line828">828: </a><font color="#B22222">  Creates "balanced" ownership ranges after refinement, constrained by the need for the</font>
+<a name="line829">829: </a><font color="#B22222">  fine grid boundaries to fall within one stencil width of the coarse partition.</font>
+
+<a name="line831">831: </a><font color="#B22222">  Uses a greedy algorithm to handle non-ideal layouts, could probably do something better.</font>
+<a name="line832">832: </a><font color="#B22222">*/</font>
+<a name="line833">833: </a><strong><font color="#4169E1"><a name="DMDARefineOwnershipRanges"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMDARefineOwnershipRanges(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> da,<a href="../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> periodic,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> stencil_width,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> ratio,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> m,const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> lc[],<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> lf[])</font></strong>
+<a name="line834">834: </a>{
+<a name="line835">835: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       i,totalc = 0,remaining,startc = 0,startf = 0;
+
+<a name="line839">839: </a>  <font color="#4169E1">if</font> (ratio &lt; 1) <a href="../../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),PETSC_ERR_USER,<font color="#666666">"Requested refinement ratio %D must be at least 1"</font>,ratio);
+<a name="line840">840: </a>  <font color="#4169E1">if</font> (ratio == 1) {
+<a name="line841">841: </a>    <a href="../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(lf,lc,m*<font color="#4169E1">sizeof</font>(lc[0]));
+<a name="line842">842: </a>    <font color="#4169E1">return</font>(0);
+<a name="line843">843: </a>  }
+<a name="line844">844: </a>  <font color="#4169E1">for</font> (i=0; i&lt;m; i++) totalc += lc[i];
+<a name="line845">845: </a>  remaining = (!periodic) + ratio * (totalc - (!periodic));
+<a name="line846">846: </a>  <font color="#4169E1">for</font> (i=0; i&lt;m; i++) {
+<a name="line847">847: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> want = remaining/(m-i) + !!(remaining%(m-i));
+<a name="line848">848: </a>    <font color="#4169E1">if</font> (i == m-1) lf[i] = want;
+<a name="line849">849: </a>    <font color="#4169E1">else</font> {
+<a name="line850">850: </a>      const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> nextc = startc + lc[i];
+<a name="line851">851: </a>      <font color="#B22222">/* Move the first fine node of the next subdomain to the right until the coarse node on its left is within one</font>
+<a name="line852">852: </a><font color="#B22222">       * coarse stencil width of the first coarse node in the next subdomain. */</font>
+<a name="line853">853: </a>      <font color="#4169E1">while</font> ((startf+want)/ratio &lt; nextc - stencil_width) want++;
+<a name="line854">854: </a>      <font color="#B22222">/* Move the last fine node in the current subdomain to the left until the coarse node on its right is within one</font>
+<a name="line855">855: </a><font color="#B22222">       * coarse stencil width of the last coarse node in the current subdomain. */</font>
+<a name="line856">856: </a>      <font color="#4169E1">while</font> ((startf+want-1+ratio-1)/ratio &gt; nextc-1+stencil_width) want--;
+<a name="line857">857: </a>      <font color="#B22222">/* Make sure all constraints are satisfied */</font>
+<a name="line858">858: </a>      <font color="#4169E1">if</font> (want &lt; 0 || want &gt; remaining || ((startf+want)/ratio &lt; nextc - stencil_width)
+<a name="line859">859: </a>          || ((startf+want-1+ratio-1)/ratio &gt; nextc-1+stencil_width)) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),PETSC_ERR_ARG_SIZ,<font color="#666666">"Could not find a compatible refined ownership range"</font>);
+<a name="line860">860: </a>    }
+<a name="line861">861: </a>    lf[i]      = want;
+<a name="line862">862: </a>    startc    += lc[i];
+<a name="line863">863: </a>    startf    += lf[i];
+<a name="line864">864: </a>    remaining -= lf[i];
+<a name="line865">865: </a>  }
+<a name="line866">866: </a>  <font color="#4169E1">return</font>(0);
+<a name="line867">867: </a>}
+
+<a name="line869">869: </a><font color="#B22222">/*</font>
+<a name="line870">870: </a><font color="#B22222">  Creates "balanced" ownership ranges after coarsening, constrained by the need for the</font>
+<a name="line871">871: </a><font color="#B22222">  fine grid boundaries to fall within one stencil width of the coarse partition.</font>
+
+<a name="line873">873: </a><font color="#B22222">  Uses a greedy algorithm to handle non-ideal layouts, could probably do something better.</font>
+<a name="line874">874: </a><font color="#B22222">*/</font>
+<a name="line875">875: </a><strong><font color="#4169E1"><a name="DMDACoarsenOwnershipRanges"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMDACoarsenOwnershipRanges(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> da,<a href="../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> periodic,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> stencil_width,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> ratio,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> m,const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> lf[],<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> lc[])</font></strong>
+<a name="line876">876: </a>{
+<a name="line877">877: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       i,totalf,remaining,startc,startf;
+
+<a name="line881">881: </a>  <font color="#4169E1">if</font> (ratio &lt; 1) <a href="../../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),PETSC_ERR_USER,<font color="#666666">"Requested refinement ratio %D must be at least 1"</font>,ratio);
+<a name="line882">882: </a>  <font color="#4169E1">if</font> (ratio == 1) {
+<a name="line883">883: </a>    <a href="../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(lc,lf,m*<font color="#4169E1">sizeof</font>(lf[0]));
+<a name="line884">884: </a>    <font color="#4169E1">return</font>(0);
+<a name="line885">885: </a>  }
+<a name="line886">886: </a>  <font color="#4169E1">for</font> (i=0,totalf=0; i&lt;m; i++) totalf += lf[i];
+<a name="line887">887: </a>  remaining = (!periodic) + (totalf - (!periodic)) / ratio;
+<a name="line888">888: </a>  <font color="#4169E1">for</font> (i=0,startc=0,startf=0; i&lt;m; i++) {
+<a name="line889">889: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> want = remaining/(m-i) + !!(remaining%(m-i));
+<a name="line890">890: </a>    <font color="#4169E1">if</font> (i == m-1) lc[i] = want;
+<a name="line891">891: </a>    <font color="#4169E1">else</font> {
+<a name="line892">892: </a>      const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> nextf = startf+lf[i];
+<a name="line893">893: </a>      <font color="#B22222">/* Slide first coarse node of next subdomain to the left until the coarse node to the left of the first fine</font>
+<a name="line894">894: </a><font color="#B22222">       * node is within one stencil width. */</font>
+<a name="line895">895: </a>      <font color="#4169E1">while</font> (nextf/ratio &lt; startc+want-stencil_width) want--;
+<a name="line896">896: </a>      <font color="#B22222">/* Slide the last coarse node of the current subdomain to the right until the coarse node to the right of the last</font>
+<a name="line897">897: </a><font color="#B22222">       * fine node is within one stencil width. */</font>
+<a name="line898">898: </a>      <font color="#4169E1">while</font> ((nextf-1+ratio-1)/ratio &gt; startc+want-1+stencil_width) want++;
+<a name="line899">899: </a>      <font color="#4169E1">if</font> (want &lt; 0 || want &gt; remaining
+<a name="line900">900: </a>          || (nextf/ratio &lt; startc+want-stencil_width) || ((nextf-1+ratio-1)/ratio &gt; startc+want-1+stencil_width)) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),PETSC_ERR_ARG_SIZ,<font color="#666666">"Could not find a compatible coarsened ownership range"</font>);
+<a name="line901">901: </a>    }
+<a name="line902">902: </a>    lc[i]      = want;
+<a name="line903">903: </a>    startc    += lc[i];
+<a name="line904">904: </a>    startf    += lf[i];
+<a name="line905">905: </a>    remaining -= lc[i];
+<a name="line906">906: </a>  }
+<a name="line907">907: </a>  <font color="#4169E1">return</font>(0);
+<a name="line908">908: </a>}
+
+<a name="line910">910: </a><strong><font color="#4169E1"><a name="DMRefine_DA"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  DMRefine_DA(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> da,<a href="../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a> comm,<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> *daref)</font></strong>
+<a name="line911">911: </a>{
+<a name="line913">913: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       M,N,P,i,dim;
+<a name="line914">914: </a>  <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a>             da2;
+<a name="line915">915: </a>  DM_DA          *dd = (DM_DA*)da-&gt;data,*dd2;
+
+
+<a name="line921">921: </a>  <a href="../../../../docs/manualpages/DM/DMGetDimension.html#DMGetDimension">DMGetDimension</a>(da, &amp;dim);
+<a name="line922">922: </a>  <font color="#4169E1">if</font> (dd-&gt;bx == <a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_PERIODIC</a> || dd-&gt;interptype == <a href="../../../../docs/manualpages/DMDA/DMDAInterpolationType.html#DMDAInterpolationType">DMDA_Q0</a>) {
+<a name="line923">923: </a>    M = dd-&gt;refine_x*dd-&gt;M;
+<a name="line924">924: </a>  } <font color="#4169E1">else</font> {
+<a name="line925">925: </a>    M = 1 + dd-&gt;refine_x*(dd-&gt;M - 1);
+<a name="line926">926: </a>  }
+<a name="line927">927: </a>  <font color="#4169E1">if</font> (dd-&gt;by == <a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_PERIODIC</a> || dd-&gt;interptype == <a href="../../../../docs/manualpages/DMDA/DMDAInterpolationType.html#DMDAInterpolationType">DMDA_Q0</a>) {
+<a name="line928">928: </a>    <font color="#4169E1">if</font> (dim &gt; 1) {
+<a name="line929">929: </a>      N = dd-&gt;refine_y*dd-&gt;N;
+<a name="line930">930: </a>    } <font color="#4169E1">else</font> {
+<a name="line931">931: </a>      N = 1;
+<a name="line932">932: </a>    }
+<a name="line933">933: </a>  } <font color="#4169E1">else</font> {
+<a name="line934">934: </a>    N = 1 + dd-&gt;refine_y*(dd-&gt;N - 1);
+<a name="line935">935: </a>  }
+<a name="line936">936: </a>  <font color="#4169E1">if</font> (dd-&gt;bz == <a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_PERIODIC</a> || dd-&gt;interptype == <a href="../../../../docs/manualpages/DMDA/DMDAInterpolationType.html#DMDAInterpolationType">DMDA_Q0</a>) {
+<a name="line937">937: </a>    <font color="#4169E1">if</font> (dim &gt; 2) {
+<a name="line938">938: </a>      P = dd-&gt;refine_z*dd-&gt;P;
+<a name="line939">939: </a>    } <font color="#4169E1">else</font> {
+<a name="line940">940: </a>      P = 1;
+<a name="line941">941: </a>    }
+<a name="line942">942: </a>  } <font color="#4169E1">else</font> {
+<a name="line943">943: </a>    P = 1 + dd-&gt;refine_z*(dd-&gt;P - 1);
+<a name="line944">944: </a>  }
+<a name="line945">945: </a>  <a href="../../../../docs/manualpages/DMDA/DMDACreate.html#DMDACreate">DMDACreate</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),&amp;da2);
+<a name="line946">946: </a>  <a href="../../../../docs/manualpages/DM/DMSetOptionsPrefix.html#DMSetOptionsPrefix">DMSetOptionsPrefix</a>(da2,((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da)-&gt;prefix);
+<a name="line947">947: </a>  <a href="../../../../docs/manualpages/DM/DMSetDimension.html#DMSetDimension">DMSetDimension</a>(da2,dim);
+<a name="line948">948: </a>  <a href="../../../../docs/manualpages/DMDA/DMDASetSizes.html#DMDASetSizes">DMDASetSizes</a>(da2,M,N,P);
+<a name="line949">949: </a>  <a href="../../../../docs/manualpages/DMDA/DMDASetNumProcs.html#DMDASetNumProcs">DMDASetNumProcs</a>(da2,dd-&gt;m,dd-&gt;n,dd-&gt;p);
+<a name="line950">950: </a>  <a href="../../../../docs/manualpages/DMDA/DMDASetBoundaryType.html#DMDASetBoundaryType">DMDASetBoundaryType</a>(da2,dd-&gt;bx,dd-&gt;by,dd-&gt;bz);
+<a name="line951">951: </a>  <a href="../../../../docs/manualpages/DMDA/DMDASetDof.html#DMDASetDof">DMDASetDof</a>(da2,dd-&gt;w);
+<a name="line952">952: </a>  <a href="../../../../docs/manualpages/DMDA/DMDASetStencilType.html#DMDASetStencilType">DMDASetStencilType</a>(da2,dd-&gt;stencil_type);
+<a name="line953">953: </a>  <a href="../../../../docs/manualpages/DMDA/DMDASetStencilWidth.html#DMDASetStencilWidth">DMDASetStencilWidth</a>(da2,dd-&gt;s);
+<a name="line954">954: </a>  <font color="#4169E1">if</font> (dim == 3) {
+<a name="line955">955: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *lx,*ly,*lz;
+<a name="line956">956: </a>    <a href="../../../../docs/manualpages/Sys/PetscMalloc3.html#PetscMalloc3">PetscMalloc3</a>(dd-&gt;m,&amp;lx,dd-&gt;n,&amp;ly,dd-&gt;p,&amp;lz);
+<a name="line957">957: </a>    DMDARefineOwnershipRanges(da,(<a href="../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>)(dd-&gt;bx == <a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_PERIODIC</a> || dd-&gt;interptype == <a href="../../../../docs/manualpages/DMDA/DMDAInterpolationType.html#DMDAInterpolationType">DMDA_Q0</a>),dd-&gt;s,dd-&gt;refine_x,dd-&gt;m,dd-&gt;lx,lx);
+<a name="line958">958: </a>    DMDARefineOwnershipRanges(da,(<a href="../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>)(dd-&gt;by == <a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_PERIODIC</a> || dd-&gt;interptype == <a href="../../../../docs/manualpages/DMDA/DMDAInterpolationType.html#DMDAInterpolationType">DMDA_Q0</a>),dd-&gt;s,dd-&gt;refine_y,dd-&gt;n,dd-&gt;ly,ly);
+<a name="line959">959: </a>    DMDARefineOwnershipRanges(da,(<a href="../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>)(dd-&gt;bz == <a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_PERIODIC</a> || dd-&gt;interptype == <a href="../../../../docs/manualpages/DMDA/DMDAInterpolationType.html#DMDAInterpolationType">DMDA_Q0</a>),dd-&gt;s,dd-&gt;refine_z,dd-&gt;p,dd-&gt;lz,lz);
+<a name="line960">960: </a>    <a href="../../../../docs/manualpages/DMDA/DMDASetOwnershipRanges.html#DMDASetOwnershipRanges">DMDASetOwnershipRanges</a>(da2,lx,ly,lz);
+<a name="line961">961: </a>    <a href="../../../../docs/manualpages/Sys/PetscFree3.html#PetscFree3">PetscFree3</a>(lx,ly,lz);
+<a name="line962">962: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 2) {
+<a name="line963">963: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *lx,*ly;
+<a name="line964">964: </a>    <a href="../../../../docs/manualpages/Sys/PetscMalloc2.html#PetscMalloc2">PetscMalloc2</a>(dd-&gt;m,&amp;lx,dd-&gt;n,&amp;ly);
+<a name="line965">965: </a>    DMDARefineOwnershipRanges(da,(<a href="../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>)(dd-&gt;bx == <a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_PERIODIC</a> || dd-&gt;interptype == <a href="../../../../docs/manualpages/DMDA/DMDAInterpolationType.html#DMDAInterpolationType">DMDA_Q0</a>),dd-&gt;s,dd-&gt;refine_x,dd-&gt;m,dd-&gt;lx,lx);
+<a name="line966">966: </a>    DMDARefineOwnershipRanges(da,(<a href="../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>)(dd-&gt;by == <a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_PERIODIC</a> || dd-&gt;interptype == <a href="../../../../docs/manualpages/DMDA/DMDAInterpolationType.html#DMDAInterpolationType">DMDA_Q0</a>),dd-&gt;s,dd-&gt;refine_y,dd-&gt;n,dd-&gt;ly,ly);
+<a name="line967">967: </a>    <a href="../../../../docs/manualpages/DMDA/DMDASetOwnershipRanges.html#DMDASetOwnershipRanges">DMDASetOwnershipRanges</a>(da2,lx,ly,NULL);
+<a name="line968">968: </a>    <a href="../../../../docs/manualpages/Sys/PetscFree2.html#PetscFree2">PetscFree2</a>(lx,ly);
+<a name="line969">969: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 1) {
+<a name="line970">970: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *lx;
+<a name="line971">971: </a>    <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(dd-&gt;m,&amp;lx);
+<a name="line972">972: </a>    DMDARefineOwnershipRanges(da,(<a href="../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>)(dd-&gt;bx == <a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_PERIODIC</a> || dd-&gt;interptype == <a href="../../../../docs/manualpages/DMDA/DMDAInterpolationType.html#DMDAInterpolationType">DMDA_Q0</a>),dd-&gt;s,dd-&gt;refine_x,dd-&gt;m,dd-&gt;lx,lx);
+<a name="line973">973: </a>    <a href="../../../../docs/manualpages/DMDA/DMDASetOwnershipRanges.html#DMDASetOwnershipRanges">DMDASetOwnershipRanges</a>(da2,lx,NULL,NULL);
+<a name="line974">974: </a>    <a href="../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(lx);
+<a name="line975">975: </a>  }
+<a name="line976">976: </a>  dd2 = (DM_DA*)da2-&gt;data;
+
+<a name="line978">978: </a>  <font color="#B22222">/* allow overloaded (user replaced) operations to be inherited by refinement clones */</font>
+<a name="line979">979: </a>  da2-&gt;ops-&gt;creatematrix = da-&gt;ops-&gt;creatematrix;
+<a name="line980">980: </a>  <font color="#B22222">/* da2-&gt;ops-&gt;createinterpolation = da-&gt;ops-&gt;createinterpolation; this causes problem with SNESVI */</font>
+<a name="line981">981: </a>  da2-&gt;ops-&gt;getcoloring = da-&gt;ops-&gt;getcoloring;
+<a name="line982">982: </a>  dd2-&gt;interptype       = dd-&gt;interptype;
+
+<a name="line984">984: </a>  <font color="#B22222">/* copy fill information if given */</font>
+<a name="line985">985: </a>  <font color="#4169E1">if</font> (dd-&gt;dfill) {
+<a name="line986">986: </a>    <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(dd-&gt;dfill[dd-&gt;w]+dd-&gt;w+1,&amp;dd2-&gt;dfill);
+<a name="line987">987: </a>    <a href="../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(dd2-&gt;dfill,dd-&gt;dfill,(dd-&gt;dfill[dd-&gt;w]+dd-&gt;w+1)*<font color="#4169E1">sizeof</font>(<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>));
+<a name="line988">988: </a>  }
+<a name="line989">989: </a>  <font color="#4169E1">if</font> (dd-&gt;ofill) {
+<a name="line990">990: </a>    <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(dd-&gt;ofill[dd-&gt;w]+dd-&gt;w+1,&amp;dd2-&gt;ofill);
+<a name="line991">991: </a>    <a href="../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(dd2-&gt;ofill,dd-&gt;ofill,(dd-&gt;ofill[dd-&gt;w]+dd-&gt;w+1)*<font color="#4169E1">sizeof</font>(<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>));
+<a name="line992">992: </a>  }
+<a name="line993">993: </a>  <font color="#B22222">/* copy the refine information */</font>
+<a name="line994">994: </a>  dd2-&gt;coarsen_x = dd2-&gt;refine_x = dd-&gt;refine_x;
+<a name="line995">995: </a>  dd2-&gt;coarsen_y = dd2-&gt;refine_y = dd-&gt;refine_y;
+<a name="line996">996: </a>  dd2-&gt;coarsen_z = dd2-&gt;refine_z = dd-&gt;refine_z;
+
+<a name="line998">998: </a>  <font color="#4169E1">if</font> (dd-&gt;refine_z_hier) {
+<a name="line999">999: </a>    <font color="#4169E1">if</font> (da-&gt;levelup - da-&gt;leveldown + 1 &gt; -1 &amp;&amp; da-&gt;levelup - da-&gt;leveldown + 1 &lt; dd-&gt;refine_z_hier_n) {
+<a name="line1000">1000: </a>      dd2-&gt;refine_z = dd-&gt;refine_z_hier[da-&gt;levelup - da-&gt;leveldown + 1];
+<a name="line1001">1001: </a>    }
+<a name="line1002">1002: </a>    <font color="#4169E1">if</font> (da-&gt;levelup - da-&gt;leveldown &gt; -1 &amp;&amp; da-&gt;levelup - da-&gt;leveldown &lt; dd-&gt;refine_z_hier_n) {
+<a name="line1003">1003: </a>      dd2-&gt;coarsen_z = dd-&gt;refine_z_hier[da-&gt;levelup - da-&gt;leveldown];
+<a name="line1004">1004: </a>    }
+<a name="line1005">1005: </a>    dd2-&gt;refine_z_hier_n = dd-&gt;refine_z_hier_n;
+<a name="line1006">1006: </a>    <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(dd2-&gt;refine_z_hier_n,&amp;dd2-&gt;refine_z_hier);
+<a name="line1007">1007: </a>    <a href="../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(dd2-&gt;refine_z_hier,dd-&gt;refine_z_hier,dd2-&gt;refine_z_hier_n*<font color="#4169E1">sizeof</font>(<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>));
+<a name="line1008">1008: </a>  }
+<a name="line1009">1009: </a>  <font color="#4169E1">if</font> (dd-&gt;refine_y_hier) {
+<a name="line1010">1010: </a>    <font color="#4169E1">if</font> (da-&gt;levelup - da-&gt;leveldown + 1 &gt; -1 &amp;&amp; da-&gt;levelup - da-&gt;leveldown + 1 &lt; dd-&gt;refine_y_hier_n) {
+<a name="line1011">1011: </a>      dd2-&gt;refine_y = dd-&gt;refine_y_hier[da-&gt;levelup - da-&gt;leveldown + 1];
+<a name="line1012">1012: </a>    }
+<a name="line1013">1013: </a>    <font color="#4169E1">if</font> (da-&gt;levelup - da-&gt;leveldown &gt; -1 &amp;&amp; da-&gt;levelup - da-&gt;leveldown &lt; dd-&gt;refine_y_hier_n) {
+<a name="line1014">1014: </a>      dd2-&gt;coarsen_y = dd-&gt;refine_y_hier[da-&gt;levelup - da-&gt;leveldown];
+<a name="line1015">1015: </a>    }
+<a name="line1016">1016: </a>    dd2-&gt;refine_y_hier_n = dd-&gt;refine_y_hier_n;
+<a name="line1017">1017: </a>    <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(dd2-&gt;refine_y_hier_n,&amp;dd2-&gt;refine_y_hier);
+<a name="line1018">1018: </a>    <a href="../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(dd2-&gt;refine_y_hier,dd-&gt;refine_y_hier,dd2-&gt;refine_y_hier_n*<font color="#4169E1">sizeof</font>(<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>));
+<a name="line1019">1019: </a>  }
+<a name="line1020">1020: </a>  <font color="#4169E1">if</font> (dd-&gt;refine_x_hier) {
+<a name="line1021">1021: </a>    <font color="#4169E1">if</font> (da-&gt;levelup - da-&gt;leveldown + 1 &gt; -1 &amp;&amp; da-&gt;levelup - da-&gt;leveldown + 1 &lt; dd-&gt;refine_x_hier_n) {
+<a name="line1022">1022: </a>      dd2-&gt;refine_x = dd-&gt;refine_x_hier[da-&gt;levelup - da-&gt;leveldown + 1];
+<a name="line1023">1023: </a>    }
+<a name="line1024">1024: </a>    <font color="#4169E1">if</font> (da-&gt;levelup - da-&gt;leveldown &gt; -1 &amp;&amp; da-&gt;levelup - da-&gt;leveldown &lt; dd-&gt;refine_x_hier_n) {
+<a name="line1025">1025: </a>      dd2-&gt;coarsen_x = dd-&gt;refine_x_hier[da-&gt;levelup - da-&gt;leveldown];
+<a name="line1026">1026: </a>    }
+<a name="line1027">1027: </a>    dd2-&gt;refine_x_hier_n = dd-&gt;refine_x_hier_n;
+<a name="line1028">1028: </a>    <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(dd2-&gt;refine_x_hier_n,&amp;dd2-&gt;refine_x_hier);
+<a name="line1029">1029: </a>    <a href="../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(dd2-&gt;refine_x_hier,dd-&gt;refine_x_hier,dd2-&gt;refine_x_hier_n*<font color="#4169E1">sizeof</font>(<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>));
+<a name="line1030">1030: </a>  }
+<a name="line1031">1031: </a>
+
+<a name="line1033">1033: </a>  <font color="#B22222">/* copy vector type information */</font>
+<a name="line1034">1034: </a>  <a href="../../../../docs/manualpages/DM/DMSetVecType.html#DMSetVecType">DMSetVecType</a>(da2,da-&gt;vectype);
+
+<a name="line1036">1036: </a>  dd2-&gt;lf = dd-&gt;lf;
+<a name="line1037">1037: </a>  dd2-&gt;lj = dd-&gt;lj;
+
+<a name="line1039">1039: </a>  da2-&gt;leveldown = da-&gt;leveldown;
+<a name="line1040">1040: </a>  da2-&gt;levelup   = da-&gt;levelup + 1;
+
+<a name="line1042">1042: </a>  <a href="../../../../docs/manualpages/DM/DMSetUp.html#DMSetUp">DMSetUp</a>(da2);
+
+<a name="line1044">1044: </a>  <font color="#B22222">/* interpolate coordinates if they are set on the coarse grid */</font>
+<a name="line1045">1045: </a>  <font color="#4169E1">if</font> (da-&gt;coordinates) {
+<a name="line1046">1046: </a>    <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a>  cdaf,cdac;
+<a name="line1047">1047: </a>    <a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> coordsc,coordsf;
+<a name="line1048">1048: </a>    <a href="../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> II;
+
+<a name="line1050">1050: </a>    <a href="../../../../docs/manualpages/DM/DMGetCoordinateDM.html#DMGetCoordinateDM">DMGetCoordinateDM</a>(da,&amp;cdac);
+<a name="line1051">1051: </a>    <a href="../../../../docs/manualpages/DM/DMGetCoordinates.html#DMGetCoordinates">DMGetCoordinates</a>(da,&amp;coordsc);
+<a name="line1052">1052: </a>    <a href="../../../../docs/manualpages/DM/DMGetCoordinateDM.html#DMGetCoordinateDM">DMGetCoordinateDM</a>(da2,&amp;cdaf);
+<a name="line1053">1053: </a>    <font color="#B22222">/* force creation of the coordinate vector */</font>
+<a name="line1054">1054: </a>    <a href="../../../../docs/manualpages/DMDA/DMDASetUniformCoordinates.html#DMDASetUniformCoordinates">DMDASetUniformCoordinates</a>(da2,0.0,1.0,0.0,1.0,0.0,1.0);
+<a name="line1055">1055: </a>    <a href="../../../../docs/manualpages/DM/DMGetCoordinates.html#DMGetCoordinates">DMGetCoordinates</a>(da2,&amp;coordsf);
+<a name="line1056">1056: </a>    <a href="../../../../docs/manualpages/DM/DMCreateInterpolation.html#DMCreateInterpolation">DMCreateInterpolation</a>(cdac,cdaf,&amp;II,NULL);
+<a name="line1057">1057: </a>    <a href="../../../../docs/manualpages/Mat/MatInterpolate.html#MatInterpolate">MatInterpolate</a>(II,coordsc,coordsf);
+<a name="line1058">1058: </a>    <a href="../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;II);
+<a name="line1059">1059: </a>  }
+
+<a name="line1061">1061: </a>  <font color="#4169E1">for</font> (i=0; i&lt;da-&gt;bs; i++) {
+<a name="line1062">1062: </a>    const char *fieldname;
+<a name="line1063">1063: </a>    <a href="../../../../docs/manualpages/DMDA/DMDAGetFieldName.html#DMDAGetFieldName">DMDAGetFieldName</a>(da,i,&amp;fieldname);
+<a name="line1064">1064: </a>    <a href="../../../../docs/manualpages/DMDA/DMDASetFieldName.html#DMDASetFieldName">DMDASetFieldName</a>(da2,i,fieldname);
+<a name="line1065">1065: </a>  }
+
+<a name="line1067">1067: </a>  *daref = da2;
+<a name="line1068">1068: </a>  <font color="#4169E1">return</font>(0);
+<a name="line1069">1069: </a>}
+
+
+<a name="line1072">1072: </a><strong><font color="#4169E1"><a name="DMCoarsen_DA"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  DMCoarsen_DA(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> da, <a href="../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a> comm,<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> *daref)</font></strong>
+<a name="line1073">1073: </a>{
+<a name="line1075">1075: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       M,N,P,i,dim;
+<a name="line1076">1076: </a>  <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a>             da2;
+<a name="line1077">1077: </a>  DM_DA          *dd = (DM_DA*)da-&gt;data,*dd2;
+
+
+<a name="line1083">1083: </a>  <a href="../../../../docs/manualpages/DM/DMGetDimension.html#DMGetDimension">DMGetDimension</a>(da, &amp;dim);
+<a name="line1084">1084: </a>  <font color="#4169E1">if</font> (dd-&gt;bx == <a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_PERIODIC</a> || dd-&gt;interptype == <a href="../../../../docs/manualpages/DMDA/DMDAInterpolationType.html#DMDAInterpolationType">DMDA_Q0</a>) {
+<a name="line1085">1085: </a>    M = dd-&gt;M / dd-&gt;coarsen_x;
+<a name="line1086">1086: </a>  } <font color="#4169E1">else</font> {
+<a name="line1087">1087: </a>    M = 1 + (dd-&gt;M - 1) / dd-&gt;coarsen_x;
+<a name="line1088">1088: </a>  }
+<a name="line1089">1089: </a>  <font color="#4169E1">if</font> (dd-&gt;by == <a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_PERIODIC</a> || dd-&gt;interptype == <a href="../../../../docs/manualpages/DMDA/DMDAInterpolationType.html#DMDAInterpolationType">DMDA_Q0</a>) {
+<a name="line1090">1090: </a>    <font color="#4169E1">if</font> (dim &gt; 1) {
+<a name="line1091">1091: </a>      N = dd-&gt;N / dd-&gt;coarsen_y;
+<a name="line1092">1092: </a>    } <font color="#4169E1">else</font> {
+<a name="line1093">1093: </a>      N = 1;
+<a name="line1094">1094: </a>    }
+<a name="line1095">1095: </a>  } <font color="#4169E1">else</font> {
+<a name="line1096">1096: </a>    N = 1 + (dd-&gt;N - 1) / dd-&gt;coarsen_y;
+<a name="line1097">1097: </a>  }
+<a name="line1098">1098: </a>  <font color="#4169E1">if</font> (dd-&gt;bz == <a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_PERIODIC</a> || dd-&gt;interptype == <a href="../../../../docs/manualpages/DMDA/DMDAInterpolationType.html#DMDAInterpolationType">DMDA_Q0</a>) {
+<a name="line1099">1099: </a>    <font color="#4169E1">if</font> (dim &gt; 2) {
+<a name="line1100">1100: </a>      P = dd-&gt;P / dd-&gt;coarsen_z;
+<a name="line1101">1101: </a>    } <font color="#4169E1">else</font> {
+<a name="line1102">1102: </a>      P = 1;
+<a name="line1103">1103: </a>    }
+<a name="line1104">1104: </a>  } <font color="#4169E1">else</font> {
+<a name="line1105">1105: </a>    P = 1 + (dd-&gt;P - 1) / dd-&gt;coarsen_z;
+<a name="line1106">1106: </a>  }
+<a name="line1107">1107: </a>  <a href="../../../../docs/manualpages/DMDA/DMDACreate.html#DMDACreate">DMDACreate</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),&amp;da2);
+<a name="line1108">1108: </a>  <a href="../../../../docs/manualpages/DM/DMSetOptionsPrefix.html#DMSetOptionsPrefix">DMSetOptionsPrefix</a>(da2,((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da)-&gt;prefix);
+<a name="line1109">1109: </a>  <a href="../../../../docs/manualpages/DM/DMSetDimension.html#DMSetDimension">DMSetDimension</a>(da2,dim);
+<a name="line1110">1110: </a>  <a href="../../../../docs/manualpages/DMDA/DMDASetSizes.html#DMDASetSizes">DMDASetSizes</a>(da2,M,N,P);
+<a name="line1111">1111: </a>  <a href="../../../../docs/manualpages/DMDA/DMDASetNumProcs.html#DMDASetNumProcs">DMDASetNumProcs</a>(da2,dd-&gt;m,dd-&gt;n,dd-&gt;p);
+<a name="line1112">1112: </a>  <a href="../../../../docs/manualpages/DMDA/DMDASetBoundaryType.html#DMDASetBoundaryType">DMDASetBoundaryType</a>(da2,dd-&gt;bx,dd-&gt;by,dd-&gt;bz);
+<a name="line1113">1113: </a>  <a href="../../../../docs/manualpages/DMDA/DMDASetDof.html#DMDASetDof">DMDASetDof</a>(da2,dd-&gt;w);
+<a name="line1114">1114: </a>  <a href="../../../../docs/manualpages/DMDA/DMDASetStencilType.html#DMDASetStencilType">DMDASetStencilType</a>(da2,dd-&gt;stencil_type);
+<a name="line1115">1115: </a>  <a href="../../../../docs/manualpages/DMDA/DMDASetStencilWidth.html#DMDASetStencilWidth">DMDASetStencilWidth</a>(da2,dd-&gt;s);
+<a name="line1116">1116: </a>  <font color="#4169E1">if</font> (dim == 3) {
+<a name="line1117">1117: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *lx,*ly,*lz;
+<a name="line1118">1118: </a>    <a href="../../../../docs/manualpages/Sys/PetscMalloc3.html#PetscMalloc3">PetscMalloc3</a>(dd-&gt;m,&amp;lx,dd-&gt;n,&amp;ly,dd-&gt;p,&amp;lz);
+<a name="line1119">1119: </a>    DMDACoarsenOwnershipRanges(da,(<a href="../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>)(dd-&gt;bx == <a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_PERIODIC</a> || dd-&gt;interptype == <a href="../../../../docs/manualpages/DMDA/DMDAInterpolationType.html#DMDAInterpolationType">DMDA_Q0</a>),dd-&gt;s,dd-&gt;coarsen_x,dd-&gt;m,dd-&gt;lx,lx);
+<a name="line1120">1120: </a>    DMDACoarsenOwnershipRanges(da,(<a href="../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>)(dd-&gt;by == <a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_PERIODIC</a> || dd-&gt;interptype == <a href="../../../../docs/manualpages/DMDA/DMDAInterpolationType.html#DMDAInterpolationType">DMDA_Q0</a>),dd-&gt;s,dd-&gt;coarsen_y,dd-&gt;n,dd-&gt;ly,ly);
+<a name="line1121">1121: </a>    DMDACoarsenOwnershipRanges(da,(<a href="../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>)(dd-&gt;bz == <a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_PERIODIC</a> || dd-&gt;interptype == <a href="../../../../docs/manualpages/DMDA/DMDAInterpolationType.html#DMDAInterpolationType">DMDA_Q0</a>),dd-&gt;s,dd-&gt;coarsen_z,dd-&gt;p,dd-&gt;lz,lz);
+<a name="line1122">1122: </a>    <a href="../../../../docs/manualpages/DMDA/DMDASetOwnershipRanges.html#DMDASetOwnershipRanges">DMDASetOwnershipRanges</a>(da2,lx,ly,lz);
+<a name="line1123">1123: </a>    <a href="../../../../docs/manualpages/Sys/PetscFree3.html#PetscFree3">PetscFree3</a>(lx,ly,lz);
+<a name="line1124">1124: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 2) {
+<a name="line1125">1125: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *lx,*ly;
+<a name="line1126">1126: </a>    <a href="../../../../docs/manualpages/Sys/PetscMalloc2.html#PetscMalloc2">PetscMalloc2</a>(dd-&gt;m,&amp;lx,dd-&gt;n,&amp;ly);
+<a name="line1127">1127: </a>    DMDACoarsenOwnershipRanges(da,(<a href="../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>)(dd-&gt;bx == <a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_PERIODIC</a> || dd-&gt;interptype == <a href="../../../../docs/manualpages/DMDA/DMDAInterpolationType.html#DMDAInterpolationType">DMDA_Q0</a>),dd-&gt;s,dd-&gt;coarsen_x,dd-&gt;m,dd-&gt;lx,lx);
+<a name="line1128">1128: </a>    DMDACoarsenOwnershipRanges(da,(<a href="../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>)(dd-&gt;by == <a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_PERIODIC</a> || dd-&gt;interptype == <a href="../../../../docs/manualpages/DMDA/DMDAInterpolationType.html#DMDAInterpolationType">DMDA_Q0</a>),dd-&gt;s,dd-&gt;coarsen_y,dd-&gt;n,dd-&gt;ly,ly);
+<a name="line1129">1129: </a>    <a href="../../../../docs/manualpages/DMDA/DMDASetOwnershipRanges.html#DMDASetOwnershipRanges">DMDASetOwnershipRanges</a>(da2,lx,ly,NULL);
+<a name="line1130">1130: </a>    <a href="../../../../docs/manualpages/Sys/PetscFree2.html#PetscFree2">PetscFree2</a>(lx,ly);
+<a name="line1131">1131: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 1) {
+<a name="line1132">1132: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *lx;
+<a name="line1133">1133: </a>    <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(dd-&gt;m,&amp;lx);
+<a name="line1134">1134: </a>    DMDACoarsenOwnershipRanges(da,(<a href="../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>)(dd-&gt;bx == <a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_PERIODIC</a> || dd-&gt;interptype == <a href="../../../../docs/manualpages/DMDA/DMDAInterpolationType.html#DMDAInterpolationType">DMDA_Q0</a>),dd-&gt;s,dd-&gt;coarsen_x,dd-&gt;m,dd-&gt;lx,lx);
+<a name="line1135">1135: </a>    <a href="../../../../docs/manualpages/DMDA/DMDASetOwnershipRanges.html#DMDASetOwnershipRanges">DMDASetOwnershipRanges</a>(da2,lx,NULL,NULL);
+<a name="line1136">1136: </a>    <a href="../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(lx);
+<a name="line1137">1137: </a>  }
+<a name="line1138">1138: </a>  dd2 = (DM_DA*)da2-&gt;data;
+
+<a name="line1140">1140: </a>  <font color="#B22222">/* allow overloaded (user replaced) operations to be inherited by refinement clones; why are only some inherited and not all? */</font>
+<a name="line1141">1141: </a>  <font color="#B22222">/* da2-&gt;ops-&gt;createinterpolation = da-&gt;ops-&gt;createinterpolation; copying this one causes trouble for DMSetVI */</font>
+<a name="line1142">1142: </a>  da2-&gt;ops-&gt;creatematrix = da-&gt;ops-&gt;creatematrix;
+<a name="line1143">1143: </a>  da2-&gt;ops-&gt;getcoloring  = da-&gt;ops-&gt;getcoloring;
+<a name="line1144">1144: </a>  dd2-&gt;interptype        = dd-&gt;interptype;
+
+<a name="line1146">1146: </a>  <font color="#B22222">/* copy fill information if given */</font>
+<a name="line1147">1147: </a>  <font color="#4169E1">if</font> (dd-&gt;dfill) {
+<a name="line1148">1148: </a>    <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(dd-&gt;dfill[dd-&gt;w]+dd-&gt;w+1,&amp;dd2-&gt;dfill);
+<a name="line1149">1149: </a>    <a href="../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(dd2-&gt;dfill,dd-&gt;dfill,(dd-&gt;dfill[dd-&gt;w]+dd-&gt;w+1)*<font color="#4169E1">sizeof</font>(<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>));
+<a name="line1150">1150: </a>  }
+<a name="line1151">1151: </a>  <font color="#4169E1">if</font> (dd-&gt;ofill) {
+<a name="line1152">1152: </a>    <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(dd-&gt;ofill[dd-&gt;w]+dd-&gt;w+1,&amp;dd2-&gt;ofill);
+<a name="line1153">1153: </a>    <a href="../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(dd2-&gt;ofill,dd-&gt;ofill,(dd-&gt;ofill[dd-&gt;w]+dd-&gt;w+1)*<font color="#4169E1">sizeof</font>(<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>));
+<a name="line1154">1154: </a>  }
+<a name="line1155">1155: </a>  <font color="#B22222">/* copy the refine information */</font>
+<a name="line1156">1156: </a>  dd2-&gt;coarsen_x = dd2-&gt;refine_x = dd-&gt;coarsen_x;
+<a name="line1157">1157: </a>  dd2-&gt;coarsen_y = dd2-&gt;refine_y = dd-&gt;coarsen_y;
+<a name="line1158">1158: </a>  dd2-&gt;coarsen_z = dd2-&gt;refine_z = dd-&gt;coarsen_z;
+
+<a name="line1160">1160: </a>  <font color="#4169E1">if</font> (dd-&gt;refine_z_hier) {
+<a name="line1161">1161: </a>    <font color="#4169E1">if</font> (da-&gt;levelup - da-&gt;leveldown -1 &gt; -1 &amp;&amp; da-&gt;levelup - da-&gt;leveldown - 1&lt; dd-&gt;refine_z_hier_n) {
+<a name="line1162">1162: </a>      dd2-&gt;refine_z = dd-&gt;refine_z_hier[da-&gt;levelup - da-&gt;leveldown - 1];
+<a name="line1163">1163: </a>    }
+<a name="line1164">1164: </a>    <font color="#4169E1">if</font> (da-&gt;levelup - da-&gt;leveldown - 2 &gt; -1 &amp;&amp; da-&gt;levelup - da-&gt;leveldown - 2 &lt; dd-&gt;refine_z_hier_n) {
+<a name="line1165">1165: </a>      dd2-&gt;coarsen_z = dd-&gt;refine_z_hier[da-&gt;levelup - da-&gt;leveldown - 2];
+<a name="line1166">1166: </a>    }
+<a name="line1167">1167: </a>    dd2-&gt;refine_z_hier_n = dd-&gt;refine_z_hier_n;
+<a name="line1168">1168: </a>    <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(dd2-&gt;refine_z_hier_n,&amp;dd2-&gt;refine_z_hier);
+<a name="line1169">1169: </a>    <a href="../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(dd2-&gt;refine_z_hier,dd-&gt;refine_z_hier,dd2-&gt;refine_z_hier_n*<font color="#4169E1">sizeof</font>(<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>));
+<a name="line1170">1170: </a>  }
+<a name="line1171">1171: </a>  <font color="#4169E1">if</font> (dd-&gt;refine_y_hier) {
+<a name="line1172">1172: </a>    <font color="#4169E1">if</font> (da-&gt;levelup - da-&gt;leveldown - 1 &gt; -1 &amp;&amp; da-&gt;levelup - da-&gt;leveldown - 1&lt; dd-&gt;refine_y_hier_n) {
+<a name="line1173">1173: </a>      dd2-&gt;refine_y = dd-&gt;refine_y_hier[da-&gt;levelup - da-&gt;leveldown - 1];
+<a name="line1174">1174: </a>    }
+<a name="line1175">1175: </a>    <font color="#4169E1">if</font> (da-&gt;levelup - da-&gt;leveldown - 2 &gt; -1 &amp;&amp; da-&gt;levelup - da-&gt;leveldown - 2 &lt; dd-&gt;refine_y_hier_n) {
+<a name="line1176">1176: </a>      dd2-&gt;coarsen_y = dd-&gt;refine_y_hier[da-&gt;levelup - da-&gt;leveldown - 2];
+<a name="line1177">1177: </a>    }
+<a name="line1178">1178: </a>    dd2-&gt;refine_y_hier_n = dd-&gt;refine_y_hier_n;
+<a name="line1179">1179: </a>    <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(dd2-&gt;refine_y_hier_n,&amp;dd2-&gt;refine_y_hier);
+<a name="line1180">1180: </a>    <a href="../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(dd2-&gt;refine_y_hier,dd-&gt;refine_y_hier,dd2-&gt;refine_y_hier_n*<font color="#4169E1">sizeof</font>(<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>));
+<a name="line1181">1181: </a>  }
+<a name="line1182">1182: </a>  <font color="#4169E1">if</font> (dd-&gt;refine_x_hier) {
+<a name="line1183">1183: </a>    <font color="#4169E1">if</font> (da-&gt;levelup - da-&gt;leveldown - 1 &gt; -1 &amp;&amp; da-&gt;levelup - da-&gt;leveldown - 1 &lt; dd-&gt;refine_x_hier_n) {
+<a name="line1184">1184: </a>      dd2-&gt;refine_x = dd-&gt;refine_x_hier[da-&gt;levelup - da-&gt;leveldown - 1];
+<a name="line1185">1185: </a>    }
+<a name="line1186">1186: </a>    <font color="#4169E1">if</font> (da-&gt;levelup - da-&gt;leveldown - 2 &gt; -1 &amp;&amp; da-&gt;levelup - da-&gt;leveldown - 2 &lt; dd-&gt;refine_x_hier_n) {
+<a name="line1187">1187: </a>      dd2-&gt;coarsen_x = dd-&gt;refine_x_hier[da-&gt;levelup - da-&gt;leveldown - 2];
+<a name="line1188">1188: </a>    }
+<a name="line1189">1189: </a>    dd2-&gt;refine_x_hier_n = dd-&gt;refine_x_hier_n;
+<a name="line1190">1190: </a>    <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(dd2-&gt;refine_x_hier_n,&amp;dd2-&gt;refine_x_hier);
+<a name="line1191">1191: </a>    <a href="../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(dd2-&gt;refine_x_hier,dd-&gt;refine_x_hier,dd2-&gt;refine_x_hier_n*<font color="#4169E1">sizeof</font>(<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>));
+<a name="line1192">1192: </a>  }
+
+<a name="line1194">1194: </a>  <font color="#B22222">/* copy vector type information */</font>
+<a name="line1195">1195: </a>  <a href="../../../../docs/manualpages/DM/DMSetVecType.html#DMSetVecType">DMSetVecType</a>(da2,da-&gt;vectype);
+
+<a name="line1197">1197: </a>  dd2-&gt;lf = dd-&gt;lf;
+<a name="line1198">1198: </a>  dd2-&gt;lj = dd-&gt;lj;
+
+<a name="line1200">1200: </a>  da2-&gt;leveldown = da-&gt;leveldown + 1;
+<a name="line1201">1201: </a>  da2-&gt;levelup   = da-&gt;levelup;
+
+<a name="line1203">1203: </a>  <a href="../../../../docs/manualpages/DM/DMSetUp.html#DMSetUp">DMSetUp</a>(da2);
+
+<a name="line1205">1205: </a>  <font color="#B22222">/* inject coordinates if they are set on the fine grid */</font>
+<a name="line1206">1206: </a>  <font color="#4169E1">if</font> (da-&gt;coordinates) {
+<a name="line1207">1207: </a>    <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a>         cdaf,cdac;
+<a name="line1208">1208: </a>    <a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>        coordsc,coordsf;
+<a name="line1209">1209: </a>    <a href="../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>        inject;
+<a name="line1210">1210: </a>    <a href="../../../../docs/manualpages/Vec/VecScatter.html#VecScatter">VecScatter</a> vscat;
+
+<a name="line1212">1212: </a>    <a href="../../../../docs/manualpages/DM/DMGetCoordinateDM.html#DMGetCoordinateDM">DMGetCoordinateDM</a>(da,&amp;cdaf);
+<a name="line1213">1213: </a>    <a href="../../../../docs/manualpages/DM/DMGetCoordinates.html#DMGetCoordinates">DMGetCoordinates</a>(da,&amp;coordsf);
+<a name="line1214">1214: </a>    <a href="../../../../docs/manualpages/DM/DMGetCoordinateDM.html#DMGetCoordinateDM">DMGetCoordinateDM</a>(da2,&amp;cdac);
+<a name="line1215">1215: </a>    <font color="#B22222">/* force creation of the coordinate vector */</font>
+<a name="line1216">1216: </a>    <a href="../../../../docs/manualpages/DMDA/DMDASetUniformCoordinates.html#DMDASetUniformCoordinates">DMDASetUniformCoordinates</a>(da2,0.0,1.0,0.0,1.0,0.0,1.0);
+<a name="line1217">1217: </a>    <a href="../../../../docs/manualpages/DM/DMGetCoordinates.html#DMGetCoordinates">DMGetCoordinates</a>(da2,&amp;coordsc);
+
+<a name="line1219">1219: </a>    <a href="../../../../docs/manualpages/DM/DMCreateInjection.html#DMCreateInjection">DMCreateInjection</a>(cdac,cdaf,&amp;inject);
+<a name="line1220">1220: </a>    <a href="../../../../docs/manualpages/Mat/MatScatterGetVecScatter.html#MatScatterGetVecScatter">MatScatterGetVecScatter</a>(inject,&amp;vscat);
+<a name="line1221">1221: </a>    <a href="../../../../docs/manualpages/Vec/VecScatterBegin.html#VecScatterBegin">VecScatterBegin</a>(vscat,coordsf,coordsc,<a href="../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>,<a href="../../../../docs/manualpages/Vec/SCATTER_FORWARD.html#SCATTER_FORWARD">SCATTER_FORWARD</a>);
+<a name="line1222">1222: </a>    <a href="../../../../docs/manualpages/Vec/VecScatterEnd.html#VecScatterEnd">VecScatterEnd</a>(vscat,coordsf,coordsc,<a href="../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>,<a href="../../../../docs/manualpages/Vec/SCATTER_FORWARD.html#SCATTER_FORWARD">SCATTER_FORWARD</a>);
+<a name="line1223">1223: </a>    <a href="../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;inject);
+<a name="line1224">1224: </a>  }
+
+<a name="line1226">1226: </a>  <font color="#4169E1">for</font> (i=0; i&lt;da-&gt;bs; i++) {
+<a name="line1227">1227: </a>    const char *fieldname;
+<a name="line1228">1228: </a>    <a href="../../../../docs/manualpages/DMDA/DMDAGetFieldName.html#DMDAGetFieldName">DMDAGetFieldName</a>(da,i,&amp;fieldname);
+<a name="line1229">1229: </a>    <a href="../../../../docs/manualpages/DMDA/DMDASetFieldName.html#DMDASetFieldName">DMDASetFieldName</a>(da2,i,fieldname);
+<a name="line1230">1230: </a>  }
+
+<a name="line1232">1232: </a>  *daref = da2;
+<a name="line1233">1233: </a>  <font color="#4169E1">return</font>(0);
+<a name="line1234">1234: </a>}
+
+<a name="line1236">1236: </a><strong><font color="#4169E1"><a name="DMRefineHierarchy_DA"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  DMRefineHierarchy_DA(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> da,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> nlevels,<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> daf[])</font></strong>
+<a name="line1237">1237: </a>{
+<a name="line1239">1239: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       i,n,*refx,*refy,*refz;
+
+<a name="line1243">1243: </a>  <font color="#4169E1">if</font> (nlevels &lt; 0) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),PETSC_ERR_ARG_OUTOFRANGE,<font color="#666666">"nlevels cannot be negative"</font>);
+<a name="line1244">1244: </a>  <font color="#4169E1">if</font> (nlevels == 0) <font color="#4169E1">return</font>(0);
+
+<a name="line1247">1247: </a>  <font color="#B22222">/* Get refinement factors, defaults taken from the coarse <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a> */</font>
+<a name="line1248">1248: </a>  <a href="../../../../docs/manualpages/Sys/PetscMalloc3.html#PetscMalloc3">PetscMalloc3</a>(nlevels,&amp;refx,nlevels,&amp;refy,nlevels,&amp;refz);
+<a name="line1249">1249: </a>  <font color="#4169E1">for</font> (i=0; i&lt;nlevels; i++) {
+<a name="line1250">1250: </a>    <a href="../../../../docs/manualpages/DMDA/DMDAGetRefinementFactor.html#DMDAGetRefinementFactor">DMDAGetRefinementFactor</a>(da,&amp;refx[i],&amp;refy[i],&amp;refz[i]);
+<a name="line1251">1251: </a>  }
+<a name="line1252">1252: </a>  n    = nlevels;
+<a name="line1253">1253: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsGetIntArray.html#PetscOptionsGetIntArray">PetscOptionsGetIntArray</a>(((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da)-&gt;options,((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da)-&gt;prefix,<font color="#666666">"-da_refine_hierarchy_x"</font>,refx,&amp;n,NULL);
+<a name="line1254">1254: </a>  n    = nlevels;
+<a name="line1255">1255: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsGetIntArray.html#PetscOptionsGetIntArray">PetscOptionsGetIntArray</a>(((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da)-&gt;options,((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da)-&gt;prefix,<font color="#666666">"-da_refine_hierarchy_y"</font>,refy,&amp;n,NULL);
+<a name="line1256">1256: </a>  n    = nlevels;
+<a name="line1257">1257: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsGetIntArray.html#PetscOptionsGetIntArray">PetscOptionsGetIntArray</a>(((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da)-&gt;options,((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da)-&gt;prefix,<font color="#666666">"-da_refine_hierarchy_z"</font>,refz,&amp;n,NULL);
+
+<a name="line1259">1259: </a>  <a href="../../../../docs/manualpages/DMDA/DMDASetRefinementFactor.html#DMDASetRefinementFactor">DMDASetRefinementFactor</a>(da,refx[0],refy[0],refz[0]);
+<a name="line1260">1260: </a>  <a href="../../../../docs/manualpages/DM/DMRefine.html#DMRefine">DMRefine</a>(da,<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),&amp;daf[0]);
+<a name="line1261">1261: </a>  <font color="#4169E1">for</font> (i=1; i&lt;nlevels; i++) {
+<a name="line1262">1262: </a>    <a href="../../../../docs/manualpages/DMDA/DMDASetRefinementFactor.html#DMDASetRefinementFactor">DMDASetRefinementFactor</a>(daf[i-1],refx[i],refy[i],refz[i]);
+<a name="line1263">1263: </a>    <a href="../../../../docs/manualpages/DM/DMRefine.html#DMRefine">DMRefine</a>(daf[i-1],<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),&amp;daf[i]);
+<a name="line1264">1264: </a>  }
+<a name="line1265">1265: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree3.html#PetscFree3">PetscFree3</a>(refx,refy,refz);
+<a name="line1266">1266: </a>  <font color="#4169E1">return</font>(0);
+<a name="line1267">1267: </a>}
+
+<a name="line1269">1269: </a><strong><font color="#4169E1"><a name="DMCoarsenHierarchy_DA"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  DMCoarsenHierarchy_DA(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> da,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> nlevels,<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dac[])</font></strong>
+<a name="line1270">1270: </a>{
+<a name="line1272">1272: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       i;
+
+<a name="line1276">1276: </a>  <font color="#4169E1">if</font> (nlevels &lt; 0) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),PETSC_ERR_ARG_OUTOFRANGE,<font color="#666666">"nlevels cannot be negative"</font>);
+<a name="line1277">1277: </a>  <font color="#4169E1">if</font> (nlevels == 0) <font color="#4169E1">return</font>(0);
+<a name="line1279">1279: </a>  <a href="../../../../docs/manualpages/DM/DMCoarsen.html#DMCoarsen">DMCoarsen</a>(da,<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),&amp;dac[0]);
+<a name="line1280">1280: </a>  <font color="#4169E1">for</font> (i=1; i&lt;nlevels; i++) {
+<a name="line1281">1281: </a>    <a href="../../../../docs/manualpages/DM/DMCoarsen.html#DMCoarsen">DMCoarsen</a>(dac[i-1],<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),&amp;dac[i]);
+<a name="line1282">1282: </a>  }
+<a name="line1283">1283: </a>  <font color="#4169E1">return</font>(0);
+<a name="line1284">1284: </a>}
+
+<a name="line1286">1286: </a> #include <A href="../../../../include/petscgll.h.html">&lt;petscgll.h&gt;</A>
+
+<a name="line1288">1288: </a><strong><font color="#4169E1"><a name="DMDASetGLLCoordinates_1d"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMDASetGLLCoordinates_1d(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../../docs/manualpages/Sys/PetscGLL.html#PetscGLL">PetscGLL</a> *gll)</font></strong>
+<a name="line1289">1289: </a>{
+<a name="line1291">1291: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       i,j,n = gll-&gt;n,xs,xn,q;
+<a name="line1292">1292: </a>  <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>    *xx;
+<a name="line1293">1293: </a>  <a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>      h;
+<a name="line1294">1294: </a>  <a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>            x;
+<a name="line1295">1295: </a>  DM_DA          *da = (DM_DA*)dm-&gt;data;
+
+<a name="line1298">1298: </a>  <font color="#4169E1">if</font> (da-&gt;bx != <a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_PERIODIC</a>) {
+<a name="line1299">1299: </a>    <a href="../../../../docs/manualpages/DMDA/DMDAGetInfo.html#DMDAGetInfo">DMDAGetInfo</a>(dm,NULL,&amp;q,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+<a name="line1300">1300: </a>    q    = (q-1)/(n-1);  <font color="#B22222">/* number of spectral elements */</font>
+<a name="line1301">1301: </a>    h    = 2.0/q;
+<a name="line1302">1302: </a>    <a href="../../../../docs/manualpages/DMDA/DMDAGetCorners.html#DMDAGetCorners">DMDAGetCorners</a>(dm,&amp;xs,NULL,NULL,&amp;xn,NULL,NULL);
+<a name="line1303">1303: </a>    xs   = xs/(n-1);
+<a name="line1304">1304: </a>    xn   = xn/(n-1);
+<a name="line1305">1305: </a>    <a href="../../../../docs/manualpages/DMDA/DMDASetUniformCoordinates.html#DMDASetUniformCoordinates">DMDASetUniformCoordinates</a>(dm,-1.,1.,0.,0.,0.,0.);
+<a name="line1306">1306: </a>    <a href="../../../../docs/manualpages/DM/DMGetCoordinates.html#DMGetCoordinates">DMGetCoordinates</a>(dm,&amp;x);
+<a name="line1307">1307: </a>    <a href="../../../../docs/manualpages/DMDA/DMDAVecGetArray.html#DMDAVecGetArray">DMDAVecGetArray</a>(dm,x,&amp;xx);
+
+<a name="line1309">1309: </a>    <font color="#B22222">/* loop over local spectral elements */</font>
+<a name="line1310">1310: </a>    <font color="#4169E1">for</font> (j=xs; j&lt;xs+xn; j++) {
+<a name="line1311">1311: </a>      <font color="#B22222">/*</font>
+<a name="line1312">1312: </a><font color="#B22222">       Except for the first process, each process starts on the second GLL point of the first element on that process</font>
+<a name="line1313">1313: </a><font color="#B22222">       */</font>
+<a name="line1314">1314: </a>      <font color="#4169E1">for</font> (i= (j == xs &amp;&amp; xs &gt; 0)? 1 : 0; i&lt;n; i++) {
+<a name="line1315">1315: </a>        xx[j*(n-1) + i] = -1.0 + h*j + h*(gll-&gt;nodes[i]+1.0)/2.;
+<a name="line1316">1316: </a>      }
+<a name="line1317">1317: </a>    }
+<a name="line1318">1318: </a>    <a href="../../../../docs/manualpages/DMDA/DMDAVecRestoreArray.html#DMDAVecRestoreArray">DMDAVecRestoreArray</a>(dm,x,&amp;xx);
+<a name="line1319">1319: </a>  } <font color="#4169E1">else</font> <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),PETSC_ERR_SUP,<font color="#666666">"Not yet implemented for periodic"</font>);
+<a name="line1320">1320: </a>  <font color="#4169E1">return</font>(0);
+<a name="line1321">1321: </a>}
+
+<a name="line1323">1323: </a><font color="#B22222">/*@C</font>
+
+<a name="line1325">1325: </a><font color="#B22222">     <a href="../../../../docs/manualpages/DMDA/DMDASetGLLCoordinates.html#DMDASetGLLCoordinates">DMDASetGLLCoordinates</a> - Sets the global coordinates from -1 to 1 to the GLL points of as many GLL elements that fit the number of grid points</font>
+
+<a name="line1327">1327: </a><font color="#B22222">   Collective on <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a></font>
+
+<a name="line1329">1329: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line1330">1330: </a><font color="#B22222">+   da - the <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a> object</font>
+<a name="line1331">1331: </a><font color="#B22222">-   gll - the GLL object</font>
+
+<a name="line1333">1333: </a><font color="#B22222">   Notes: the parallel decomposition of grid points must correspond to the degree of the GLL. That is, the number of grid points</font>
+<a name="line1334">1334: </a><font color="#B22222">          on each process much be divisible by the number of GLL elements needed per process. This depends on whether the <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> is</font>
+<a name="line1335">1335: </a><font color="#B22222">          periodic or not.</font>
+
+<a name="line1337">1337: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line1339">1339: </a><font color="#B22222">.seealso:   <a href="../../../../docs/manualpages/DMDA/DMDACreate.html#DMDACreate">DMDACreate</a>(), <a href="../../../../docs/manualpages/Sys/PetscGLLCreate.html#PetscGLLCreate">PetscGLLCreate</a>(), <a href="../../../../docs/manualpages/DM/DMGetCoordinates.html#DMGetCoordinates">DMGetCoordinates</a>()</font>
+<a name="line1340">1340: </a><font color="#B22222">@*/</font>
+<a name="line1341">1341: </a><strong><font color="#4169E1"><a name="DMDASetGLLCoordinates"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMDA/DMDASetGLLCoordinates.html#DMDASetGLLCoordinates">DMDASetGLLCoordinates</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> da,<a href="../../../../docs/manualpages/Sys/PetscGLL.html#PetscGLL">PetscGLL</a> *gll)</font></strong>
+<a name="line1342">1342: </a>{
+
+<a name="line1346">1346: </a>  <font color="#4169E1">if</font> (da-&gt;dim == 1) {
+<a name="line1347">1347: </a>    DMDASetGLLCoordinates_1d(da,gll);
+<a name="line1348">1348: </a>  } <font color="#4169E1">else</font> <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),PETSC_ERR_SUP,<font color="#666666">"Not yet implemented for 2 or 3d"</font>);
+<a name="line1349">1349: </a>  <font color="#4169E1">return</font>(0);
+<a name="line1350">1350: </a>}
+</pre>
+</body>
+
+</html>

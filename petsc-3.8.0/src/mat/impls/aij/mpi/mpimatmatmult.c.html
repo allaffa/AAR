@@ -1,0 +1,1935 @@
+<center><a href="mpimatmatmult.c">Actual source code: mpimatmatmult.c</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/mat/impls/aij/mpi/mpimatmatmult.c.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:25:13+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/mat/impls/aij/mpi/mpimatmatmult.c.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+
+<a name="line2">  2: </a><font color="#B22222">/*</font>
+<a name="line3">  3: </a><font color="#B22222">  Defines matrix-matrix product routines for pairs of MPIAIJ matrices</font>
+<a name="line4">  4: </a><font color="#B22222">          C = A * B</font>
+<a name="line5">  5: </a><font color="#B22222">*/</font>
+<a name="line6">  6: </a> #include <A href="../../../../../include/../src/mat/impls/aij/seq/aij.h.html">&lt;../src/mat/impls/aij/seq/aij.h&gt;</A>
+<a name="line7">  7: </a> #include <A href="../../../../../include/../src/mat/utils/freespace.h.html">&lt;../src/mat/utils/freespace.h&gt;</A>
+<a name="line8">  8: </a> #include <A href="../../../../../include/../src/mat/impls/aij/mpi/mpiaij.h.html">&lt;../src/mat/impls/aij/mpi/mpiaij.h&gt;</A>
+<a name="line9">  9: </a> #include <A href="../../../../../include/petscbt.h.html">&lt;petscbt.h&gt;</A>
+<a name="line10"> 10: </a> #include <A href="../../../../../include/../src/mat/impls/dense/mpi/mpidense.h.html">&lt;../src/mat/impls/dense/mpi/mpidense.h&gt;</A>
+<a name="line11"> 11: </a> #include <A href="../../../../../include/petsc/private/vecimpl.h.html">&lt;petsc/private/vecimpl.h&gt;</A>
+
+<a name="line13"> 13: </a><font color="#A020F0">#if defined(PETSC_HAVE_HYPRE)</font>
+<a name="line14"> 14: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatMatMultSymbolic_AIJ_AIJ_wHYPRE(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>,<a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>*)</font></strong>;
+<a name="line15"> 15: </a><font color="#A020F0">#endif</font>
+
+<a name="line17"> 17: </a><strong><font color="#4169E1"><a name="MatMatMult_MPIAIJ_MPIAIJ"></a>PETSC_INTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatMatMult_MPIAIJ_MPIAIJ(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> A,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> B,<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MatReuse</a> scall,<a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> fill, <a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> *C)</font></strong>
+<a name="line18"> 18: </a>{
+<a name="line20"> 20: </a><font color="#A020F0">#if defined(PETSC_HAVE_HYPRE)</font>
+<a name="line21"> 21: </a>  const char     *algTypes[3] = {<font color="#666666">"scalable"</font>,<font color="#666666">"nonscalable"</font>,<font color="#666666">"hypre"</font>};
+<a name="line22"> 22: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       nalg = 3;
+<a name="line23"> 23: </a><font color="#A020F0">#else</font>
+<a name="line24"> 24: </a>  const char     *algTypes[2] = {<font color="#666666">"scalable"</font>,<font color="#666666">"nonscalable"</font>};
+<a name="line25"> 25: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       nalg = 2;
+<a name="line26"> 26: </a><font color="#A020F0">#endif</font>
+<a name="line27"> 27: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       alg = 1; <font color="#B22222">/* set nonscalable algorithm as default */</font>
+<a name="line28"> 28: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a>       comm;
+<a name="line29"> 29: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>      flg;
+
+<a name="line32"> 32: </a>  <font color="#4169E1">if</font> (scall == <a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MAT_INITIAL_MATRIX</a>) {
+<a name="line33"> 33: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectGetComm.html#PetscObjectGetComm">PetscObjectGetComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)A,&amp;comm);
+<a name="line34"> 34: </a>    <font color="#4169E1">if</font> (A-&gt;cmap-&gt;rstart != B-&gt;rmap-&gt;rstart || A-&gt;cmap-&gt;rend != B-&gt;rmap-&gt;rend) <a href="../../../../../docs/manualpages/Sys/SETERRQ4.html#SETERRQ4">SETERRQ4</a>(comm,PETSC_ERR_ARG_SIZ,<font color="#666666">"Matrix local dimensions are incompatible, (%D, %D) != (%D,%D)"</font>,A-&gt;cmap-&gt;rstart,A-&gt;cmap-&gt;rend,B-&gt;rmap-&gt;rstart,B-&gt;rmap-&gt;rend);
+
+<a name="line36"> 36: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectOptionsBegin.html#PetscObjectOptionsBegin">PetscObjectOptionsBegin</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)A);
+<a name="line37"> 37: </a>    PetscOptionsObject-&gt;alreadyprinted = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>; <font color="#B22222">/* a hack to ensure the option shows in '-help' */</font>
+<a name="line38"> 38: </a>    <a href="../../../../../docs/manualpages/Sys/PetscOptionsEList.html#PetscOptionsEList">PetscOptionsEList</a>(<font color="#666666">"-matmatmult_via"</font>,<font color="#666666">"Algorithmic approach"</font>,<font color="#666666">"<a href="../../../../../docs/manualpages/Mat/MatMatMult.html#MatMatMult">MatMatMult</a>"</font>,algTypes,nalg,algTypes[1],&amp;alg,&amp;flg);
+<a name="line39"> 39: </a>    <a href="../../../../../docs/manualpages/Sys/PetscOptionsEnd.html#PetscOptionsEnd">PetscOptionsEnd</a>();
+
+<a name="line41"> 41: </a>    <font color="#4169E1">if</font> (!flg &amp;&amp; B-&gt;cmap-&gt;N &gt; 100000) { <font color="#B22222">/* may switch to scalable algorithm as default */</font>
+<a name="line42"> 42: </a>      <a href="../../../../../docs/manualpages/Mat/MatInfo.html#MatInfo">MatInfo</a>     Ainfo,Binfo;
+<a name="line43"> 43: </a>      <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>    nz_local;
+<a name="line44"> 44: </a>      <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>   alg_scalable_loc=<a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>,alg_scalable;
+
+<a name="line46"> 46: </a>      <a href="../../../../../docs/manualpages/Mat/MatGetInfo.html#MatGetInfo">MatGetInfo</a>(A,<a href="../../../../../docs/manualpages/Mat/MatInfoType.html#MatInfoType">MAT_LOCAL</a>,&amp;Ainfo);
+<a name="line47"> 47: </a>      <a href="../../../../../docs/manualpages/Mat/MatGetInfo.html#MatGetInfo">MatGetInfo</a>(B,<a href="../../../../../docs/manualpages/Mat/MatInfoType.html#MatInfoType">MAT_LOCAL</a>,&amp;Binfo);
+<a name="line48"> 48: </a>      nz_local = (<a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>)(Ainfo.nz_allocated + Binfo.nz_allocated);
+
+<a name="line50"> 50: </a>      <font color="#4169E1">if</font> (B-&gt;cmap-&gt;N &gt; fill*nz_local) alg_scalable_loc = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+<a name="line51"> 51: </a>      <a href="../../../../../docs/manualpages/Sys/MPIU_Allreduce.html#MPIU_Allreduce">MPIU_Allreduce</a>(&amp;alg_scalable_loc,&amp;alg_scalable,1,MPIU_BOOL,MPI_LOR,comm);
+
+<a name="line53"> 53: </a>      <font color="#4169E1">if</font> (alg_scalable) {
+<a name="line54"> 54: </a>        alg  = 0; <font color="#B22222">/* scalable algorithm would 50% slower than nonscalable algorithm */</font>
+<a name="line55"> 55: </a>        PetscInfo2(B,<font color="#666666">"Use scalable algorithm, BN %D, fill*nz_allocated %g\n"</font>,B-&gt;cmap-&gt;N,fill*nz_local);
+<a name="line56"> 56: </a>      }
+<a name="line57"> 57: </a>    }
+
+<a name="line59"> 59: </a>    <a href="../../../../../docs/manualpages/Profiling/PetscLogEventBegin.html#PetscLogEventBegin">PetscLogEventBegin</a>(MAT_MatMultSymbolic,A,B,0,0);
+<a name="line60"> 60: </a>    <font color="#4169E1">switch</font> (alg) {
+<a name="line61"> 61: </a>    <font color="#4169E1">case</font> 1:
+<a name="line62"> 62: </a>      MatMatMultSymbolic_MPIAIJ_MPIAIJ_nonscalable(A,B,fill,C);
+<a name="line63"> 63: </a>      <font color="#4169E1">break</font>;
+<a name="line64"> 64: </a><font color="#A020F0">#if defined(PETSC_HAVE_HYPRE)</font>
+<a name="line65"> 65: </a>    <font color="#4169E1">case</font> 2:
+<a name="line66"> 66: </a>      MatMatMultSymbolic_AIJ_AIJ_wHYPRE(A,B,fill,C);
+<a name="line67"> 67: </a>      <font color="#4169E1">break</font>;
+<a name="line68"> 68: </a><font color="#A020F0">#endif</font>
+<a name="line69"> 69: </a><strong><font color="#FF0000">    default:</font></strong>
+<a name="line70"> 70: </a>      MatMatMultSymbolic_MPIAIJ_MPIAIJ(A,B,fill,C);
+<a name="line71"> 71: </a>      <font color="#4169E1">break</font>;
+<a name="line72"> 72: </a>    }
+<a name="line73"> 73: </a>    <a href="../../../../../docs/manualpages/Profiling/PetscLogEventEnd.html#PetscLogEventEnd">PetscLogEventEnd</a>(MAT_MatMultSymbolic,A,B,0,0);
+<a name="line74"> 74: </a>  }
+<a name="line75"> 75: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscLogEventBegin.html#PetscLogEventBegin">PetscLogEventBegin</a>(MAT_MatMultNumeric,A,B,0,0);
+<a name="line76"> 76: </a>  (*(*C)-&gt;ops-&gt;matmultnumeric)(A,B,*C);
+<a name="line77"> 77: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscLogEventEnd.html#PetscLogEventEnd">PetscLogEventEnd</a>(MAT_MatMultNumeric,A,B,0,0);
+<a name="line78"> 78: </a>  <font color="#4169E1">return</font>(0);
+<a name="line79"> 79: </a>}
+
+<a name="line81"> 81: </a><strong><font color="#4169E1"><a name="MatDestroy_MPIAIJ_MatMatMult"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatDestroy_MPIAIJ_MatMatMult(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> A)</font></strong>
+<a name="line82"> 82: </a>{
+<a name="line84"> 84: </a>  Mat_MPIAIJ     *a    = (Mat_MPIAIJ*)A-&gt;data;
+<a name="line85"> 85: </a>  Mat_PtAPMPI    *ptap = a-&gt;ptap;
+
+<a name="line88"> 88: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree2.html#PetscFree2">PetscFree2</a>(ptap-&gt;startsj_s,ptap-&gt;startsj_r);
+<a name="line89"> 89: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(ptap-&gt;bufa);
+<a name="line90"> 90: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;ptap-&gt;P_loc);
+<a name="line91"> 91: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;ptap-&gt;P_oth);
+<a name="line92"> 92: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;ptap-&gt;Pt);
+<a name="line93"> 93: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(ptap-&gt;api);
+<a name="line94"> 94: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(ptap-&gt;apj);
+<a name="line95"> 95: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(ptap-&gt;apa);
+<a name="line96"> 96: </a>  ptap-&gt;destroy(A);
+<a name="line97"> 97: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(ptap);
+<a name="line98"> 98: </a>  <font color="#4169E1">return</font>(0);
+<a name="line99"> 99: </a>}
+
+<a name="line101">101: </a><strong><font color="#4169E1"><a name="MatDuplicate_MPIAIJ_MatMatMult"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatDuplicate_MPIAIJ_MatMatMult(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> A, <a href="../../../../../docs/manualpages/Mat/MatDuplicateOption.html#MatDuplicateOption">MatDuplicateOption</a> op, <a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> *M)</font></strong>
+<a name="line102">102: </a>{
+<a name="line104">104: </a>  Mat_MPIAIJ     *a    = (Mat_MPIAIJ*)A-&gt;data;
+<a name="line105">105: </a>  Mat_PtAPMPI    *ptap = a-&gt;ptap;
+
+<a name="line108">108: </a>  (*ptap-&gt;duplicate)(A,op,M);
+
+<a name="line110">110: </a>  (*M)-&gt;ops-&gt;destroy   = ptap-&gt;destroy;   <font color="#B22222">/* = MatDestroy_MPIAIJ, *M doesn't duplicate A's special structure! */</font>
+<a name="line111">111: </a>  (*M)-&gt;ops-&gt;duplicate = ptap-&gt;duplicate; <font color="#B22222">/* = MatDuplicate_MPIAIJ */</font>
+<a name="line112">112: </a>  <font color="#4169E1">return</font>(0);
+<a name="line113">113: </a>}
+
+<a name="line115">115: </a><strong><font color="#4169E1"><a name="MatMatMultNumeric_MPIAIJ_MPIAIJ_nonscalable"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatMatMultNumeric_MPIAIJ_MPIAIJ_nonscalable(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> A,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> P,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> C)</font></strong>
+<a name="line116">116: </a>{
+<a name="line118">118: </a>  Mat_MPIAIJ     *a  =(Mat_MPIAIJ*)A-&gt;data,*c=(Mat_MPIAIJ*)C-&gt;data;
+<a name="line119">119: </a>  Mat_SeqAIJ     *ad =(Mat_SeqAIJ*)(a-&gt;A)-&gt;data,*ao=(Mat_SeqAIJ*)(a-&gt;B)-&gt;data;
+<a name="line120">120: </a>  Mat_SeqAIJ     *cd =(Mat_SeqAIJ*)(c-&gt;A)-&gt;data,*co=(Mat_SeqAIJ*)(c-&gt;B)-&gt;data;
+<a name="line121">121: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>    *cda=cd-&gt;a,*coa=co-&gt;a;
+<a name="line122">122: </a>  Mat_SeqAIJ     *p_loc,*p_oth;
+<a name="line123">123: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>    *apa,*ca;
+<a name="line124">124: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       cm   =C-&gt;rmap-&gt;n;
+<a name="line125">125: </a>  Mat_PtAPMPI    *ptap=c-&gt;ptap;
+<a name="line126">126: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       *api,*apj,*apJ,i,k;
+<a name="line127">127: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       cstart=C-&gt;cmap-&gt;rstart;
+<a name="line128">128: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       cdnz,conz,k0,k1;
+<a name="line129">129: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a>       comm;
+<a name="line130">130: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>    size;
+
+<a name="line133">133: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectGetComm.html#PetscObjectGetComm">PetscObjectGetComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)A,&amp;comm);
+<a name="line134">134: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm,&amp;size);
+
+<a name="line136">136: </a>  <font color="#B22222">/* 1) get P_oth = ptap-&gt;P_oth  and P_loc = ptap-&gt;P_loc */</font>
+<a name="line137">137: </a>  <font color="#B22222">/*-----------------------------------------------------*/</font>
+<a name="line138">138: </a>  <font color="#B22222">/* update numerical values of P_oth and P_loc */</font>
+<a name="line139">139: </a>  MatGetBrowsOfAoCols_MPIAIJ(A,P,<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MAT_REUSE_MATRIX</a>,&amp;ptap-&gt;startsj_s,&amp;ptap-&gt;startsj_r,&amp;ptap-&gt;bufa,&amp;ptap-&gt;P_oth);
+<a name="line140">140: </a>  <a href="../../../../../docs/manualpages/Mat/MatMPIAIJGetLocalMat.html#MatMPIAIJGetLocalMat">MatMPIAIJGetLocalMat</a>(P,<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MAT_REUSE_MATRIX</a>,&amp;ptap-&gt;P_loc);
+
+<a name="line142">142: </a>  <font color="#B22222">/* 2) compute numeric C_loc = A_loc*P = Ad*P_loc + Ao*P_oth */</font>
+<a name="line143">143: </a>  <font color="#B22222">/*----------------------------------------------------------*/</font>
+<a name="line144">144: </a>  <font color="#B22222">/* get data from symbolic products */</font>
+<a name="line145">145: </a>  p_loc = (Mat_SeqAIJ*)(ptap-&gt;P_loc)-&gt;data;
+<a name="line146">146: </a>  p_oth = NULL;
+<a name="line147">147: </a>  <font color="#4169E1">if</font> (size &gt;1) {
+<a name="line148">148: </a>    p_oth = (Mat_SeqAIJ*)(ptap-&gt;P_oth)-&gt;data;
+<a name="line149">149: </a>  }
+
+<a name="line151">151: </a>  <font color="#B22222">/* get apa for storing dense row A[i,:]*P */</font>
+<a name="line152">152: </a>  apa = ptap-&gt;apa;
+
+<a name="line154">154: </a>  api = ptap-&gt;api;
+<a name="line155">155: </a>  apj = ptap-&gt;apj;
+<a name="line156">156: </a>  <font color="#4169E1">for</font> (i=0; i&lt;cm; i++) {
+<a name="line157">157: </a>    <font color="#B22222">/* compute apa = A[i,:]*P */</font>
+<a name="line158">158: </a>    AProw_nonscalable(i,ad,ao,p_loc,p_oth,apa);
+
+<a name="line160">160: </a>    <font color="#B22222">/* set values in C */</font>
+<a name="line161">161: </a>    apJ  = apj + api[i];
+<a name="line162">162: </a>    cdnz = cd-&gt;i[i+1] - cd-&gt;i[i];
+<a name="line163">163: </a>    conz = co-&gt;i[i+1] - co-&gt;i[i];
+
+<a name="line165">165: </a>    <font color="#B22222">/* 1st off-diagoanl part of C */</font>
+<a name="line166">166: </a>    ca = coa + co-&gt;i[i];
+<a name="line167">167: </a>    k  = 0;
+<a name="line168">168: </a>    <font color="#4169E1">for</font> (k0=0; k0&lt;conz; k0++) {
+<a name="line169">169: </a>      <font color="#4169E1">if</font> (apJ[k] &gt;= cstart) <font color="#4169E1">break</font>;
+<a name="line170">170: </a>      ca[k0]      = apa[apJ[k]];
+<a name="line171">171: </a>      apa[apJ[k++]] = 0.0;
+<a name="line172">172: </a>    }
+
+<a name="line174">174: </a>    <font color="#B22222">/* diagonal part of C */</font>
+<a name="line175">175: </a>    ca = cda + cd-&gt;i[i];
+<a name="line176">176: </a>    <font color="#4169E1">for</font> (k1=0; k1&lt;cdnz; k1++) {
+<a name="line177">177: </a>      ca[k1]      = apa[apJ[k]];
+<a name="line178">178: </a>      apa[apJ[k++]] = 0.0;
+<a name="line179">179: </a>    }
+
+<a name="line181">181: </a>    <font color="#B22222">/* 2nd off-diagoanl part of C */</font>
+<a name="line182">182: </a>    ca = coa + co-&gt;i[i];
+<a name="line183">183: </a>    <font color="#4169E1">for</font> (; k0&lt;conz; k0++) {
+<a name="line184">184: </a>      ca[k0]      = apa[apJ[k]];
+<a name="line185">185: </a>      apa[apJ[k++]] = 0.0;
+<a name="line186">186: </a>    }
+<a name="line187">187: </a>  }
+<a name="line188">188: </a>  <a href="../../../../../docs/manualpages/Mat/MatAssemblyBegin.html#MatAssemblyBegin">MatAssemblyBegin</a>(C,<a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+<a name="line189">189: </a>  <a href="../../../../../docs/manualpages/Mat/MatAssemblyEnd.html#MatAssemblyEnd">MatAssemblyEnd</a>(C,<a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+<a name="line190">190: </a>  <font color="#4169E1">return</font>(0);
+<a name="line191">191: </a>}
+
+<a name="line193">193: </a><strong><font color="#4169E1"><a name="MatMatMultSymbolic_MPIAIJ_MPIAIJ_nonscalable"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatMatMultSymbolic_MPIAIJ_MPIAIJ_nonscalable(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> A,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> P,<a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> fill,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> *C)</font></strong>
+<a name="line194">194: </a>{
+<a name="line195">195: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>     ierr;
+<a name="line196">196: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a>           comm;
+<a name="line197">197: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>        size;
+<a name="line198">198: </a>  <a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>                Cmpi;
+<a name="line199">199: </a>  Mat_PtAPMPI        *ptap;
+<a name="line200">200: </a>  PetscFreeSpaceList free_space=NULL,current_space=NULL;
+<a name="line201">201: </a>  Mat_MPIAIJ         *a        =(Mat_MPIAIJ*)A-&gt;data,*c;
+<a name="line202">202: </a>  Mat_SeqAIJ         *ad       =(Mat_SeqAIJ*)(a-&gt;A)-&gt;data,*ao=(Mat_SeqAIJ*)(a-&gt;B)-&gt;data,*p_loc,*p_oth;
+<a name="line203">203: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>           *pi_loc,*pj_loc,*pi_oth,*pj_oth,*dnz,*onz;
+<a name="line204">204: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>           *adi=ad-&gt;i,*adj=ad-&gt;j,*aoi=ao-&gt;i,*aoj=ao-&gt;j,rstart=A-&gt;rmap-&gt;rstart;
+<a name="line205">205: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>           *lnk,i,pnz,row,*api,*apj,*Jptr,apnz,nspacedouble=0,j,nzi;
+<a name="line206">206: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>           am=A-&gt;rmap-&gt;n,pN=P-&gt;cmap-&gt;N,pn=P-&gt;cmap-&gt;n,pm=P-&gt;rmap-&gt;n;
+<a name="line207">207: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBT.html#PetscBT">PetscBT</a>            lnkbt;
+<a name="line208">208: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>        *apa;
+<a name="line209">209: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>          afill;
+
+<a name="line212">212: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectGetComm.html#PetscObjectGetComm">PetscObjectGetComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)A,&amp;comm);
+<a name="line213">213: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm,&amp;size);
+
+<a name="line215">215: </a>  <font color="#B22222">/* create struct Mat_PtAPMPI and attached it to C later */</font>
+<a name="line216">216: </a>  <a href="../../../../../docs/manualpages/Sys/PetscNew.html#PetscNew">PetscNew</a>(&amp;ptap);
+
+<a name="line218">218: </a>  <font color="#B22222">/* get P_oth by taking rows of P (= non-zero cols of local A) from other processors */</font>
+<a name="line219">219: </a>  MatGetBrowsOfAoCols_MPIAIJ(A,P,<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MAT_INITIAL_MATRIX</a>,&amp;ptap-&gt;startsj_s,&amp;ptap-&gt;startsj_r,&amp;ptap-&gt;bufa,&amp;ptap-&gt;P_oth);
+
+<a name="line221">221: </a>  <font color="#B22222">/* get P_loc by taking all local rows of P */</font>
+<a name="line222">222: </a>  <a href="../../../../../docs/manualpages/Mat/MatMPIAIJGetLocalMat.html#MatMPIAIJGetLocalMat">MatMPIAIJGetLocalMat</a>(P,<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MAT_INITIAL_MATRIX</a>,&amp;ptap-&gt;P_loc);
+
+<a name="line224">224: </a>  p_loc  = (Mat_SeqAIJ*)(ptap-&gt;P_loc)-&gt;data;
+<a name="line225">225: </a>  pi_loc = p_loc-&gt;i; pj_loc = p_loc-&gt;j;
+<a name="line226">226: </a>  <font color="#4169E1">if</font> (size &gt; 1) {
+<a name="line227">227: </a>    p_oth  = (Mat_SeqAIJ*)(ptap-&gt;P_oth)-&gt;data;
+<a name="line228">228: </a>    pi_oth = p_oth-&gt;i; pj_oth = p_oth-&gt;j;
+<a name="line229">229: </a>  } <font color="#4169E1">else</font> {
+<a name="line230">230: </a>    p_oth = NULL;
+<a name="line231">231: </a>    pi_oth = NULL; pj_oth = NULL;
+<a name="line232">232: </a>  }
+
+<a name="line234">234: </a>  <font color="#B22222">/* first, compute symbolic AP = A_loc*P = A_diag*P_loc + A_off*P_oth */</font>
+<a name="line235">235: </a>  <font color="#B22222">/*-------------------------------------------------------------------*/</font>
+<a name="line236">236: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(am+2,&amp;api);
+<a name="line237">237: </a>  ptap-&gt;api = api;
+<a name="line238">238: </a>  api[0]    = 0;
+
+<a name="line240">240: </a>  <font color="#B22222">/* create and initialize a linked list */</font>
+<a name="line241">241: </a>  PetscLLCondensedCreate(pN,pN,&amp;lnk,&amp;lnkbt);
+
+<a name="line243">243: </a>  <font color="#B22222">/* Initial FreeSpace size is fill*(nnz(A)+nnz(P)) */</font>
+<a name="line244">244: </a>  PetscFreeSpaceGet(<a href="../../../../../docs/manualpages/Sys/PetscRealIntMultTruncate.html#PetscRealIntMultTruncate">PetscRealIntMultTruncate</a>(fill,<a href="../../../../../docs/manualpages/Sys/PetscIntSumTruncate.html#PetscIntSumTruncate">PetscIntSumTruncate</a>(adi[am],<a href="../../../../../docs/manualpages/Sys/PetscIntSumTruncate.html#PetscIntSumTruncate">PetscIntSumTruncate</a>(aoi[am],pi_loc[pm]))),&amp;free_space);
+<a name="line245">245: </a>  current_space = free_space;
+
+<a name="line247">247: </a>  <a href="../../../../../docs/manualpages/Mat/MatPreallocateInitialize.html#MatPreallocateInitialize">MatPreallocateInitialize</a>(comm,am,pn,dnz,onz);
+<a name="line248">248: </a>  <font color="#4169E1">for</font> (i=0; i&lt;am; i++) {
+<a name="line249">249: </a>    <font color="#B22222">/* diagonal portion of A */</font>
+<a name="line250">250: </a>    nzi = adi[i+1] - adi[i];
+<a name="line251">251: </a>    <font color="#4169E1">for</font> (j=0; j&lt;nzi; j++) {
+<a name="line252">252: </a>      row  = *adj++;
+<a name="line253">253: </a>      pnz  = pi_loc[row+1] - pi_loc[row];
+<a name="line254">254: </a>      Jptr = pj_loc + pi_loc[row];
+<a name="line255">255: </a>      <font color="#B22222">/* add non-zero cols of P into the sorted linked list lnk */</font>
+<a name="line256">256: </a>      PetscLLCondensedAddSorted(pnz,Jptr,lnk,lnkbt);
+<a name="line257">257: </a>    }
+<a name="line258">258: </a>    <font color="#B22222">/* off-diagonal portion of A */</font>
+<a name="line259">259: </a>    nzi = aoi[i+1] - aoi[i];
+<a name="line260">260: </a>    <font color="#4169E1">for</font> (j=0; j&lt;nzi; j++) {
+<a name="line261">261: </a>      row  = *aoj++;
+<a name="line262">262: </a>      pnz  = pi_oth[row+1] - pi_oth[row];
+<a name="line263">263: </a>      Jptr = pj_oth + pi_oth[row];
+<a name="line264">264: </a>      PetscLLCondensedAddSorted(pnz,Jptr,lnk,lnkbt);
+<a name="line265">265: </a>    }
+
+<a name="line267">267: </a>    apnz     = lnk[0];
+<a name="line268">268: </a>    api[i+1] = api[i] + apnz;
+
+<a name="line270">270: </a>    <font color="#B22222">/* if free space is not available, double the total space in the list */</font>
+<a name="line271">271: </a>    <font color="#4169E1">if</font> (current_space-&gt;local_remaining&lt;apnz) {
+<a name="line272">272: </a>      PetscFreeSpaceGet(<a href="../../../../../docs/manualpages/Sys/PetscIntSumTruncate.html#PetscIntSumTruncate">PetscIntSumTruncate</a>(apnz,current_space-&gt;total_array_size),&amp;current_space);
+<a name="line273">273: </a>      nspacedouble++;
+<a name="line274">274: </a>    }
+
+<a name="line276">276: </a>    <font color="#B22222">/* Copy data into free space, then initialize lnk */</font>
+<a name="line277">277: </a>    PetscLLCondensedClean(pN,apnz,current_space-&gt;array,lnk,lnkbt);
+<a name="line278">278: </a>    <a href="../../../../../docs/manualpages/Mat/MatPreallocateSet.html#MatPreallocateSet">MatPreallocateSet</a>(i+rstart,apnz,current_space-&gt;array,dnz,onz);
+
+<a name="line280">280: </a>    current_space-&gt;array           += apnz;
+<a name="line281">281: </a>    current_space-&gt;local_used      += apnz;
+<a name="line282">282: </a>    current_space-&gt;local_remaining -= apnz;
+<a name="line283">283: </a>  }
+
+<a name="line285">285: </a>  <font color="#B22222">/* Allocate space for apj, initialize apj, and */</font>
+<a name="line286">286: </a>  <font color="#B22222">/* destroy list of free space and other temporary array(s) */</font>
+<a name="line287">287: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(api[am]+1,&amp;ptap-&gt;apj);
+<a name="line288">288: </a>  apj  = ptap-&gt;apj;
+<a name="line289">289: </a>  PetscFreeSpaceContiguous(&amp;free_space,ptap-&gt;apj);
+<a name="line290">290: </a>  PetscLLDestroy(lnk,lnkbt);
+
+<a name="line292">292: </a>  <font color="#B22222">/* malloc apa to store dense row A[i,:]*P */</font>
+<a name="line293">293: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCalloc1.html#PetscCalloc1">PetscCalloc1</a>(pN,&amp;apa);
+
+<a name="line295">295: </a>  ptap-&gt;apa = apa;
+
+<a name="line297">297: </a>  <font color="#B22222">/* create and assemble symbolic parallel matrix Cmpi */</font>
+<a name="line298">298: </a>  <font color="#B22222">/*----------------------------------------------------*/</font>
+<a name="line299">299: </a>  <a href="../../../../../docs/manualpages/Mat/MatCreate.html#MatCreate">MatCreate</a>(comm,&amp;Cmpi);
+<a name="line300">300: </a>  <a href="../../../../../docs/manualpages/Mat/MatSetSizes.html#MatSetSizes">MatSetSizes</a>(Cmpi,am,pn,<a href="../../../../../docs/manualpages/Sys/PETSC_DETERMINE.html#PETSC_DETERMINE">PETSC_DETERMINE</a>,<a href="../../../../../docs/manualpages/Sys/PETSC_DETERMINE.html#PETSC_DETERMINE">PETSC_DETERMINE</a>);
+<a name="line301">301: </a>  <a href="../../../../../docs/manualpages/Mat/MatSetBlockSizesFromMats.html#MatSetBlockSizesFromMats">MatSetBlockSizesFromMats</a>(Cmpi,A,P);
+
+<a name="line303">303: </a>  <a href="../../../../../docs/manualpages/Mat/MatSetType.html#MatSetType">MatSetType</a>(Cmpi,<a href="../../../../../docs/manualpages/Mat/MATMPIAIJ.html#MATMPIAIJ">MATMPIAIJ</a>);
+<a name="line304">304: </a>  <a href="../../../../../docs/manualpages/Mat/MatMPIAIJSetPreallocation.html#MatMPIAIJSetPreallocation">MatMPIAIJSetPreallocation</a>(Cmpi,0,dnz,0,onz);
+<a name="line305">305: </a>  <a href="../../../../../docs/manualpages/Mat/MatPreallocateFinalize.html#MatPreallocateFinalize">MatPreallocateFinalize</a>(dnz,onz);
+<a name="line306">306: </a>  <font color="#4169E1">for</font> (i=0; i&lt;am; i++) {
+<a name="line307">307: </a>    row  = i + rstart;
+<a name="line308">308: </a>    apnz = api[i+1] - api[i];
+<a name="line309">309: </a>    <a href="../../../../../docs/manualpages/Mat/MatSetValues.html#MatSetValues">MatSetValues</a>(Cmpi,1,&amp;row,apnz,apj,apa,<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>);
+<a name="line310">310: </a>    apj += apnz;
+<a name="line311">311: </a>  }
+<a name="line312">312: </a>  <a href="../../../../../docs/manualpages/Mat/MatAssemblyBegin.html#MatAssemblyBegin">MatAssemblyBegin</a>(Cmpi,<a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+<a name="line313">313: </a>  <a href="../../../../../docs/manualpages/Mat/MatAssemblyEnd.html#MatAssemblyEnd">MatAssemblyEnd</a>(Cmpi,<a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+
+<a name="line315">315: </a>  ptap-&gt;destroy        = Cmpi-&gt;ops-&gt;destroy;
+<a name="line316">316: </a>  ptap-&gt;duplicate      = Cmpi-&gt;ops-&gt;duplicate;
+<a name="line317">317: </a>  Cmpi-&gt;ops-&gt;matmultnumeric = MatMatMultNumeric_MPIAIJ_MPIAIJ_nonscalable;
+<a name="line318">318: </a>  Cmpi-&gt;ops-&gt;destroy   = MatDestroy_MPIAIJ_MatMatMult;
+<a name="line319">319: </a>  Cmpi-&gt;ops-&gt;duplicate = MatDuplicate_MPIAIJ_MatMatMult;
+
+<a name="line321">321: </a>  <font color="#B22222">/* attach the supporting struct to Cmpi for reuse */</font>
+<a name="line322">322: </a>  c       = (Mat_MPIAIJ*)Cmpi-&gt;data;
+<a name="line323">323: </a>  c-&gt;ptap = ptap;
+
+<a name="line325">325: </a>  *C = Cmpi;
+
+<a name="line327">327: </a>  <font color="#B22222">/* set <a href="../../../../../docs/manualpages/Mat/MatInfo.html#MatInfo">MatInfo</a> */</font>
+<a name="line328">328: </a>  afill = (<a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>)api[am]/(adi[am]+aoi[am]+pi_loc[pm]+1) + 1.e-5;
+<a name="line329">329: </a>  <font color="#4169E1">if</font> (afill &lt; 1.0) afill = 1.0;
+<a name="line330">330: </a>  Cmpi-&gt;info.mallocs           = nspacedouble;
+<a name="line331">331: </a>  Cmpi-&gt;info.fill_ratio_given  = fill;
+<a name="line332">332: </a>  Cmpi-&gt;info.fill_ratio_needed = afill;
+
+<a name="line334">334: </a><font color="#A020F0">#if defined(PETSC_USE_INFO)</font>
+<a name="line335">335: </a>  <font color="#4169E1">if</font> (api[am]) {
+<a name="line336">336: </a>    PetscInfo3(Cmpi,<font color="#666666">"Reallocs %D; Fill ratio: given %g needed %g.\n"</font>,nspacedouble,(double)fill,(double)afill);
+<a name="line337">337: </a>    PetscInfo1(Cmpi,<font color="#666666">"Use <a href="../../../../../docs/manualpages/Mat/MatMatMult.html#MatMatMult">MatMatMult</a>(A,B,<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MatReuse</a>,%g,&amp;C) for best performance.;\n"</font>,(double)afill);
+<a name="line338">338: </a>  } <font color="#4169E1">else</font> {
+<a name="line339">339: </a>    <a href="../../../../../docs/manualpages/Profiling/PetscInfo.html#PetscInfo">PetscInfo</a>(Cmpi,<font color="#666666">"Empty matrix product\n"</font>);
+<a name="line340">340: </a>  }
+<a name="line341">341: </a><font color="#A020F0">#endif</font>
+<a name="line342">342: </a>  <font color="#4169E1">return</font>(0);
+<a name="line343">343: </a>}
+
+<a name="line345">345: </a><strong><font color="#4169E1"><a name="MatMatMult_MPIAIJ_MPIDense"></a>PETSC_INTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatMatMult_MPIAIJ_MPIDense(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> A,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> B,<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MatReuse</a> scall,<a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> fill,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> *C)</font></strong>
+<a name="line346">346: </a>{
+
+<a name="line350">350: </a>  <font color="#4169E1">if</font> (scall == <a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MAT_INITIAL_MATRIX</a>) {
+<a name="line351">351: </a>    <a href="../../../../../docs/manualpages/Profiling/PetscLogEventBegin.html#PetscLogEventBegin">PetscLogEventBegin</a>(MAT_MatMultSymbolic,A,B,0,0);
+<a name="line352">352: </a>    MatMatMultSymbolic_MPIAIJ_MPIDense(A,B,fill,C);
+<a name="line353">353: </a>    <a href="../../../../../docs/manualpages/Profiling/PetscLogEventEnd.html#PetscLogEventEnd">PetscLogEventEnd</a>(MAT_MatMultSymbolic,A,B,0,0);
+<a name="line354">354: </a>  }
+<a name="line355">355: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscLogEventBegin.html#PetscLogEventBegin">PetscLogEventBegin</a>(MAT_MatMultNumeric,A,B,0,0);
+<a name="line356">356: </a>  MatMatMultNumeric_MPIAIJ_MPIDense(A,B,*C);
+<a name="line357">357: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscLogEventEnd.html#PetscLogEventEnd">PetscLogEventEnd</a>(MAT_MatMultNumeric,A,B,0,0);
+<a name="line358">358: </a>  <font color="#4169E1">return</font>(0);
+<a name="line359">359: </a>}
+
+<a name="line361">361: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line362">362: </a>  <a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>         workB;
+<a name="line363">363: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> *rvalues,*svalues;
+<a name="line364">364: </a>  MPI_Request *rwaits,*swaits;
+<a name="line365">365: </a>} MPIAIJ_MPIDense;
+
+<a name="line367">367: </a><strong><font color="#4169E1"><a name="MatMPIAIJ_MPIDenseDestroy"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatMPIAIJ_MPIDenseDestroy(void *ctx)</font></strong>
+<a name="line368">368: </a>{
+<a name="line369">369: </a>  MPIAIJ_MPIDense *contents = (MPIAIJ_MPIDense*) ctx;
+<a name="line370">370: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  ierr;
+
+<a name="line373">373: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;contents-&gt;workB);
+<a name="line374">374: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree4.html#PetscFree4">PetscFree4</a>(contents-&gt;rvalues,contents-&gt;svalues,contents-&gt;rwaits,contents-&gt;swaits);
+<a name="line375">375: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(contents);
+<a name="line376">376: </a>  <font color="#4169E1">return</font>(0);
+<a name="line377">377: </a>}
+
+<a name="line379">379: </a><font color="#B22222">/*</font>
+<a name="line380">380: </a><font color="#B22222">    This is a "dummy function" that handles the case where matrix C was created as a dense matrix</font>
+<a name="line381">381: </a><font color="#B22222">  directly by the user and passed to <a href="../../../../../docs/manualpages/Mat/MatMatMult.html#MatMatMult">MatMatMult</a>() with the <a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MAT_REUSE_MATRIX</a> option</font>
+
+<a name="line383">383: </a><font color="#B22222">  It is the same as MatMatMultSymbolic_MPIAIJ_MPIDense() except does not create C</font>
+<a name="line384">384: </a><font color="#B22222">*/</font>
+<a name="line385">385: </a><strong><font color="#4169E1"><a name="MatMatMultNumeric_MPIDense"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatMatMultNumeric_MPIDense(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> A,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> B,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> C)</font></strong>
+<a name="line386">386: </a>{
+<a name="line387">387: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>         ierr;
+<a name="line388">388: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>              flg;
+<a name="line389">389: </a>  Mat_MPIAIJ             *aij = (Mat_MPIAIJ*) A-&gt;data;
+<a name="line390">390: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>               nz   = aij-&gt;B-&gt;cmap-&gt;n;
+<a name="line391">391: </a>  <a href="../../../../../docs/manualpages/Sys/PetscContainer.html#PetscContainer">PetscContainer</a>         container;
+<a name="line392">392: </a>  MPIAIJ_MPIDense        *contents;
+<a name="line393">393: </a>  <a href="../../../../../docs/manualpages/Vec/VecScatter.html#VecScatter">VecScatter</a>             ctx   = aij-&gt;Mvctx;
+<a name="line394">394: </a>  VecScatter_MPI_General *from = (VecScatter_MPI_General*) ctx-&gt;fromdata;
+<a name="line395">395: </a>  VecScatter_MPI_General *to   = (VecScatter_MPI_General*) ctx-&gt;todata;
+
+<a name="line398">398: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)B,MATMPIDENSE,&amp;flg);
+<a name="line399">399: </a>  <font color="#4169E1">if</font> (!flg) <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_WRONG,<font color="#666666">"Second matrix must be mpidense"</font>);
+
+<a name="line401">401: </a>  <font color="#B22222">/* Handle case where where user provided the final C matrix rather than calling <a href="../../../../../docs/manualpages/Mat/MatMatMult.html#MatMatMult">MatMatMult</a>() with <a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MAT_INITIAL_MATRIX</a>*/</font>
+<a name="line402">402: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)A,<a href="../../../../../docs/manualpages/Mat/MATMPIAIJ.html#MATMPIAIJ">MATMPIAIJ</a>,&amp;flg);
+<a name="line403">403: </a>  <font color="#4169E1">if</font> (!flg) <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_WRONG,<font color="#666666">"First matrix must be MPIAIJ"</font>);
+
+<a name="line405">405: </a>  C-&gt;ops-&gt;matmultnumeric = MatMatMultNumeric_MPIAIJ_MPIDense;
+
+<a name="line407">407: </a>  <a href="../../../../../docs/manualpages/Sys/PetscNew.html#PetscNew">PetscNew</a>(&amp;contents);
+<a name="line408">408: </a>  <font color="#B22222">/* Create work matrix used to store off processor rows of B needed for local product */</font>
+<a name="line409">409: </a>  <a href="../../../../../docs/manualpages/Mat/MatCreateSeqDense.html#MatCreateSeqDense">MatCreateSeqDense</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,nz,B-&gt;cmap-&gt;N,NULL,&amp;contents-&gt;workB);
+<a name="line410">410: </a>  <font color="#B22222">/* Create work arrays needed */</font>
+<a name="line411">411: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc4.html#PetscMalloc4">PetscMalloc4</a>(B-&gt;cmap-&gt;N*from-&gt;starts[from-&gt;n],&amp;contents-&gt;rvalues,
+<a name="line412">412: </a>                      B-&gt;cmap-&gt;N*to-&gt;starts[to-&gt;n],&amp;contents-&gt;svalues,
+<a name="line413">413: </a>                      from-&gt;n,&amp;contents-&gt;rwaits,
+<a name="line414">414: </a>                      to-&gt;n,&amp;contents-&gt;swaits);
+
+<a name="line416">416: </a>  <a href="../../../../../docs/manualpages/Sys/PetscContainerCreate.html#PetscContainerCreate">PetscContainerCreate</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)A),&amp;container);
+<a name="line417">417: </a>  <a href="../../../../../docs/manualpages/Sys/PetscContainerSetPointer.html#PetscContainerSetPointer">PetscContainerSetPointer</a>(container,contents);
+<a name="line418">418: </a>  <a href="../../../../../docs/manualpages/Sys/PetscContainerSetUserDestroy.html#PetscContainerSetUserDestroy">PetscContainerSetUserDestroy</a>(container,MatMPIAIJ_MPIDenseDestroy);
+<a name="line419">419: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectCompose.html#PetscObjectCompose">PetscObjectCompose</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)C,<font color="#666666">"workB"</font>,(<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)container);
+<a name="line420">420: </a>  <a href="../../../../../docs/manualpages/Sys/PetscContainerDestroy.html#PetscContainerDestroy">PetscContainerDestroy</a>(&amp;container);
+
+<a name="line422">422: </a>  (*C-&gt;ops-&gt;matmultnumeric)(A,B,C);
+<a name="line423">423: </a>  <font color="#4169E1">return</font>(0);
+<a name="line424">424: </a>}
+
+<a name="line426">426: </a><strong><font color="#4169E1"><a name="MatMatMultSymbolic_MPIAIJ_MPIDense"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatMatMultSymbolic_MPIAIJ_MPIDense(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> A,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> B,<a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> fill,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> *C)</font></strong>
+<a name="line427">427: </a>{
+<a name="line428">428: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>         ierr;
+<a name="line429">429: </a>  Mat_MPIAIJ             *aij = (Mat_MPIAIJ*) A-&gt;data;
+<a name="line430">430: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>               nz   = aij-&gt;B-&gt;cmap-&gt;n;
+<a name="line431">431: </a>  <a href="../../../../../docs/manualpages/Sys/PetscContainer.html#PetscContainer">PetscContainer</a>         container;
+<a name="line432">432: </a>  MPIAIJ_MPIDense        *contents;
+<a name="line433">433: </a>  <a href="../../../../../docs/manualpages/Vec/VecScatter.html#VecScatter">VecScatter</a>             ctx   = aij-&gt;Mvctx;
+<a name="line434">434: </a>  VecScatter_MPI_General *from = (VecScatter_MPI_General*) ctx-&gt;fromdata;
+<a name="line435">435: </a>  VecScatter_MPI_General *to   = (VecScatter_MPI_General*) ctx-&gt;todata;
+<a name="line436">436: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>               m     = A-&gt;rmap-&gt;n,n=B-&gt;cmap-&gt;n;
+
+<a name="line439">439: </a>  <a href="../../../../../docs/manualpages/Mat/MatCreate.html#MatCreate">MatCreate</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)B),C);
+<a name="line440">440: </a>  <a href="../../../../../docs/manualpages/Mat/MatSetSizes.html#MatSetSizes">MatSetSizes</a>(*C,m,n,A-&gt;rmap-&gt;N,B-&gt;cmap-&gt;N);
+<a name="line441">441: </a>  <a href="../../../../../docs/manualpages/Mat/MatSetBlockSizesFromMats.html#MatSetBlockSizesFromMats">MatSetBlockSizesFromMats</a>(*C,A,B);
+<a name="line442">442: </a>  <a href="../../../../../docs/manualpages/Mat/MatSetType.html#MatSetType">MatSetType</a>(*C,MATMPIDENSE);
+<a name="line443">443: </a>  <a href="../../../../../docs/manualpages/Mat/MatMPIDenseSetPreallocation.html#MatMPIDenseSetPreallocation">MatMPIDenseSetPreallocation</a>(*C,NULL);
+<a name="line444">444: </a>  <a href="../../../../../docs/manualpages/Mat/MatAssemblyBegin.html#MatAssemblyBegin">MatAssemblyBegin</a>(*C,<a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+<a name="line445">445: </a>  <a href="../../../../../docs/manualpages/Mat/MatAssemblyEnd.html#MatAssemblyEnd">MatAssemblyEnd</a>(*C,<a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+
+<a name="line447">447: </a>  (*C)-&gt;ops-&gt;matmultnumeric = MatMatMultNumeric_MPIAIJ_MPIDense;
+
+<a name="line449">449: </a>  <a href="../../../../../docs/manualpages/Sys/PetscNew.html#PetscNew">PetscNew</a>(&amp;contents);
+<a name="line450">450: </a>  <font color="#B22222">/* Create work matrix used to store off processor rows of B needed for local product */</font>
+<a name="line451">451: </a>  <a href="../../../../../docs/manualpages/Mat/MatCreateSeqDense.html#MatCreateSeqDense">MatCreateSeqDense</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,nz,B-&gt;cmap-&gt;N,NULL,&amp;contents-&gt;workB);
+<a name="line452">452: </a>  <font color="#B22222">/* Create work arrays needed */</font>
+<a name="line453">453: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc4.html#PetscMalloc4">PetscMalloc4</a>(B-&gt;cmap-&gt;N*from-&gt;starts[from-&gt;n],&amp;contents-&gt;rvalues,
+<a name="line454">454: </a>                      B-&gt;cmap-&gt;N*to-&gt;starts[to-&gt;n],&amp;contents-&gt;svalues,
+<a name="line455">455: </a>                      from-&gt;n,&amp;contents-&gt;rwaits,
+<a name="line456">456: </a>                      to-&gt;n,&amp;contents-&gt;swaits);
+
+<a name="line458">458: </a>  <a href="../../../../../docs/manualpages/Sys/PetscContainerCreate.html#PetscContainerCreate">PetscContainerCreate</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)A),&amp;container);
+<a name="line459">459: </a>  <a href="../../../../../docs/manualpages/Sys/PetscContainerSetPointer.html#PetscContainerSetPointer">PetscContainerSetPointer</a>(container,contents);
+<a name="line460">460: </a>  <a href="../../../../../docs/manualpages/Sys/PetscContainerSetUserDestroy.html#PetscContainerSetUserDestroy">PetscContainerSetUserDestroy</a>(container,MatMPIAIJ_MPIDenseDestroy);
+<a name="line461">461: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectCompose.html#PetscObjectCompose">PetscObjectCompose</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)(*C),<font color="#666666">"workB"</font>,(<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)container);
+<a name="line462">462: </a>  <a href="../../../../../docs/manualpages/Sys/PetscContainerDestroy.html#PetscContainerDestroy">PetscContainerDestroy</a>(&amp;container);
+<a name="line463">463: </a>  <font color="#4169E1">return</font>(0);
+<a name="line464">464: </a>}
+
+<a name="line466">466: </a><font color="#B22222">/*</font>
+<a name="line467">467: </a><font color="#B22222">    Performs an efficient scatter on the rows of B needed by this process; this is</font>
+<a name="line468">468: </a><font color="#B22222">    a modification of the VecScatterBegin_() routines.</font>
+<a name="line469">469: </a><font color="#B22222">*/</font>
+<a name="line470">470: </a><strong><font color="#4169E1"><a name="MatMPIDenseScatter"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatMPIDenseScatter(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> A,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> B,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> C,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> *outworkB)</font></strong>
+<a name="line471">471: </a>{
+<a name="line472">472: </a>  Mat_MPIAIJ             *aij = (Mat_MPIAIJ*)A-&gt;data;
+<a name="line473">473: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>         ierr;
+<a name="line474">474: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>            *b,*w,*svalues,*rvalues;
+<a name="line475">475: </a>  <a href="../../../../../docs/manualpages/Vec/VecScatter.html#VecScatter">VecScatter</a>             ctx   = aij-&gt;Mvctx;
+<a name="line476">476: </a>  VecScatter_MPI_General *from = (VecScatter_MPI_General*) ctx-&gt;fromdata;
+<a name="line477">477: </a>  VecScatter_MPI_General *to   = (VecScatter_MPI_General*) ctx-&gt;todata;
+<a name="line478">478: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>               i,j,k;
+<a name="line479">479: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>               *sindices,*sstarts,*rindices,*rstarts;
+<a name="line480">480: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>            *sprocs,*rprocs,nrecvs;
+<a name="line481">481: </a>  MPI_Request            *swaits,*rwaits;
+<a name="line482">482: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a>               comm;
+<a name="line483">483: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>            tag  = ((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)ctx)-&gt;tag,ncols = B-&gt;cmap-&gt;N, nrows = aij-&gt;B-&gt;cmap-&gt;n,imdex,nrowsB = B-&gt;rmap-&gt;n;
+<a name="line484">484: </a>  MPI_Status             status;
+<a name="line485">485: </a>  MPIAIJ_MPIDense        *contents;
+<a name="line486">486: </a>  <a href="../../../../../docs/manualpages/Sys/PetscContainer.html#PetscContainer">PetscContainer</a>         container;
+<a name="line487">487: </a>  <a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>                    workB;
+
+<a name="line490">490: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectGetComm.html#PetscObjectGetComm">PetscObjectGetComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)A,&amp;comm);
+<a name="line491">491: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectQuery.html#PetscObjectQuery">PetscObjectQuery</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)C,<font color="#666666">"workB"</font>,(<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>*)&amp;container);
+<a name="line492">492: </a>  <font color="#4169E1">if</font> (!container) <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(comm,PETSC_ERR_PLIB,<font color="#666666">"Container does not exist"</font>);
+<a name="line493">493: </a>  <a href="../../../../../docs/manualpages/Sys/PetscContainerGetPointer.html#PetscContainerGetPointer">PetscContainerGetPointer</a>(container,(void**)&amp;contents);
+
+<a name="line495">495: </a>  workB = *outworkB = contents-&gt;workB;
+<a name="line496">496: </a>  <font color="#4169E1">if</font> (nrows != workB-&gt;rmap-&gt;n) <a href="../../../../../docs/manualpages/Sys/SETERRQ2.html#SETERRQ2">SETERRQ2</a>(comm,PETSC_ERR_PLIB,<font color="#666666">"Number of rows of workB %D not equal to columns of aij-&gt;B %D"</font>,nrows,workB-&gt;cmap-&gt;n);
+<a name="line497">497: </a>  sindices = to-&gt;indices;
+<a name="line498">498: </a>  sstarts  = to-&gt;starts;
+<a name="line499">499: </a>  sprocs   = to-&gt;procs;
+<a name="line500">500: </a>  swaits   = contents-&gt;swaits;
+<a name="line501">501: </a>  svalues  = contents-&gt;svalues;
+
+<a name="line503">503: </a>  rindices = from-&gt;indices;
+<a name="line504">504: </a>  rstarts  = from-&gt;starts;
+<a name="line505">505: </a>  rprocs   = from-&gt;procs;
+<a name="line506">506: </a>  rwaits   = contents-&gt;rwaits;
+<a name="line507">507: </a>  rvalues  = contents-&gt;rvalues;
+
+<a name="line509">509: </a>  <a href="../../../../../docs/manualpages/Mat/MatDenseGetArray.html#MatDenseGetArray">MatDenseGetArray</a>(B,&amp;b);
+<a name="line510">510: </a>  <a href="../../../../../docs/manualpages/Mat/MatDenseGetArray.html#MatDenseGetArray">MatDenseGetArray</a>(workB,&amp;w);
+
+<a name="line512">512: </a>  <font color="#4169E1">for</font> (i=0; i&lt;from-&gt;n; i++) {
+<a name="line513">513: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Irecv.html#MPI_Irecv">MPI_Irecv</a>(rvalues+ncols*rstarts[i],ncols*(rstarts[i+1]-rstarts[i]),<a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html#MPIU_SCALAR">MPIU_SCALAR</a>,rprocs[i],tag,comm,rwaits+i);
+<a name="line514">514: </a>  }
+
+<a name="line516">516: </a>  <font color="#4169E1">for</font> (i=0; i&lt;to-&gt;n; i++) {
+<a name="line517">517: </a>    <font color="#B22222">/* pack a message at a time */</font>
+<a name="line518">518: </a>    <font color="#4169E1">for</font> (j=0; j&lt;sstarts[i+1]-sstarts[i]; j++) {
+<a name="line519">519: </a>      <font color="#4169E1">for</font> (k=0; k&lt;ncols; k++) {
+<a name="line520">520: </a>        svalues[ncols*(sstarts[i] + j) + k] = b[sindices[sstarts[i]+j] + nrowsB*k];
+<a name="line521">521: </a>      }
+<a name="line522">522: </a>    }
+<a name="line523">523: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Isend.html#MPI_Isend">MPI_Isend</a>(svalues+ncols*sstarts[i],ncols*(sstarts[i+1]-sstarts[i]),<a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html#MPIU_SCALAR">MPIU_SCALAR</a>,sprocs[i],tag,comm,swaits+i);
+<a name="line524">524: </a>  }
+
+<a name="line526">526: </a>  nrecvs = from-&gt;n;
+<a name="line527">527: </a>  <font color="#4169E1">while</font> (nrecvs) {
+<a name="line528">528: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Waitany.html#MPI_Waitany">MPI_Waitany</a>(from-&gt;n,rwaits,&amp;imdex,&amp;status);
+<a name="line529">529: </a>    nrecvs--;
+<a name="line530">530: </a>    <font color="#B22222">/* unpack a message at a time */</font>
+<a name="line531">531: </a>    <font color="#4169E1">for</font> (j=0; j&lt;rstarts[imdex+1]-rstarts[imdex]; j++) {
+<a name="line532">532: </a>      <font color="#4169E1">for</font> (k=0; k&lt;ncols; k++) {
+<a name="line533">533: </a>        w[rindices[rstarts[imdex]+j] + nrows*k] = rvalues[ncols*(rstarts[imdex] + j) + k];
+<a name="line534">534: </a>      }
+<a name="line535">535: </a>    }
+<a name="line536">536: </a>  }
+<a name="line537">537: </a>  <font color="#4169E1">if</font> (to-&gt;n) {<a href="http://www.mpich.org/static/docs/latest/www3/MPI_Waitall.html#MPI_Waitall">MPI_Waitall</a>(to-&gt;n,swaits,to-&gt;sstatus);}
+
+<a name="line539">539: </a>  <a href="../../../../../docs/manualpages/Mat/MatDenseRestoreArray.html#MatDenseRestoreArray">MatDenseRestoreArray</a>(B,&amp;b);
+<a name="line540">540: </a>  <a href="../../../../../docs/manualpages/Mat/MatDenseRestoreArray.html#MatDenseRestoreArray">MatDenseRestoreArray</a>(workB,&amp;w);
+<a name="line541">541: </a>  <a href="../../../../../docs/manualpages/Mat/MatAssemblyBegin.html#MatAssemblyBegin">MatAssemblyBegin</a>(workB,<a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+<a name="line542">542: </a>  <a href="../../../../../docs/manualpages/Mat/MatAssemblyEnd.html#MatAssemblyEnd">MatAssemblyEnd</a>(workB,<a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+<a name="line543">543: </a>  <font color="#4169E1">return</font>(0);
+<a name="line544">544: </a>}
+<a name="line545">545: </a><strong><font color="#4169E1">extern <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatMatMultNumericAdd_SeqAIJ_SeqDense(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>)</font></strong>;
+
+<a name="line547">547: </a><strong><font color="#4169E1"><a name="MatMatMultNumeric_MPIAIJ_MPIDense"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatMatMultNumeric_MPIAIJ_MPIDense(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> A,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> B,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> C)</font></strong>
+<a name="line548">548: </a>{
+<a name="line550">550: </a>  Mat_MPIAIJ     *aij    = (Mat_MPIAIJ*)A-&gt;data;
+<a name="line551">551: </a>  Mat_MPIDense   *bdense = (Mat_MPIDense*)B-&gt;data;
+<a name="line552">552: </a>  Mat_MPIDense   *cdense = (Mat_MPIDense*)C-&gt;data;
+<a name="line553">553: </a>  <a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>            workB;
+
+<a name="line556">556: </a>  <font color="#B22222">/* diagonal block of A times all local rows of B*/</font>
+<a name="line557">557: </a>  MatMatMultNumeric_SeqAIJ_SeqDense(aij-&gt;A,bdense-&gt;A,cdense-&gt;A);
+
+<a name="line559">559: </a>  <font color="#B22222">/* get off processor parts of B needed to complete the product */</font>
+<a name="line560">560: </a>  MatMPIDenseScatter(A,B,C,&amp;workB);
+
+<a name="line562">562: </a>  <font color="#B22222">/* off-diagonal block of A times nonlocal rows of B */</font>
+<a name="line563">563: </a>  MatMatMultNumericAdd_SeqAIJ_SeqDense(aij-&gt;B,workB,cdense-&gt;A);
+<a name="line564">564: </a>  <a href="../../../../../docs/manualpages/Mat/MatAssemblyBegin.html#MatAssemblyBegin">MatAssemblyBegin</a>(C,<a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+<a name="line565">565: </a>  <a href="../../../../../docs/manualpages/Mat/MatAssemblyEnd.html#MatAssemblyEnd">MatAssemblyEnd</a>(C,<a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+<a name="line566">566: </a>  <font color="#4169E1">return</font>(0);
+<a name="line567">567: </a>}
+
+<a name="line569">569: </a><strong><font color="#4169E1"><a name="MatMatMultNumeric_MPIAIJ_MPIAIJ"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatMatMultNumeric_MPIAIJ_MPIAIJ(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> A,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> P,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> C)</font></strong>
+<a name="line570">570: </a>{
+<a name="line572">572: </a>  Mat_MPIAIJ     *a   = (Mat_MPIAIJ*)A-&gt;data,*c=(Mat_MPIAIJ*)C-&gt;data;
+<a name="line573">573: </a>  Mat_SeqAIJ     *ad  = (Mat_SeqAIJ*)(a-&gt;A)-&gt;data,*ao=(Mat_SeqAIJ*)(a-&gt;B)-&gt;data;
+<a name="line574">574: </a>  Mat_SeqAIJ     *cd  = (Mat_SeqAIJ*)(c-&gt;A)-&gt;data,*co=(Mat_SeqAIJ*)(c-&gt;B)-&gt;data;
+<a name="line575">575: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       *adi = ad-&gt;i,*adj,*aoi=ao-&gt;i,*aoj;
+<a name="line576">576: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>    *ada,*aoa,*cda=cd-&gt;a,*coa=co-&gt;a;
+<a name="line577">577: </a>  Mat_SeqAIJ     *p_loc,*p_oth;
+<a name="line578">578: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       *pi_loc,*pj_loc,*pi_oth,*pj_oth,*pj;
+<a name="line579">579: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>    *pa_loc,*pa_oth,*pa,valtmp,*ca;
+<a name="line580">580: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       cm          = C-&gt;rmap-&gt;n,anz,pnz;
+<a name="line581">581: </a>  Mat_PtAPMPI    *ptap       = c-&gt;ptap;
+<a name="line582">582: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>    *apa_sparse = ptap-&gt;apa;
+<a name="line583">583: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       *api,*apj,*apJ,i,j,k,row;
+<a name="line584">584: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       cstart = C-&gt;cmap-&gt;rstart;
+<a name="line585">585: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       cdnz,conz,k0,k1,nextp;
+<a name="line586">586: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a>       comm;
+<a name="line587">587: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>    size;
+
+<a name="line590">590: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectGetComm.html#PetscObjectGetComm">PetscObjectGetComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)A,&amp;comm);
+<a name="line591">591: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm,&amp;size);
+
+<a name="line593">593: </a>  <font color="#B22222">/* 1) get P_oth = ptap-&gt;P_oth  and P_loc = ptap-&gt;P_loc */</font>
+<a name="line594">594: </a>  <font color="#B22222">/*-----------------------------------------------------*/</font>
+<a name="line595">595: </a>  <font color="#B22222">/* update numerical values of P_oth and P_loc */</font>
+<a name="line596">596: </a>  MatGetBrowsOfAoCols_MPIAIJ(A,P,<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MAT_REUSE_MATRIX</a>,&amp;ptap-&gt;startsj_s,&amp;ptap-&gt;startsj_r,&amp;ptap-&gt;bufa,&amp;ptap-&gt;P_oth);
+<a name="line597">597: </a>  <a href="../../../../../docs/manualpages/Mat/MatMPIAIJGetLocalMat.html#MatMPIAIJGetLocalMat">MatMPIAIJGetLocalMat</a>(P,<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MAT_REUSE_MATRIX</a>,&amp;ptap-&gt;P_loc);
+
+<a name="line599">599: </a>  <font color="#B22222">/* 2) compute numeric C_loc = A_loc*P = Ad*P_loc + Ao*P_oth */</font>
+<a name="line600">600: </a>  <font color="#B22222">/*----------------------------------------------------------*/</font>
+<a name="line601">601: </a>  <font color="#B22222">/* get data from symbolic products */</font>
+<a name="line602">602: </a>  p_loc = (Mat_SeqAIJ*)(ptap-&gt;P_loc)-&gt;data;
+<a name="line603">603: </a>  pi_loc = p_loc-&gt;i; pj_loc = p_loc-&gt;j; pa_loc = p_loc-&gt;a;
+<a name="line604">604: </a>  <font color="#4169E1">if</font> (size &gt;1) {
+<a name="line605">605: </a>    p_oth = (Mat_SeqAIJ*)(ptap-&gt;P_oth)-&gt;data;
+<a name="line606">606: </a>    pi_oth = p_oth-&gt;i; pj_oth = p_oth-&gt;j; pa_oth = p_oth-&gt;a;
+<a name="line607">607: </a>  } <font color="#4169E1">else</font> {
+<a name="line608">608: </a>    p_oth = NULL; pi_oth = NULL; pj_oth = NULL; pa_oth = NULL;
+<a name="line609">609: </a>  }
+
+<a name="line611">611: </a>  api = ptap-&gt;api;
+<a name="line612">612: </a>  apj = ptap-&gt;apj;
+<a name="line613">613: </a>  <font color="#4169E1">for</font> (i=0; i&lt;cm; i++) {
+<a name="line614">614: </a>    apJ = apj + api[i];
+
+<a name="line616">616: </a>    <font color="#B22222">/* diagonal portion of A */</font>
+<a name="line617">617: </a>    anz = adi[i+1] - adi[i];
+<a name="line618">618: </a>    adj = ad-&gt;j + adi[i];
+<a name="line619">619: </a>    ada = ad-&gt;a + adi[i];
+<a name="line620">620: </a>    <font color="#4169E1">for</font> (j=0; j&lt;anz; j++) {
+<a name="line621">621: </a>      row = adj[j];
+<a name="line622">622: </a>      pnz = pi_loc[row+1] - pi_loc[row];
+<a name="line623">623: </a>      pj  = pj_loc + pi_loc[row];
+<a name="line624">624: </a>      pa  = pa_loc + pi_loc[row];
+<a name="line625">625: </a>      <font color="#B22222">/* perform sparse axpy */</font>
+<a name="line626">626: </a>      valtmp = ada[j];
+<a name="line627">627: </a>      nextp  = 0;
+<a name="line628">628: </a>      <font color="#4169E1">for</font> (k=0; nextp&lt;pnz; k++) {
+<a name="line629">629: </a>        <font color="#4169E1">if</font> (apJ[k] == pj[nextp]) { <font color="#B22222">/* column of AP == column of P */</font>
+<a name="line630">630: </a>          apa_sparse[k] += valtmp*pa[nextp++];
+<a name="line631">631: </a>        }
+<a name="line632">632: </a>      }
+<a name="line633">633: </a>      <a href="../../../../../docs/manualpages/Profiling/PetscLogFlops.html#PetscLogFlops">PetscLogFlops</a>(2.0*pnz);
+<a name="line634">634: </a>    }
+
+<a name="line636">636: </a>    <font color="#B22222">/* off-diagonal portion of A */</font>
+<a name="line637">637: </a>    anz = aoi[i+1] - aoi[i];
+<a name="line638">638: </a>    aoj = ao-&gt;j + aoi[i];
+<a name="line639">639: </a>    aoa = ao-&gt;a + aoi[i];
+<a name="line640">640: </a>    <font color="#4169E1">for</font> (j=0; j&lt;anz; j++) {
+<a name="line641">641: </a>      row = aoj[j];
+<a name="line642">642: </a>      pnz = pi_oth[row+1] - pi_oth[row];
+<a name="line643">643: </a>      pj  = pj_oth + pi_oth[row];
+<a name="line644">644: </a>      pa  = pa_oth + pi_oth[row];
+<a name="line645">645: </a>      <font color="#B22222">/* perform sparse axpy */</font>
+<a name="line646">646: </a>      valtmp = aoa[j];
+<a name="line647">647: </a>      nextp  = 0;
+<a name="line648">648: </a>      <font color="#4169E1">for</font> (k=0; nextp&lt;pnz; k++) {
+<a name="line649">649: </a>        <font color="#4169E1">if</font> (apJ[k] == pj[nextp]) { <font color="#B22222">/* column of AP == column of P */</font>
+<a name="line650">650: </a>          apa_sparse[k] += valtmp*pa[nextp++];
+<a name="line651">651: </a>        }
+<a name="line652">652: </a>      }
+<a name="line653">653: </a>      <a href="../../../../../docs/manualpages/Profiling/PetscLogFlops.html#PetscLogFlops">PetscLogFlops</a>(2.0*pnz);
+<a name="line654">654: </a>    }
+
+<a name="line656">656: </a>    <font color="#B22222">/* set values in C */</font>
+<a name="line657">657: </a>    cdnz = cd-&gt;i[i+1] - cd-&gt;i[i];
+<a name="line658">658: </a>    conz = co-&gt;i[i+1] - co-&gt;i[i];
+
+<a name="line660">660: </a>    <font color="#B22222">/* 1st off-diagoanl part of C */</font>
+<a name="line661">661: </a>    ca = coa + co-&gt;i[i];
+<a name="line662">662: </a>    k  = 0;
+<a name="line663">663: </a>    <font color="#4169E1">for</font> (k0=0; k0&lt;conz; k0++) {
+<a name="line664">664: </a>      <font color="#4169E1">if</font> (apJ[k] &gt;= cstart) <font color="#4169E1">break</font>;
+<a name="line665">665: </a>      ca[k0]        = apa_sparse[k];
+<a name="line666">666: </a>      apa_sparse[k] = 0.0;
+<a name="line667">667: </a>      k++;
+<a name="line668">668: </a>    }
+
+<a name="line670">670: </a>    <font color="#B22222">/* diagonal part of C */</font>
+<a name="line671">671: </a>    ca = cda + cd-&gt;i[i];
+<a name="line672">672: </a>    <font color="#4169E1">for</font> (k1=0; k1&lt;cdnz; k1++) {
+<a name="line673">673: </a>      ca[k1]        = apa_sparse[k];
+<a name="line674">674: </a>      apa_sparse[k] = 0.0;
+<a name="line675">675: </a>      k++;
+<a name="line676">676: </a>    }
+
+<a name="line678">678: </a>    <font color="#B22222">/* 2nd off-diagoanl part of C */</font>
+<a name="line679">679: </a>    ca = coa + co-&gt;i[i];
+<a name="line680">680: </a>    <font color="#4169E1">for</font> (; k0&lt;conz; k0++) {
+<a name="line681">681: </a>      ca[k0]        = apa_sparse[k];
+<a name="line682">682: </a>      apa_sparse[k] = 0.0;
+<a name="line683">683: </a>      k++;
+<a name="line684">684: </a>    }
+<a name="line685">685: </a>  }
+<a name="line686">686: </a>  <a href="../../../../../docs/manualpages/Mat/MatAssemblyBegin.html#MatAssemblyBegin">MatAssemblyBegin</a>(C,<a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+<a name="line687">687: </a>  <a href="../../../../../docs/manualpages/Mat/MatAssemblyEnd.html#MatAssemblyEnd">MatAssemblyEnd</a>(C,<a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+<a name="line688">688: </a>  <font color="#4169E1">return</font>(0);
+<a name="line689">689: </a>}
+
+<a name="line691">691: </a><font color="#B22222">/* same as MatMatMultSymbolic_MPIAIJ_MPIAIJ_nonscalable(), except using LLCondensed to avoid O(BN) memory requirement */</font>
+<a name="line692">692: </a><strong><font color="#4169E1"><a name="MatMatMultSymbolic_MPIAIJ_MPIAIJ"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatMatMultSymbolic_MPIAIJ_MPIAIJ(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> A,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> P,<a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> fill,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> *C)</font></strong>
+<a name="line693">693: </a>{
+<a name="line694">694: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>     ierr;
+<a name="line695">695: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a>           comm;
+<a name="line696">696: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>        size;
+<a name="line697">697: </a>  <a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>                Cmpi;
+<a name="line698">698: </a>  Mat_PtAPMPI        *ptap;
+<a name="line699">699: </a>  PetscFreeSpaceList free_space = NULL,current_space=NULL;
+<a name="line700">700: </a>  Mat_MPIAIJ         *a         = (Mat_MPIAIJ*)A-&gt;data,*c;
+<a name="line701">701: </a>  Mat_SeqAIJ         *ad        = (Mat_SeqAIJ*)(a-&gt;A)-&gt;data,*ao=(Mat_SeqAIJ*)(a-&gt;B)-&gt;data,*p_loc,*p_oth;
+<a name="line702">702: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>           *pi_loc,*pj_loc,*pi_oth,*pj_oth,*dnz,*onz;
+<a name="line703">703: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>           *adi=ad-&gt;i,*adj=ad-&gt;j,*aoi=ao-&gt;i,*aoj=ao-&gt;j,rstart=A-&gt;rmap-&gt;rstart;
+<a name="line704">704: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>           i,pnz,row,*api,*apj,*Jptr,apnz,nspacedouble=0,j,nzi,*lnk,apnz_max;
+<a name="line705">705: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>           am=A-&gt;rmap-&gt;n,pN=P-&gt;cmap-&gt;N,pn=P-&gt;cmap-&gt;n,pm=P-&gt;rmap-&gt;n;
+<a name="line706">706: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>          afill;
+<a name="line707">707: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>        *apa;
+<a name="line708">708: </a>  PetscTable         ta;
+
+<a name="line711">711: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectGetComm.html#PetscObjectGetComm">PetscObjectGetComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)A,&amp;comm);
+<a name="line712">712: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm,&amp;size);
+
+<a name="line714">714: </a>  <font color="#B22222">/* create struct Mat_PtAPMPI and attached it to C later */</font>
+<a name="line715">715: </a>  <a href="../../../../../docs/manualpages/Sys/PetscNew.html#PetscNew">PetscNew</a>(&amp;ptap);
+
+<a name="line717">717: </a>  <font color="#B22222">/* get P_oth by taking rows of P (= non-zero cols of local A) from other processors */</font>
+<a name="line718">718: </a>  MatGetBrowsOfAoCols_MPIAIJ(A,P,<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MAT_INITIAL_MATRIX</a>,&amp;ptap-&gt;startsj_s,&amp;ptap-&gt;startsj_r,&amp;ptap-&gt;bufa,&amp;ptap-&gt;P_oth);
+
+<a name="line720">720: </a>  <font color="#B22222">/* get P_loc by taking all local rows of P */</font>
+<a name="line721">721: </a>  <a href="../../../../../docs/manualpages/Mat/MatMPIAIJGetLocalMat.html#MatMPIAIJGetLocalMat">MatMPIAIJGetLocalMat</a>(P,<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MAT_INITIAL_MATRIX</a>,&amp;ptap-&gt;P_loc);
+
+<a name="line723">723: </a>  p_loc  = (Mat_SeqAIJ*)(ptap-&gt;P_loc)-&gt;data;
+<a name="line724">724: </a>  pi_loc = p_loc-&gt;i; pj_loc = p_loc-&gt;j;
+<a name="line725">725: </a>  <font color="#4169E1">if</font> (size &gt; 1) {
+<a name="line726">726: </a>    p_oth  = (Mat_SeqAIJ*)(ptap-&gt;P_oth)-&gt;data;
+<a name="line727">727: </a>    pi_oth = p_oth-&gt;i; pj_oth = p_oth-&gt;j;
+<a name="line728">728: </a>  } <font color="#4169E1">else</font> {
+<a name="line729">729: </a>    p_oth  = NULL;
+<a name="line730">730: </a>    pi_oth = NULL; pj_oth = NULL;
+<a name="line731">731: </a>  }
+
+<a name="line733">733: </a>  <font color="#B22222">/* first, compute symbolic AP = A_loc*P = A_diag*P_loc + A_off*P_oth */</font>
+<a name="line734">734: </a>  <font color="#B22222">/*-------------------------------------------------------------------*/</font>
+<a name="line735">735: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(am+2,&amp;api);
+<a name="line736">736: </a>  ptap-&gt;api = api;
+<a name="line737">737: </a>  api[0]    = 0;
+
+<a name="line739">739: </a>  <font color="#B22222">/* create and initialize a linked list */</font>
+<a name="line740">740: </a>  PetscTableCreate(pn,pN,&amp;ta);
+
+<a name="line742">742: </a>  <font color="#B22222">/* Calculate apnz_max */</font>
+<a name="line743">743: </a>  apnz_max = 0;
+<a name="line744">744: </a>  <font color="#4169E1">for</font> (i=0; i&lt;am; i++) {
+<a name="line745">745: </a>    PetscTableRemoveAll(ta);
+<a name="line746">746: </a>    <font color="#B22222">/* diagonal portion of A */</font>
+<a name="line747">747: </a>    nzi  = adi[i+1] - adi[i];
+<a name="line748">748: </a>    Jptr = adj+adi[i];  <font color="#B22222">/* cols of A_diag */</font>
+<a name="line749">749: </a>    MatMergeRows_SeqAIJ(p_loc,nzi,Jptr,ta);
+<a name="line750">750: </a>    PetscTableGetCount(ta,&amp;apnz);
+<a name="line751">751: </a>    <font color="#4169E1">if</font> (apnz_max &lt; apnz) apnz_max = apnz;
+
+<a name="line753">753: </a>    <font color="#B22222">/*  off-diagonal portion of A */</font>
+<a name="line754">754: </a>    nzi = aoi[i+1] - aoi[i];
+<a name="line755">755: </a>    Jptr = aoj+aoi[i];  <font color="#B22222">/* cols of A_off */</font>
+<a name="line756">756: </a>    MatMergeRows_SeqAIJ(p_oth,nzi,Jptr,ta);
+<a name="line757">757: </a>    PetscTableGetCount(ta,&amp;apnz);
+<a name="line758">758: </a>    <font color="#4169E1">if</font> (apnz_max &lt; apnz) apnz_max = apnz;
+<a name="line759">759: </a>  }
+<a name="line760">760: </a>  PetscTableDestroy(&amp;ta);
+
+<a name="line762">762: </a>  PetscLLCondensedCreate_Scalable(apnz_max,&amp;lnk);
+
+<a name="line764">764: </a>  <font color="#B22222">/* Initial FreeSpace size is fill*(nnz(A)+nnz(P)) */</font>
+<a name="line765">765: </a>  PetscFreeSpaceGet(<a href="../../../../../docs/manualpages/Sys/PetscRealIntMultTruncate.html#PetscRealIntMultTruncate">PetscRealIntMultTruncate</a>(fill,<a href="../../../../../docs/manualpages/Sys/PetscIntSumTruncate.html#PetscIntSumTruncate">PetscIntSumTruncate</a>(adi[am],<a href="../../../../../docs/manualpages/Sys/PetscIntSumTruncate.html#PetscIntSumTruncate">PetscIntSumTruncate</a>(aoi[am],pi_loc[pm]))),&amp;free_space);
+<a name="line766">766: </a>  current_space = free_space;
+<a name="line767">767: </a>  <a href="../../../../../docs/manualpages/Mat/MatPreallocateInitialize.html#MatPreallocateInitialize">MatPreallocateInitialize</a>(comm,am,pn,dnz,onz);
+<a name="line768">768: </a>  <font color="#4169E1">for</font> (i=0; i&lt;am; i++) {
+<a name="line769">769: </a>    <font color="#B22222">/* diagonal portion of A */</font>
+<a name="line770">770: </a>    nzi = adi[i+1] - adi[i];
+<a name="line771">771: </a>    <font color="#4169E1">for</font> (j=0; j&lt;nzi; j++) {
+<a name="line772">772: </a>      row  = *adj++;
+<a name="line773">773: </a>      pnz  = pi_loc[row+1] - pi_loc[row];
+<a name="line774">774: </a>      Jptr = pj_loc + pi_loc[row];
+<a name="line775">775: </a>      <font color="#B22222">/* add non-zero cols of P into the sorted linked list lnk */</font>
+<a name="line776">776: </a>      PetscLLCondensedAddSorted_Scalable(pnz,Jptr,lnk);
+<a name="line777">777: </a>    }
+<a name="line778">778: </a>    <font color="#B22222">/* off-diagonal portion of A */</font>
+<a name="line779">779: </a>    nzi = aoi[i+1] - aoi[i];
+<a name="line780">780: </a>    <font color="#4169E1">for</font> (j=0; j&lt;nzi; j++) {
+<a name="line781">781: </a>      row  = *aoj++;
+<a name="line782">782: </a>      pnz  = pi_oth[row+1] - pi_oth[row];
+<a name="line783">783: </a>      Jptr = pj_oth + pi_oth[row];
+<a name="line784">784: </a>      PetscLLCondensedAddSorted_Scalable(pnz,Jptr,lnk);
+<a name="line785">785: </a>    }
+
+<a name="line787">787: </a>    apnz     = *lnk;
+<a name="line788">788: </a>    api[i+1] = api[i] + apnz;
+
+<a name="line790">790: </a>    <font color="#B22222">/* if free space is not available, double the total space in the list */</font>
+<a name="line791">791: </a>    <font color="#4169E1">if</font> (current_space-&gt;local_remaining&lt;apnz) {
+<a name="line792">792: </a>      PetscFreeSpaceGet(<a href="../../../../../docs/manualpages/Sys/PetscIntSumTruncate.html#PetscIntSumTruncate">PetscIntSumTruncate</a>(apnz,current_space-&gt;total_array_size),&amp;current_space);
+<a name="line793">793: </a>      nspacedouble++;
+<a name="line794">794: </a>    }
+
+<a name="line796">796: </a>    <font color="#B22222">/* Copy data into free space, then initialize lnk */</font>
+<a name="line797">797: </a>    PetscLLCondensedClean_Scalable(apnz,current_space-&gt;array,lnk);
+<a name="line798">798: </a>    <a href="../../../../../docs/manualpages/Mat/MatPreallocateSet.html#MatPreallocateSet">MatPreallocateSet</a>(i+rstart,apnz,current_space-&gt;array,dnz,onz);
+
+<a name="line800">800: </a>    current_space-&gt;array           += apnz;
+<a name="line801">801: </a>    current_space-&gt;local_used      += apnz;
+<a name="line802">802: </a>    current_space-&gt;local_remaining -= apnz;
+<a name="line803">803: </a>  }
+
+<a name="line805">805: </a>  <font color="#B22222">/* Allocate space for apj, initialize apj, and */</font>
+<a name="line806">806: </a>  <font color="#B22222">/* destroy list of free space and other temporary array(s) */</font>
+<a name="line807">807: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(api[am]+1,&amp;ptap-&gt;apj);
+<a name="line808">808: </a>  apj  = ptap-&gt;apj;
+<a name="line809">809: </a>  PetscFreeSpaceContiguous(&amp;free_space,ptap-&gt;apj);
+<a name="line810">810: </a>  PetscLLCondensedDestroy_Scalable(lnk);
+
+<a name="line812">812: </a>  <font color="#B22222">/* create and assemble symbolic parallel matrix Cmpi */</font>
+<a name="line813">813: </a>  <font color="#B22222">/*----------------------------------------------------*/</font>
+<a name="line814">814: </a>  <a href="../../../../../docs/manualpages/Mat/MatCreate.html#MatCreate">MatCreate</a>(comm,&amp;Cmpi);
+<a name="line815">815: </a>  <a href="../../../../../docs/manualpages/Mat/MatSetSizes.html#MatSetSizes">MatSetSizes</a>(Cmpi,am,pn,<a href="../../../../../docs/manualpages/Sys/PETSC_DETERMINE.html#PETSC_DETERMINE">PETSC_DETERMINE</a>,<a href="../../../../../docs/manualpages/Sys/PETSC_DETERMINE.html#PETSC_DETERMINE">PETSC_DETERMINE</a>);
+<a name="line816">816: </a>  <a href="../../../../../docs/manualpages/Mat/MatSetBlockSizesFromMats.html#MatSetBlockSizesFromMats">MatSetBlockSizesFromMats</a>(Cmpi,A,P);
+<a name="line817">817: </a>  <a href="../../../../../docs/manualpages/Mat/MatSetType.html#MatSetType">MatSetType</a>(Cmpi,<a href="../../../../../docs/manualpages/Mat/MATMPIAIJ.html#MATMPIAIJ">MATMPIAIJ</a>);
+<a name="line818">818: </a>  <a href="../../../../../docs/manualpages/Mat/MatMPIAIJSetPreallocation.html#MatMPIAIJSetPreallocation">MatMPIAIJSetPreallocation</a>(Cmpi,0,dnz,0,onz);
+<a name="line819">819: </a>  <a href="../../../../../docs/manualpages/Mat/MatPreallocateFinalize.html#MatPreallocateFinalize">MatPreallocateFinalize</a>(dnz,onz);
+
+<a name="line821">821: </a>  <font color="#B22222">/* malloc apa for assembly Cmpi */</font>
+<a name="line822">822: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCalloc1.html#PetscCalloc1">PetscCalloc1</a>(apnz_max,&amp;apa);
+
+<a name="line824">824: </a>  ptap-&gt;apa = apa;
+<a name="line825">825: </a>  <font color="#4169E1">for</font> (i=0; i&lt;am; i++) {
+<a name="line826">826: </a>    row  = i + rstart;
+<a name="line827">827: </a>    apnz = api[i+1] - api[i];
+<a name="line828">828: </a>    <a href="../../../../../docs/manualpages/Mat/MatSetValues.html#MatSetValues">MatSetValues</a>(Cmpi,1,&amp;row,apnz,apj,apa,<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>);
+<a name="line829">829: </a>    apj += apnz;
+<a name="line830">830: </a>  }
+<a name="line831">831: </a>  <a href="../../../../../docs/manualpages/Mat/MatAssemblyBegin.html#MatAssemblyBegin">MatAssemblyBegin</a>(Cmpi,<a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+<a name="line832">832: </a>  <a href="../../../../../docs/manualpages/Mat/MatAssemblyEnd.html#MatAssemblyEnd">MatAssemblyEnd</a>(Cmpi,<a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+
+<a name="line834">834: </a>  ptap-&gt;destroy             = Cmpi-&gt;ops-&gt;destroy;
+<a name="line835">835: </a>  ptap-&gt;duplicate           = Cmpi-&gt;ops-&gt;duplicate;
+<a name="line836">836: </a>  Cmpi-&gt;ops-&gt;matmultnumeric = MatMatMultNumeric_MPIAIJ_MPIAIJ;
+<a name="line837">837: </a>  Cmpi-&gt;ops-&gt;destroy        = MatDestroy_MPIAIJ_MatMatMult;
+<a name="line838">838: </a>  Cmpi-&gt;ops-&gt;duplicate      = MatDuplicate_MPIAIJ_MatMatMult;
+
+<a name="line840">840: </a>  <font color="#B22222">/* attach the supporting struct to Cmpi for reuse */</font>
+<a name="line841">841: </a>  c       = (Mat_MPIAIJ*)Cmpi-&gt;data;
+<a name="line842">842: </a>  c-&gt;ptap = ptap;
+
+<a name="line844">844: </a>  *C = Cmpi;
+
+<a name="line846">846: </a>  <font color="#B22222">/* set <a href="../../../../../docs/manualpages/Mat/MatInfo.html#MatInfo">MatInfo</a> */</font>
+<a name="line847">847: </a>  afill = (<a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>)api[am]/(adi[am]+aoi[am]+pi_loc[pm]+1) + 1.e-5;
+<a name="line848">848: </a>  <font color="#4169E1">if</font> (afill &lt; 1.0) afill = 1.0;
+<a name="line849">849: </a>  Cmpi-&gt;info.mallocs           = nspacedouble;
+<a name="line850">850: </a>  Cmpi-&gt;info.fill_ratio_given  = fill;
+<a name="line851">851: </a>  Cmpi-&gt;info.fill_ratio_needed = afill;
+
+<a name="line853">853: </a><font color="#A020F0">#if defined(PETSC_USE_INFO)</font>
+<a name="line854">854: </a>  <font color="#4169E1">if</font> (api[am]) {
+<a name="line855">855: </a>    PetscInfo3(Cmpi,<font color="#666666">"Reallocs %D; Fill ratio: given %g needed %g.\n"</font>,nspacedouble,(double)fill,(double)afill);
+<a name="line856">856: </a>    PetscInfo1(Cmpi,<font color="#666666">"Use <a href="../../../../../docs/manualpages/Mat/MatMatMult.html#MatMatMult">MatMatMult</a>(A,B,<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MatReuse</a>,%g,&amp;C) for best performance.;\n"</font>,(double)afill);
+<a name="line857">857: </a>  } <font color="#4169E1">else</font> {
+<a name="line858">858: </a>    <a href="../../../../../docs/manualpages/Profiling/PetscInfo.html#PetscInfo">PetscInfo</a>(Cmpi,<font color="#666666">"Empty matrix product\n"</font>);
+<a name="line859">859: </a>  }
+<a name="line860">860: </a><font color="#A020F0">#endif</font>
+<a name="line861">861: </a>  <font color="#4169E1">return</font>(0);
+<a name="line862">862: </a>}
+
+<a name="line864">864: </a><font color="#B22222">/*-------------------------------------------------------------------------*/</font>
+<a name="line865">865: </a><strong><font color="#4169E1"><a name="MatTransposeMatMult_MPIAIJ_MPIAIJ"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatTransposeMatMult_MPIAIJ_MPIAIJ(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> P,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> A,<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MatReuse</a> scall,<a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> fill,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> *C)</font></strong>
+<a name="line866">866: </a>{
+<a name="line868">868: </a>  const char     *algTypes[3] = {<font color="#666666">"scalable"</font>,<font color="#666666">"nonscalable"</font>,<font color="#666666">"matmatmult"</font>};
+<a name="line869">869: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       alg=0; <font color="#B22222">/* set default algorithm */</font>
+
+<a name="line872">872: </a>  <font color="#4169E1">if</font> (scall == <a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MAT_INITIAL_MATRIX</a>) {
+<a name="line873">873: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectOptionsBegin.html#PetscObjectOptionsBegin">PetscObjectOptionsBegin</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)A);
+<a name="line874">874: </a>    PetscOptionsObject-&gt;alreadyprinted = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>; <font color="#B22222">/* a hack to ensure the option shows in '-help' */</font>
+<a name="line875">875: </a>    <a href="../../../../../docs/manualpages/Sys/PetscOptionsEList.html#PetscOptionsEList">PetscOptionsEList</a>(<font color="#666666">"-mattransposematmult_via"</font>,<font color="#666666">"Algorithmic approach"</font>,<font color="#666666">"<a href="../../../../../docs/manualpages/Mat/MatTransposeMatMult.html#MatTransposeMatMult">MatTransposeMatMult</a>"</font>,algTypes,3,algTypes[0],&amp;alg,NULL);
+<a name="line876">876: </a>    <a href="../../../../../docs/manualpages/Sys/PetscOptionsEnd.html#PetscOptionsEnd">PetscOptionsEnd</a>();
+
+<a name="line878">878: </a>    <a href="../../../../../docs/manualpages/Profiling/PetscLogEventBegin.html#PetscLogEventBegin">PetscLogEventBegin</a>(MAT_TransposeMatMultSymbolic,P,A,0,0);
+<a name="line879">879: </a>    <font color="#4169E1">switch</font> (alg) {
+<a name="line880">880: </a>    <font color="#4169E1">case</font> 1:
+<a name="line881">881: </a>      MatTransposeMatMultSymbolic_MPIAIJ_MPIAIJ_nonscalable(P,A,fill,C);
+<a name="line882">882: </a>      <font color="#4169E1">break</font>;
+<a name="line883">883: </a>    <font color="#4169E1">case</font> 2:
+<a name="line884">884: </a>    {
+<a name="line885">885: </a>      <a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>         Pt;
+<a name="line886">886: </a>      Mat_PtAPMPI *ptap;
+<a name="line887">887: </a>      Mat_MPIAIJ  *c;
+<a name="line888">888: </a>      <a href="../../../../../docs/manualpages/Mat/MatTranspose.html#MatTranspose">MatTranspose</a>(P,<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MAT_INITIAL_MATRIX</a>,&amp;Pt);
+<a name="line889">889: </a>      <a href="../../../../../docs/manualpages/Mat/MatMatMult.html#MatMatMult">MatMatMult</a>(Pt,A,<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MAT_INITIAL_MATRIX</a>,fill,C);
+<a name="line890">890: </a>      c        = (Mat_MPIAIJ*)(*C)-&gt;data;
+<a name="line891">891: </a>      ptap     = c-&gt;ptap;
+<a name="line892">892: </a>      ptap-&gt;Pt = Pt;
+<a name="line893">893: </a>      (*C)-&gt;ops-&gt;mattransposemultnumeric = MatTransposeMatMultNumeric_MPIAIJ_MPIAIJ_matmatmult;
+<a name="line894">894: </a>      <font color="#4169E1">return</font>(0);
+<a name="line895">895: </a>    }
+<a name="line896">896: </a>      <font color="#4169E1">break</font>;
+<a name="line897">897: </a><strong><font color="#FF0000">    default:</font></strong>
+<a name="line898">898: </a>      MatTransposeMatMultSymbolic_MPIAIJ_MPIAIJ(P,A,fill,C);
+<a name="line899">899: </a>      <font color="#4169E1">break</font>;
+<a name="line900">900: </a>    }
+<a name="line901">901: </a>    <a href="../../../../../docs/manualpages/Profiling/PetscLogEventEnd.html#PetscLogEventEnd">PetscLogEventEnd</a>(MAT_TransposeMatMultSymbolic,P,A,0,0);
+<a name="line902">902: </a>  }
+<a name="line903">903: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscLogEventBegin.html#PetscLogEventBegin">PetscLogEventBegin</a>(MAT_TransposeMatMultNumeric,P,A,0,0);
+<a name="line904">904: </a>  (*(*C)-&gt;ops-&gt;mattransposemultnumeric)(P,A,*C);
+<a name="line905">905: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscLogEventEnd.html#PetscLogEventEnd">PetscLogEventEnd</a>(MAT_TransposeMatMultNumeric,P,A,0,0);
+<a name="line906">906: </a>  <font color="#4169E1">return</font>(0);
+<a name="line907">907: </a>}
+
+<a name="line909">909: </a><font color="#B22222">/* This routine only works when scall=<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MAT_REUSE_MATRIX</a>! */</font>
+<a name="line910">910: </a><strong><font color="#4169E1"><a name="MatTransposeMatMultNumeric_MPIAIJ_MPIAIJ_matmatmult"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatTransposeMatMultNumeric_MPIAIJ_MPIAIJ_matmatmult(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> P,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> A,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> C)</font></strong>
+<a name="line911">911: </a>{
+<a name="line913">913: </a>  Mat_MPIAIJ     *c=(Mat_MPIAIJ*)C-&gt;data;
+<a name="line914">914: </a>  Mat_PtAPMPI    *ptap= c-&gt;ptap;
+<a name="line915">915: </a>  <a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>            Pt=ptap-&gt;Pt;
+
+<a name="line918">918: </a>  <a href="../../../../../docs/manualpages/Mat/MatTranspose.html#MatTranspose">MatTranspose</a>(P,<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MAT_REUSE_MATRIX</a>,&amp;Pt);
+<a name="line919">919: </a>  <a href="../../../../../docs/manualpages/Mat/MatMatMultNumeric.html#MatMatMultNumeric">MatMatMultNumeric</a>(Pt,A,C);
+<a name="line920">920: </a>  <font color="#4169E1">return</font>(0);
+<a name="line921">921: </a>}
+
+<a name="line923">923: </a><font color="#B22222">/* Non-scalable version, use dense axpy */</font>
+<a name="line924">924: </a><strong><font color="#4169E1"><a name="MatTransposeMatMultNumeric_MPIAIJ_MPIAIJ_nonscalable"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatTransposeMatMultNumeric_MPIAIJ_MPIAIJ_nonscalable(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> P,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> A,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> C)</font></strong>
+<a name="line925">925: </a>{
+<a name="line926">926: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>      ierr;
+<a name="line927">927: </a>  Mat_Merge_SeqsToMPI *merge;
+<a name="line928">928: </a>  Mat_MPIAIJ          *p =(Mat_MPIAIJ*)P-&gt;data,*c=(Mat_MPIAIJ*)C-&gt;data;
+<a name="line929">929: </a>  Mat_SeqAIJ          *pd=(Mat_SeqAIJ*)(p-&gt;A)-&gt;data,*po=(Mat_SeqAIJ*)(p-&gt;B)-&gt;data;
+<a name="line930">930: </a>  Mat_PtAPMPI         *ptap;
+<a name="line931">931: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            *adj,*aJ;
+<a name="line932">932: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            i,j,k,anz,pnz,row,*cj;
+<a name="line933">933: </a>  MatScalar           *ada,*aval,*ca,valtmp;
+<a name="line934">934: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            am  =A-&gt;rmap-&gt;n,cm=C-&gt;rmap-&gt;n,pon=(p-&gt;B)-&gt;cmap-&gt;n;
+<a name="line935">935: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a>            comm;
+<a name="line936">936: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>         size,rank,taga,*len_s;
+<a name="line937">937: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            *owners,proc,nrows,**buf_ri_k,**nextrow,**nextci;
+<a name="line938">938: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            **buf_ri,**buf_rj;
+<a name="line939">939: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            cnz=0,*bj_i,*bi,*bj,bnz,nextcj;  <font color="#B22222">/* bi,bj,ba: local array of C(mpi mat) */</font>
+<a name="line940">940: </a>  MPI_Request         *s_waits,*r_waits;
+<a name="line941">941: </a>  MPI_Status          *status;
+<a name="line942">942: </a>  MatScalar           **abuf_r,*ba_i,*pA,*coa,*ba;
+<a name="line943">943: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            *ai,*aj,*coi,*coj;
+<a name="line944">944: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            *poJ,*pdJ;
+<a name="line945">945: </a>  <a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>                 A_loc;
+<a name="line946">946: </a>  Mat_SeqAIJ          *a_loc;
+
+<a name="line949">949: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectGetComm.html#PetscObjectGetComm">PetscObjectGetComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)C,&amp;comm);
+<a name="line950">950: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm,&amp;size);
+<a name="line951">951: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm,&amp;rank);
+
+<a name="line953">953: </a>  ptap  = c-&gt;ptap;
+<a name="line954">954: </a>  merge = ptap-&gt;merge;
+
+<a name="line956">956: </a>  <font color="#B22222">/* 2) compute numeric C_seq = P_loc^T*A_loc*P - dominating part */</font>
+<a name="line957">957: </a>  <font color="#B22222">/*--------------------------------------------------------------*/</font>
+<a name="line958">958: </a>  <font color="#B22222">/* get data from symbolic products */</font>
+<a name="line959">959: </a>  coi  = merge-&gt;coi; coj = merge-&gt;coj;
+<a name="line960">960: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCalloc1.html#PetscCalloc1">PetscCalloc1</a>(coi[pon]+1,&amp;coa);
+
+<a name="line962">962: </a>  bi     = merge-&gt;bi; bj = merge-&gt;bj;
+<a name="line963">963: </a>  owners = merge-&gt;rowmap-&gt;range;
+<a name="line964">964: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCalloc1.html#PetscCalloc1">PetscCalloc1</a>(bi[cm]+1,&amp;ba);
+
+<a name="line966">966: </a>  <font color="#B22222">/* get A_loc by taking all local rows of A */</font>
+<a name="line967">967: </a>  A_loc = ptap-&gt;A_loc;
+<a name="line968">968: </a>  <a href="../../../../../docs/manualpages/Mat/MatMPIAIJGetLocalMat.html#MatMPIAIJGetLocalMat">MatMPIAIJGetLocalMat</a>(A,<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MAT_REUSE_MATRIX</a>,&amp;A_loc);
+<a name="line969">969: </a>  a_loc = (Mat_SeqAIJ*)(A_loc)-&gt;data;
+<a name="line970">970: </a>  ai    = a_loc-&gt;i;
+<a name="line971">971: </a>  aj    = a_loc-&gt;j;
+
+<a name="line973">973: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCalloc1.html#PetscCalloc1">PetscCalloc1</a>(A-&gt;cmap-&gt;N,&amp;aval); <font color="#B22222">/* non-scalable!!! */</font>
+
+<a name="line975">975: </a>  <font color="#4169E1">for</font> (i=0; i&lt;am; i++) {
+<a name="line976">976: </a>    <font color="#B22222">/* 2-a) put A[i,:] to dense array aval */</font>
+<a name="line977">977: </a>    anz = ai[i+1] - ai[i];
+<a name="line978">978: </a>    adj = aj + ai[i];
+<a name="line979">979: </a>    ada = a_loc-&gt;a + ai[i];
+<a name="line980">980: </a>    <font color="#4169E1">for</font> (j=0; j&lt;anz; j++) {
+<a name="line981">981: </a>      aval[adj[j]] = ada[j];
+<a name="line982">982: </a>    }
+
+<a name="line984">984: </a>    <font color="#B22222">/* 2-b) Compute Cseq = P_loc[i,:]^T*A[i,:] using outer product */</font>
+<a name="line985">985: </a>    <font color="#B22222">/*--------------------------------------------------------------*/</font>
+<a name="line986">986: </a>    <font color="#B22222">/* put the value into Co=(p-&gt;B)^T*A (off-diagonal part, send to others) */</font>
+<a name="line987">987: </a>    pnz = po-&gt;i[i+1] - po-&gt;i[i];
+<a name="line988">988: </a>    poJ = po-&gt;j + po-&gt;i[i];
+<a name="line989">989: </a>    pA  = po-&gt;a + po-&gt;i[i];
+<a name="line990">990: </a>    <font color="#4169E1">for</font> (j=0; j&lt;pnz; j++) {
+<a name="line991">991: </a>      row = poJ[j];
+<a name="line992">992: </a>      cnz = coi[row+1] - coi[row];
+<a name="line993">993: </a>      cj  = coj + coi[row];
+<a name="line994">994: </a>      ca  = coa + coi[row];
+<a name="line995">995: </a>      <font color="#B22222">/* perform dense axpy */</font>
+<a name="line996">996: </a>      valtmp = pA[j];
+<a name="line997">997: </a>      <font color="#4169E1">for</font> (k=0; k&lt;cnz; k++) {
+<a name="line998">998: </a>        ca[k] += valtmp*aval[cj[k]];
+<a name="line999">999: </a>      }
+<a name="line1000">1000: </a>      <a href="../../../../../docs/manualpages/Profiling/PetscLogFlops.html#PetscLogFlops">PetscLogFlops</a>(2.0*cnz);
+<a name="line1001">1001: </a>    }
+
+<a name="line1003">1003: </a>    <font color="#B22222">/* put the value into Cd (diagonal part) */</font>
+<a name="line1004">1004: </a>    pnz = pd-&gt;i[i+1] - pd-&gt;i[i];
+<a name="line1005">1005: </a>    pdJ = pd-&gt;j + pd-&gt;i[i];
+<a name="line1006">1006: </a>    pA  = pd-&gt;a + pd-&gt;i[i];
+<a name="line1007">1007: </a>    <font color="#4169E1">for</font> (j=0; j&lt;pnz; j++) {
+<a name="line1008">1008: </a>      row = pdJ[j];
+<a name="line1009">1009: </a>      cnz = bi[row+1] - bi[row];
+<a name="line1010">1010: </a>      cj  = bj + bi[row];
+<a name="line1011">1011: </a>      ca  = ba + bi[row];
+<a name="line1012">1012: </a>      <font color="#B22222">/* perform dense axpy */</font>
+<a name="line1013">1013: </a>      valtmp = pA[j];
+<a name="line1014">1014: </a>      <font color="#4169E1">for</font> (k=0; k&lt;cnz; k++) {
+<a name="line1015">1015: </a>        ca[k] += valtmp*aval[cj[k]];
+<a name="line1016">1016: </a>      }
+<a name="line1017">1017: </a>      <a href="../../../../../docs/manualpages/Profiling/PetscLogFlops.html#PetscLogFlops">PetscLogFlops</a>(2.0*cnz);
+<a name="line1018">1018: </a>    }
+
+<a name="line1020">1020: </a>    <font color="#B22222">/* zero the current row of Pt*A */</font>
+<a name="line1021">1021: </a>    aJ = aj + ai[i];
+<a name="line1022">1022: </a>    <font color="#4169E1">for</font> (k=0; k&lt;anz; k++) aval[aJ[k]] = 0.0;
+<a name="line1023">1023: </a>  }
+
+<a name="line1025">1025: </a>  <font color="#B22222">/* 3) send and recv matrix values coa */</font>
+<a name="line1026">1026: </a>  <font color="#B22222">/*------------------------------------*/</font>
+<a name="line1027">1027: </a>  buf_ri = merge-&gt;buf_ri;
+<a name="line1028">1028: </a>  buf_rj = merge-&gt;buf_rj;
+<a name="line1029">1029: </a>  len_s  = merge-&gt;len_s;
+<a name="line1030">1030: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCommGetNewTag.html#PetscCommGetNewTag">PetscCommGetNewTag</a>(comm,&amp;taga);
+<a name="line1031">1031: </a>  PetscPostIrecvScalar(comm,taga,merge-&gt;nrecv,merge-&gt;id_r,merge-&gt;len_r,&amp;abuf_r,&amp;r_waits);
+
+<a name="line1033">1033: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc2.html#PetscMalloc2">PetscMalloc2</a>(merge-&gt;nsend+1,&amp;s_waits,size,&amp;status);
+<a name="line1034">1034: </a>  <font color="#4169E1">for</font> (proc=0,k=0; proc&lt;size; proc++) {
+<a name="line1035">1035: </a>    <font color="#4169E1">if</font> (!len_s[proc]) <font color="#4169E1">continue</font>;
+<a name="line1036">1036: </a>    i    = merge-&gt;owners_co[proc];
+<a name="line1037">1037: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Isend.html#MPI_Isend">MPI_Isend</a>(coa+coi[i],len_s[proc],MPIU_MATSCALAR,proc,taga,comm,s_waits+k);
+<a name="line1038">1038: </a>    k++;
+<a name="line1039">1039: </a>  }
+<a name="line1040">1040: </a>  <font color="#4169E1">if</font> (merge-&gt;nrecv) {<a href="http://www.mpich.org/static/docs/latest/www3/MPI_Waitall.html#MPI_Waitall">MPI_Waitall</a>(merge-&gt;nrecv,r_waits,status);}
+<a name="line1041">1041: </a>  <font color="#4169E1">if</font> (merge-&gt;nsend) {<a href="http://www.mpich.org/static/docs/latest/www3/MPI_Waitall.html#MPI_Waitall">MPI_Waitall</a>(merge-&gt;nsend,s_waits,status);}
+
+<a name="line1043">1043: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree2.html#PetscFree2">PetscFree2</a>(s_waits,status);
+<a name="line1044">1044: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(r_waits);
+<a name="line1045">1045: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(coa);
+
+<a name="line1047">1047: </a>  <font color="#B22222">/* 4) insert local Cseq and received values into Cmpi */</font>
+<a name="line1048">1048: </a>  <font color="#B22222">/*----------------------------------------------------*/</font>
+<a name="line1049">1049: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc3.html#PetscMalloc3">PetscMalloc3</a>(merge-&gt;nrecv,&amp;buf_ri_k,merge-&gt;nrecv,&amp;nextrow,merge-&gt;nrecv,&amp;nextci);
+<a name="line1050">1050: </a>  <font color="#4169E1">for</font> (k=0; k&lt;merge-&gt;nrecv; k++) {
+<a name="line1051">1051: </a>    buf_ri_k[k] = buf_ri[k]; <font color="#B22222">/* beginning of k-th recved i-structure */</font>
+<a name="line1052">1052: </a>    nrows       = *(buf_ri_k[k]);
+<a name="line1053">1053: </a>    nextrow[k]  = buf_ri_k[k]+1;  <font color="#B22222">/* next row number of k-th recved i-structure */</font>
+<a name="line1054">1054: </a>    nextci[k]   = buf_ri_k[k] + (nrows + 1); <font color="#B22222">/* poins to the next i-structure of k-th recved i-structure  */</font>
+<a name="line1055">1055: </a>  }
+
+<a name="line1057">1057: </a>  <font color="#4169E1">for</font> (i=0; i&lt;cm; i++) {
+<a name="line1058">1058: </a>    row  = owners[rank] + i; <font color="#B22222">/* global row index of C_seq */</font>
+<a name="line1059">1059: </a>    bj_i = bj + bi[i];  <font color="#B22222">/* col indices of the i-th row of C */</font>
+<a name="line1060">1060: </a>    ba_i = ba + bi[i];
+<a name="line1061">1061: </a>    bnz  = bi[i+1] - bi[i];
+<a name="line1062">1062: </a>    <font color="#B22222">/* add received vals into ba */</font>
+<a name="line1063">1063: </a>    <font color="#4169E1">for</font> (k=0; k&lt;merge-&gt;nrecv; k++) { <font color="#B22222">/* k-th received message */</font>
+<a name="line1064">1064: </a>      <font color="#B22222">/* i-th row */</font>
+<a name="line1065">1065: </a>      <font color="#4169E1">if</font> (i == *nextrow[k]) {
+<a name="line1066">1066: </a>        cnz    = *(nextci[k]+1) - *nextci[k];
+<a name="line1067">1067: </a>        cj     = buf_rj[k] + *(nextci[k]);
+<a name="line1068">1068: </a>        ca     = abuf_r[k] + *(nextci[k]);
+<a name="line1069">1069: </a>        nextcj = 0;
+<a name="line1070">1070: </a>        <font color="#4169E1">for</font> (j=0; nextcj&lt;cnz; j++) {
+<a name="line1071">1071: </a>          <font color="#4169E1">if</font> (bj_i[j] == cj[nextcj]) { <font color="#B22222">/* bcol == ccol */</font>
+<a name="line1072">1072: </a>            ba_i[j] += ca[nextcj++];
+<a name="line1073">1073: </a>          }
+<a name="line1074">1074: </a>        }
+<a name="line1075">1075: </a>        nextrow[k]++; nextci[k]++;
+<a name="line1076">1076: </a>        <a href="../../../../../docs/manualpages/Profiling/PetscLogFlops.html#PetscLogFlops">PetscLogFlops</a>(2.0*cnz);
+<a name="line1077">1077: </a>      }
+<a name="line1078">1078: </a>    }
+<a name="line1079">1079: </a>    <a href="../../../../../docs/manualpages/Mat/MatSetValues.html#MatSetValues">MatSetValues</a>(C,1,&amp;row,bnz,bj_i,ba_i,<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>);
+<a name="line1080">1080: </a>  }
+<a name="line1081">1081: </a>  <a href="../../../../../docs/manualpages/Mat/MatAssemblyBegin.html#MatAssemblyBegin">MatAssemblyBegin</a>(C,<a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+<a name="line1082">1082: </a>  <a href="../../../../../docs/manualpages/Mat/MatAssemblyEnd.html#MatAssemblyEnd">MatAssemblyEnd</a>(C,<a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+
+<a name="line1084">1084: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(ba);
+<a name="line1085">1085: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(abuf_r[0]);
+<a name="line1086">1086: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(abuf_r);
+<a name="line1087">1087: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree3.html#PetscFree3">PetscFree3</a>(buf_ri_k,nextrow,nextci);
+<a name="line1088">1088: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(aval);
+<a name="line1089">1089: </a>  <font color="#4169E1">return</font>(0);
+<a name="line1090">1090: </a>}
+
+<a name="line1092">1092: </a><strong><font color="#4169E1"><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatDuplicate_MPIAIJ_MatPtAP(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>, <a href="../../../../../docs/manualpages/Mat/MatDuplicateOption.html#MatDuplicateOption">MatDuplicateOption</a>,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>*)</font></strong>;
+<a name="line1093">1093: </a><font color="#B22222">/* This routine is modified from MatPtAPSymbolic_MPIAIJ_MPIAIJ() */</font>
+<a name="line1094">1094: </a><strong><font color="#4169E1"><a name="MatTransposeMatMultSymbolic_MPIAIJ_MPIAIJ_nonscalable"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatTransposeMatMultSymbolic_MPIAIJ_MPIAIJ_nonscalable(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> P,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> A,<a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> fill,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> *C)</font></strong>
+<a name="line1095">1095: </a>{
+<a name="line1096">1096: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>      ierr;
+<a name="line1097">1097: </a>  <a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>                 Cmpi,A_loc,POt,PDt;
+<a name="line1098">1098: </a>  Mat_PtAPMPI         *ptap;
+<a name="line1099">1099: </a>  PetscFreeSpaceList  free_space=NULL,current_space=NULL;
+<a name="line1100">1100: </a>  Mat_MPIAIJ          *p        =(Mat_MPIAIJ*)P-&gt;data,*c;
+<a name="line1101">1101: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            *pdti,*pdtj,*poti,*potj,*ptJ;
+<a name="line1102">1102: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            nnz;
+<a name="line1103">1103: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            *lnk,*owners_co,*coi,*coj,i,k,pnz,row;
+<a name="line1104">1104: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            am=A-&gt;rmap-&gt;n,pn=P-&gt;cmap-&gt;n;
+<a name="line1105">1105: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBT.html#PetscBT">PetscBT</a>             lnkbt;
+<a name="line1106">1106: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a>            comm;
+<a name="line1107">1107: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>         size,rank,tagi,tagj,*len_si,*len_s,*len_ri;
+<a name="line1108">1108: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            **buf_rj,**buf_ri,**buf_ri_k;
+<a name="line1109">1109: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            len,proc,*dnz,*onz,*owners;
+<a name="line1110">1110: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            nzi,*bi,*bj;
+<a name="line1111">1111: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            nrows,*buf_s,*buf_si,*buf_si_i,**nextrow,**nextci;
+<a name="line1112">1112: </a>  MPI_Request         *swaits,*rwaits;
+<a name="line1113">1113: </a>  MPI_Status          *sstatus,rstatus;
+<a name="line1114">1114: </a>  Mat_Merge_SeqsToMPI *merge;
+<a name="line1115">1115: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            *ai,*aj,*Jptr,anz,*prmap=p-&gt;garray,pon,nspacedouble=0,j;
+<a name="line1116">1116: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>           afill  =1.0,afill_tmp;
+<a name="line1117">1117: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            rstart = P-&gt;cmap-&gt;rstart,rmax,aN=A-&gt;cmap-&gt;N;
+<a name="line1118">1118: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>         *vals;
+<a name="line1119">1119: </a>  Mat_SeqAIJ          *a_loc, *pdt,*pot;
+
+<a name="line1122">1122: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectGetComm.html#PetscObjectGetComm">PetscObjectGetComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)A,&amp;comm);
+<a name="line1123">1123: </a>  <font color="#B22222">/* check if matrix local sizes are compatible */</font>
+<a name="line1124">1124: </a>  <font color="#4169E1">if</font> (A-&gt;rmap-&gt;rstart != P-&gt;rmap-&gt;rstart || A-&gt;rmap-&gt;rend != P-&gt;rmap-&gt;rend) <a href="../../../../../docs/manualpages/Sys/SETERRQ4.html#SETERRQ4">SETERRQ4</a>(comm,PETSC_ERR_ARG_SIZ,<font color="#666666">"Matrix local dimensions are incompatible, A (%D, %D) != P (%D,%D)"</font>,A-&gt;rmap-&gt;rstart,A-&gt;rmap-&gt;rend,P-&gt;rmap-&gt;rstart,P-&gt;rmap-&gt;rend);
+
+<a name="line1126">1126: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm,&amp;size);
+<a name="line1127">1127: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm,&amp;rank);
+
+<a name="line1129">1129: </a>  <font color="#B22222">/* create struct Mat_PtAPMPI and attached it to C later */</font>
+<a name="line1130">1130: </a>  <a href="../../../../../docs/manualpages/Sys/PetscNew.html#PetscNew">PetscNew</a>(&amp;ptap);
+
+<a name="line1132">1132: </a>  <font color="#B22222">/* get A_loc by taking all local rows of A */</font>
+<a name="line1133">1133: </a>  <a href="../../../../../docs/manualpages/Mat/MatMPIAIJGetLocalMat.html#MatMPIAIJGetLocalMat">MatMPIAIJGetLocalMat</a>(A,<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MAT_INITIAL_MATRIX</a>,&amp;A_loc);
+
+<a name="line1135">1135: </a>  ptap-&gt;A_loc = A_loc;
+
+<a name="line1137">1137: </a>  a_loc = (Mat_SeqAIJ*)(A_loc)-&gt;data;
+<a name="line1138">1138: </a>  ai    = a_loc-&gt;i;
+<a name="line1139">1139: </a>  aj    = a_loc-&gt;j;
+
+<a name="line1141">1141: </a>  <font color="#B22222">/* determine symbolic Co=(p-&gt;B)^T*A - send to others */</font>
+<a name="line1142">1142: </a>  <font color="#B22222">/*----------------------------------------------------*/</font>
+<a name="line1143">1143: </a>  MatTransposeSymbolic_SeqAIJ(p-&gt;A,&amp;PDt);
+<a name="line1144">1144: </a>  pdt  = (Mat_SeqAIJ*)PDt-&gt;data;
+<a name="line1145">1145: </a>  pdti = pdt-&gt;i; pdtj = pdt-&gt;j;
+
+<a name="line1147">1147: </a>  MatTransposeSymbolic_SeqAIJ(p-&gt;B,&amp;POt);
+<a name="line1148">1148: </a>  pot  = (Mat_SeqAIJ*)POt-&gt;data;
+<a name="line1149">1149: </a>  poti = pot-&gt;i; potj = pot-&gt;j;
+
+<a name="line1151">1151: </a>  <font color="#B22222">/* then, compute symbolic Co = (p-&gt;B)^T*A */</font>
+<a name="line1152">1152: </a>  pon    = (p-&gt;B)-&gt;cmap-&gt;n; <font color="#B22222">/* total num of rows to be sent to other processors &gt;= (num of nonzero rows of C_seq) - pn */</font>
+<a name="line1153">1153: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(pon+1,&amp;coi);
+<a name="line1154">1154: </a>  coi[0] = 0;
+
+<a name="line1156">1156: </a>  <font color="#B22222">/* set initial free space to be fill*(nnz(p-&gt;B) + nnz(A)) */</font>
+<a name="line1157">1157: </a>  nnz           = <a href="../../../../../docs/manualpages/Sys/PetscRealIntMultTruncate.html#PetscRealIntMultTruncate">PetscRealIntMultTruncate</a>(fill,<a href="../../../../../docs/manualpages/Sys/PetscIntSumTruncate.html#PetscIntSumTruncate">PetscIntSumTruncate</a>(poti[pon],ai[am]));
+<a name="line1158">1158: </a>  PetscFreeSpaceGet(nnz,&amp;free_space);
+<a name="line1159">1159: </a>  current_space = free_space;
+
+<a name="line1161">1161: </a>  <font color="#B22222">/* create and initialize a linked list */</font>
+<a name="line1162">1162: </a>  PetscLLCondensedCreate(aN,aN,&amp;lnk,&amp;lnkbt);
+
+<a name="line1164">1164: </a>  <font color="#4169E1">for</font> (i=0; i&lt;pon; i++) {
+<a name="line1165">1165: </a>    pnz = poti[i+1] - poti[i];
+<a name="line1166">1166: </a>    ptJ = potj + poti[i];
+<a name="line1167">1167: </a>    <font color="#4169E1">for</font> (j=0; j&lt;pnz; j++) {
+<a name="line1168">1168: </a>      row  = ptJ[j]; <font color="#B22222">/* row of A_loc == col of Pot */</font>
+<a name="line1169">1169: </a>      anz  = ai[row+1] - ai[row];
+<a name="line1170">1170: </a>      Jptr = aj + ai[row];
+<a name="line1171">1171: </a>      <font color="#B22222">/* add non-zero cols of AP into the sorted linked list lnk */</font>
+<a name="line1172">1172: </a>      PetscLLCondensedAddSorted(anz,Jptr,lnk,lnkbt);
+<a name="line1173">1173: </a>    }
+<a name="line1174">1174: </a>    nnz = lnk[0];
+
+<a name="line1176">1176: </a>    <font color="#B22222">/* If free space is not available, double the total space in the list */</font>
+<a name="line1177">1177: </a>    <font color="#4169E1">if</font> (current_space-&gt;local_remaining&lt;nnz) {
+<a name="line1178">1178: </a>      PetscFreeSpaceGet(<a href="../../../../../docs/manualpages/Sys/PetscIntSumTruncate.html#PetscIntSumTruncate">PetscIntSumTruncate</a>(nnz,current_space-&gt;total_array_size),&amp;current_space);
+<a name="line1179">1179: </a>      nspacedouble++;
+<a name="line1180">1180: </a>    }
+
+<a name="line1182">1182: </a>    <font color="#B22222">/* Copy data into free space, and zero out denserows */</font>
+<a name="line1183">1183: </a>    PetscLLCondensedClean(aN,nnz,current_space-&gt;array,lnk,lnkbt);
+
+<a name="line1185">1185: </a>    current_space-&gt;array           += nnz;
+<a name="line1186">1186: </a>    current_space-&gt;local_used      += nnz;
+<a name="line1187">1187: </a>    current_space-&gt;local_remaining -= nnz;
+
+<a name="line1189">1189: </a>    coi[i+1] = coi[i] + nnz;
+<a name="line1190">1190: </a>  }
+
+<a name="line1192">1192: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(coi[pon]+1,&amp;coj);
+<a name="line1193">1193: </a>  PetscFreeSpaceContiguous(&amp;free_space,coj);
+
+<a name="line1195">1195: </a>  afill_tmp = (<a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>)coi[pon]/(poti[pon] + ai[am]+1);
+<a name="line1196">1196: </a>  <font color="#4169E1">if</font> (afill_tmp &gt; afill) afill = afill_tmp;
+
+<a name="line1198">1198: </a>  <font color="#B22222">/* send j-array (coj) of Co to other processors */</font>
+<a name="line1199">1199: </a>  <font color="#B22222">/*----------------------------------------------*/</font>
+<a name="line1200">1200: </a>  <font color="#B22222">/* determine row ownership */</font>
+<a name="line1201">1201: </a>  <a href="../../../../../docs/manualpages/Sys/PetscNew.html#PetscNew">PetscNew</a>(&amp;merge);
+<a name="line1202">1202: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutCreate.html#PetscLayoutCreate">PetscLayoutCreate</a>(comm,&amp;merge-&gt;rowmap);
+
+<a name="line1204">1204: </a>  merge-&gt;rowmap-&gt;n  = pn;
+<a name="line1205">1205: </a>  merge-&gt;rowmap-&gt;bs = 1;
+
+<a name="line1207">1207: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutSetUp.html#PetscLayoutSetUp">PetscLayoutSetUp</a>(merge-&gt;rowmap);
+<a name="line1208">1208: </a>  owners = merge-&gt;rowmap-&gt;range;
+
+<a name="line1210">1210: </a>  <font color="#B22222">/* determine the number of messages to send, their lengths */</font>
+<a name="line1211">1211: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCalloc1.html#PetscCalloc1">PetscCalloc1</a>(size,&amp;len_si);
+<a name="line1212">1212: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(size,&amp;merge-&gt;len_s);
+
+<a name="line1214">1214: </a>  len_s        = merge-&gt;len_s;
+<a name="line1215">1215: </a>  merge-&gt;nsend = 0;
+
+<a name="line1217">1217: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(size+2,&amp;owners_co);
+<a name="line1218">1218: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMemzero.html#PetscMemzero">PetscMemzero</a>(len_s,size*<font color="#4169E1">sizeof</font>(<a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>));
+
+<a name="line1220">1220: </a>  proc = 0;
+<a name="line1221">1221: </a>  <font color="#4169E1">for</font> (i=0; i&lt;pon; i++) {
+<a name="line1222">1222: </a>    <font color="#4169E1">while</font> (prmap[i] &gt;= owners[proc+1]) proc++;
+<a name="line1223">1223: </a>    len_si[proc]++;  <font color="#B22222">/* num of rows in Co to be sent to [proc] */</font>
+<a name="line1224">1224: </a>    len_s[proc] += coi[i+1] - coi[i];
+<a name="line1225">1225: </a>  }
+
+<a name="line1227">1227: </a>  len          = 0; <font color="#B22222">/* max length of buf_si[] */</font>
+<a name="line1228">1228: </a>  owners_co[0] = 0;
+<a name="line1229">1229: </a>  <font color="#4169E1">for</font> (proc=0; proc&lt;size; proc++) {
+<a name="line1230">1230: </a>    owners_co[proc+1] = owners_co[proc] + len_si[proc];
+<a name="line1231">1231: </a>    <font color="#4169E1">if</font> (len_si[proc]) {
+<a name="line1232">1232: </a>      merge-&gt;nsend++;
+<a name="line1233">1233: </a>      len_si[proc] = 2*(len_si[proc] + 1);
+<a name="line1234">1234: </a>      len         += len_si[proc];
+<a name="line1235">1235: </a>    }
+<a name="line1236">1236: </a>  }
+
+<a name="line1238">1238: </a>  <font color="#B22222">/* determine the number and length of messages to receive for coi and coj  */</font>
+<a name="line1239">1239: </a>  <a href="../../../../../docs/manualpages/Sys/PetscGatherNumberOfMessages.html#PetscGatherNumberOfMessages">PetscGatherNumberOfMessages</a>(comm,NULL,len_s,&amp;merge-&gt;nrecv);
+<a name="line1240">1240: </a>  <a href="../../../../../docs/manualpages/Sys/PetscGatherMessageLengths2.html#PetscGatherMessageLengths2">PetscGatherMessageLengths2</a>(comm,merge-&gt;nsend,merge-&gt;nrecv,len_s,len_si,&amp;merge-&gt;id_r,&amp;merge-&gt;len_r,&amp;len_ri);
+
+<a name="line1242">1242: </a>  <font color="#B22222">/* post the Irecv and Isend of coj */</font>
+<a name="line1243">1243: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCommGetNewTag.html#PetscCommGetNewTag">PetscCommGetNewTag</a>(comm,&amp;tagj);
+<a name="line1244">1244: </a>  PetscPostIrecvInt(comm,tagj,merge-&gt;nrecv,merge-&gt;id_r,merge-&gt;len_r,&amp;buf_rj,&amp;rwaits);
+<a name="line1245">1245: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(merge-&gt;nsend+1,&amp;swaits);
+<a name="line1246">1246: </a>  <font color="#4169E1">for</font> (proc=0, k=0; proc&lt;size; proc++) {
+<a name="line1247">1247: </a>    <font color="#4169E1">if</font> (!len_s[proc]) <font color="#4169E1">continue</font>;
+<a name="line1248">1248: </a>    i    = owners_co[proc];
+<a name="line1249">1249: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Isend.html#MPI_Isend">MPI_Isend</a>(coj+coi[i],len_s[proc],MPIU_INT,proc,tagj,comm,swaits+k);
+<a name="line1250">1250: </a>    k++;
+<a name="line1251">1251: </a>  }
+
+<a name="line1253">1253: </a>  <font color="#B22222">/* receives and sends of coj are complete */</font>
+<a name="line1254">1254: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(size,&amp;sstatus);
+<a name="line1255">1255: </a>  <font color="#4169E1">for</font> (i=0; i&lt;merge-&gt;nrecv; i++) {
+<a name="line1256">1256: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> icompleted;
+<a name="line1257">1257: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Waitany.html#MPI_Waitany">MPI_Waitany</a>(merge-&gt;nrecv,rwaits,&amp;icompleted,&amp;rstatus);
+<a name="line1258">1258: </a>  }
+<a name="line1259">1259: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(rwaits);
+<a name="line1260">1260: </a>  <font color="#4169E1">if</font> (merge-&gt;nsend) {<a href="http://www.mpich.org/static/docs/latest/www3/MPI_Waitall.html#MPI_Waitall">MPI_Waitall</a>(merge-&gt;nsend,swaits,sstatus);}
+
+<a name="line1262">1262: </a>  <font color="#B22222">/* send and recv coi */</font>
+<a name="line1263">1263: </a>  <font color="#B22222">/*-------------------*/</font>
+<a name="line1264">1264: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCommGetNewTag.html#PetscCommGetNewTag">PetscCommGetNewTag</a>(comm,&amp;tagi);
+<a name="line1265">1265: </a>  PetscPostIrecvInt(comm,tagi,merge-&gt;nrecv,merge-&gt;id_r,len_ri,&amp;buf_ri,&amp;rwaits);
+<a name="line1266">1266: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(len+1,&amp;buf_s);
+<a name="line1267">1267: </a>  buf_si = buf_s;  <font color="#B22222">/* points to the beginning of k-th msg to be sent */</font>
+<a name="line1268">1268: </a>  <font color="#4169E1">for</font> (proc=0,k=0; proc&lt;size; proc++) {
+<a name="line1269">1269: </a>    <font color="#4169E1">if</font> (!len_s[proc]) <font color="#4169E1">continue</font>;
+<a name="line1270">1270: </a>    <font color="#B22222">/* form outgoing message for i-structure:</font>
+<a name="line1271">1271: </a><font color="#B22222">         buf_si[0]:                 nrows to be sent</font>
+<a name="line1272">1272: </a><font color="#B22222">               [1:nrows]:           row index (global)</font>
+<a name="line1273">1273: </a><font color="#B22222">               [nrows+1:2*nrows+1]: i-structure index</font>
+<a name="line1274">1274: </a><font color="#B22222">    */</font>
+<a name="line1275">1275: </a>    <font color="#B22222">/*-------------------------------------------*/</font>
+<a name="line1276">1276: </a>    nrows       = len_si[proc]/2 - 1;
+<a name="line1277">1277: </a>    buf_si_i    = buf_si + nrows+1;
+<a name="line1278">1278: </a>    buf_si[0]   = nrows;
+<a name="line1279">1279: </a>    buf_si_i[0] = 0;
+<a name="line1280">1280: </a>    nrows       = 0;
+<a name="line1281">1281: </a>    <font color="#4169E1">for</font> (i=owners_co[proc]; i&lt;owners_co[proc+1]; i++) {
+<a name="line1282">1282: </a>      nzi               = coi[i+1] - coi[i];
+<a name="line1283">1283: </a>      buf_si_i[nrows+1] = buf_si_i[nrows] + nzi; <font color="#B22222">/* i-structure */</font>
+<a name="line1284">1284: </a>      buf_si[nrows+1]   = prmap[i] -owners[proc]; <font color="#B22222">/* local row index */</font>
+<a name="line1285">1285: </a>      nrows++;
+<a name="line1286">1286: </a>    }
+<a name="line1287">1287: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Isend.html#MPI_Isend">MPI_Isend</a>(buf_si,len_si[proc],MPIU_INT,proc,tagi,comm,swaits+k);
+<a name="line1288">1288: </a>    k++;
+<a name="line1289">1289: </a>    buf_si += len_si[proc];
+<a name="line1290">1290: </a>  }
+<a name="line1291">1291: </a>  i = merge-&gt;nrecv;
+<a name="line1292">1292: </a>  <font color="#4169E1">while</font> (i--) {
+<a name="line1293">1293: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> icompleted;
+<a name="line1294">1294: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Waitany.html#MPI_Waitany">MPI_Waitany</a>(merge-&gt;nrecv,rwaits,&amp;icompleted,&amp;rstatus);
+<a name="line1295">1295: </a>  }
+<a name="line1296">1296: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(rwaits);
+<a name="line1297">1297: </a>  <font color="#4169E1">if</font> (merge-&gt;nsend) {<a href="http://www.mpich.org/static/docs/latest/www3/MPI_Waitall.html#MPI_Waitall">MPI_Waitall</a>(merge-&gt;nsend,swaits,sstatus);}
+<a name="line1298">1298: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(len_si);
+<a name="line1299">1299: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(len_ri);
+<a name="line1300">1300: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(swaits);
+<a name="line1301">1301: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(sstatus);
+<a name="line1302">1302: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(buf_s);
+
+<a name="line1304">1304: </a>  <font color="#B22222">/* compute the local portion of C (mpi mat) */</font>
+<a name="line1305">1305: </a>  <font color="#B22222">/*------------------------------------------*/</font>
+<a name="line1306">1306: </a>  <font color="#B22222">/* allocate bi array and free space for accumulating nonzero column info */</font>
+<a name="line1307">1307: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(pn+1,&amp;bi);
+<a name="line1308">1308: </a>  bi[0] = 0;
+
+<a name="line1310">1310: </a>  <font color="#B22222">/* set initial free space to be fill*(nnz(P) + nnz(A)) */</font>
+<a name="line1311">1311: </a>  nnz           = <a href="../../../../../docs/manualpages/Sys/PetscRealIntMultTruncate.html#PetscRealIntMultTruncate">PetscRealIntMultTruncate</a>(fill,<a href="../../../../../docs/manualpages/Sys/PetscIntSumTruncate.html#PetscIntSumTruncate">PetscIntSumTruncate</a>(pdti[pn],<a href="../../../../../docs/manualpages/Sys/PetscIntSumTruncate.html#PetscIntSumTruncate">PetscIntSumTruncate</a>(poti[pon],ai[am])));
+<a name="line1312">1312: </a>  PetscFreeSpaceGet(nnz,&amp;free_space);
+<a name="line1313">1313: </a>  current_space = free_space;
+
+<a name="line1315">1315: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc3.html#PetscMalloc3">PetscMalloc3</a>(merge-&gt;nrecv,&amp;buf_ri_k,merge-&gt;nrecv,&amp;nextrow,merge-&gt;nrecv,&amp;nextci);
+<a name="line1316">1316: </a>  <font color="#4169E1">for</font> (k=0; k&lt;merge-&gt;nrecv; k++) {
+<a name="line1317">1317: </a>    buf_ri_k[k] = buf_ri[k]; <font color="#B22222">/* beginning of k-th recved i-structure */</font>
+<a name="line1318">1318: </a>    nrows       = *buf_ri_k[k];
+<a name="line1319">1319: </a>    nextrow[k]  = buf_ri_k[k] + 1;  <font color="#B22222">/* next row number of k-th recved i-structure */</font>
+<a name="line1320">1320: </a>    nextci[k]   = buf_ri_k[k] + (nrows + 1); <font color="#B22222">/* poins to the next i-structure of k-th recved i-structure  */</font>
+<a name="line1321">1321: </a>  }
+
+<a name="line1323">1323: </a>  <a href="../../../../../docs/manualpages/Mat/MatPreallocateInitialize.html#MatPreallocateInitialize">MatPreallocateInitialize</a>(comm,pn,A-&gt;cmap-&gt;n,dnz,onz);
+<a name="line1324">1324: </a>  rmax = 0;
+<a name="line1325">1325: </a>  <font color="#4169E1">for</font> (i=0; i&lt;pn; i++) {
+<a name="line1326">1326: </a>    <font color="#B22222">/* add pdt[i,:]*AP into lnk */</font>
+<a name="line1327">1327: </a>    pnz = pdti[i+1] - pdti[i];
+<a name="line1328">1328: </a>    ptJ = pdtj + pdti[i];
+<a name="line1329">1329: </a>    <font color="#4169E1">for</font> (j=0; j&lt;pnz; j++) {
+<a name="line1330">1330: </a>      row  = ptJ[j];  <font color="#B22222">/* row of AP == col of Pt */</font>
+<a name="line1331">1331: </a>      anz  = ai[row+1] - ai[row];
+<a name="line1332">1332: </a>      Jptr = aj + ai[row];
+<a name="line1333">1333: </a>      <font color="#B22222">/* add non-zero cols of AP into the sorted linked list lnk */</font>
+<a name="line1334">1334: </a>      PetscLLCondensedAddSorted(anz,Jptr,lnk,lnkbt);
+<a name="line1335">1335: </a>    }
+
+<a name="line1337">1337: </a>    <font color="#B22222">/* add received col data into lnk */</font>
+<a name="line1338">1338: </a>    <font color="#4169E1">for</font> (k=0; k&lt;merge-&gt;nrecv; k++) { <font color="#B22222">/* k-th received message */</font>
+<a name="line1339">1339: </a>      <font color="#4169E1">if</font> (i == *nextrow[k]) { <font color="#B22222">/* i-th row */</font>
+<a name="line1340">1340: </a>        nzi  = *(nextci[k]+1) - *nextci[k];
+<a name="line1341">1341: </a>        Jptr = buf_rj[k] + *nextci[k];
+<a name="line1342">1342: </a>        PetscLLCondensedAddSorted(nzi,Jptr,lnk,lnkbt);
+<a name="line1343">1343: </a>        nextrow[k]++; nextci[k]++;
+<a name="line1344">1344: </a>      }
+<a name="line1345">1345: </a>    }
+<a name="line1346">1346: </a>    nnz = lnk[0];
+
+<a name="line1348">1348: </a>    <font color="#B22222">/* if free space is not available, make more free space */</font>
+<a name="line1349">1349: </a>    <font color="#4169E1">if</font> (current_space-&gt;local_remaining&lt;nnz) {
+<a name="line1350">1350: </a>      PetscFreeSpaceGet(<a href="../../../../../docs/manualpages/Sys/PetscIntSumTruncate.html#PetscIntSumTruncate">PetscIntSumTruncate</a>(nnz,current_space-&gt;total_array_size),&amp;current_space);
+<a name="line1351">1351: </a>      nspacedouble++;
+<a name="line1352">1352: </a>    }
+<a name="line1353">1353: </a>    <font color="#B22222">/* copy data into free space, then initialize lnk */</font>
+<a name="line1354">1354: </a>    PetscLLCondensedClean(aN,nnz,current_space-&gt;array,lnk,lnkbt);
+<a name="line1355">1355: </a>    <a href="../../../../../docs/manualpages/Mat/MatPreallocateSet.html#MatPreallocateSet">MatPreallocateSet</a>(i+owners[rank],nnz,current_space-&gt;array,dnz,onz);
+
+<a name="line1357">1357: </a>    current_space-&gt;array           += nnz;
+<a name="line1358">1358: </a>    current_space-&gt;local_used      += nnz;
+<a name="line1359">1359: </a>    current_space-&gt;local_remaining -= nnz;
+
+<a name="line1361">1361: </a>    bi[i+1] = bi[i] + nnz;
+<a name="line1362">1362: </a>    <font color="#4169E1">if</font> (nnz &gt; rmax) rmax = nnz;
+<a name="line1363">1363: </a>  }
+<a name="line1364">1364: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree3.html#PetscFree3">PetscFree3</a>(buf_ri_k,nextrow,nextci);
+
+<a name="line1366">1366: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(bi[pn]+1,&amp;bj);
+<a name="line1367">1367: </a>  PetscFreeSpaceContiguous(&amp;free_space,bj);
+
+<a name="line1369">1369: </a>  afill_tmp = (<a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>)bi[pn]/(pdti[pn] + poti[pon] + ai[am]+1);
+<a name="line1370">1370: </a>  <font color="#4169E1">if</font> (afill_tmp &gt; afill) afill = afill_tmp;
+<a name="line1371">1371: </a>  PetscLLCondensedDestroy(lnk,lnkbt);
+<a name="line1372">1372: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;POt);
+<a name="line1373">1373: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;PDt);
+
+<a name="line1375">1375: </a>  <font color="#B22222">/* create symbolic parallel matrix Cmpi - why cannot be assembled in Numeric part   */</font>
+<a name="line1376">1376: </a>  <font color="#B22222">/*----------------------------------------------------------------------------------*/</font>
+<a name="line1377">1377: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCalloc1.html#PetscCalloc1">PetscCalloc1</a>(rmax+1,&amp;vals);
+
+<a name="line1379">1379: </a>  <a href="../../../../../docs/manualpages/Mat/MatCreate.html#MatCreate">MatCreate</a>(comm,&amp;Cmpi);
+<a name="line1380">1380: </a>  <a href="../../../../../docs/manualpages/Mat/MatSetSizes.html#MatSetSizes">MatSetSizes</a>(Cmpi,pn,A-&gt;cmap-&gt;n,<a href="../../../../../docs/manualpages/Sys/PETSC_DETERMINE.html#PETSC_DETERMINE">PETSC_DETERMINE</a>,<a href="../../../../../docs/manualpages/Sys/PETSC_DETERMINE.html#PETSC_DETERMINE">PETSC_DETERMINE</a>);
+<a name="line1381">1381: </a>  <a href="../../../../../docs/manualpages/Mat/MatSetBlockSizes.html#MatSetBlockSizes">MatSetBlockSizes</a>(Cmpi,PetscAbs(P-&gt;cmap-&gt;bs),PetscAbs(A-&gt;cmap-&gt;bs));
+<a name="line1382">1382: </a>  <a href="../../../../../docs/manualpages/Mat/MatSetType.html#MatSetType">MatSetType</a>(Cmpi,<a href="../../../../../docs/manualpages/Mat/MATMPIAIJ.html#MATMPIAIJ">MATMPIAIJ</a>);
+<a name="line1383">1383: </a>  <a href="../../../../../docs/manualpages/Mat/MatMPIAIJSetPreallocation.html#MatMPIAIJSetPreallocation">MatMPIAIJSetPreallocation</a>(Cmpi,0,dnz,0,onz);
+<a name="line1384">1384: </a>  <a href="../../../../../docs/manualpages/Mat/MatPreallocateFinalize.html#MatPreallocateFinalize">MatPreallocateFinalize</a>(dnz,onz);
+<a name="line1385">1385: </a>  <a href="../../../../../docs/manualpages/Mat/MatSetBlockSize.html#MatSetBlockSize">MatSetBlockSize</a>(Cmpi,1);
+<a name="line1386">1386: </a>  <font color="#4169E1">for</font> (i=0; i&lt;pn; i++) {
+<a name="line1387">1387: </a>    row  = i + rstart;
+<a name="line1388">1388: </a>    nnz  = bi[i+1] - bi[i];
+<a name="line1389">1389: </a>    Jptr = bj + bi[i];
+<a name="line1390">1390: </a>    <a href="../../../../../docs/manualpages/Mat/MatSetValues.html#MatSetValues">MatSetValues</a>(Cmpi,1,&amp;row,nnz,Jptr,vals,<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>);
+<a name="line1391">1391: </a>  }
+<a name="line1392">1392: </a>  <a href="../../../../../docs/manualpages/Mat/MatAssemblyBegin.html#MatAssemblyBegin">MatAssemblyBegin</a>(Cmpi,<a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+<a name="line1393">1393: </a>  <a href="../../../../../docs/manualpages/Mat/MatAssemblyEnd.html#MatAssemblyEnd">MatAssemblyEnd</a>(Cmpi,<a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+<a name="line1394">1394: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(vals);
+
+<a name="line1396">1396: </a>  merge-&gt;bi        = bi;
+<a name="line1397">1397: </a>  merge-&gt;bj        = bj;
+<a name="line1398">1398: </a>  merge-&gt;coi       = coi;
+<a name="line1399">1399: </a>  merge-&gt;coj       = coj;
+<a name="line1400">1400: </a>  merge-&gt;buf_ri    = buf_ri;
+<a name="line1401">1401: </a>  merge-&gt;buf_rj    = buf_rj;
+<a name="line1402">1402: </a>  merge-&gt;owners_co = owners_co;
+
+<a name="line1404">1404: </a>  <font color="#B22222">/* attach the supporting struct to Cmpi for reuse */</font>
+<a name="line1405">1405: </a>  c           = (Mat_MPIAIJ*)Cmpi-&gt;data;
+<a name="line1406">1406: </a>  c-&gt;ptap     = ptap;
+<a name="line1407">1407: </a>  ptap-&gt;api   = NULL;
+<a name="line1408">1408: </a>  ptap-&gt;apj   = NULL;
+<a name="line1409">1409: </a>  ptap-&gt;merge = merge;
+<a name="line1410">1410: </a>  ptap-&gt;destroy   = Cmpi-&gt;ops-&gt;destroy;
+<a name="line1411">1411: </a>  ptap-&gt;duplicate = Cmpi-&gt;ops-&gt;duplicate;
+
+<a name="line1413">1413: </a>  Cmpi-&gt;ops-&gt;mattransposemultnumeric = MatTransposeMatMultNumeric_MPIAIJ_MPIAIJ_nonscalable;
+<a name="line1414">1414: </a>  Cmpi-&gt;ops-&gt;destroy                 = MatDestroy_MPIAIJ_PtAP;
+<a name="line1415">1415: </a>  Cmpi-&gt;ops-&gt;duplicate               = MatDuplicate_MPIAIJ_MatPtAP;
+
+<a name="line1417">1417: </a>  *C = Cmpi;
+<a name="line1418">1418: </a><font color="#A020F0">#if defined(PETSC_USE_INFO)</font>
+<a name="line1419">1419: </a>  <font color="#4169E1">if</font> (bi[pn] != 0) {
+<a name="line1420">1420: </a>    PetscInfo3(Cmpi,<font color="#666666">"Reallocs %D; Fill ratio: given %g needed %g.\n"</font>,nspacedouble,(double)fill,(double)afill);
+<a name="line1421">1421: </a>    PetscInfo1(Cmpi,<font color="#666666">"Use <a href="../../../../../docs/manualpages/Mat/MatTransposeMatMult.html#MatTransposeMatMult">MatTransposeMatMult</a>(A,B,<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MatReuse</a>,%g,&amp;C) for best performance.\n"</font>,(double)afill);
+<a name="line1422">1422: </a>  } <font color="#4169E1">else</font> {
+<a name="line1423">1423: </a>    <a href="../../../../../docs/manualpages/Profiling/PetscInfo.html#PetscInfo">PetscInfo</a>(Cmpi,<font color="#666666">"Empty matrix product\n"</font>);
+<a name="line1424">1424: </a>  }
+<a name="line1425">1425: </a><font color="#A020F0">#endif</font>
+<a name="line1426">1426: </a>  <font color="#4169E1">return</font>(0);
+<a name="line1427">1427: </a>}
+
+<a name="line1429">1429: </a><strong><font color="#4169E1"><a name="MatTransposeMatMultNumeric_MPIAIJ_MPIAIJ"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatTransposeMatMultNumeric_MPIAIJ_MPIAIJ(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> P,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> A,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> C)</font></strong>
+<a name="line1430">1430: </a>{
+<a name="line1431">1431: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>      ierr;
+<a name="line1432">1432: </a>  Mat_Merge_SeqsToMPI *merge;
+<a name="line1433">1433: </a>  Mat_MPIAIJ          *p =(Mat_MPIAIJ*)P-&gt;data,*c=(Mat_MPIAIJ*)C-&gt;data;
+<a name="line1434">1434: </a>  Mat_SeqAIJ          *pd=(Mat_SeqAIJ*)(p-&gt;A)-&gt;data,*po=(Mat_SeqAIJ*)(p-&gt;B)-&gt;data;
+<a name="line1435">1435: </a>  Mat_PtAPMPI         *ptap;
+<a name="line1436">1436: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            *adj;
+<a name="line1437">1437: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            i,j,k,anz,pnz,row,*cj,nexta;
+<a name="line1438">1438: </a>  MatScalar           *ada,*ca,valtmp;
+<a name="line1439">1439: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            am  =A-&gt;rmap-&gt;n,cm=C-&gt;rmap-&gt;n,pon=(p-&gt;B)-&gt;cmap-&gt;n;
+<a name="line1440">1440: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a>            comm;
+<a name="line1441">1441: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>         size,rank,taga,*len_s;
+<a name="line1442">1442: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            *owners,proc,nrows,**buf_ri_k,**nextrow,**nextci;
+<a name="line1443">1443: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            **buf_ri,**buf_rj;
+<a name="line1444">1444: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            cnz=0,*bj_i,*bi,*bj,bnz,nextcj;  <font color="#B22222">/* bi,bj,ba: local array of C(mpi mat) */</font>
+<a name="line1445">1445: </a>  MPI_Request         *s_waits,*r_waits;
+<a name="line1446">1446: </a>  MPI_Status          *status;
+<a name="line1447">1447: </a>  MatScalar           **abuf_r,*ba_i,*pA,*coa,*ba;
+<a name="line1448">1448: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            *ai,*aj,*coi,*coj;
+<a name="line1449">1449: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            *poJ,*pdJ;
+<a name="line1450">1450: </a>  <a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>                 A_loc;
+<a name="line1451">1451: </a>  Mat_SeqAIJ          *a_loc;
+
+<a name="line1454">1454: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectGetComm.html#PetscObjectGetComm">PetscObjectGetComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)C,&amp;comm);
+<a name="line1455">1455: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm,&amp;size);
+<a name="line1456">1456: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm,&amp;rank);
+
+<a name="line1458">1458: </a>  ptap  = c-&gt;ptap;
+<a name="line1459">1459: </a>  merge = ptap-&gt;merge;
+
+<a name="line1461">1461: </a>  <font color="#B22222">/* 2) compute numeric C_seq = P_loc^T*A_loc */</font>
+<a name="line1462">1462: </a>  <font color="#B22222">/*------------------------------------------*/</font>
+<a name="line1463">1463: </a>  <font color="#B22222">/* get data from symbolic products */</font>
+<a name="line1464">1464: </a>  coi    = merge-&gt;coi; coj = merge-&gt;coj;
+<a name="line1465">1465: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCalloc1.html#PetscCalloc1">PetscCalloc1</a>(coi[pon]+1,&amp;coa);
+<a name="line1466">1466: </a>  bi     = merge-&gt;bi; bj = merge-&gt;bj;
+<a name="line1467">1467: </a>  owners = merge-&gt;rowmap-&gt;range;
+<a name="line1468">1468: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCalloc1.html#PetscCalloc1">PetscCalloc1</a>(bi[cm]+1,&amp;ba);
+
+<a name="line1470">1470: </a>  <font color="#B22222">/* get A_loc by taking all local rows of A */</font>
+<a name="line1471">1471: </a>  A_loc = ptap-&gt;A_loc;
+<a name="line1472">1472: </a>  <a href="../../../../../docs/manualpages/Mat/MatMPIAIJGetLocalMat.html#MatMPIAIJGetLocalMat">MatMPIAIJGetLocalMat</a>(A,<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MAT_REUSE_MATRIX</a>,&amp;A_loc);
+<a name="line1473">1473: </a>  a_loc = (Mat_SeqAIJ*)(A_loc)-&gt;data;
+<a name="line1474">1474: </a>  ai    = a_loc-&gt;i;
+<a name="line1475">1475: </a>  aj    = a_loc-&gt;j;
+
+<a name="line1477">1477: </a>  <font color="#4169E1">for</font> (i=0; i&lt;am; i++) {
+<a name="line1478">1478: </a>    anz = ai[i+1] - ai[i];
+<a name="line1479">1479: </a>    adj = aj + ai[i];
+<a name="line1480">1480: </a>    ada = a_loc-&gt;a + ai[i];
+
+<a name="line1482">1482: </a>    <font color="#B22222">/* 2-b) Compute Cseq = P_loc[i,:]^T*A[i,:] using outer product */</font>
+<a name="line1483">1483: </a>    <font color="#B22222">/*-------------------------------------------------------------*/</font>
+<a name="line1484">1484: </a>    <font color="#B22222">/* put the value into Co=(p-&gt;B)^T*A (off-diagonal part, send to others) */</font>
+<a name="line1485">1485: </a>    pnz = po-&gt;i[i+1] - po-&gt;i[i];
+<a name="line1486">1486: </a>    poJ = po-&gt;j + po-&gt;i[i];
+<a name="line1487">1487: </a>    pA  = po-&gt;a + po-&gt;i[i];
+<a name="line1488">1488: </a>    <font color="#4169E1">for</font> (j=0; j&lt;pnz; j++) {
+<a name="line1489">1489: </a>      row = poJ[j];
+<a name="line1490">1490: </a>      cj  = coj + coi[row];
+<a name="line1491">1491: </a>      ca  = coa + coi[row];
+<a name="line1492">1492: </a>      <font color="#B22222">/* perform sparse axpy */</font>
+<a name="line1493">1493: </a>      nexta  = 0;
+<a name="line1494">1494: </a>      valtmp = pA[j];
+<a name="line1495">1495: </a>      <font color="#4169E1">for</font> (k=0; nexta&lt;anz; k++) {
+<a name="line1496">1496: </a>        <font color="#4169E1">if</font> (cj[k] == adj[nexta]) {
+<a name="line1497">1497: </a>          ca[k] += valtmp*ada[nexta];
+<a name="line1498">1498: </a>          nexta++;
+<a name="line1499">1499: </a>        }
+<a name="line1500">1500: </a>      }
+<a name="line1501">1501: </a>      <a href="../../../../../docs/manualpages/Profiling/PetscLogFlops.html#PetscLogFlops">PetscLogFlops</a>(2.0*anz);
+<a name="line1502">1502: </a>    }
+
+<a name="line1504">1504: </a>    <font color="#B22222">/* put the value into Cd (diagonal part) */</font>
+<a name="line1505">1505: </a>    pnz = pd-&gt;i[i+1] - pd-&gt;i[i];
+<a name="line1506">1506: </a>    pdJ = pd-&gt;j + pd-&gt;i[i];
+<a name="line1507">1507: </a>    pA  = pd-&gt;a + pd-&gt;i[i];
+<a name="line1508">1508: </a>    <font color="#4169E1">for</font> (j=0; j&lt;pnz; j++) {
+<a name="line1509">1509: </a>      row = pdJ[j];
+<a name="line1510">1510: </a>      cj  = bj + bi[row];
+<a name="line1511">1511: </a>      ca  = ba + bi[row];
+<a name="line1512">1512: </a>      <font color="#B22222">/* perform sparse axpy */</font>
+<a name="line1513">1513: </a>      nexta  = 0;
+<a name="line1514">1514: </a>      valtmp = pA[j];
+<a name="line1515">1515: </a>      <font color="#4169E1">for</font> (k=0; nexta&lt;anz; k++) {
+<a name="line1516">1516: </a>        <font color="#4169E1">if</font> (cj[k] == adj[nexta]) {
+<a name="line1517">1517: </a>          ca[k] += valtmp*ada[nexta];
+<a name="line1518">1518: </a>          nexta++;
+<a name="line1519">1519: </a>        }
+<a name="line1520">1520: </a>      }
+<a name="line1521">1521: </a>      <a href="../../../../../docs/manualpages/Profiling/PetscLogFlops.html#PetscLogFlops">PetscLogFlops</a>(2.0*anz);
+<a name="line1522">1522: </a>    }
+<a name="line1523">1523: </a>  }
+
+<a name="line1525">1525: </a>  <font color="#B22222">/* 3) send and recv matrix values coa */</font>
+<a name="line1526">1526: </a>  <font color="#B22222">/*------------------------------------*/</font>
+<a name="line1527">1527: </a>  buf_ri = merge-&gt;buf_ri;
+<a name="line1528">1528: </a>  buf_rj = merge-&gt;buf_rj;
+<a name="line1529">1529: </a>  len_s  = merge-&gt;len_s;
+<a name="line1530">1530: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCommGetNewTag.html#PetscCommGetNewTag">PetscCommGetNewTag</a>(comm,&amp;taga);
+<a name="line1531">1531: </a>  PetscPostIrecvScalar(comm,taga,merge-&gt;nrecv,merge-&gt;id_r,merge-&gt;len_r,&amp;abuf_r,&amp;r_waits);
+
+<a name="line1533">1533: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc2.html#PetscMalloc2">PetscMalloc2</a>(merge-&gt;nsend+1,&amp;s_waits,size,&amp;status);
+<a name="line1534">1534: </a>  <font color="#4169E1">for</font> (proc=0,k=0; proc&lt;size; proc++) {
+<a name="line1535">1535: </a>    <font color="#4169E1">if</font> (!len_s[proc]) <font color="#4169E1">continue</font>;
+<a name="line1536">1536: </a>    i    = merge-&gt;owners_co[proc];
+<a name="line1537">1537: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Isend.html#MPI_Isend">MPI_Isend</a>(coa+coi[i],len_s[proc],MPIU_MATSCALAR,proc,taga,comm,s_waits+k);
+<a name="line1538">1538: </a>    k++;
+<a name="line1539">1539: </a>  }
+<a name="line1540">1540: </a>  <font color="#4169E1">if</font> (merge-&gt;nrecv) {<a href="http://www.mpich.org/static/docs/latest/www3/MPI_Waitall.html#MPI_Waitall">MPI_Waitall</a>(merge-&gt;nrecv,r_waits,status);}
+<a name="line1541">1541: </a>  <font color="#4169E1">if</font> (merge-&gt;nsend) {<a href="http://www.mpich.org/static/docs/latest/www3/MPI_Waitall.html#MPI_Waitall">MPI_Waitall</a>(merge-&gt;nsend,s_waits,status);}
+
+<a name="line1543">1543: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree2.html#PetscFree2">PetscFree2</a>(s_waits,status);
+<a name="line1544">1544: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(r_waits);
+<a name="line1545">1545: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(coa);
+
+<a name="line1547">1547: </a>  <font color="#B22222">/* 4) insert local Cseq and received values into Cmpi */</font>
+<a name="line1548">1548: </a>  <font color="#B22222">/*----------------------------------------------------*/</font>
+<a name="line1549">1549: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc3.html#PetscMalloc3">PetscMalloc3</a>(merge-&gt;nrecv,&amp;buf_ri_k,merge-&gt;nrecv,&amp;nextrow,merge-&gt;nrecv,&amp;nextci);
+<a name="line1550">1550: </a>  <font color="#4169E1">for</font> (k=0; k&lt;merge-&gt;nrecv; k++) {
+<a name="line1551">1551: </a>    buf_ri_k[k] = buf_ri[k]; <font color="#B22222">/* beginning of k-th recved i-structure */</font>
+<a name="line1552">1552: </a>    nrows       = *(buf_ri_k[k]);
+<a name="line1553">1553: </a>    nextrow[k]  = buf_ri_k[k]+1;  <font color="#B22222">/* next row number of k-th recved i-structure */</font>
+<a name="line1554">1554: </a>    nextci[k]   = buf_ri_k[k] + (nrows + 1); <font color="#B22222">/* poins to the next i-structure of k-th recved i-structure  */</font>
+<a name="line1555">1555: </a>  }
+
+<a name="line1557">1557: </a>  <font color="#4169E1">for</font> (i=0; i&lt;cm; i++) {
+<a name="line1558">1558: </a>    row  = owners[rank] + i; <font color="#B22222">/* global row index of C_seq */</font>
+<a name="line1559">1559: </a>    bj_i = bj + bi[i];  <font color="#B22222">/* col indices of the i-th row of C */</font>
+<a name="line1560">1560: </a>    ba_i = ba + bi[i];
+<a name="line1561">1561: </a>    bnz  = bi[i+1] - bi[i];
+<a name="line1562">1562: </a>    <font color="#B22222">/* add received vals into ba */</font>
+<a name="line1563">1563: </a>    <font color="#4169E1">for</font> (k=0; k&lt;merge-&gt;nrecv; k++) { <font color="#B22222">/* k-th received message */</font>
+<a name="line1564">1564: </a>      <font color="#B22222">/* i-th row */</font>
+<a name="line1565">1565: </a>      <font color="#4169E1">if</font> (i == *nextrow[k]) {
+<a name="line1566">1566: </a>        cnz    = *(nextci[k]+1) - *nextci[k];
+<a name="line1567">1567: </a>        cj     = buf_rj[k] + *(nextci[k]);
+<a name="line1568">1568: </a>        ca     = abuf_r[k] + *(nextci[k]);
+<a name="line1569">1569: </a>        nextcj = 0;
+<a name="line1570">1570: </a>        <font color="#4169E1">for</font> (j=0; nextcj&lt;cnz; j++) {
+<a name="line1571">1571: </a>          <font color="#4169E1">if</font> (bj_i[j] == cj[nextcj]) { <font color="#B22222">/* bcol == ccol */</font>
+<a name="line1572">1572: </a>            ba_i[j] += ca[nextcj++];
+<a name="line1573">1573: </a>          }
+<a name="line1574">1574: </a>        }
+<a name="line1575">1575: </a>        nextrow[k]++; nextci[k]++;
+<a name="line1576">1576: </a>        <a href="../../../../../docs/manualpages/Profiling/PetscLogFlops.html#PetscLogFlops">PetscLogFlops</a>(2.0*cnz);
+<a name="line1577">1577: </a>      }
+<a name="line1578">1578: </a>    }
+<a name="line1579">1579: </a>    <a href="../../../../../docs/manualpages/Mat/MatSetValues.html#MatSetValues">MatSetValues</a>(C,1,&amp;row,bnz,bj_i,ba_i,<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>);
+<a name="line1580">1580: </a>  }
+<a name="line1581">1581: </a>  <a href="../../../../../docs/manualpages/Mat/MatAssemblyBegin.html#MatAssemblyBegin">MatAssemblyBegin</a>(C,<a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+<a name="line1582">1582: </a>  <a href="../../../../../docs/manualpages/Mat/MatAssemblyEnd.html#MatAssemblyEnd">MatAssemblyEnd</a>(C,<a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+
+<a name="line1584">1584: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(ba);
+<a name="line1585">1585: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(abuf_r[0]);
+<a name="line1586">1586: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(abuf_r);
+<a name="line1587">1587: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree3.html#PetscFree3">PetscFree3</a>(buf_ri_k,nextrow,nextci);
+<a name="line1588">1588: </a>  <font color="#4169E1">return</font>(0);
+<a name="line1589">1589: </a>}
+
+<a name="line1591">1591: </a><font color="#B22222">/* This routine is modified from MatPtAPSymbolic_MPIAIJ_MPIAIJ();</font>
+<a name="line1592">1592: </a><font color="#B22222">   differ from MatTransposeMatMultSymbolic_MPIAIJ_MPIAIJ_nonscalable in using LLCondensedCreate_Scalable() */</font>
+<a name="line1593">1593: </a><strong><font color="#4169E1"><a name="MatTransposeMatMultSymbolic_MPIAIJ_MPIAIJ"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatTransposeMatMultSymbolic_MPIAIJ_MPIAIJ(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> P,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> A,<a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> fill,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> *C)</font></strong>
+<a name="line1594">1594: </a>{
+<a name="line1595">1595: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>      ierr;
+<a name="line1596">1596: </a>  <a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>                 Cmpi,A_loc,POt,PDt;
+<a name="line1597">1597: </a>  Mat_PtAPMPI         *ptap;
+<a name="line1598">1598: </a>  PetscFreeSpaceList  free_space=NULL,current_space=NULL;
+<a name="line1599">1599: </a>  Mat_MPIAIJ          *p=(Mat_MPIAIJ*)P-&gt;data,*a=(Mat_MPIAIJ*)A-&gt;data,*c;
+<a name="line1600">1600: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            *pdti,*pdtj,*poti,*potj,*ptJ;
+<a name="line1601">1601: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            nnz;
+<a name="line1602">1602: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            *lnk,*owners_co,*coi,*coj,i,k,pnz,row;
+<a name="line1603">1603: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            am  =A-&gt;rmap-&gt;n,pn=P-&gt;cmap-&gt;n;
+<a name="line1604">1604: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a>            comm;
+<a name="line1605">1605: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>         size,rank,tagi,tagj,*len_si,*len_s,*len_ri;
+<a name="line1606">1606: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            **buf_rj,**buf_ri,**buf_ri_k;
+<a name="line1607">1607: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            len,proc,*dnz,*onz,*owners;
+<a name="line1608">1608: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            nzi,*bi,*bj;
+<a name="line1609">1609: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            nrows,*buf_s,*buf_si,*buf_si_i,**nextrow,**nextci;
+<a name="line1610">1610: </a>  MPI_Request         *swaits,*rwaits;
+<a name="line1611">1611: </a>  MPI_Status          *sstatus,rstatus;
+<a name="line1612">1612: </a>  Mat_Merge_SeqsToMPI *merge;
+<a name="line1613">1613: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            *ai,*aj,*Jptr,anz,*prmap=p-&gt;garray,pon,nspacedouble=0,j;
+<a name="line1614">1614: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>           afill  =1.0,afill_tmp;
+<a name="line1615">1615: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            rstart = P-&gt;cmap-&gt;rstart,rmax,aN=A-&gt;cmap-&gt;N,Armax;
+<a name="line1616">1616: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>         *vals;
+<a name="line1617">1617: </a>  Mat_SeqAIJ          *a_loc,*pdt,*pot;
+<a name="line1618">1618: </a>  PetscTable          ta;
+
+<a name="line1621">1621: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectGetComm.html#PetscObjectGetComm">PetscObjectGetComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)A,&amp;comm);
+<a name="line1622">1622: </a>  <font color="#B22222">/* check if matrix local sizes are compatible */</font>
+<a name="line1623">1623: </a>  <font color="#4169E1">if</font> (A-&gt;rmap-&gt;rstart != P-&gt;rmap-&gt;rstart || A-&gt;rmap-&gt;rend != P-&gt;rmap-&gt;rend) <a href="../../../../../docs/manualpages/Sys/SETERRQ4.html#SETERRQ4">SETERRQ4</a>(comm,PETSC_ERR_ARG_SIZ,<font color="#666666">"Matrix local dimensions are incompatible, A (%D, %D) != P (%D,%D)"</font>,A-&gt;rmap-&gt;rstart,A-&gt;rmap-&gt;rend,P-&gt;rmap-&gt;rstart,P-&gt;rmap-&gt;rend);
+
+<a name="line1625">1625: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm,&amp;size);
+<a name="line1626">1626: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm,&amp;rank);
+
+<a name="line1628">1628: </a>  <font color="#B22222">/* create struct Mat_PtAPMPI and attached it to C later */</font>
+<a name="line1629">1629: </a>  <a href="../../../../../docs/manualpages/Sys/PetscNew.html#PetscNew">PetscNew</a>(&amp;ptap);
+
+<a name="line1631">1631: </a>  <font color="#B22222">/* get A_loc by taking all local rows of A */</font>
+<a name="line1632">1632: </a>  <a href="../../../../../docs/manualpages/Mat/MatMPIAIJGetLocalMat.html#MatMPIAIJGetLocalMat">MatMPIAIJGetLocalMat</a>(A,<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MAT_INITIAL_MATRIX</a>,&amp;A_loc);
+
+<a name="line1634">1634: </a>  ptap-&gt;A_loc = A_loc;
+<a name="line1635">1635: </a>  a_loc       = (Mat_SeqAIJ*)(A_loc)-&gt;data;
+<a name="line1636">1636: </a>  ai          = a_loc-&gt;i;
+<a name="line1637">1637: </a>  aj          = a_loc-&gt;j;
+
+<a name="line1639">1639: </a>  <font color="#B22222">/* determine symbolic Co=(p-&gt;B)^T*A - send to others */</font>
+<a name="line1640">1640: </a>  <font color="#B22222">/*----------------------------------------------------*/</font>
+<a name="line1641">1641: </a>  MatTransposeSymbolic_SeqAIJ(p-&gt;A,&amp;PDt);
+<a name="line1642">1642: </a>  pdt  = (Mat_SeqAIJ*)PDt-&gt;data;
+<a name="line1643">1643: </a>  pdti = pdt-&gt;i; pdtj = pdt-&gt;j;
+
+<a name="line1645">1645: </a>  MatTransposeSymbolic_SeqAIJ(p-&gt;B,&amp;POt);
+<a name="line1646">1646: </a>  pot  = (Mat_SeqAIJ*)POt-&gt;data;
+<a name="line1647">1647: </a>  poti = pot-&gt;i; potj = pot-&gt;j;
+
+<a name="line1649">1649: </a>  <font color="#B22222">/* then, compute symbolic Co = (p-&gt;B)^T*A */</font>
+<a name="line1650">1650: </a>  pon    = (p-&gt;B)-&gt;cmap-&gt;n; <font color="#B22222">/* total num of rows to be sent to other processors</font>
+<a name="line1651">1651: </a><font color="#B22222">                         &gt;= (num of nonzero rows of C_seq) - pn */</font>
+<a name="line1652">1652: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(pon+1,&amp;coi);
+<a name="line1653">1653: </a>  coi[0] = 0;
+
+<a name="line1655">1655: </a>  <font color="#B22222">/* set initial free space to be fill*(nnz(p-&gt;B) + nnz(A)) */</font>
+<a name="line1656">1656: </a>  nnz           = <a href="../../../../../docs/manualpages/Sys/PetscRealIntMultTruncate.html#PetscRealIntMultTruncate">PetscRealIntMultTruncate</a>(fill,<a href="../../../../../docs/manualpages/Sys/PetscIntSumTruncate.html#PetscIntSumTruncate">PetscIntSumTruncate</a>(poti[pon],ai[am]));
+<a name="line1657">1657: </a>  PetscFreeSpaceGet(nnz,&amp;free_space);
+<a name="line1658">1658: </a>  current_space = free_space;
+
+<a name="line1660">1660: </a>  <font color="#B22222">/* create and initialize a linked list */</font>
+<a name="line1661">1661: </a>  PetscTableCreate(A-&gt;cmap-&gt;n + a-&gt;B-&gt;cmap-&gt;N,aN,&amp;ta);
+<a name="line1662">1662: </a>  MatRowMergeMax_SeqAIJ(a_loc,am,ta);
+<a name="line1663">1663: </a>  PetscTableGetCount(ta,&amp;Armax);
+
+<a name="line1665">1665: </a>  PetscLLCondensedCreate_Scalable(Armax,&amp;lnk);
+
+<a name="line1667">1667: </a>  <font color="#4169E1">for</font> (i=0; i&lt;pon; i++) {
+<a name="line1668">1668: </a>    pnz = poti[i+1] - poti[i];
+<a name="line1669">1669: </a>    ptJ = potj + poti[i];
+<a name="line1670">1670: </a>    <font color="#4169E1">for</font> (j=0; j&lt;pnz; j++) {
+<a name="line1671">1671: </a>      row  = ptJ[j]; <font color="#B22222">/* row of A_loc == col of Pot */</font>
+<a name="line1672">1672: </a>      anz  = ai[row+1] - ai[row];
+<a name="line1673">1673: </a>      Jptr = aj + ai[row];
+<a name="line1674">1674: </a>      <font color="#B22222">/* add non-zero cols of AP into the sorted linked list lnk */</font>
+<a name="line1675">1675: </a>      PetscLLCondensedAddSorted_Scalable(anz,Jptr,lnk);
+<a name="line1676">1676: </a>    }
+<a name="line1677">1677: </a>    nnz = lnk[0];
+
+<a name="line1679">1679: </a>    <font color="#B22222">/* If free space is not available, double the total space in the list */</font>
+<a name="line1680">1680: </a>    <font color="#4169E1">if</font> (current_space-&gt;local_remaining&lt;nnz) {
+<a name="line1681">1681: </a>      PetscFreeSpaceGet(<a href="../../../../../docs/manualpages/Sys/PetscIntSumTruncate.html#PetscIntSumTruncate">PetscIntSumTruncate</a>(nnz,current_space-&gt;total_array_size),&amp;current_space);
+<a name="line1682">1682: </a>      nspacedouble++;
+<a name="line1683">1683: </a>    }
+
+<a name="line1685">1685: </a>    <font color="#B22222">/* Copy data into free space, and zero out denserows */</font>
+<a name="line1686">1686: </a>    PetscLLCondensedClean_Scalable(nnz,current_space-&gt;array,lnk);
+
+<a name="line1688">1688: </a>    current_space-&gt;array           += nnz;
+<a name="line1689">1689: </a>    current_space-&gt;local_used      += nnz;
+<a name="line1690">1690: </a>    current_space-&gt;local_remaining -= nnz;
+
+<a name="line1692">1692: </a>    coi[i+1] = coi[i] + nnz;
+<a name="line1693">1693: </a>  }
+
+<a name="line1695">1695: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(coi[pon]+1,&amp;coj);
+<a name="line1696">1696: </a>  PetscFreeSpaceContiguous(&amp;free_space,coj);
+<a name="line1697">1697: </a>  PetscLLCondensedDestroy_Scalable(lnk); <font color="#B22222">/* must destroy to get a new one for C */</font>
+
+<a name="line1699">1699: </a>  afill_tmp = (<a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>)coi[pon]/(poti[pon] + ai[am]+1);
+<a name="line1700">1700: </a>  <font color="#4169E1">if</font> (afill_tmp &gt; afill) afill = afill_tmp;
+
+<a name="line1702">1702: </a>  <font color="#B22222">/* send j-array (coj) of Co to other processors */</font>
+<a name="line1703">1703: </a>  <font color="#B22222">/*----------------------------------------------*/</font>
+<a name="line1704">1704: </a>  <font color="#B22222">/* determine row ownership */</font>
+<a name="line1705">1705: </a>  <a href="../../../../../docs/manualpages/Sys/PetscNew.html#PetscNew">PetscNew</a>(&amp;merge);
+<a name="line1706">1706: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutCreate.html#PetscLayoutCreate">PetscLayoutCreate</a>(comm,&amp;merge-&gt;rowmap);
+
+<a name="line1708">1708: </a>  merge-&gt;rowmap-&gt;n  = pn;
+<a name="line1709">1709: </a>  merge-&gt;rowmap-&gt;bs = 1;
+
+<a name="line1711">1711: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutSetUp.html#PetscLayoutSetUp">PetscLayoutSetUp</a>(merge-&gt;rowmap);
+<a name="line1712">1712: </a>  owners = merge-&gt;rowmap-&gt;range;
+
+<a name="line1714">1714: </a>  <font color="#B22222">/* determine the number of messages to send, their lengths */</font>
+<a name="line1715">1715: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCalloc1.html#PetscCalloc1">PetscCalloc1</a>(size,&amp;len_si);
+<a name="line1716">1716: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(size,&amp;merge-&gt;len_s);
+
+<a name="line1718">1718: </a>  len_s        = merge-&gt;len_s;
+<a name="line1719">1719: </a>  merge-&gt;nsend = 0;
+
+<a name="line1721">1721: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(size+2,&amp;owners_co);
+<a name="line1722">1722: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMemzero.html#PetscMemzero">PetscMemzero</a>(len_s,size*<font color="#4169E1">sizeof</font>(<a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>));
+
+<a name="line1724">1724: </a>  proc = 0;
+<a name="line1725">1725: </a>  <font color="#4169E1">for</font> (i=0; i&lt;pon; i++) {
+<a name="line1726">1726: </a>    <font color="#4169E1">while</font> (prmap[i] &gt;= owners[proc+1]) proc++;
+<a name="line1727">1727: </a>    len_si[proc]++;  <font color="#B22222">/* num of rows in Co to be sent to [proc] */</font>
+<a name="line1728">1728: </a>    len_s[proc] += coi[i+1] - coi[i];
+<a name="line1729">1729: </a>  }
+
+<a name="line1731">1731: </a>  len          = 0; <font color="#B22222">/* max length of buf_si[] */</font>
+<a name="line1732">1732: </a>  owners_co[0] = 0;
+<a name="line1733">1733: </a>  <font color="#4169E1">for</font> (proc=0; proc&lt;size; proc++) {
+<a name="line1734">1734: </a>    owners_co[proc+1] = owners_co[proc] + len_si[proc];
+<a name="line1735">1735: </a>    <font color="#4169E1">if</font> (len_si[proc]) {
+<a name="line1736">1736: </a>      merge-&gt;nsend++;
+<a name="line1737">1737: </a>      len_si[proc] = 2*(len_si[proc] + 1);
+<a name="line1738">1738: </a>      len         += len_si[proc];
+<a name="line1739">1739: </a>    }
+<a name="line1740">1740: </a>  }
+
+<a name="line1742">1742: </a>  <font color="#B22222">/* determine the number and length of messages to receive for coi and coj  */</font>
+<a name="line1743">1743: </a>  <a href="../../../../../docs/manualpages/Sys/PetscGatherNumberOfMessages.html#PetscGatherNumberOfMessages">PetscGatherNumberOfMessages</a>(comm,NULL,len_s,&amp;merge-&gt;nrecv);
+<a name="line1744">1744: </a>  <a href="../../../../../docs/manualpages/Sys/PetscGatherMessageLengths2.html#PetscGatherMessageLengths2">PetscGatherMessageLengths2</a>(comm,merge-&gt;nsend,merge-&gt;nrecv,len_s,len_si,&amp;merge-&gt;id_r,&amp;merge-&gt;len_r,&amp;len_ri);
+
+<a name="line1746">1746: </a>  <font color="#B22222">/* post the Irecv and Isend of coj */</font>
+<a name="line1747">1747: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCommGetNewTag.html#PetscCommGetNewTag">PetscCommGetNewTag</a>(comm,&amp;tagj);
+<a name="line1748">1748: </a>  PetscPostIrecvInt(comm,tagj,merge-&gt;nrecv,merge-&gt;id_r,merge-&gt;len_r,&amp;buf_rj,&amp;rwaits);
+<a name="line1749">1749: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(merge-&gt;nsend+1,&amp;swaits);
+<a name="line1750">1750: </a>  <font color="#4169E1">for</font> (proc=0, k=0; proc&lt;size; proc++) {
+<a name="line1751">1751: </a>    <font color="#4169E1">if</font> (!len_s[proc]) <font color="#4169E1">continue</font>;
+<a name="line1752">1752: </a>    i    = owners_co[proc];
+<a name="line1753">1753: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Isend.html#MPI_Isend">MPI_Isend</a>(coj+coi[i],len_s[proc],MPIU_INT,proc,tagj,comm,swaits+k);
+<a name="line1754">1754: </a>    k++;
+<a name="line1755">1755: </a>  }
+
+<a name="line1757">1757: </a>  <font color="#B22222">/* receives and sends of coj are complete */</font>
+<a name="line1758">1758: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(size,&amp;sstatus);
+<a name="line1759">1759: </a>  <font color="#4169E1">for</font> (i=0; i&lt;merge-&gt;nrecv; i++) {
+<a name="line1760">1760: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> icompleted;
+<a name="line1761">1761: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Waitany.html#MPI_Waitany">MPI_Waitany</a>(merge-&gt;nrecv,rwaits,&amp;icompleted,&amp;rstatus);
+<a name="line1762">1762: </a>  }
+<a name="line1763">1763: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(rwaits);
+<a name="line1764">1764: </a>  <font color="#4169E1">if</font> (merge-&gt;nsend) {<a href="http://www.mpich.org/static/docs/latest/www3/MPI_Waitall.html#MPI_Waitall">MPI_Waitall</a>(merge-&gt;nsend,swaits,sstatus);}
+
+<a name="line1766">1766: </a>  <font color="#B22222">/* add received column indices into table to update Armax */</font>
+<a name="line1767">1767: </a>  <font color="#B22222">/* Armax can be as large as aN if a P[row,:] is dense, see src/ksp/ksp/examples/tutorials/ex56.c! */</font>
+<a name="line1768">1768: </a>  <font color="#4169E1">for</font> (k=0; k&lt;merge-&gt;nrecv; k++) {<font color="#B22222">/* k-th received message */</font>
+<a name="line1769">1769: </a>    Jptr = buf_rj[k];
+<a name="line1770">1770: </a>    <font color="#4169E1">for</font> (j=0; j&lt;merge-&gt;len_r[k]; j++) {
+<a name="line1771">1771: </a>      PetscTableAdd(ta,*(Jptr+j)+1,1,<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>);
+<a name="line1772">1772: </a>    }
+<a name="line1773">1773: </a>  }
+<a name="line1774">1774: </a>  PetscTableGetCount(ta,&amp;Armax);
+<a name="line1775">1775: </a>  <font color="#B22222">/* printf("Armax %d, an %d + Bn %d = %d, aN %d\n",Armax,A-&gt;cmap-&gt;n,a-&gt;B-&gt;cmap-&gt;N,A-&gt;cmap-&gt;n+a-&gt;B-&gt;cmap-&gt;N,aN); */</font>
+
+<a name="line1777">1777: </a>  <font color="#B22222">/* send and recv coi */</font>
+<a name="line1778">1778: </a>  <font color="#B22222">/*-------------------*/</font>
+<a name="line1779">1779: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCommGetNewTag.html#PetscCommGetNewTag">PetscCommGetNewTag</a>(comm,&amp;tagi);
+<a name="line1780">1780: </a>  PetscPostIrecvInt(comm,tagi,merge-&gt;nrecv,merge-&gt;id_r,len_ri,&amp;buf_ri,&amp;rwaits);
+<a name="line1781">1781: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(len+1,&amp;buf_s);
+<a name="line1782">1782: </a>  buf_si = buf_s;  <font color="#B22222">/* points to the beginning of k-th msg to be sent */</font>
+<a name="line1783">1783: </a>  <font color="#4169E1">for</font> (proc=0,k=0; proc&lt;size; proc++) {
+<a name="line1784">1784: </a>    <font color="#4169E1">if</font> (!len_s[proc]) <font color="#4169E1">continue</font>;
+<a name="line1785">1785: </a>    <font color="#B22222">/* form outgoing message for i-structure:</font>
+<a name="line1786">1786: </a><font color="#B22222">         buf_si[0]:                 nrows to be sent</font>
+<a name="line1787">1787: </a><font color="#B22222">               [1:nrows]:           row index (global)</font>
+<a name="line1788">1788: </a><font color="#B22222">               [nrows+1:2*nrows+1]: i-structure index</font>
+<a name="line1789">1789: </a><font color="#B22222">    */</font>
+<a name="line1790">1790: </a>    <font color="#B22222">/*-------------------------------------------*/</font>
+<a name="line1791">1791: </a>    nrows       = len_si[proc]/2 - 1;
+<a name="line1792">1792: </a>    buf_si_i    = buf_si + nrows+1;
+<a name="line1793">1793: </a>    buf_si[0]   = nrows;
+<a name="line1794">1794: </a>    buf_si_i[0] = 0;
+<a name="line1795">1795: </a>    nrows       = 0;
+<a name="line1796">1796: </a>    <font color="#4169E1">for</font> (i=owners_co[proc]; i&lt;owners_co[proc+1]; i++) {
+<a name="line1797">1797: </a>      nzi               = coi[i+1] - coi[i];
+<a name="line1798">1798: </a>      buf_si_i[nrows+1] = buf_si_i[nrows] + nzi;  <font color="#B22222">/* i-structure */</font>
+<a name="line1799">1799: </a>      buf_si[nrows+1]   = prmap[i] -owners[proc]; <font color="#B22222">/* local row index */</font>
+<a name="line1800">1800: </a>      nrows++;
+<a name="line1801">1801: </a>    }
+<a name="line1802">1802: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Isend.html#MPI_Isend">MPI_Isend</a>(buf_si,len_si[proc],MPIU_INT,proc,tagi,comm,swaits+k);
+<a name="line1803">1803: </a>    k++;
+<a name="line1804">1804: </a>    buf_si += len_si[proc];
+<a name="line1805">1805: </a>  }
+<a name="line1806">1806: </a>  i = merge-&gt;nrecv;
+<a name="line1807">1807: </a>  <font color="#4169E1">while</font> (i--) {
+<a name="line1808">1808: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> icompleted;
+<a name="line1809">1809: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Waitany.html#MPI_Waitany">MPI_Waitany</a>(merge-&gt;nrecv,rwaits,&amp;icompleted,&amp;rstatus);
+<a name="line1810">1810: </a>  }
+<a name="line1811">1811: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(rwaits);
+<a name="line1812">1812: </a>  <font color="#4169E1">if</font> (merge-&gt;nsend) {<a href="http://www.mpich.org/static/docs/latest/www3/MPI_Waitall.html#MPI_Waitall">MPI_Waitall</a>(merge-&gt;nsend,swaits,sstatus);}
+<a name="line1813">1813: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(len_si);
+<a name="line1814">1814: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(len_ri);
+<a name="line1815">1815: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(swaits);
+<a name="line1816">1816: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(sstatus);
+<a name="line1817">1817: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(buf_s);
+
+<a name="line1819">1819: </a>  <font color="#B22222">/* compute the local portion of C (mpi mat) */</font>
+<a name="line1820">1820: </a>  <font color="#B22222">/*------------------------------------------*/</font>
+<a name="line1821">1821: </a>  <font color="#B22222">/* allocate bi array and free space for accumulating nonzero column info */</font>
+<a name="line1822">1822: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(pn+1,&amp;bi);
+<a name="line1823">1823: </a>  bi[0] = 0;
+
+<a name="line1825">1825: </a>  <font color="#B22222">/* set initial free space to be fill*(nnz(P) + nnz(AP)) */</font>
+<a name="line1826">1826: </a>  nnz           = <a href="../../../../../docs/manualpages/Sys/PetscRealIntMultTruncate.html#PetscRealIntMultTruncate">PetscRealIntMultTruncate</a>(fill,<a href="../../../../../docs/manualpages/Sys/PetscIntSumTruncate.html#PetscIntSumTruncate">PetscIntSumTruncate</a>(pdti[pn],<a href="../../../../../docs/manualpages/Sys/PetscIntSumTruncate.html#PetscIntSumTruncate">PetscIntSumTruncate</a>(poti[pon],ai[am])));
+<a name="line1827">1827: </a>  PetscFreeSpaceGet(nnz,&amp;free_space);
+<a name="line1828">1828: </a>  current_space = free_space;
+
+<a name="line1830">1830: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc3.html#PetscMalloc3">PetscMalloc3</a>(merge-&gt;nrecv,&amp;buf_ri_k,merge-&gt;nrecv,&amp;nextrow,merge-&gt;nrecv,&amp;nextci);
+<a name="line1831">1831: </a>  <font color="#4169E1">for</font> (k=0; k&lt;merge-&gt;nrecv; k++) {
+<a name="line1832">1832: </a>    buf_ri_k[k] = buf_ri[k]; <font color="#B22222">/* beginning of k-th recved i-structure */</font>
+<a name="line1833">1833: </a>    nrows       = *buf_ri_k[k];
+<a name="line1834">1834: </a>    nextrow[k]  = buf_ri_k[k] + 1;  <font color="#B22222">/* next row number of k-th recved i-structure */</font>
+<a name="line1835">1835: </a>    nextci[k]   = buf_ri_k[k] + (nrows + 1); <font color="#B22222">/* points to the next i-structure of k-th recieved i-structure  */</font>
+<a name="line1836">1836: </a>  }
+
+<a name="line1838">1838: </a>  PetscLLCondensedCreate_Scalable(Armax,&amp;lnk);
+<a name="line1839">1839: </a>  <a href="../../../../../docs/manualpages/Mat/MatPreallocateInitialize.html#MatPreallocateInitialize">MatPreallocateInitialize</a>(comm,pn,A-&gt;cmap-&gt;n,dnz,onz);
+<a name="line1840">1840: </a>  rmax = 0;
+<a name="line1841">1841: </a>  <font color="#4169E1">for</font> (i=0; i&lt;pn; i++) {
+<a name="line1842">1842: </a>    <font color="#B22222">/* add pdt[i,:]*AP into lnk */</font>
+<a name="line1843">1843: </a>    pnz = pdti[i+1] - pdti[i];
+<a name="line1844">1844: </a>    ptJ = pdtj + pdti[i];
+<a name="line1845">1845: </a>    <font color="#4169E1">for</font> (j=0; j&lt;pnz; j++) {
+<a name="line1846">1846: </a>      row  = ptJ[j];  <font color="#B22222">/* row of AP == col of Pt */</font>
+<a name="line1847">1847: </a>      anz  = ai[row+1] - ai[row];
+<a name="line1848">1848: </a>      Jptr = aj + ai[row];
+<a name="line1849">1849: </a>      <font color="#B22222">/* add non-zero cols of AP into the sorted linked list lnk */</font>
+<a name="line1850">1850: </a>      PetscLLCondensedAddSorted_Scalable(anz,Jptr,lnk);
+<a name="line1851">1851: </a>    }
+
+<a name="line1853">1853: </a>    <font color="#B22222">/* add received col data into lnk */</font>
+<a name="line1854">1854: </a>    <font color="#4169E1">for</font> (k=0; k&lt;merge-&gt;nrecv; k++) { <font color="#B22222">/* k-th received message */</font>
+<a name="line1855">1855: </a>      <font color="#4169E1">if</font> (i == *nextrow[k]) { <font color="#B22222">/* i-th row */</font>
+<a name="line1856">1856: </a>        nzi  = *(nextci[k]+1) - *nextci[k];
+<a name="line1857">1857: </a>        Jptr = buf_rj[k] + *nextci[k];
+<a name="line1858">1858: </a>        PetscLLCondensedAddSorted_Scalable(nzi,Jptr,lnk);
+<a name="line1859">1859: </a>        nextrow[k]++; nextci[k]++;
+<a name="line1860">1860: </a>      }
+<a name="line1861">1861: </a>    }
+<a name="line1862">1862: </a>    nnz = lnk[0];
+
+<a name="line1864">1864: </a>    <font color="#B22222">/* if free space is not available, make more free space */</font>
+<a name="line1865">1865: </a>    <font color="#4169E1">if</font> (current_space-&gt;local_remaining&lt;nnz) {
+<a name="line1866">1866: </a>      PetscFreeSpaceGet(<a href="../../../../../docs/manualpages/Sys/PetscIntSumTruncate.html#PetscIntSumTruncate">PetscIntSumTruncate</a>(nnz,current_space-&gt;total_array_size),&amp;current_space);
+<a name="line1867">1867: </a>      nspacedouble++;
+<a name="line1868">1868: </a>    }
+<a name="line1869">1869: </a>    <font color="#B22222">/* copy data into free space, then initialize lnk */</font>
+<a name="line1870">1870: </a>    PetscLLCondensedClean_Scalable(nnz,current_space-&gt;array,lnk);
+<a name="line1871">1871: </a>    <a href="../../../../../docs/manualpages/Mat/MatPreallocateSet.html#MatPreallocateSet">MatPreallocateSet</a>(i+owners[rank],nnz,current_space-&gt;array,dnz,onz);
+
+<a name="line1873">1873: </a>    current_space-&gt;array           += nnz;
+<a name="line1874">1874: </a>    current_space-&gt;local_used      += nnz;
+<a name="line1875">1875: </a>    current_space-&gt;local_remaining -= nnz;
+
+<a name="line1877">1877: </a>    bi[i+1] = bi[i] + nnz;
+<a name="line1878">1878: </a>    <font color="#4169E1">if</font> (nnz &gt; rmax) rmax = nnz;
+<a name="line1879">1879: </a>  }
+<a name="line1880">1880: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree3.html#PetscFree3">PetscFree3</a>(buf_ri_k,nextrow,nextci);
+
+<a name="line1882">1882: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(bi[pn]+1,&amp;bj);
+<a name="line1883">1883: </a>  PetscFreeSpaceContiguous(&amp;free_space,bj);
+<a name="line1884">1884: </a>  afill_tmp = (<a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>)bi[pn]/(pdti[pn] + poti[pon] + ai[am]+1);
+<a name="line1885">1885: </a>  <font color="#4169E1">if</font> (afill_tmp &gt; afill) afill = afill_tmp;
+<a name="line1886">1886: </a>  PetscLLCondensedDestroy_Scalable(lnk);
+<a name="line1887">1887: </a>  PetscTableDestroy(&amp;ta);
+
+<a name="line1889">1889: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;POt);
+<a name="line1890">1890: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;PDt);
+
+<a name="line1892">1892: </a>  <font color="#B22222">/* create symbolic parallel matrix Cmpi - why cannot be assembled in Numeric part   */</font>
+<a name="line1893">1893: </a>  <font color="#B22222">/*----------------------------------------------------------------------------------*/</font>
+<a name="line1894">1894: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCalloc1.html#PetscCalloc1">PetscCalloc1</a>(rmax+1,&amp;vals);
+
+<a name="line1896">1896: </a>  <a href="../../../../../docs/manualpages/Mat/MatCreate.html#MatCreate">MatCreate</a>(comm,&amp;Cmpi);
+<a name="line1897">1897: </a>  <a href="../../../../../docs/manualpages/Mat/MatSetSizes.html#MatSetSizes">MatSetSizes</a>(Cmpi,pn,A-&gt;cmap-&gt;n,<a href="../../../../../docs/manualpages/Sys/PETSC_DETERMINE.html#PETSC_DETERMINE">PETSC_DETERMINE</a>,<a href="../../../../../docs/manualpages/Sys/PETSC_DETERMINE.html#PETSC_DETERMINE">PETSC_DETERMINE</a>);
+<a name="line1898">1898: </a>  <a href="../../../../../docs/manualpages/Mat/MatSetBlockSizes.html#MatSetBlockSizes">MatSetBlockSizes</a>(Cmpi,PetscAbs(P-&gt;cmap-&gt;bs),PetscAbs(A-&gt;cmap-&gt;bs));
+<a name="line1899">1899: </a>  <a href="../../../../../docs/manualpages/Mat/MatSetType.html#MatSetType">MatSetType</a>(Cmpi,<a href="../../../../../docs/manualpages/Mat/MATMPIAIJ.html#MATMPIAIJ">MATMPIAIJ</a>);
+<a name="line1900">1900: </a>  <a href="../../../../../docs/manualpages/Mat/MatMPIAIJSetPreallocation.html#MatMPIAIJSetPreallocation">MatMPIAIJSetPreallocation</a>(Cmpi,0,dnz,0,onz);
+<a name="line1901">1901: </a>  <a href="../../../../../docs/manualpages/Mat/MatPreallocateFinalize.html#MatPreallocateFinalize">MatPreallocateFinalize</a>(dnz,onz);
+<a name="line1902">1902: </a>  <a href="../../../../../docs/manualpages/Mat/MatSetBlockSize.html#MatSetBlockSize">MatSetBlockSize</a>(Cmpi,1);
+<a name="line1903">1903: </a>  <font color="#4169E1">for</font> (i=0; i&lt;pn; i++) {
+<a name="line1904">1904: </a>    row  = i + rstart;
+<a name="line1905">1905: </a>    nnz  = bi[i+1] - bi[i];
+<a name="line1906">1906: </a>    Jptr = bj + bi[i];
+<a name="line1907">1907: </a>    <a href="../../../../../docs/manualpages/Mat/MatSetValues.html#MatSetValues">MatSetValues</a>(Cmpi,1,&amp;row,nnz,Jptr,vals,<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>);
+<a name="line1908">1908: </a>  }
+<a name="line1909">1909: </a>  <a href="../../../../../docs/manualpages/Mat/MatAssemblyBegin.html#MatAssemblyBegin">MatAssemblyBegin</a>(Cmpi,<a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+<a name="line1910">1910: </a>  <a href="../../../../../docs/manualpages/Mat/MatAssemblyEnd.html#MatAssemblyEnd">MatAssemblyEnd</a>(Cmpi,<a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+<a name="line1911">1911: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(vals);
+
+<a name="line1913">1913: </a>  merge-&gt;bi        = bi;
+<a name="line1914">1914: </a>  merge-&gt;bj        = bj;
+<a name="line1915">1915: </a>  merge-&gt;coi       = coi;
+<a name="line1916">1916: </a>  merge-&gt;coj       = coj;
+<a name="line1917">1917: </a>  merge-&gt;buf_ri    = buf_ri;
+<a name="line1918">1918: </a>  merge-&gt;buf_rj    = buf_rj;
+<a name="line1919">1919: </a>  merge-&gt;owners_co = owners_co;
+
+<a name="line1921">1921: </a>  <font color="#B22222">/* attach the supporting struct to Cmpi for reuse */</font>
+<a name="line1922">1922: </a>  c = (Mat_MPIAIJ*)Cmpi-&gt;data;
+
+<a name="line1924">1924: </a>  c-&gt;ptap     = ptap;
+<a name="line1925">1925: </a>  ptap-&gt;api   = NULL;
+<a name="line1926">1926: </a>  ptap-&gt;apj   = NULL;
+<a name="line1927">1927: </a>  ptap-&gt;merge = merge;
+<a name="line1928">1928: </a>  ptap-&gt;apa   = NULL;
+<a name="line1929">1929: </a>  ptap-&gt;destroy   = Cmpi-&gt;ops-&gt;destroy;
+<a name="line1930">1930: </a>  ptap-&gt;duplicate = Cmpi-&gt;ops-&gt;duplicate;
+
+<a name="line1932">1932: </a>  Cmpi-&gt;ops-&gt;mattransposemultnumeric = MatTransposeMatMultNumeric_MPIAIJ_MPIAIJ;
+<a name="line1933">1933: </a>  Cmpi-&gt;ops-&gt;destroy                 = MatDestroy_MPIAIJ_PtAP;
+<a name="line1934">1934: </a>  Cmpi-&gt;ops-&gt;duplicate               = MatDuplicate_MPIAIJ_MatPtAP;
+
+<a name="line1936">1936: </a>  *C = Cmpi;
+<a name="line1937">1937: </a><font color="#A020F0">#if defined(PETSC_USE_INFO)</font>
+<a name="line1938">1938: </a>  <font color="#4169E1">if</font> (bi[pn] != 0) {
+<a name="line1939">1939: </a>    PetscInfo3(Cmpi,<font color="#666666">"Reallocs %D; Fill ratio: given %g needed %g.\n"</font>,nspacedouble,(double)fill,(double)afill);
+<a name="line1940">1940: </a>    PetscInfo1(Cmpi,<font color="#666666">"Use <a href="../../../../../docs/manualpages/Mat/MatTransposeMatMult.html#MatTransposeMatMult">MatTransposeMatMult</a>(A,B,<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MatReuse</a>,%g,&amp;C) for best performance.\n"</font>,(double)afill);
+<a name="line1941">1941: </a>  } <font color="#4169E1">else</font> {
+<a name="line1942">1942: </a>    <a href="../../../../../docs/manualpages/Profiling/PetscInfo.html#PetscInfo">PetscInfo</a>(Cmpi,<font color="#666666">"Empty matrix product\n"</font>);
+<a name="line1943">1943: </a>  }
+<a name="line1944">1944: </a><font color="#A020F0">#endif</font>
+<a name="line1945">1945: </a>  <font color="#4169E1">return</font>(0);
+<a name="line1946">1946: </a>}
+</pre>
+</body>
+
+</html>

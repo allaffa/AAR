@@ -1,0 +1,206 @@
+<center><a href="ptype.c">Actual source code: ptype.c</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/sys/objects/ptype.c.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:08:39+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/sys/objects/ptype.c.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+
+<a name="line2">  2: </a><font color="#B22222">/*</font>
+<a name="line3">  3: </a><font color="#B22222">     Provides utility routines for manipulating any type of PETSc object.</font>
+<a name="line4">  4: </a><font color="#B22222">*/</font>
+<a name="line5">  5: </a> #include <A href="../../../include/petscsys.h.html">&lt;petscsys.h&gt;</A>
+
+<a name="line7">  7: </a><font color="#B22222">/*@C</font>
+<a name="line8">  8: </a><font color="#B22222">     <a href="../../../docs/manualpages/Sys/PetscDataTypeToMPIDataType.html#PetscDataTypeToMPIDataType">PetscDataTypeToMPIDataType</a> - Converts the PETSc name of a datatype to its MPI name.</font>
+
+<a name="line10"> 10: </a><font color="#B22222">   Not collective</font>
+
+<a name="line12"> 12: </a><font color="#B22222">    Input Parameter:</font>
+<a name="line13"> 13: </a><font color="#B22222">.     ptype - the PETSc datatype name (for example <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_DOUBLE</a>)</font>
+
+<a name="line15"> 15: </a><font color="#B22222">    Output Parameter:</font>
+<a name="line16"> 16: </a><font color="#B22222">.     mtype - the MPI datatype (for example MPI_DOUBLE, ...)</font>
+
+<a name="line18"> 18: </a><font color="#B22222">    Level: advanced</font>
+
+<a name="line20"> 20: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PetscDataType</a>, <a href="../../../docs/manualpages/Sys/PetscMPIDataTypeToPetscDataType.html#PetscMPIDataTypeToPetscDataType">PetscMPIDataTypeToPetscDataType</a>()</font>
+<a name="line21"> 21: </a><font color="#B22222">@*/</font>
+<a name="line22"> 22: </a><strong><font color="#4169E1"><a name="PetscDataTypeToMPIDataType"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../docs/manualpages/Sys/PetscDataTypeToMPIDataType.html#PetscDataTypeToMPIDataType">PetscDataTypeToMPIDataType</a>(<a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PetscDataType</a> ptype,MPI_Datatype *mtype)</font></strong>
+<a name="line23"> 23: </a>{
+<a name="line25"> 25: </a>  <font color="#4169E1">if</font> (ptype == <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_INT</a>)              *mtype = MPIU_INT;
+<a name="line26"> 26: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ptype == <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_DOUBLE</a>)      *mtype = MPI_DOUBLE;
+<a name="line27"> 27: </a><font color="#A020F0">#if defined(PETSC_USE_COMPLEX)</font>
+<a name="line28"> 28: </a><font color="#A020F0">#if defined(PETSC_USE_REAL_SINGLE)</font>
+<a name="line29"> 29: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ptype == <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_COMPLEX</a>)     *mtype = MPIU_C_COMPLEX;
+<a name="line30"> 30: </a><font color="#A020F0">#elif defined(PETSC_USE_REAL___FLOAT128)</font>
+<a name="line31"> 31: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ptype == <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_COMPLEX</a>)     *mtype = MPIU___COMPLEX128;
+<a name="line32"> 32: </a><font color="#A020F0">#else</font>
+<a name="line33"> 33: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ptype == <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_COMPLEX</a>)     *mtype = MPIU_C_DOUBLE_COMPLEX;
+<a name="line34"> 34: </a><font color="#A020F0">#endif</font>
+<a name="line35"> 35: </a><font color="#A020F0">#endif</font>
+<a name="line36"> 36: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ptype == <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_LONG</a>)        *mtype = MPI_LONG;
+<a name="line37"> 37: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ptype == <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_SHORT</a>)       *mtype = MPI_SHORT;
+<a name="line38"> 38: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ptype == <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_ENUM</a>)        *mtype = MPI_INT;
+<a name="line39"> 39: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ptype == <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_BOOL</a>)        *mtype = MPI_INT;
+<a name="line40"> 40: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ptype == <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_FLOAT</a>)       *mtype = MPI_FLOAT;
+<a name="line41"> 41: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ptype == <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_CHAR</a>)        *mtype = MPI_CHAR;
+<a name="line42"> 42: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ptype == <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_BIT_LOGICAL</a>) *mtype = MPI_BYTE;
+<a name="line43"> 43: </a><font color="#A020F0">#if defined(PETSC_USE_REAL___FLOAT128)</font>
+<a name="line44"> 44: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ptype == <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC___FLOAT128</a>)  *mtype = MPIU___FLOAT128;
+<a name="line45"> 45: </a><font color="#A020F0">#elif defined(PETSC_USE_REAL___FP16)</font>
+<a name="line46"> 46: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ptype == <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC___FP16</a>)  *mtype = MPIU___FP16;
+<a name="line47"> 47: </a><font color="#A020F0">#endif</font>
+<a name="line48"> 48: </a>  <font color="#4169E1">else</font> <a href="../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_OUTOFRANGE,<font color="#666666">"Unknown PETSc datatype"</font>);
+<a name="line49"> 49: </a>  <font color="#4169E1">return</font>(0);
+<a name="line50"> 50: </a>}
+
+<a name="line52"> 52: </a><font color="#B22222">/*@C</font>
+<a name="line53"> 53: </a><font color="#B22222">     <a href="../../../docs/manualpages/Sys/PetscMPIDataTypeToPetscDataType.html#PetscMPIDataTypeToPetscDataType">PetscMPIDataTypeToPetscDataType</a> Finds the PETSc name of a datatype from its MPI name</font>
+
+<a name="line55"> 55: </a><font color="#B22222">   Not collective</font>
+
+<a name="line57"> 57: </a><font color="#B22222">    Input Parameter:</font>
+<a name="line58"> 58: </a><font color="#B22222">.     mtype - the MPI datatype (for example MPI_DOUBLE, ...)</font>
+
+<a name="line60"> 60: </a><font color="#B22222">    Output Parameter:</font>
+<a name="line61"> 61: </a><font color="#B22222">.     ptype - the PETSc datatype name (for example <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_DOUBLE</a>)</font>
+
+<a name="line63"> 63: </a><font color="#B22222">    Level: advanced</font>
+
+<a name="line65"> 65: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PetscDataType</a>, <a href="../../../docs/manualpages/Sys/PetscMPIDataTypeToPetscDataType.html#PetscMPIDataTypeToPetscDataType">PetscMPIDataTypeToPetscDataType</a>()</font>
+<a name="line66"> 66: </a><font color="#B22222">@*/</font>
+<a name="line67"> 67: </a><strong><font color="#4169E1"><a name="PetscMPIDataTypeToPetscDataType"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../docs/manualpages/Sys/PetscMPIDataTypeToPetscDataType.html#PetscMPIDataTypeToPetscDataType">PetscMPIDataTypeToPetscDataType</a>(MPI_Datatype mtype,<a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PetscDataType</a> *ptype)</font></strong>
+<a name="line68"> 68: </a>{
+<a name="line70"> 70: </a>  <font color="#4169E1">if</font> (mtype == MPIU_INT)             *ptype = <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_INT</a>;
+<a name="line71"> 71: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (mtype == MPI_INT)         *ptype = <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_INT</a>;
+<a name="line72"> 72: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (mtype == MPI_DOUBLE)      *ptype = <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_DOUBLE</a>;
+<a name="line73"> 73: </a><font color="#A020F0">#if defined(PETSC_USE_COMPLEX)</font>
+<a name="line74"> 74: </a><font color="#A020F0">#if defined(PETSC_USE_REAL_SINGLE)</font>
+<a name="line75"> 75: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (mtype == MPIU_C_COMPLEX)  *ptype = <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_COMPLEX</a>;
+<a name="line76"> 76: </a><font color="#A020F0">#elif defined(PETSC_USE_REAL___FLOAT128)</font>
+<a name="line77"> 77: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (mtype == MPIU___COMPLEX128) *ptype = <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_COMPLEX</a>;
+<a name="line78"> 78: </a><font color="#A020F0">#else</font>
+<a name="line79"> 79: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (mtype == MPIU_C_DOUBLE_COMPLEX) *ptype = <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_COMPLEX</a>;
+<a name="line80"> 80: </a><font color="#A020F0">#endif</font>
+<a name="line81"> 81: </a><font color="#A020F0">#endif</font>
+<a name="line82"> 82: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (mtype == MPI_LONG)        *ptype = <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_LONG</a>;
+<a name="line83"> 83: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (mtype == MPI_SHORT)       *ptype = <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_SHORT</a>;
+<a name="line84"> 84: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (mtype == MPI_FLOAT)       *ptype = <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_FLOAT</a>;
+<a name="line85"> 85: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (mtype == MPI_CHAR)        *ptype = <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_CHAR</a>;
+<a name="line86"> 86: </a><font color="#A020F0">#if defined(PETSC_USE_REAL___FLOAT128)</font>
+<a name="line87"> 87: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (mtype == MPIU___FLOAT128) *ptype = <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC___FLOAT128</a>;
+<a name="line88"> 88: </a><font color="#A020F0">#elif defined(PETSC_USE_REAL___FP16)</font>
+<a name="line89"> 89: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (mtype == MPIU___FP16) *ptype = <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC___FP16</a>;
+<a name="line90"> 90: </a><font color="#A020F0">#endif</font>
+<a name="line91"> 91: </a>  <font color="#4169E1">else</font> <a href="../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_SUP,<font color="#666666">"Unhandled MPI datatype"</font>);
+<a name="line92"> 92: </a>  <font color="#4169E1">return</font>(0);
+<a name="line93"> 93: </a>}
+
+<a name="line95"> 95: </a><font color="#4169E1">typedef</font> <font color="#4169E1">enum</font> {PETSC_INT_SIZE         = <font color="#4169E1">sizeof</font>(<a href="../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>),
+<a name="line96"> 96: </a>              PETSC_DOUBLE_SIZE      = <font color="#4169E1">sizeof</font>(double),
+<a name="line97"> 97: </a>              PETSC_COMPLEX_SIZE     = <font color="#4169E1">sizeof</font>(<a href="../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>),
+<a name="line98"> 98: </a>              PETSC_LONG_SIZE        = <font color="#4169E1">sizeof</font>(long),
+<a name="line99"> 99: </a>              PETSC_SHORT_SIZE       = <font color="#4169E1">sizeof</font>(short),
+<a name="line100">100: </a>              PETSC_FLOAT_SIZE       = <font color="#4169E1">sizeof</font>(float),
+<a name="line101">101: </a>              PETSC_CHAR_SIZE        = <font color="#4169E1">sizeof</font>(char),
+<a name="line102">102: </a>              PETSC_BIT_LOGICAL_SIZE = <font color="#4169E1">sizeof</font>(char),
+<a name="line103">103: </a>              PETSC_ENUM_SIZE        = <font color="#4169E1">sizeof</font>(<a href="../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>),
+<a name="line104">104: </a>              PETSC_BOOL_SIZE        = <font color="#4169E1">sizeof</font>(<a href="../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>)
+<a name="line105">105: </a><font color="#A020F0">#if defined(PETSC_USE_REAL___FLOAT128)</font>
+<a name="line106">106: </a>              ,PETSC___FLOAT128_SIZE  = <font color="#4169E1">sizeof</font>(__float128)
+<a name="line107">107: </a><font color="#A020F0">#elif defined(PETSC_USE_REAL___FP16)</font>
+<a name="line108">108: </a>              ,PETSC___FP16_SIZE      = <font color="#4169E1">sizeof</font>(__fp16)
+<a name="line109">109: </a><font color="#A020F0">#endif</font>
+<a name="line110">110: </a>             } PetscDataTypeSize;
+
+<a name="line112">112: </a><font color="#B22222">/*@C</font>
+<a name="line113">113: </a><font color="#B22222">     <a href="../../../docs/manualpages/Sys/PetscDataTypeGetSize.html#PetscDataTypeGetSize">PetscDataTypeGetSize</a> - Gets the size (in bytes) of a PETSc datatype</font>
+
+<a name="line115">115: </a><font color="#B22222">   Not collective</font>
+
+<a name="line117">117: </a><font color="#B22222">    Input Parameter:</font>
+<a name="line118">118: </a><font color="#B22222">.     ptype - the PETSc datatype name (for example <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_DOUBLE</a>)</font>
+
+<a name="line120">120: </a><font color="#B22222">    Output Parameter:</font>
+<a name="line121">121: </a><font color="#B22222">.     size - the size in bytes (for example the size of <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_DOUBLE</a> is 8)</font>
+
+<a name="line123">123: </a><font color="#B22222">    Level: advanced</font>
+
+<a name="line125">125: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PetscDataType</a>, <a href="../../../docs/manualpages/Sys/PetscDataTypeToMPIDataType.html#PetscDataTypeToMPIDataType">PetscDataTypeToMPIDataType</a>()</font>
+<a name="line126">126: </a><font color="#B22222">@*/</font>
+<a name="line127">127: </a><strong><font color="#4169E1"><a name="PetscDataTypeGetSize"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../docs/manualpages/Sys/PetscDataTypeGetSize.html#PetscDataTypeGetSize">PetscDataTypeGetSize</a>(<a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PetscDataType</a> ptype,size_t *size)</font></strong>
+<a name="line128">128: </a>{
+<a name="line130">130: </a>  <font color="#4169E1">if</font> ((int) ptype &lt; 0) {
+<a name="line131">131: </a>    *size = -(int) ptype;
+<a name="line132">132: </a>    <font color="#4169E1">return</font>(0);
+<a name="line133">133: </a>  }
+
+<a name="line135">135: </a>  <font color="#4169E1">if</font> (ptype == <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_INT</a>)              *size = PETSC_INT_SIZE;
+<a name="line136">136: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ptype == <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_DOUBLE</a>)      *size = PETSC_DOUBLE_SIZE;
+<a name="line137">137: </a><font color="#A020F0">#if defined(PETSC_USE_COMPLEX)</font>
+<a name="line138">138: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ptype == <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_COMPLEX</a>)     *size = PETSC_COMPLEX_SIZE;
+<a name="line139">139: </a><font color="#A020F0">#endif</font>
+<a name="line140">140: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ptype == <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_LONG</a>)        *size = PETSC_LONG_SIZE;
+<a name="line141">141: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ptype == <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_SHORT</a>)       *size = PETSC_SHORT_SIZE;
+<a name="line142">142: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ptype == <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_FLOAT</a>)       *size = PETSC_FLOAT_SIZE;
+<a name="line143">143: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ptype == <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_CHAR</a>)        *size = PETSC_CHAR_SIZE;
+<a name="line144">144: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ptype == <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_ENUM</a>)        *size = PETSC_ENUM_SIZE;
+<a name="line145">145: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ptype == <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_BIT_LOGICAL</a>) *size = PETSC_BIT_LOGICAL_SIZE;
+<a name="line146">146: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ptype == <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_BOOL</a>)        *size = PETSC_BOOL_SIZE;
+<a name="line147">147: </a><font color="#A020F0">#if defined(PETSC_USE_REAL___FLOAT128)</font>
+<a name="line148">148: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ptype == <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC___FLOAT128</a>)  *size = PETSC___FLOAT128_SIZE;
+<a name="line149">149: </a><font color="#A020F0">#elif defined(PETSC_USE_REAL___FP16)</font>
+<a name="line150">150: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ptype == <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC___FP16</a>)      *size = PETSC___FP16_SIZE;
+<a name="line151">151: </a><font color="#A020F0">#endif</font>
+<a name="line152">152: </a>  <font color="#4169E1">else</font> <a href="../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_OUTOFRANGE,<font color="#666666">"Unknown PETSc datatype"</font>);
+<a name="line153">153: </a>  <font color="#4169E1">return</font>(0);
+<a name="line154">154: </a>}
+
+<a name="line156">156: </a><font color="#B22222">/*@C</font>
+<a name="line157">157: </a><font color="#B22222">     <a href="../../../docs/manualpages/Sys/PetscDataTypeFromString.html#PetscDataTypeFromString">PetscDataTypeFromString</a> - Gets the enum value of a PETSc datatype represented as a string</font>
+
+<a name="line159">159: </a><font color="#B22222">   Not collective</font>
+
+<a name="line161">161: </a><font color="#B22222">    Input Parameter:</font>
+<a name="line162">162: </a><font color="#B22222">.     name - the PETSc datatype name (for example, DOUBLE or real or Scalar)</font>
+
+<a name="line164">164: </a><font color="#B22222">    Output Parameter:</font>
+<a name="line165">165: </a><font color="#B22222">+    ptype - the enum value</font>
+<a name="line166">166: </a><font color="#B22222">-    found - the string matches one of the data types</font>
+
+<a name="line168">168: </a><font color="#B22222">    Level: advanced</font>
+
+<a name="line170">170: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PetscDataType</a>, <a href="../../../docs/manualpages/Sys/PetscDataTypeToMPIDataType.html#PetscDataTypeToMPIDataType">PetscDataTypeToMPIDataType</a>(), <a href="../../../docs/manualpages/Sys/PetscDataTypeGetSize.html#PetscDataTypeGetSize">PetscDataTypeGetSize</a>()</font>
+<a name="line171">171: </a><font color="#B22222">@*/</font>
+<a name="line172">172: </a><strong><font color="#4169E1"><a name="PetscDataTypeFromString"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../docs/manualpages/Sys/PetscDataTypeFromString.html#PetscDataTypeFromString">PetscDataTypeFromString</a>(const char*name, <a href="../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PetscDataType</a> *ptype,<a href="../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> *found)</font></strong>
+<a name="line173">173: </a>{
+
+<a name="line177">177: </a>  PetscEnumFind(PetscDataTypes,name,(<a href="../../../docs/manualpages/Sys/PetscEnum.html#PetscEnum">PetscEnum</a>*)ptype,found);
+<a name="line178">178: </a>  <font color="#4169E1">if</font> (!*found) {
+<a name="line179">179: </a>    char formatted[16];
+
+<a name="line181">181: </a>    <a href="../../../docs/manualpages/Sys/PetscStrncpy.html#PetscStrncpy">PetscStrncpy</a>(formatted,name,16);
+<a name="line182">182: </a>    <a href="../../../docs/manualpages/Sys/PetscStrtolower.html#PetscStrtolower">PetscStrtolower</a>(formatted);
+<a name="line183">183: </a>    <a href="../../../docs/manualpages/Sys/PetscStrcmp.html#PetscStrcmp">PetscStrcmp</a>(formatted,<font color="#666666">"scalar"</font>,found);
+<a name="line184">184: </a>    <font color="#4169E1">if</font> (*found) {
+<a name="line185">185: </a>      *ptype = PETSC_SCALAR;
+<a name="line186">186: </a>    } <font color="#4169E1">else</font> {
+<a name="line187">187: </a>      <a href="../../../docs/manualpages/Sys/PetscStrcmp.html#PetscStrcmp">PetscStrcmp</a>(formatted,<font color="#666666">"real"</font>,found);
+<a name="line188">188: </a>      <font color="#4169E1">if</font> (*found) {
+<a name="line189">189: </a>        *ptype = PETSC_REAL;
+<a name="line190">190: </a>      }
+<a name="line191">191: </a>    }
+<a name="line192">192: </a>  }
+<a name="line193">193: </a>  <font color="#4169E1">return</font>(0);
+<a name="line194">194: </a>}
+</pre>
+</body>
+
+</html>

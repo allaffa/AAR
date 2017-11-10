@@ -1,0 +1,509 @@
+<center><a href="ex5f.F90">Actual source code: ex5f.F90</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/snes/examples/tutorials/ex5f.F90.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-27T00:10:05+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/snes/examples/tutorials/ex5f.F90.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+<a name="line1">  1: </a>!
+<a name="line2">  2: </a>!  Description: This example solves a nonlinear system in parallel with <a href="../../../../docs/manualpages/SNES/SNES.html#SNES">SNES</a>.
+<a name="line3">  3: </a>!  We solve the  Bratu (SFI - solid fuel ignition) problem in a 2D rectangular
+<a name="line4">  4: </a>!  domain, using distributed arrays (DMDAs) to partition the parallel grid.
+<a name="line5">  5: </a>!  The command line options include:
+<a name="line6">  6: </a>!    -par &lt;param&gt;, where &lt;param&gt; indicates the nonlinearity of the problem
+<a name="line7">  7: </a>!       problem SFI:  &lt;parameter&gt; = Bratu parameter (0 &lt;= par &lt;= 6.81)
+<a name="line8">  8: </a>!
+<a name="line9">  9: </a>!
+<a name="line10"> 10: </a>!<font color="#B22222">/*T</font>
+<a name="line11"> 11: </a><font color="#B22222">!  Concepts: <a href="../../../../docs/manualpages/SNES/SNES.html#SNES">SNES</a>^parallel Bratu example</font>
+<a name="line12"> 12: </a><font color="#B22222">!  Concepts: <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a>^using distributed arrays;</font>
+<a name="line13"> 13: </a><font color="#B22222">!  Processors: n</font>
+<a name="line14"> 14: </a><font color="#B22222">!T*/</font>
+<a name="line15"> 15: </a>!
+<a name="line16"> 16: </a>!  --------------------------------------------------------------------------
+<a name="line17"> 17: </a>!
+<a name="line18"> 18: </a>!  Solid Fuel Ignition (SFI) problem.  This problem is modeled by
+<a name="line19"> 19: </a>!  the partial differential equation
+<a name="line20"> 20: </a>!
+<a name="line21"> 21: </a>!          -Laplacian u - lambda*exp(u) = 0,  0 &lt; x,y &lt; 1,
+<a name="line22"> 22: </a>!
+<a name="line23"> 23: </a>!  with boundary conditions
+<a name="line24"> 24: </a>!
+<a name="line25"> 25: </a>!           u = 0  <font color="#4169E1">for</font>  x = 0, x = 1, y = 0, y = 1.
+<a name="line26"> 26: </a>!
+<a name="line27"> 27: </a>!  A finite difference approximation with the usual 5-point stencil
+<a name="line28"> 28: </a>!  is used to discretize the boundary value problem to obtain a nonlinear
+<a name="line29"> 29: </a>!  system of equations.
+<a name="line30"> 30: </a>!
+<a name="line31"> 31: </a>!  --------------------------------------------------------------------------
+
+<a name="line33"> 33: </a>      program main
+<a name="line34"> 34: </a> #include <A href="../../../../include/petsc/finclude/petscsnes.h.html">&lt;petsc/finclude/petscsnes.h&gt;</A>
+<a name="line35"> 35: </a>      use petscdmda
+<a name="line36"> 36: </a>      use petscsnes
+<a name="line37"> 37: </a>      implicit none
+<a name="line38"> 38: </a>!
+<a name="line39"> 39: </a>!  We place common blocks, variable declarations, and other include files
+<a name="line40"> 40: </a>!  needed <font color="#4169E1">for</font> this code in the single file ex5f.h.  We then need to include
+<a name="line41"> 41: </a>!  only this file throughout the various routines in this program.  See
+<a name="line42"> 42: </a>!  additional comments in the file ex5f.h.
+<a name="line43"> 43: </a>!
+<a name="line44"> 44: </a><font color="#A020F0">#include </font><font color="#666666">"ex5f.h"</font><font color="#A020F0"></font>
+
+<a name="line46"> 46: </a>! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+<a name="line47"> 47: </a>!                   Variable declarations
+<a name="line48"> 48: </a>! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+<a name="line49"> 49: </a>!
+<a name="line50"> 50: </a>!  Variables:
+<a name="line51"> 51: </a>!     snes        - nonlinear solver
+<a name="line52"> 52: </a>!     x, r        - solution, residual vectors
+<a name="line53"> 53: </a>!     its         - iterations <font color="#4169E1">for</font> convergence
+<a name="line54"> 54: </a>!
+<a name="line55"> 55: </a>!  See additional variable declarations in the file ex5f.h
+<a name="line56"> 56: </a>!
+<a name="line57"> 57: </a>      <a href="../../../../docs/manualpages/SNES/SNES.html#SNES">SNES</a>           snes
+<a name="line58"> 58: </a>      <a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>            x,r
+<a name="line59"> 59: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       its,i1,i4
+<a name="line60"> 60: </a>      <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line61"> 61: </a>      <a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>      lambda_max,lambda_min
+<a name="line62"> 62: </a>      <a href="../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>      flg
+
+
+<a name="line65"> 65: </a>!  Note: Any user-defined Fortran routines (such as FormJacobianLocal)
+<a name="line66"> 66: </a>!  MUST be declared as external.
+
+<a name="line68"> 68: </a>      external FormInitialGuess
+<a name="line69"> 69: </a>      external FormFunctionLocal,FormJacobianLocal
+
+<a name="line71"> 71: </a>! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+<a name="line72"> 72: </a>!  Initialize program
+<a name="line73"> 73: </a>! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+<a name="line75"> 75: </a>      call <a href="../../../../docs/manualpages/Sys/PetscInitialize.html#PetscInitialize">PetscInitialize</a>(PETSC_NULL_CHARACTER,ierr)
+<a name="line76"> 76: </a>      <font color="#4169E1">if</font> (ierr .ne. 0) then
+<a name="line77"> 77: </a>        print*,'Unable to initialize PETSc'
+<a name="line78"> 78: </a>        stop
+<a name="line79"> 79: </a>      endif
+<a name="line80"> 80: </a>      call <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,size,ierr)
+<a name="line81"> 81: </a>      call <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,rank,ierr)
+
+<a name="line83"> 83: </a>!  Initialize problem parameters
+
+<a name="line85"> 85: </a>      i1 = 1
+<a name="line86"> 86: </a>      i4 = 4
+<a name="line87"> 87: </a>      lambda_max = 6.81
+<a name="line88"> 88: </a>      lambda_min = 0.0
+<a name="line89"> 89: </a>      lambda     = 6.0
+<a name="line90"> 90: </a>      call <a href="../../../../docs/manualpages/Sys/PetscOptionsGetReal.html#PetscOptionsGetReal">PetscOptionsGetReal</a>(PETSC_NULL_OPTIONS,                        &amp;
+<a name="line91"> 91: </a>     &amp;             PETSC_NULL_CHARACTER,'-par',lambda,flg,ierr)
+<a name="line92"> 92: </a>      <font color="#4169E1">if</font> (lambda .ge. lambda_max .or. lambda .le. lambda_min) then
+<a name="line93"> 93: </a>         SETERRA(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,1,'Lambda out of range')
+<a name="line94"> 94: </a>      endif
+
+<a name="line96"> 96: </a>! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+<a name="line97"> 97: </a>!  Create nonlinear solver context
+<a name="line98"> 98: </a>! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+<a name="line100">100: </a>      call <a href="../../../../docs/manualpages/SNES/SNESCreate.html#SNESCreate">SNESCreate</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,snes,ierr)
+
+<a name="line102">102: </a>! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+<a name="line103">103: </a>!  Create vector data structures; set function evaluation routine
+<a name="line104">104: </a>! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+<a name="line106">106: </a>!  Create distributed array (<a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a>) to manage parallel grid and vectors
+
+<a name="line108">108: </a>! This really needs only the star-type stencil, but we use the box
+<a name="line109">109: </a>! stencil temporarily.
+<a name="line110">110: </a>      call <a href="../../../../docs/manualpages/DMDA/DMDACreate2d.html#DMDACreate2d">DMDACreate2d</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_NONE</a>,              &amp;
+<a name="line111">111: </a>     &amp;     <a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_NONE</a>,                                            &amp;
+<a name="line112">112: </a>     &amp;     <a href="../../../../docs/manualpages/DMDA/DMDAStencilType.html#DMDAStencilType">DMDA_STENCIL_STAR</a>,i4,i4,<a href="../../../../docs/manualpages/Sys/PETSC_DECIDE.html#PETSC_DECIDE">PETSC_DECIDE</a>,<a href="../../../../docs/manualpages/Sys/PETSC_DECIDE.html#PETSC_DECIDE">PETSC_DECIDE</a>,i1,i1,                &amp;
+<a name="line113">113: </a>     &amp;     PETSC_NULL_INTEGER,PETSC_NULL_INTEGER,da,ierr)
+<a name="line114">114: </a>      call <a href="../../../../docs/manualpages/DM/DMSetFromOptions.html#DMSetFromOptions">DMSetFromOptions</a>(da,ierr)
+<a name="line115">115: </a>      call <a href="../../../../docs/manualpages/DM/DMSetUp.html#DMSetUp">DMSetUp</a>(da,ierr)
+
+<a name="line117">117: </a>!  Extract global and local vectors from <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a>; then duplicate <font color="#4169E1">for</font> remaining
+<a name="line118">118: </a>!  vectors that are the same types
+
+<a name="line120">120: </a>      call <a href="../../../../docs/manualpages/DM/DMCreateGlobalVector.html#DMCreateGlobalVector">DMCreateGlobalVector</a>(da,x,ierr)
+<a name="line121">121: </a>      call <a href="../../../../docs/manualpages/Vec/VecDuplicate.html#VecDuplicate">VecDuplicate</a>(x,r,ierr)
+
+<a name="line123">123: </a>!  Get local grid boundaries (<font color="#4169E1">for</font> 2-dimensional <a href="../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a>)
+
+<a name="line125">125: </a>      call <a href="../../../../docs/manualpages/DMDA/DMDAGetInfo.html#DMDAGetInfo">DMDAGetInfo</a>(da,PETSC_NULL_INTEGER,mx,my,PETSC_NULL_INTEGER,            &amp;
+<a name="line126">126: </a>     &amp;               PETSC_NULL_INTEGER,PETSC_NULL_INTEGER,                     &amp;
+<a name="line127">127: </a>     &amp;               PETSC_NULL_INTEGER,PETSC_NULL_INTEGER,                     &amp;
+<a name="line128">128: </a>     &amp;               PETSC_NULL_INTEGER,PETSC_NULL_INTEGER,                     &amp;
+<a name="line129">129: </a>     &amp;               PETSC_NULL_INTEGER,PETSC_NULL_INTEGER,                     &amp;
+<a name="line130">130: </a>     &amp;               PETSC_NULL_INTEGER,ierr)
+<a name="line131">131: </a>      call <a href="../../../../docs/manualpages/DMDA/DMDAGetCorners.html#DMDAGetCorners">DMDAGetCorners</a>(da,xs,ys,PETSC_NULL_INTEGER,xm,ym,                      &amp;
+<a name="line132">132: </a>     &amp;     PETSC_NULL_INTEGER,ierr)
+<a name="line133">133: </a>      call <a href="../../../../docs/manualpages/DMDA/DMDAGetGhostCorners.html#DMDAGetGhostCorners">DMDAGetGhostCorners</a>(da,gxs,gys,PETSC_NULL_INTEGER,gxm,gym,             &amp;
+<a name="line134">134: </a>     &amp;     PETSC_NULL_INTEGER,ierr)
+
+<a name="line136">136: </a>!  Here we shift the starting indices up by one so that we can easily
+<a name="line137">137: </a>!  use the Fortran convention of 1-based indices (rather 0-based indices).
+
+<a name="line139">139: </a>      xs  = xs+1
+<a name="line140">140: </a>      ys  = ys+1
+<a name="line141">141: </a>      gxs = gxs+1
+<a name="line142">142: </a>      gys = gys+1
+
+<a name="line144">144: </a>      ye  = ys+ym-1
+<a name="line145">145: </a>      xe  = xs+xm-1
+<a name="line146">146: </a>      gye = gys+gym-1
+<a name="line147">147: </a>      gxe = gxs+gxm-1
+
+<a name="line149">149: </a>!  Set function evaluation routine and vector
+
+<a name="line151">151: </a>      call <a href="../../../../docs/manualpages/SNES/DMDASNESSetFunctionLocal.html#DMDASNESSetFunctionLocal">DMDASNESSetFunctionLocal</a>(da,<a href="../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>,FormFunctionLocal,            &amp;
+<a name="line152">152: </a>     &amp;                              0,ierr)
+<a name="line153">153: </a>      call <a href="../../../../docs/manualpages/SNES/DMDASNESSetJacobianLocal.html#DMDASNESSetJacobianLocal">DMDASNESSetJacobianLocal</a>(da,FormJacobianLocal,                          &amp;
+<a name="line154">154: </a>     &amp;                              0,ierr)
+<a name="line155">155: </a>      call <a href="../../../../docs/manualpages/SNES/SNESSetDM.html#SNESSetDM">SNESSetDM</a>(snes,da,ierr)
+
+<a name="line157">157: </a>! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+<a name="line158">158: </a>!  Customize nonlinear solver; set runtime options
+<a name="line159">159: </a>! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+<a name="line161">161: </a>!  Set runtime options (e.g., -snes_monitor -snes_rtol &lt;rtol&gt; -ksp_type &lt;type&gt;)
+
+<a name="line163">163: </a>          call <a href="../../../../docs/manualpages/SNES/SNESSetFromOptions.html#SNESSetFromOptions">SNESSetFromOptions</a>(snes,ierr)
+<a name="line164">164: </a>! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+<a name="line165">165: </a>!  Evaluate initial guess; then solve nonlinear system.
+<a name="line166">166: </a>! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+<a name="line168">168: </a>!  Note: The user should initialize the vector, x, with the initial guess
+<a name="line169">169: </a>!  <font color="#4169E1">for</font> the nonlinear solver prior to calling <a href="../../../../docs/manualpages/SNES/SNESSolve.html#SNESSolve">SNESSolve</a>().  In particular,
+<a name="line170">170: </a>!  to employ an initial guess of zero, the user should explicitly set
+<a name="line171">171: </a>!  this vector to zero by calling <a href="../../../../docs/manualpages/Vec/VecSet.html#VecSet">VecSet</a>().
+
+<a name="line173">173: </a>      call FormInitialGuess(x,ierr)
+<a name="line174">174: </a>      call <a href="../../../../docs/manualpages/SNES/SNESSolve.html#SNESSolve">SNESSolve</a>(snes,PETSC_NULL_VEC,x,ierr)
+<a name="line175">175: </a>      call <a href="../../../../docs/manualpages/SNES/SNESGetIterationNumber.html#SNESGetIterationNumber">SNESGetIterationNumber</a>(snes,its,ierr)
+<a name="line176">176: </a>      <font color="#4169E1">if</font> (rank .eq. 0) then
+<a name="line177">177: </a>         write(6,100) its
+<a name="line178">178: </a>      endif
+<a name="line179">179: </a>  100 format('Number of <a href="../../../../docs/manualpages/SNES/SNES.html#SNES">SNES</a> iterations = ',i5)
+
+
+<a name="line182">182: </a>! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+<a name="line183">183: </a>!  Free work space.  All PETSc objects should be destroyed when they
+<a name="line184">184: </a>!  are no longer needed.
+<a name="line185">185: </a>! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+<a name="line187">187: </a>      call <a href="../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(x,ierr)
+<a name="line188">188: </a>      call <a href="../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(r,ierr)
+<a name="line189">189: </a>      call <a href="../../../../docs/manualpages/SNES/SNESDestroy.html#SNESDestroy">SNESDestroy</a>(snes,ierr)
+<a name="line190">190: </a>      call <a href="../../../../docs/manualpages/DM/DMDestroy.html#DMDestroy">DMDestroy</a>(da,ierr)
+<a name="line191">191: </a>      call <a href="../../../../docs/manualpages/Sys/PetscFinalize.html#PetscFinalize">PetscFinalize</a>(ierr)
+<a name="line192">192: </a>      end
+
+<a name="line194">194: </a>! ---------------------------------------------------------------------
+<a name="line195">195: </a>!
+<a name="line196">196: </a>!  FormInitialGuess - Forms initial approximation.
+<a name="line197">197: </a>!
+<a name="line198">198: </a>!  Input Parameters:
+<a name="line199">199: </a>!  X - vector
+<a name="line200">200: </a>!
+<a name="line201">201: </a>!  Output Parameter:
+<a name="line202">202: </a>!  X - vector
+<a name="line203">203: </a>!
+<a name="line204">204: </a>!  Notes:
+<a name="line205">205: </a>!  This routine serves as a wrapper <font color="#4169E1">for</font> the lower-level routine
+<a name="line206">206: </a>!  <font color="#666666">"ApplicationInitialGuess"</font>, where the actual computations are
+<a name="line207">207: </a>!  done using the standard Fortran style of treating the local
+<a name="line208">208: </a>!  vector data as a multidimensional array over the local mesh.
+<a name="line209">209: </a>!  This routine merely handles ghost point scatters and accesses
+<a name="line210">210: </a>!  the local vector data via <a href="../../../../docs/manualpages/Vec/VecGetArray.html#VecGetArray">VecGetArray</a>() and <a href="../../../../docs/manualpages/Vec/VecRestoreArray.html#VecRestoreArray">VecRestoreArray</a>().
+<a name="line211">211: </a>!
+<a name="line212">212: </a>      subroutine FormInitialGuess(X,ierr)
+<a name="line213">213: </a>      use petscsnes
+<a name="line214">214: </a>      implicit none
+
+<a name="line216">216: </a><font color="#A020F0">#include </font><font color="#666666">"ex5f.h"</font><font color="#A020F0"></font>
+
+<a name="line218">218: </a>!  Input/output variables:
+<a name="line219">219: </a>      <a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>      X
+<a name="line220">220: </a>      <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  ierr
+
+<a name="line222">222: </a>!  Declarations <font color="#4169E1">for</font> use with local arrays:
+<a name="line223">223: </a>      <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> lx_v(0:1)
+<a name="line224">224: </a>      <a href="../../../../docs/manualpages/Sys/PetscOffset.html#PetscOffset">PetscOffset</a> lx_i
+
+<a name="line226">226: </a>      0
+
+<a name="line228">228: </a>!  Get a pointer to vector data.
+<a name="line229">229: </a>!    - For <font color="#4169E1">default</font> PETSc vectors, <a href="../../../../docs/manualpages/Vec/VecGetArray.html#VecGetArray">VecGetArray</a>() returns a pointer to
+<a name="line230">230: </a>!      the data array.  Otherwise, the routine is implementation dependent.
+<a name="line231">231: </a>!    - You MUST call <a href="../../../../docs/manualpages/Vec/VecRestoreArray.html#VecRestoreArray">VecRestoreArray</a>() when you no longer need access to
+<a name="line232">232: </a>!      the array.
+<a name="line233">233: </a>!    - Note that the Fortran interface to <a href="../../../../docs/manualpages/Vec/VecGetArray.html#VecGetArray">VecGetArray</a>() differs from the
+<a name="line234">234: </a>!      C version.  See the users manual <font color="#4169E1">for</font> details.
+
+<a name="line236">236: </a>      call <a href="../../../../docs/manualpages/Vec/VecGetArray.html#VecGetArray">VecGetArray</a>(X,lx_v,lx_i,ierr)
+
+<a name="line238">238: </a>!  Compute initial guess over the locally owned part of the grid
+
+<a name="line240">240: </a>      call InitialGuessLocal(lx_v(lx_i),ierr)
+
+<a name="line242">242: </a>!  Restore vector
+
+<a name="line244">244: </a>      call <a href="../../../../docs/manualpages/Vec/VecRestoreArray.html#VecRestoreArray">VecRestoreArray</a>(X,lx_v,lx_i,ierr)
+
+<a name="line246">246: </a>      <font color="#4169E1">return</font>
+<a name="line247">247: </a>      end
+
+<a name="line249">249: </a>! ---------------------------------------------------------------------
+<a name="line250">250: </a>!
+<a name="line251">251: </a>!  InitialGuessLocal - Computes initial approximation, called by
+<a name="line252">252: </a>!  the higher level routine FormInitialGuess().
+<a name="line253">253: </a>!
+<a name="line254">254: </a>!  Input Parameter:
+<a name="line255">255: </a>!  x - local vector data
+<a name="line256">256: </a>!
+<a name="line257">257: </a>!  Output Parameters:
+<a name="line258">258: </a>!  x - local vector data
+<a name="line259">259: </a>!  ierr - error code
+<a name="line260">260: </a>!
+<a name="line261">261: </a>!  Notes:
+<a name="line262">262: </a>!  This routine uses standard Fortran-style computations over a 2-dim array.
+<a name="line263">263: </a>!
+<a name="line264">264: </a>      subroutine InitialGuessLocal(x,ierr)
+<a name="line265">265: </a>      use petscsnes
+<a name="line266">266: </a>      implicit none
+
+<a name="line268">268: </a><font color="#A020F0">#include </font><font color="#666666">"ex5f.h"</font><font color="#A020F0"></font>
+
+<a name="line270">270: </a>!  Input/output variables:
+<a name="line271">271: </a>      <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>    x(xs:xe,ys:ye)
+<a name="line272">272: </a>      <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+
+<a name="line274">274: </a>!  Local variables:
+<a name="line275">275: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>  i,j
+<a name="line276">276: </a>      <a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> temp1,temp,one,hx,hy
+
+<a name="line278">278: </a>!  Set parameters
+
+<a name="line280">280: </a>      0
+<a name="line281">281: </a>      one    = 1.0
+<a name="line282">282: </a>      hx     = one/((mx-1))
+<a name="line283">283: </a>      hy     = one/((my-1))
+<a name="line284">284: </a>      temp1  = lambda/(lambda + one)
+
+<a name="line286">286: </a>      <font color="#4169E1">do</font> 20 j=ys,ye
+<a name="line287">287: </a>         temp = (min(j-1,my-j))*hy
+<a name="line288">288: </a>         <font color="#4169E1">do</font> 10 i=xs,xe
+<a name="line289">289: </a>            <font color="#4169E1">if</font> (i .eq. 1 .or. j .eq. 1                                  &amp;
+<a name="line290">290: </a>     &amp;             .or. i .eq. mx .or. j .eq. my) then
+<a name="line291">291: </a>              x(i,j) = 0.0
+<a name="line292">292: </a>            <font color="#4169E1">else</font>
+<a name="line293">293: </a>              x(i,j) = temp1 *                                          &amp;
+<a name="line294">294: </a>     &amp;          sqrt(min(min(i-1,mx-i)*hx,(temp)))
+<a name="line295">295: </a>            endif
+<a name="line296">296: </a> 10      <font color="#4169E1">continue</font>
+<a name="line297">297: </a> 20   <font color="#4169E1">continue</font>
+
+<a name="line299">299: </a>      <font color="#4169E1">return</font>
+<a name="line300">300: </a>      end
+
+<a name="line302">302: </a>! ---------------------------------------------------------------------
+<a name="line303">303: </a>!
+<a name="line304">304: </a>!  FormFunctionLocal - Computes nonlinear function, called by
+<a name="line305">305: </a>!  the higher level routine FormFunction().
+<a name="line306">306: </a>!
+<a name="line307">307: </a>!  Input Parameter:
+<a name="line308">308: </a>!  x - local vector data
+<a name="line309">309: </a>!
+<a name="line310">310: </a>!  Output Parameters:
+<a name="line311">311: </a>!  f - local vector data, f(x)
+<a name="line312">312: </a>!  ierr - error code
+<a name="line313">313: </a>!
+<a name="line314">314: </a>!  Notes:
+<a name="line315">315: </a>!  This routine uses standard Fortran-style computations over a 2-dim array.
+<a name="line316">316: </a>!
+<a name="line317">317: </a>!
+<a name="line318">318: </a>      subroutine FormFunctionLocal(info,x,f,dummy,ierr)
+<a name="line319">319: </a> #include <A href="../../../../include/petsc/finclude/petscdmda.h.html">&lt;petsc/finclude/petscdmda.h&gt;</A>
+<a name="line320">320: </a>      use petscsnes
+<a name="line321">321: </a>      implicit none
+
+<a name="line323">323: </a><font color="#A020F0">#include </font><font color="#666666">"ex5f.h"</font><font color="#A020F0"></font>
+
+<a name="line325">325: </a>!  Input/output variables:
+<a name="line326">326: </a>      <a href="../../../../docs/manualpages/DMDA/DMDALocalInfo.html#DMDALocalInfo">DMDALocalInfo</a> info(DMDA_LOCAL_INFO_SIZE)
+<a name="line327">327: </a>      <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> x(gxs:gxe,gys:gye)
+<a name="line328">328: </a>      <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> f(xs:xe,ys:ye)
+<a name="line329">329: </a>      <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>     ierr
+<a name="line330">330: </a>      <a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a> dummy
+
+<a name="line332">332: </a>!  Local variables:
+<a name="line333">333: </a>      <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> two,one,hx,hy
+<a name="line334">334: </a>      <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> hxdhy,hydhx,sc
+<a name="line335">335: </a>      <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> u,uxx,uyy
+<a name="line336">336: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>  i,j
+
+<a name="line338">338: </a>      xs     = info(DMDA_LOCAL_INFO_XS)+1
+<a name="line339">339: </a>      xe     = xs+info(DMDA_LOCAL_INFO_XM)-1
+<a name="line340">340: </a>      ys     = info(DMDA_LOCAL_INFO_YS)+1
+<a name="line341">341: </a>      ye     = ys+info(DMDA_LOCAL_INFO_YM)-1
+<a name="line342">342: </a>      mx     = info(DMDA_LOCAL_INFO_MX)
+<a name="line343">343: </a>      my     = info(DMDA_LOCAL_INFO_MY)
+
+<a name="line345">345: </a>      one    = 1.0
+<a name="line346">346: </a>      two    = 2.0
+<a name="line347">347: </a>      hx     = one/(mx-1)
+<a name="line348">348: </a>      hy     = one/(my-1)
+<a name="line349">349: </a>      sc     = hx*hy*lambda
+<a name="line350">350: </a>      hxdhy  = hx/hy
+<a name="line351">351: </a>      hydhx  = hy/hx
+
+<a name="line353">353: </a>!  Compute function over the locally owned part of the grid
+
+<a name="line355">355: </a>      <font color="#4169E1">do</font> 20 j=ys,ye
+<a name="line356">356: </a>         <font color="#4169E1">do</font> 10 i=xs,xe
+<a name="line357">357: </a>            <font color="#4169E1">if</font> (i .eq. 1 .or. j .eq. 1                                  &amp;
+<a name="line358">358: </a>     &amp;             .or. i .eq. mx .or. j .eq. my) then
+<a name="line359">359: </a>               f(i,j) = x(i,j)
+<a name="line360">360: </a>            <font color="#4169E1">else</font>
+<a name="line361">361: </a>               u = x(i,j)
+<a name="line362">362: </a>               uxx = hydhx * (two*u                                     &amp;
+<a name="line363">363: </a>     &amp;                - x(i-1,j) - x(i+1,j))
+<a name="line364">364: </a>               uyy = hxdhy * (two*u - x(i,j-1) - x(i,j+1))
+<a name="line365">365: </a>               f(i,j) = uxx + uyy - sc*exp(u)
+<a name="line366">366: </a>            endif
+<a name="line367">367: </a> 10      <font color="#4169E1">continue</font>
+<a name="line368">368: </a> 20   <font color="#4169E1">continue</font>
+
+<a name="line370">370: </a>      call <a href="../../../../docs/manualpages/Profiling/PetscLogFlops.html#PetscLogFlops">PetscLogFlops</a>(11.0d0*ym*xm,ierr)
+
+<a name="line372">372: </a>      <font color="#4169E1">return</font>
+<a name="line373">373: </a>      end
+
+<a name="line375">375: </a>! ---------------------------------------------------------------------
+<a name="line376">376: </a>!
+<a name="line377">377: </a>!  FormJacobianLocal - Computes Jacobian matrix, called by
+<a name="line378">378: </a>!  the higher level routine FormJacobian().
+<a name="line379">379: </a>!
+<a name="line380">380: </a>!  Input Parameters:
+<a name="line381">381: </a>!  x        - local vector data
+<a name="line382">382: </a>!
+<a name="line383">383: </a>!  Output Parameters:
+<a name="line384">384: </a>!  jac      - Jacobian matrix
+<a name="line385">385: </a>!  jac_prec - optionally different preconditioning matrix (not used here)
+<a name="line386">386: </a>!  ierr     - error code
+<a name="line387">387: </a>!
+<a name="line388">388: </a>!  Notes:
+<a name="line389">389: </a>!  This routine uses standard Fortran-style computations over a 2-dim array.
+<a name="line390">390: </a>!
+<a name="line391">391: </a>!  Notes:
+<a name="line392">392: </a>!  Due to grid point reordering with DMDAs, we must always work
+<a name="line393">393: </a>!  with the local grid points, and then transform them to the new
+<a name="line394">394: </a>!  global numbering with the <font color="#666666">"ltog"</font> mapping
+<a name="line395">395: </a>!  We cannot work directly with the global numbers <font color="#4169E1">for</font> the original
+<a name="line396">396: </a>!  uniprocessor grid!
+<a name="line397">397: </a>!
+<a name="line398">398: </a>!  Two methods are available <font color="#4169E1">for</font> imposing this transformation
+<a name="line399">399: </a>!  when setting matrix entries:
+<a name="line400">400: </a>!    (A) <a href="../../../../docs/manualpages/Mat/MatSetValuesLocal.html#MatSetValuesLocal">MatSetValuesLocal</a>(), using the local ordering (including
+<a name="line401">401: </a>!        ghost points!)
+<a name="line402">402: </a>!          by calling <a href="../../../../docs/manualpages/Mat/MatSetValuesLocal.html#MatSetValuesLocal">MatSetValuesLocal</a>()
+<a name="line403">403: </a>!    (B) <a href="../../../../docs/manualpages/Mat/MatSetValues.html#MatSetValues">MatSetValues</a>(), using the global ordering
+<a name="line404">404: </a>!        - Use DMDAGetGlobalIndices() to extract the local-to-global map
+<a name="line405">405: </a>!        - Then apply this map explicitly yourself
+<a name="line406">406: </a>!        - Set matrix entries using the global ordering by calling
+<a name="line407">407: </a>!          <a href="../../../../docs/manualpages/Mat/MatSetValues.html#MatSetValues">MatSetValues</a>()
+<a name="line408">408: </a>!  Option (A) seems cleaner/easier in many cases, and is the procedure
+<a name="line409">409: </a>!  used in this example.
+<a name="line410">410: </a>!
+<a name="line411">411: </a>      subroutine FormJacobianLocal(info,x,A,jac,ctx,ierr)
+<a name="line412">412: </a>      use petscsnes
+<a name="line413">413: </a>      implicit none
+
+<a name="line415">415: </a><font color="#A020F0">#include </font><font color="#666666">"ex5f.h"</font><font color="#A020F0"></font>
+
+<a name="line417">417: </a>!  Input/output variables:
+<a name="line418">418: </a>      <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> x(gxs:gxe,gys:gye)
+<a name="line419">419: </a>      <a href="../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>         A,jac
+<a name="line420">420: </a>      <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  ierr
+<a name="line421">421: </a>      integer ctx
+<a name="line422">422: </a>      <a href="../../../../docs/manualpages/DMDA/DMDALocalInfo.html#DMDALocalInfo">DMDALocalInfo</a> info(DMDA_LOCAL_INFO_SIZE)
+
+
+<a name="line425">425: </a>!  Local variables:
+<a name="line426">426: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>  row,col(5),i,j,i1,i5
+<a name="line427">427: </a>      <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> two,one,hx,hy,v(5)
+<a name="line428">428: </a>      <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> hxdhy,hydhx,sc
+
+<a name="line430">430: </a>!  Set parameters
+
+<a name="line432">432: </a>      i1     = 1
+<a name="line433">433: </a>      i5     = 5
+<a name="line434">434: </a>      one    = 1.0
+<a name="line435">435: </a>      two    = 2.0
+<a name="line436">436: </a>      hx     = one/(mx-1)
+<a name="line437">437: </a>      hy     = one/(my-1)
+<a name="line438">438: </a>      sc     = hx*hy
+<a name="line439">439: </a>      hxdhy  = hx/hy
+<a name="line440">440: </a>      hydhx  = hy/hx
+
+<a name="line442">442: </a>!  Compute entries <font color="#4169E1">for</font> the locally owned part of the Jacobian.
+<a name="line443">443: </a>!   - Currently, all PETSc parallel matrix formats are partitioned by
+<a name="line444">444: </a>!     contiguous chunks of rows across the processors.
+<a name="line445">445: </a>!   - Each processor needs to insert only elements that it owns
+<a name="line446">446: </a>!     locally (but any non-local elements will be sent to the
+<a name="line447">447: </a>!     appropriate processor during matrix assembly).
+<a name="line448">448: </a>!   - Here, we set all entries <font color="#4169E1">for</font> a particular row at once.
+<a name="line449">449: </a>!   - We can set matrix entries either using either
+<a name="line450">450: </a>!     <a href="../../../../docs/manualpages/Mat/MatSetValuesLocal.html#MatSetValuesLocal">MatSetValuesLocal</a>() or <a href="../../../../docs/manualpages/Mat/MatSetValues.html#MatSetValues">MatSetValues</a>(), as discussed above.
+<a name="line451">451: </a>!   - Note that <a href="../../../../docs/manualpages/Mat/MatSetValues.html#MatSetValues">MatSetValues</a>() uses 0-based row and column numbers
+<a name="line452">452: </a>!     in Fortran as well as in C.
+
+<a name="line454">454: </a>      <font color="#4169E1">do</font> 20 j=ys,ye
+<a name="line455">455: </a>         row = (j - gys)*gxm + xs - gxs - 1
+<a name="line456">456: </a>         <font color="#4169E1">do</font> 10 i=xs,xe
+<a name="line457">457: </a>            row = row + 1
+<a name="line458">458: </a>!           boundary points
+<a name="line459">459: </a>            <font color="#4169E1">if</font> (i .eq. 1 .or. j .eq. 1                                  &amp;
+<a name="line460">460: </a>     &amp;             .or. i .eq. mx .or. j .eq. my) then
+<a name="line461">461: </a>!       Some f90 compilers need 4th arg to be of same type in both calls
+<a name="line462">462: </a>               col(1) = row
+<a name="line463">463: </a>               v(1)   = one
+<a name="line464">464: </a>               call <a href="../../../../docs/manualpages/Mat/MatSetValuesLocal.html#MatSetValuesLocal">MatSetValuesLocal</a>(jac,i1,row,i1,col,v,                &amp;
+<a name="line465">465: </a>     &amp;                           <a href="../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>,ierr)
+<a name="line466">466: </a>!           interior grid points
+<a name="line467">467: </a>            <font color="#4169E1">else</font>
+<a name="line468">468: </a>               v(1) = -hxdhy
+<a name="line469">469: </a>               v(2) = -hydhx
+<a name="line470">470: </a>               v(3) = two*(hydhx + hxdhy)                               &amp;
+<a name="line471">471: </a>     &amp;                  - sc*lambda*exp(x(i,j))
+<a name="line472">472: </a>               v(4) = -hydhx
+<a name="line473">473: </a>               v(5) = -hxdhy
+<a name="line474">474: </a>               col(1) = row - gxm
+<a name="line475">475: </a>               col(2) = row - 1
+<a name="line476">476: </a>               col(3) = row
+<a name="line477">477: </a>               col(4) = row + 1
+<a name="line478">478: </a>               col(5) = row + gxm
+<a name="line479">479: </a>               call <a href="../../../../docs/manualpages/Mat/MatSetValuesLocal.html#MatSetValuesLocal">MatSetValuesLocal</a>(jac,i1,row,i5,col,v,                &amp;
+<a name="line480">480: </a>     &amp;                                <a href="../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>,ierr)
+<a name="line481">481: </a>            endif
+<a name="line482">482: </a> 10      <font color="#4169E1">continue</font>
+<a name="line483">483: </a> 20   <font color="#4169E1">continue</font>
+<a name="line484">484: </a>      call <a href="../../../../docs/manualpages/Mat/MatAssemblyBegin.html#MatAssemblyBegin">MatAssemblyBegin</a>(jac,<a href="../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>,ierr)
+<a name="line485">485: </a>      call <a href="../../../../docs/manualpages/Mat/MatAssemblyEnd.html#MatAssemblyEnd">MatAssemblyEnd</a>(jac,<a href="../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>,ierr)
+<a name="line486">486: </a>      <font color="#4169E1">if</font> (A .ne. jac) then
+<a name="line487">487: </a>         call <a href="../../../../docs/manualpages/Mat/MatAssemblyBegin.html#MatAssemblyBegin">MatAssemblyBegin</a>(A,<a href="../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>,ierr)
+<a name="line488">488: </a>         call <a href="../../../../docs/manualpages/Mat/MatAssemblyEnd.html#MatAssemblyEnd">MatAssemblyEnd</a>(A,<a href="../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>,ierr)
+<a name="line489">489: </a>      endif
+<a name="line490">490: </a>      <font color="#4169E1">return</font>
+<a name="line491">491: </a>      end
+
+</pre>
+</body>
+
+</html>

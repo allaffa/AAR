@@ -1,0 +1,69 @@
+<center><a href="petscsysmod.F">Actual source code: petscsysmod.F</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/sys/f90-mod/petscsysmod.F.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:03:04+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/sys/f90-mod/petscsysmod.F.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+
+<a name="line2">  2: </a>        module petscsysdefdummy
+<a name="line3">  3: </a><font color="#A020F0">#include &lt;petscconf.h&gt;</font>
+<a name="line4">  4: </a><font color="#A020F0">#if defined(PETSC_HAVE_MPI_F90MODULE) || defined(PETSC_HAVE_MPIUNI)</font>
+<a name="line5">  5: </a>        use mpi
+<a name="line6">  6: </a><strong><font color="#228B22">#define PETSC_AVOID_MPIF_H</font></strong>
+<a name="line7">  7: </a><font color="#A020F0">#endif</font>
+<a name="line8">  8: </a><font color="#A020F0">#include &lt;../src/sys/f90-mod/petscsys.h&gt;</font>
+<a name="line9">  9: </a><font color="#A020F0">#include &lt;../src/sys/f90-mod/petscdraw.h&gt;</font>
+<a name="line10"> 10: </a><font color="#A020F0">#include &lt;../src/sys/f90-mod/petscviewer.h&gt;</font>
+<a name="line11"> 11: </a>        end module
+
+<a name="line13"> 13: </a>        module petscsysdef
+<a name="line14"> 14: </a>        use petscsysdefdummy
+<a name="line15"> 15: </a>        interface operator(.ne.)
+<a name="line16"> 16: </a>          function petscviewernotequal(A,B)
+<a name="line17"> 17: </a>            use petscsysdefdummy
+<a name="line18"> 18: </a>            logical petscviewernotequal
+<a name="line19"> 19: </a>            type(tPetscViewer), intent(in) :: A,B
+<a name="line20"> 20: </a>          end function
+<a name="line21"> 21: </a>        end interface operator (.ne.)
+<a name="line22"> 22: </a>        interface operator(.eq.)
+<a name="line23"> 23: </a>          function petscviewerequals(A,B)
+<a name="line24"> 24: </a>            use petscsysdefdummy
+<a name="line25"> 25: </a>            logical petscviewerequals
+<a name="line26"> 26: </a>            type(tPetscViewer), intent(in) :: A,B
+<a name="line27"> 27: </a>          end function
+<a name="line28"> 28: </a>        end interface operator (.eq.)
+<a name="line29"> 29: </a>        end module
+
+<a name="line31"> 31: </a>        function petscviewernotequal(A,B)
+<a name="line32"> 32: </a>          use petscsysdefdummy
+<a name="line33"> 33: </a>          logical petscviewernotequal
+<a name="line34"> 34: </a>          type(tPetscViewer), intent(in) :: A,B
+<a name="line35"> 35: </a>          petscviewernotequal = (A%v .ne. B%v)
+<a name="line36"> 36: </a>        end function
+
+<a name="line38"> 38: </a>        function petscviewerequals(A,B)
+<a name="line39"> 39: </a>          use petscsysdefdummy
+<a name="line40"> 40: </a>          logical petscviewerequals
+<a name="line41"> 41: </a>          type(tPetscViewer), intent(in) :: A,B
+<a name="line42"> 42: </a>          petscviewerequals = (A%v .eq. B%v)
+<a name="line43"> 43: </a>        end function
+
+<a name="line45"> 45: </a>        module petscsys
+<a name="line46"> 46: </a>        use petscsysdef
+<a name="line47"> 47: </a><font color="#A020F0">#include &lt;../src/sys/f90-mod/petscsys.h90&gt;</font>
+<a name="line48"> 48: </a>        interface
+<a name="line49"> 49: </a><font color="#A020F0">#include &lt;../src/sys/f90-mod/ftn-auto-interfaces/petscsys.h90&gt;</font>
+<a name="line50"> 50: </a>        end interface
+<a name="line51"> 51: </a>        end module
+
+</pre>
+</body>
+
+</html>

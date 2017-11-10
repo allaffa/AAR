@@ -1,0 +1,44 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML3.2 EN">
+<HTML>
+<HEAD> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/Sys/PetscGLLElementGradientCreate.html" />
+<META NAME="GENERATOR" CONTENT="DOCTEXT">
+<TITLE>PetscGLLElementGradientCreate</TITLE>
+</HEAD>
+<BODY BGCOLOR="FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 docs/manualpages/Sys/PetscGLLElementGradientCreate.html "><small>Report Typos and Errors</small></a></div>
+<A NAME="PetscGLLElementGradientCreate"><H1>PetscGLLElementGradientCreate</H1></A>
+computes the gradient for a single 1d GLL element 
+<H3><FONT COLOR="#CC3333">Synopsis</FONT></H3>
+<PRE>
+<A HREF="../Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</A> <A HREF="../Sys/PetscGLLElementGradientCreate.html#PetscGLLElementGradientCreate">PetscGLLElementGradientCreate</A>(<A HREF="../Sys/PetscGLL.html#PetscGLL">PetscGLL</A> *gll,<A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A> ***AA, <A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A> ***AAT)
+</PRE>
+Not Collective
+<P>
+<H3><FONT COLOR="#CC3333">Input Parameter</FONT></H3>
+<DT><B>gll </B> -the nodes
+<br>
+<P>
+<H3><FONT COLOR="#CC3333">Output Parameter</FONT></H3>
+<DT><B>AA </B> -the stiffness element
+<br>
+<DT><B>AAT </B> -the transpose of AA (pass in NULL if you do not need this array)
+<br>
+</TABLE>
+<P>
+
+<P>
+Notes: Destroy this with <A HREF="../Sys/PetscGLLElementGradientDestroy.html#PetscGLLElementGradientDestroy">PetscGLLElementGradientDestroy</A>()
+<P>
+You can access entries in these arrays with AA[i][j] but in memory it is stored in contiguous memory, row oriented
+<P>
+<H3><FONT COLOR="#CC3333">See Also</FONT></H3>
+ <A HREF="../Sys/PetscGLL.html#PetscGLL">PetscGLL</A>, <A HREF="../Sys/PetscGLLDestroy.html#PetscGLLDestroy">PetscGLLDestroy</A>(), <A HREF="../Sys/PetscGLLView.html#PetscGLLView">PetscGLLView</A>(), <A HREF="../Sys/PetscGLLElementLaplacianDestroy.html#PetscGLLElementLaplacianDestroy">PetscGLLElementLaplacianDestroy</A>()
+<BR>
+<P>
+<P><B><P><B><FONT COLOR="#CC3333">Level:</FONT></B>beginner
+<BR><FONT COLOR="#CC3333">Location:</FONT></B><A HREF="../../../src/sys/classes/gll/petscgll.c.html#PetscGLLElementGradientCreate">src/sys/classes/gll/petscgll.c</A>
+<BR><A HREF="./index.html">Index of all Sys routines</A>
+<BR><A HREF="../../index.html">Table of Contents for all manual pages</A>
+<BR><A HREF="../singleindex.html">Index of all manual pages</A>
+</BODY></HTML>

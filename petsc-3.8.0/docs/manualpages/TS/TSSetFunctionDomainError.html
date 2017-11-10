@@ -1,0 +1,35 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML3.2 EN">
+<HTML>
+<HEAD> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/TS/TSSetFunctionDomainError.html" />
+<META NAME="GENERATOR" CONTENT="DOCTEXT">
+<TITLE>TSSetFunctionDomainError</TITLE>
+</HEAD>
+<BODY BGCOLOR="FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 docs/manualpages/TS/TSSetFunctionDomainError.html "><small>Report Typos and Errors</small></a></div>
+<A NAME="TSSetFunctionDomainError"><H1>TSSetFunctionDomainError</H1></A>
+Set the function testing if the current state vector is valid 
+<H3><FONT COLOR="#CC3333">Synopsis</FONT></H3>
+<PRE>
+#include "petscts.h"  
+<A HREF="../Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</A> <A HREF="../TS/TSSetFunctionDomainError.html#TSSetFunctionDomainError">TSSetFunctionDomainError</A>(<A HREF="../TS/TS.html#TS">TS</A> ts, <A HREF="../Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</A> (*func)(<A HREF="../TS/TS.html#TS">TS</A>,<A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A>,<A HREF="../Vec/Vec.html#Vec">Vec</A>,<A HREF="../Sys/PetscBool.html#PetscBool">PetscBool</A>*))
+</PRE>
+<H3><FONT COLOR="#CC3333">Input Parameters</FONT></H3>
+ts - the <A HREF="../TS/TS.html#TS">TS</A> context
+func - function called within <A HREF="../TS/TSFunctionDomainError.html#TSFunctionDomainError">TSFunctionDomainError</A>
+<P>
+
+<P>
+<H3><FONT COLOR="#CC3333">Keywords</FONT></H3>
+ <A HREF="../TS/TS.html#TS">TS</A>, state, domain
+<BR>
+<H3><FONT COLOR="#CC3333">See Also</FONT></H3>
+ <A HREF="../TS/TSAdaptCheckStage.html#TSAdaptCheckStage">TSAdaptCheckStage</A>(), <A HREF="../TS/TSFunctionDomainError.html#TSFunctionDomainError">TSFunctionDomainError</A>()
+<BR><P><B><P><B><FONT COLOR="#CC3333">Level:</FONT></B>intermediate
+<BR><FONT COLOR="#CC3333">Location:</FONT></B><A HREF="../../../src/ts/interface/ts.c.html#TSSetFunctionDomainError">src/ts/interface/ts.c</A>
+<BR><A HREF="./index.html">Index of all TS routines</A>
+<BR><A HREF="../../index.html">Table of Contents for all manual pages</A>
+<BR><A HREF="../singleindex.html">Index of all manual pages</A>
+<P><H3><FONT COLOR="#CC3333">Examples</FONT></H3>
+<A HREF="../../../src/ts/examples/tutorials/ex42.c.html">src/ts/examples/tutorials/ex42.c.html</A><BR>
+</BODY></HTML>

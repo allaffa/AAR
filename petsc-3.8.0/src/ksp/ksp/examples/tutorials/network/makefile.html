@@ -1,0 +1,97 @@
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/ksp/ksp/examples/tutorials/network/makefile.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-27T00:04:48+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/ksp/ksp/examples/tutorials/network/makefile.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80"><font color="#A020F0">#requiresdefine   'PETSC_HAVE_ATTRIBUTEALIGNED'</font>
+
+CFLAGS	         =
+FFLAGS	         =
+CPPFLAGS         =
+FPPFLAGS         =
+EXAMPLESC        = ex1.c ex2.c ex1_nest.c
+LOCDIR		 = src/ksp/ksp/examples/tutorials/network
+MANSEC           = <a href="ROOT/docs/manualpages/KSP/KSP.html#KSP">KSP</a>
+
+include ${PETSC_DIR}/lib/petsc/conf/variables
+include ${PETSC_DIR}/lib/petsc/conf/rules
+
+
+<strong><font color="#FF0000">ex1:</font></strong> ex1.o chkopts
+	-${CLINKER} -o ex1 ex1.o ${PETSC_KSP_LIB}
+	${RM} ex1.o
+
+<strong><font color="#FF0000">ex2:</font></strong> ex2.o chkopts
+	-${CLINKER} -o ex2 ex2.o ${PETSC_KSP_LIB}
+	${RM} ex2.o
+
+<strong><font color="#FF0000">ex1_nest:</font></strong> ex1_nest.o chkopts
+	-${CLINKER} -o ex1_nest ex1_nest.o ${PETSC_KSP_LIB}
+	${RM} ex1_nest.o
+<font color="#A020F0">#---------------------------------------------------------------------------</font>
+<strong><font color="#FF0000">runex1:</font></strong>
+	-@${MPIEXEC} -n 1 ./ex1 -ksp_monitor_short &gt; ex1_1.tmp 2&gt;&amp;1;   \
+	   <font color="#4169E1">if</font> (${DIFF} output/ex1_1.out ex1_1.tmp) then true; \
+	   <font color="#4169E1">else</font> printf <font color="#666666">"${PWD}\nPossible problem with ex1, diffs above\n=========================================\n"</font>; fi; \
+	   ${RM} -f ex1_1.tmp
+<strong><font color="#FF0000">runex1_2:</font></strong>
+	-@${MPIEXEC} -n 2 ./ex1 -petscpartitioner_type simple -ksp_converged_reason | ${SED} 's/iterations 2/iterations 3/g' &gt; ex1_2.tmp 2&gt;&amp;1;   \
+	   <font color="#4169E1">if</font> (${DIFF} output/ex1_2.out ex1_2.tmp) then true; \
+	   <font color="#4169E1">else</font> printf <font color="#666666">"${PWD}\nPossible problem with ex1_2, diffs above\n=========================================\n"</font>; fi; \
+	   ${RM} -f ex1_2.tmp
+
+<strong><font color="#FF0000">runex2:</font></strong>
+	-@${MPIEXEC} -n 1 ./ex2 -ksp_converged_reason &gt; ex2.tmp 2&gt;&amp;1;   \
+	   <font color="#4169E1">if</font> (${DIFF} output/ex2.out ex2.tmp) then true; \
+	   <font color="#4169E1">else</font> printf <font color="#666666">"${PWD}\nPossible problem with ex2, diffs above\n=========================================\n"</font>; fi; \
+	   ${RM} -f ex2.tmp
+<strong><font color="#FF0000">runex2_2:</font></strong>
+	-@${MPIEXEC} -n 2 ./ex2 -petscpartitioner_type simple -pc_type asm -sub_pc_type ilu -ksp_converged_reason &gt; ex2_2.tmp 2&gt;&amp;1;   \
+	   <font color="#4169E1">if</font> (${DIFF} output/ex2_2.out ex2_2.tmp) then true; \
+	   <font color="#4169E1">else</font> printf <font color="#666666">"${PWD}\nPossible problem with ex2_2, diffs above\n=========================================\n"</font>; fi; \
+	   ${RM} -f ex2_2.tmp
+<strong><font color="#FF0000">runex2_3:</font></strong>
+	-@${MPIEXEC} -n 4 ./ex2 -petscpartitioner_type simple -pc_type asm -sub_pc_type lu -sub_pc_factor_shift_type nonzero -ksp_converged_reason | ${SED} 's/iterations 36/iterations 35/g' &gt; ex2.tmp 2&gt;&amp;1;   \
+	   <font color="#4169E1">if</font> (${DIFF} output/ex2_3.out ex2.tmp) then true; \
+	   <font color="#4169E1">else</font> printf <font color="#666666">"${PWD}\nPossible problem with ex2_3, diffs above\n=========================================\n"</font>; fi; \
+	   ${RM} -f ex2.tmp
+
+<strong><font color="#FF0000">runex2_graphindex:</font></strong>
+	-@${MPIEXEC} -n 1 ./ex2 -n 20 -vertex_global_section_view -edge_global_section_view &gt; ex2_graphindex.tmp 2&gt;&amp;1;   \
+	   <font color="#4169E1">if</font> (${DIFF} output/ex2_graphindex.out ex2_graphindex.tmp) then true; \
+	   <font color="#4169E1">else</font> printf <font color="#666666">"${PWD}\nPossible problem with ex2_graphindex, diffs above\n=========================================\n"</font>; fi; \
+	   ${RM} -f ex2_graphindex.tmp
+
+<strong><font color="#FF0000">runex2_graphindex_2:</font></strong>
+	-@${MPIEXEC} -n 2 ./ex2 -petscpartitioner_type simple -n 20 -vertex_global_section_view -edge_global_section_view &gt; ex2_graphindex_2.tmp 2&gt;&amp;1;   \
+	   <font color="#4169E1">if</font> (${DIFF} output/ex2_graphindex_2.out ex2_graphindex_2.tmp) then true; \
+	   <font color="#4169E1">else</font> printf <font color="#666666">"${PWD}\nPossible problem with ex2_graphindex_2, diffs above\n=========================================\n"</font>; fi; \
+	   ${RM} -f ex2_graphindex_2.tmp
+
+<strong><font color="#FF0000">runex1_nest:</font></strong>
+	-@${MPIEXEC} -n 1 ./ex1_nest -ksp_converged_reason &gt; ex1_nest.tmp 2&gt;&amp;1;   \
+	   <font color="#4169E1">if</font> (${DIFF} output/ex1_nest.out ex1_nest.tmp) then true; \
+	   <font color="#4169E1">else</font> printf <font color="#666666">"${PWD}\nPossible problem with ex1_nest, diffs above\n=========================================\n"</font>; fi; \
+	   ${RM} -f ex1_nest.tmp
+
+<strong><font color="#FF0000">runex1_nest_2:</font></strong>
+	-@${MPIEXEC} -n 2 ./ex1_nest -petscpartitioner_type simple -ksp_converged_reason &gt; ex1_nest_2.tmp 2&gt;&amp;1;   \
+	   <font color="#4169E1">if</font> (${DIFF} output/ex1_nest_2.out ex1_nest_2.tmp) then true; \
+	   <font color="#4169E1">else</font> printf <font color="#666666">"${PWD}\nPossible problem with ex1_nest_2, diffs above\n=========================================\n"</font>; fi; \
+	   ${RM} -f ex1_nest_2.tmp
+
+TESTEXAMPLES_C_NOCOMPLEX_NOTSINGLE = ex1.PETSc runex1 runex1_2 ex1.rm \
+                                     ex2.PETSc runex2 runex2_2 runex2_3 runex2_graphindex runex2_graphindex_2 ex2.rm \
+                                     ex1_nest.PETSc runex1_nest runex1_nest_2 ex1_nest.rm
+
+include ${PETSC_DIR}/lib/petsc/conf/test
+</pre>
+</body>
+
+</html>

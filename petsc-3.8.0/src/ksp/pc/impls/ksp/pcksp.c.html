@@ -1,0 +1,230 @@
+<center><a href="pcksp.c">Actual source code: pcksp.c</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/ksp/pc/impls/ksp/pcksp.c.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:52:06+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/ksp/pc/impls/ksp/pcksp.c.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+
+<a name="line2">  2: </a> #include <A href="../../../../../include/petsc/private/pcimpl.h.html">&lt;petsc/private/pcimpl.h&gt;</A>
+<a name="line3">  3: </a> #include <A href="../../../../../include/petscksp.h.html">&lt;petscksp.h&gt;</A>
+
+<a name="line5">  5: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line6">  6: </a>  <a href="../../../../../docs/manualpages/KSP/KSP.html#KSP">KSP</a>       ksp;
+<a name="line7">  7: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>  its;                    <font color="#B22222">/* total number of iterations <a href="../../../../../docs/manualpages/KSP/KSP.html#KSP">KSP</a> uses */</font>
+<a name="line8">  8: </a>} PC_KSP;
+
+
+<a name="line11"> 11: </a><strong><font color="#4169E1"><a name="PCKSPCreateKSP_KSP"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  PCKSPCreateKSP_KSP(<a href="../../../../../docs/manualpages/PC/PC.html#PC">PC</a> pc)</font></strong>
+<a name="line12"> 12: </a>{
+<a name="line14"> 14: </a>  const char     *prefix;
+<a name="line15"> 15: </a>  PC_KSP         *jac = (PC_KSP*)pc-&gt;data;
+
+<a name="line18"> 18: </a>  <a href="../../../../../docs/manualpages/KSP/KSPCreate.html#KSPCreate">KSPCreate</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)pc),&amp;jac-&gt;ksp);
+<a name="line19"> 19: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSetErrorIfNotConverged.html#KSPSetErrorIfNotConverged">KSPSetErrorIfNotConverged</a>(jac-&gt;ksp,pc-&gt;erroriffailure);
+<a name="line20"> 20: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectIncrementTabLevel.html#PetscObjectIncrementTabLevel">PetscObjectIncrementTabLevel</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)jac-&gt;ksp,(<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)pc,1);
+<a name="line21"> 21: </a>  <a href="../../../../../docs/manualpages/PC/PCGetOptionsPrefix.html#PCGetOptionsPrefix">PCGetOptionsPrefix</a>(pc,&amp;prefix);
+<a name="line22"> 22: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSetOptionsPrefix.html#KSPSetOptionsPrefix">KSPSetOptionsPrefix</a>(jac-&gt;ksp,prefix);
+<a name="line23"> 23: </a>  <a href="../../../../../docs/manualpages/KSP/KSPAppendOptionsPrefix.html#KSPAppendOptionsPrefix">KSPAppendOptionsPrefix</a>(jac-&gt;ksp,<font color="#666666">"ksp_"</font>);
+<a name="line24"> 24: </a>  <font color="#4169E1">return</font>(0);
+<a name="line25"> 25: </a>}
+
+<a name="line27"> 27: </a><strong><font color="#4169E1"><a name="PCApply_KSP"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PCApply_KSP(<a href="../../../../../docs/manualpages/PC/PC.html#PC">PC</a> pc,<a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> x,<a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> y)</font></strong>
+<a name="line28"> 28: </a>{
+<a name="line29"> 29: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>     ierr;
+<a name="line30"> 30: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>           its;
+<a name="line31"> 31: </a>  PC_KSP             *jac = (PC_KSP*)pc-&gt;data;
+<a name="line32"> 32: </a>  <a href="../../../../../docs/manualpages/KSP/KSPConvergedReason.html#KSPConvergedReason">KSPConvergedReason</a> reason;
+
+<a name="line35"> 35: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSolve.html#KSPSolve">KSPSolve</a>(jac-&gt;ksp,x,y);
+<a name="line36"> 36: </a>  <a href="../../../../../docs/manualpages/KSP/KSPGetConvergedReason.html#KSPGetConvergedReason">KSPGetConvergedReason</a>(jac-&gt;ksp,&amp;reason);
+<a name="line37"> 37: </a>  <font color="#4169E1">if</font> (reason == <a href="../../../../../docs/manualpages/KSP/KSP_DIVERGED_PCSETUP_FAILED.html#KSP_DIVERGED_PCSETUP_FAILED">KSP_DIVERGED_PCSETUP_FAILED</a>) {
+<a name="line38"> 38: </a>    pc-&gt;failedreason = <a href="../../../../../docs/manualpages/PC/PCFailedReason.html#PCFailedReason">PC_SUBPC_ERROR</a>;
+<a name="line39"> 39: </a>  }
+<a name="line40"> 40: </a>  <a href="../../../../../docs/manualpages/KSP/KSPGetIterationNumber.html#KSPGetIterationNumber">KSPGetIterationNumber</a>(jac-&gt;ksp,&amp;its);
+<a name="line41"> 41: </a>  jac-&gt;its += its;
+<a name="line42"> 42: </a>  <font color="#4169E1">return</font>(0);
+<a name="line43"> 43: </a>}
+
+<a name="line45"> 45: </a><strong><font color="#4169E1"><a name="PCApplyTranspose_KSP"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PCApplyTranspose_KSP(<a href="../../../../../docs/manualpages/PC/PC.html#PC">PC</a> pc,<a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> x,<a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> y)</font></strong>
+<a name="line46"> 46: </a>{
+<a name="line48"> 48: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       its;
+<a name="line49"> 49: </a>  PC_KSP         *jac = (PC_KSP*)pc-&gt;data;
+
+<a name="line52"> 52: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSolveTranspose.html#KSPSolveTranspose">KSPSolveTranspose</a>(jac-&gt;ksp,x,y);
+<a name="line53"> 53: </a>  <a href="../../../../../docs/manualpages/KSP/KSPGetIterationNumber.html#KSPGetIterationNumber">KSPGetIterationNumber</a>(jac-&gt;ksp,&amp;its);
+<a name="line54"> 54: </a>  jac-&gt;its += its;
+<a name="line55"> 55: </a>  <font color="#4169E1">return</font>(0);
+<a name="line56"> 56: </a>}
+
+<a name="line58"> 58: </a><strong><font color="#4169E1"><a name="PCSetUp_KSP"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PCSetUp_KSP(<a href="../../../../../docs/manualpages/PC/PC.html#PC">PC</a> pc)</font></strong>
+<a name="line59"> 59: </a>{
+<a name="line61"> 61: </a>  PC_KSP         *jac = (PC_KSP*)pc-&gt;data;
+<a name="line62"> 62: </a>  <a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>            mat;
+
+<a name="line65"> 65: </a>  <font color="#4169E1">if</font> (!jac-&gt;ksp) {PCKSPCreateKSP_KSP(pc);}
+<a name="line66"> 66: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSetFromOptions.html#KSPSetFromOptions">KSPSetFromOptions</a>(jac-&gt;ksp);
+<a name="line67"> 67: </a>  <font color="#4169E1">if</font> (pc-&gt;useAmat) mat = pc-&gt;mat;
+<a name="line68"> 68: </a>  <font color="#4169E1">else</font>             mat = pc-&gt;pmat;
+
+<a name="line70"> 70: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSetOperators.html#KSPSetOperators">KSPSetOperators</a>(jac-&gt;ksp,mat,pc-&gt;pmat);
+<a name="line71"> 71: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSetUp.html#KSPSetUp">KSPSetUp</a>(jac-&gt;ksp);
+<a name="line72"> 72: </a>  <font color="#4169E1">return</font>(0);
+<a name="line73"> 73: </a>}
+
+<a name="line75"> 75: </a><font color="#B22222">/* Default destroy, if it has never been setup */</font>
+<a name="line76"> 76: </a><strong><font color="#4169E1"><a name="PCReset_KSP"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PCReset_KSP(<a href="../../../../../docs/manualpages/PC/PC.html#PC">PC</a> pc)</font></strong>
+<a name="line77"> 77: </a>{
+<a name="line78"> 78: </a>  PC_KSP         *jac = (PC_KSP*)pc-&gt;data;
+
+<a name="line82"> 82: </a>  <font color="#4169E1">if</font> (jac-&gt;ksp) {<a href="../../../../../docs/manualpages/KSP/KSPReset.html#KSPReset">KSPReset</a>(jac-&gt;ksp);}
+<a name="line83"> 83: </a>  <font color="#4169E1">return</font>(0);
+<a name="line84"> 84: </a>}
+
+<a name="line86"> 86: </a><strong><font color="#4169E1"><a name="PCDestroy_KSP"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PCDestroy_KSP(<a href="../../../../../docs/manualpages/PC/PC.html#PC">PC</a> pc)</font></strong>
+<a name="line87"> 87: </a>{
+<a name="line88"> 88: </a>  PC_KSP         *jac = (PC_KSP*)pc-&gt;data;
+
+<a name="line92"> 92: </a>  PCReset_KSP(pc);
+<a name="line93"> 93: </a>  <a href="../../../../../docs/manualpages/KSP/KSPDestroy.html#KSPDestroy">KSPDestroy</a>(&amp;jac-&gt;ksp);
+<a name="line94"> 94: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(pc-&gt;data);
+<a name="line95"> 95: </a>  <font color="#4169E1">return</font>(0);
+<a name="line96"> 96: </a>}
+
+<a name="line98"> 98: </a><strong><font color="#4169E1"><a name="PCView_KSP"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PCView_KSP(<a href="../../../../../docs/manualpages/PC/PC.html#PC">PC</a> pc,<a href="../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer)</font></strong>
+<a name="line99"> 99: </a>{
+<a name="line100">100: </a>  PC_KSP         *jac = (PC_KSP*)pc-&gt;data;
+<a name="line102">102: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>      iascii;
+
+<a name="line105">105: </a>  <font color="#4169E1">if</font> (!jac-&gt;ksp) {PCKSPCreateKSP_KSP(pc);}
+<a name="line106">106: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<a href="../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html#PETSCVIEWERASCII">PETSCVIEWERASCII</a>,&amp;iascii);
+<a name="line107">107: </a>  <font color="#4169E1">if</font> (iascii) {
+<a name="line108">108: </a>    <font color="#4169E1">if</font> (pc-&gt;useAmat) {
+<a name="line109">109: </a>      <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"  Using Amat (not Pmat) as operator on inner solve\n"</font>);
+<a name="line110">110: </a>    }
+<a name="line111">111: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"  <a href="../../../../../docs/manualpages/KSP/KSP.html#KSP">KSP</a> and <a href="../../../../../docs/manualpages/PC/PC.html#PC">PC</a> on <a href="../../../../../docs/manualpages/KSP/KSP.html#KSP">KSP</a> preconditioner follow\n"</font>);
+<a name="line112">112: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"  ---------------------------------\n"</font>);
+<a name="line113">113: </a>  }
+<a name="line114">114: </a>  <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPushTab.html#PetscViewerASCIIPushTab">PetscViewerASCIIPushTab</a>(viewer);
+<a name="line115">115: </a>  <a href="../../../../../docs/manualpages/KSP/KSPView.html#KSPView">KSPView</a>(jac-&gt;ksp,viewer);
+<a name="line116">116: </a>  <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPopTab.html#PetscViewerASCIIPopTab">PetscViewerASCIIPopTab</a>(viewer);
+<a name="line117">117: </a>  <font color="#4169E1">if</font> (iascii) {
+<a name="line118">118: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"  ---------------------------------\n"</font>);
+<a name="line119">119: </a>  }
+<a name="line120">120: </a>  <font color="#4169E1">return</font>(0);
+<a name="line121">121: </a>}
+
+<a name="line123">123: </a><strong><font color="#4169E1"><a name="PCKSPGetKSP_KSP"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  PCKSPGetKSP_KSP(<a href="../../../../../docs/manualpages/PC/PC.html#PC">PC</a> pc,<a href="../../../../../docs/manualpages/KSP/KSP.html#KSP">KSP</a> *ksp)</font></strong>
+<a name="line124">124: </a>{
+<a name="line125">125: </a>  PC_KSP         *jac = (PC_KSP*)pc-&gt;data;
+
+<a name="line129">129: </a>  <font color="#4169E1">if</font> (!jac-&gt;ksp) {PCKSPCreateKSP_KSP(pc);}
+<a name="line130">130: </a>  *ksp = jac-&gt;ksp;
+<a name="line131">131: </a>  <font color="#4169E1">return</font>(0);
+<a name="line132">132: </a>}
+
+<a name="line134">134: </a><font color="#B22222">/*@</font>
+<a name="line135">135: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/PC/PCKSPGetKSP.html#PCKSPGetKSP">PCKSPGetKSP</a> - Gets the <a href="../../../../../docs/manualpages/KSP/KSP.html#KSP">KSP</a> context for a <a href="../../../../../docs/manualpages/KSP/KSP.html#KSP">KSP</a> <a href="../../../../../docs/manualpages/PC/PC.html#PC">PC</a>.</font>
+
+<a name="line137">137: </a><font color="#B22222">   Not Collective but <a href="../../../../../docs/manualpages/KSP/KSP.html#KSP">KSP</a> returned is parallel if <a href="../../../../../docs/manualpages/PC/PC.html#PC">PC</a> was parallel</font>
+
+<a name="line139">139: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line140">140: </a><font color="#B22222">.  pc - the preconditioner context</font>
+
+<a name="line142">142: </a><font color="#B22222">   Output Parameters:</font>
+<a name="line143">143: </a><font color="#B22222">.  ksp - the <a href="../../../../../docs/manualpages/PC/PC.html#PC">PC</a> solver</font>
+
+<a name="line145">145: </a><font color="#B22222">   Notes:</font>
+<a name="line146">146: </a><font color="#B22222">   You must call <a href="../../../../../docs/manualpages/KSP/KSPSetUp.html#KSPSetUp">KSPSetUp</a>() before calling <a href="../../../../../docs/manualpages/PC/PCKSPGetKSP.html#PCKSPGetKSP">PCKSPGetKSP</a>().</font>
+
+<a name="line148">148: </a><font color="#B22222">   If the <a href="../../../../../docs/manualpages/PC/PC.html#PC">PC</a> is not a <a href="../../../../../docs/manualpages/PC/PCKSP.html#PCKSP">PCKSP</a> object then a NULL is returned</font>
+
+<a name="line150">150: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line152">152: </a><font color="#B22222">.keywords:  <a href="../../../../../docs/manualpages/PC/PC.html#PC">PC</a>, <a href="../../../../../docs/manualpages/KSP/KSP.html#KSP">KSP</a>, get, context</font>
+<a name="line153">153: </a><font color="#B22222">@*/</font>
+<a name="line154">154: </a><strong><font color="#4169E1"><a name="PCKSPGetKSP"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../../docs/manualpages/PC/PCKSPGetKSP.html#PCKSPGetKSP">PCKSPGetKSP</a>(<a href="../../../../../docs/manualpages/PC/PC.html#PC">PC</a> pc,<a href="../../../../../docs/manualpages/KSP/KSP.html#KSP">KSP</a> *ksp)</font></strong>
+<a name="line155">155: </a>{
+
+<a name="line161">161: </a>  *ksp = NULL;
+<a name="line162">162: </a>  PetscTryMethod(pc,<font color="#666666">"PCKSPGetKSP_C"</font>,(<a href="../../../../../docs/manualpages/PC/PC.html#PC">PC</a>,<a href="../../../../../docs/manualpages/KSP/KSP.html#KSP">KSP</a>*),(pc,ksp));
+<a name="line163">163: </a>  <font color="#4169E1">return</font>(0);
+<a name="line164">164: </a>}
+
+<a name="line166">166: </a><strong><font color="#4169E1"><a name="PCSetFromOptions_KSP"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PCSetFromOptions_KSP(PetscOptionItems *PetscOptionsObject,<a href="../../../../../docs/manualpages/PC/PC.html#PC">PC</a> pc)</font></strong>
+<a name="line167">167: </a>{
+<a name="line168">168: </a>  PC_KSP         *jac = (PC_KSP*)pc-&gt;data;
+
+<a name="line172">172: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsHead.html#PetscOptionsHead">PetscOptionsHead</a>(PetscOptionsObject,<font color="#666666">"<a href="../../../../../docs/manualpages/PC/PC.html#PC">PC</a> <a href="../../../../../docs/manualpages/KSP/KSP.html#KSP">KSP</a> options"</font>);
+<a name="line173">173: </a>  <font color="#4169E1">if</font> (jac-&gt;ksp) {
+<a name="line174">174: </a>    <a href="../../../../../docs/manualpages/KSP/KSPSetFromOptions.html#KSPSetFromOptions">KSPSetFromOptions</a>(jac-&gt;ksp);
+<a name="line175">175: </a>   }
+<a name="line176">176: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsTail.html#PetscOptionsTail">PetscOptionsTail</a>();
+<a name="line177">177: </a>  <font color="#4169E1">return</font>(0);
+<a name="line178">178: </a>}
+
+<a name="line180">180: </a><font color="#B22222">/* ----------------------------------------------------------------------------------*/</font>
+
+<a name="line182">182: </a><font color="#B22222">/*MC</font>
+<a name="line183">183: </a><font color="#B22222">     <a href="../../../../../docs/manualpages/PC/PCKSP.html#PCKSP">PCKSP</a> -    Defines a preconditioner that can consist of any <a href="../../../../../docs/manualpages/KSP/KSP.html#KSP">KSP</a> solver.</font>
+<a name="line184">184: </a><font color="#B22222">                 This allows, for example, embedding a Krylov method inside a preconditioner.</font>
+
+<a name="line186">186: </a><font color="#B22222">   Options Database Key:</font>
+<a name="line187">187: </a><font color="#B22222">.     -pc_use_amat - use the matrix that defines the linear system, Amat as the matrix for the</font>
+<a name="line188">188: </a><font color="#B22222">                    inner solver, otherwise by default it uses the matrix used to construct</font>
+<a name="line189">189: </a><font color="#B22222">                    the preconditioner, Pmat (see <a href="../../../../../docs/manualpages/PC/PCSetOperators.html#PCSetOperators">PCSetOperators</a>())</font>
+
+<a name="line191">191: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line193">193: </a><font color="#B22222">   Concepts: inner iteration</font>
+
+<a name="line195">195: </a><font color="#B22222">   Notes: Using a Krylov method inside another Krylov method can be dangerous (you get divergence or</font>
+<a name="line196">196: </a><font color="#B22222">          the incorrect answer) unless you use <a href="../../../../../docs/manualpages/KSP/KSPFGMRES.html#KSPFGMRES">KSPFGMRES</a> as the other Krylov method</font>
+
+<a name="line198">198: </a><font color="#B22222">   Developer Notes: If the outer Krylov method has a nonzero initial guess it will compute a new residual based on that initial guess</font>
+<a name="line199">199: </a><font color="#B22222">    and pass that as the right hand side into this <a href="../../../../../docs/manualpages/KSP/KSP.html#KSP">KSP</a> (and hence this <a href="../../../../../docs/manualpages/KSP/KSP.html#KSP">KSP</a> will always have a zero initial guess). For all outer Krylov methods</font>
+<a name="line200">200: </a><font color="#B22222">    except Richardson this is neccessary since Krylov methods, even the flexible ones, need to "see" the result of the action of the preconditioner on the</font>
+<a name="line201">201: </a><font color="#B22222">    input (current residual) vector, the action of the preconditioner cannot depend also on some other vector (the "initial guess"). For </font>
+<a name="line202">202: </a><font color="#B22222">    <a href="../../../../../docs/manualpages/KSP/KSPRICHARDSON.html#KSPRICHARDSON">KSPRICHARDSON</a> it is possible to provide a PCApplyRichardson_PCKSP() that short circuits returning to the <a href="../../../../../docs/manualpages/KSP/KSP.html#KSP">KSP</a> object at each iteration to compute the </font>
+<a name="line203">203: </a><font color="#B22222">    residual, see for example PCApplyRichardson_SOR(). We do not implement a PCApplyRichardson_PCKSP()  because (1) using a <a href="../../../../../docs/manualpages/KSP/KSP.html#KSP">KSP</a> directly inside a Richardson </font>
+<a name="line204">204: </a><font color="#B22222">    is not an efficient algorithm anyways and (2) implementing it for its &gt; 1 would essentially require that we implement Richardson (reimplementing the </font>
+<a name="line205">205: </a><font color="#B22222">    Richardson code) inside the PCApplyRichardson_PCKSP() leading to duplicate code.</font>
+
+<a name="line207">207: </a><font color="#B22222">.seealso:  <a href="../../../../../docs/manualpages/PC/PCCreate.html#PCCreate">PCCreate</a>(), <a href="../../../../../docs/manualpages/PC/PCSetType.html#PCSetType">PCSetType</a>(), <a href="../../../../../docs/manualpages/PC/PCType.html#PCType">PCType</a> (for list of available types), <a href="../../../../../docs/manualpages/PC/PC.html#PC">PC</a>,</font>
+<a name="line208">208: </a><font color="#B22222">           <a href="../../../../../docs/manualpages/PC/PCSHELL.html#PCSHELL">PCSHELL</a>, <a href="../../../../../docs/manualpages/PC/PCCOMPOSITE.html#PCCOMPOSITE">PCCOMPOSITE</a>, <a href="../../../../../docs/manualpages/PC/PCSetUseAmat.html#PCSetUseAmat">PCSetUseAmat</a>(), <a href="../../../../../docs/manualpages/PC/PCKSPGetKSP.html#PCKSPGetKSP">PCKSPGetKSP</a>()</font>
+
+<a name="line210">210: </a><font color="#B22222">M*/</font>
+
+<a name="line212">212: </a><strong><font color="#4169E1"><a name="PCCreate_KSP"></a>PETSC_EXTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PCCreate_KSP(<a href="../../../../../docs/manualpages/PC/PC.html#PC">PC</a> pc)</font></strong>
+<a name="line213">213: </a>{
+<a name="line215">215: </a>  PC_KSP         *jac;
+
+<a name="line218">218: </a>  <a href="../../../../../docs/manualpages/Sys/PetscNewLog.html#PetscNewLog">PetscNewLog</a>(pc,&amp;jac);
+
+<a name="line220">220: </a>  pc-&gt;ops-&gt;apply           = PCApply_KSP;
+<a name="line221">221: </a>  pc-&gt;ops-&gt;applytranspose  = PCApplyTranspose_KSP;
+<a name="line222">222: </a>  pc-&gt;ops-&gt;setup           = PCSetUp_KSP;
+<a name="line223">223: </a>  pc-&gt;ops-&gt;reset           = PCReset_KSP;
+<a name="line224">224: </a>  pc-&gt;ops-&gt;destroy         = PCDestroy_KSP;
+<a name="line225">225: </a>  pc-&gt;ops-&gt;setfromoptions  = PCSetFromOptions_KSP;
+<a name="line226">226: </a>  pc-&gt;ops-&gt;view            = PCView_KSP;
+<a name="line227">227: </a>  pc-&gt;ops-&gt;applyrichardson = 0;
+
+<a name="line229">229: </a>  pc-&gt;data = (void*)jac;
+
+
+<a name="line232">232: </a>  jac-&gt;its             = 0;
+<a name="line233">233: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html#PetscObjectComposeFunction">PetscObjectComposeFunction</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)pc,<font color="#666666">"PCKSPGetKSP_C"</font>,PCKSPGetKSP_KSP);
+<a name="line234">234: </a>  <font color="#4169E1">return</font>(0);
+<a name="line235">235: </a>}
+
+</pre>
+</body>
+
+</html>

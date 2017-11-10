@@ -1,0 +1,4 @@
+solver_tol: 1e-6
+m_aar: 9 
+p_aar: 8 
+beta_aar: 0.6 

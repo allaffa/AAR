@@ -1,0 +1,35 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML3.2 EN">
+<HTML>
+<HEAD> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/TS/TSFunctionDomainError.html" />
+<META NAME="GENERATOR" CONTENT="DOCTEXT">
+<TITLE>TSFunctionDomainError</TITLE>
+</HEAD>
+<BODY BGCOLOR="FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 docs/manualpages/TS/TSFunctionDomainError.html "><small>Report Typos and Errors</small></a></div>
+<A NAME="TSFunctionDomainError"><H1>TSFunctionDomainError</H1></A>
+Check if the current state is valid 
+<H3><FONT COLOR="#CC3333">Synopsis</FONT></H3>
+<PRE>
+#include "petscts.h"  
+<A HREF="../Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</A> <A HREF="../TS/TSFunctionDomainError.html#TSFunctionDomainError">TSFunctionDomainError</A>(<A HREF="../TS/TS.html#TS">TS</A> ts,<A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A> stagetime,<A HREF="../Vec/Vec.html#Vec">Vec</A> Y,<A HREF="../Sys/PetscBool.html#PetscBool">PetscBool</A>* accept)
+</PRE>
+<H3><FONT COLOR="#CC3333">Input Parameters</FONT></H3>
+ts - the <A HREF="../TS/TS.html#TS">TS</A> context
+stagetime - time of the simulation
+Y - state vector to check.
+<P>
+<H3><FONT COLOR="#CC3333">Output Parameter</FONT></H3>
+accept - Set to <A HREF="../Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</A> if the current state vector is valid.
+<P>
+<H3><FONT COLOR="#CC3333">Note</FONT></H3>
+This function should be used to ensure the state is in a valid part of the space.
+For example, one can ensure here all values are positive.
+<P>
+
+<P><B><P><B><FONT COLOR="#CC3333">Level:</FONT></B>advanced
+<BR><FONT COLOR="#CC3333">Location:</FONT></B><A HREF="../../../src/ts/interface/ts.c.html#TSFunctionDomainError">src/ts/interface/ts.c</A>
+<BR><A HREF="./index.html">Index of all TS routines</A>
+<BR><A HREF="../../index.html">Table of Contents for all manual pages</A>
+<BR><A HREF="../singleindex.html">Index of all manual pages</A>
+</BODY></HTML>

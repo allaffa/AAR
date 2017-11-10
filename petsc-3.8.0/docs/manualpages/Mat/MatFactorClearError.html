@@ -1,0 +1,34 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML3.2 EN">
+<HTML>
+<HEAD> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/Mat/MatFactorClearError.html" />
+<META NAME="GENERATOR" CONTENT="DOCTEXT">
+<TITLE>MatFactorClearError</TITLE>
+</HEAD>
+<BODY BGCOLOR="FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 docs/manualpages/Mat/MatFactorClearError.html "><small>Report Typos and Errors</small></a></div>
+<A NAME="MatFactorClearError"><H1>MatFactorClearError</H1></A>
+clears the error code in a factorization 
+<H3><FONT COLOR="#CC3333">Synopsis</FONT></H3>
+<PRE>
+#include "petscmat.h" 
+<A HREF="../Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</A> <A HREF="../Mat/MatFactorClearError.html#MatFactorClearError">MatFactorClearError</A>(<A HREF="../Mat/Mat.html#Mat">Mat</A> mat)
+</PRE>
+Logically Collective on <A HREF="../Mat/Mat.html#Mat">Mat</A>
+<P>
+<H3><FONT COLOR="#CC3333">Input Parameter</FONT></H3>
+<DT><B>mat </B> -the factored matrix
+<br>
+<P>
+
+<P>
+Notes: This can be called on non-factored matrices that come from, for example, matrices used in SOR.
+<P>
+<H3><FONT COLOR="#CC3333">See Also</FONT></H3>
+ <A HREF="../Mat/MatZeroEntries.html#MatZeroEntries">MatZeroEntries</A>(), MatFactor(), <A HREF="../Mat/MatGetFactor.html#MatGetFactor">MatGetFactor</A>(), MatFactorSymbolic(), <A HREF="../Mat/MatFactorGetError.html#MatFactorGetError">MatFactorGetError</A>(), <A HREF="../Mat/MatFactorGetErrorZeroPivot.html#MatFactorGetErrorZeroPivot">MatFactorGetErrorZeroPivot</A>()
+<BR><P><B><P><B><FONT COLOR="#CC3333">Level:</FONT></B>developer
+<BR><FONT COLOR="#CC3333">Location:</FONT></B><A HREF="../../../src/mat/interface/matrix.c.html#MatFactorClearError">src/mat/interface/matrix.c</A>
+<BR><A HREF="./index.html">Index of all Mat routines</A>
+<BR><A HREF="../../index.html">Table of Contents for all manual pages</A>
+<BR><A HREF="../singleindex.html">Index of all manual pages</A>
+</BODY></HTML>

@@ -1,0 +1,36 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML3.2 EN">
+<HTML>
+<HEAD> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/DT/PetscFERefine.html" />
+<META NAME="GENERATOR" CONTENT="DOCTEXT">
+<TITLE>PetscFERefine</TITLE>
+</HEAD>
+<BODY BGCOLOR="FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 docs/manualpages/DT/PetscFERefine.html "><small>Report Typos and Errors</small></a></div>
+<A NAME="PetscFERefine"><H1>PetscFERefine</H1></A>
+Create a "refined" <A HREF="../DM/PetscFE.html#PetscFE">PetscFE</A> object that refines the reference cell into smaller copies. This is typically used to precondition a higher order method with a lower order method on a refined mesh having the same number of dofs (but more sparsity). It is also used to create an interpolation between regularly refined meshes. 
+<H3><FONT COLOR="#CC3333">Synopsis</FONT></H3>
+<PRE>
+#include "petscfe.h" 
+<A HREF="../Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</A> <A HREF="../DT/PetscFERefine.html#PetscFERefine">PetscFERefine</A>(<A HREF="../DM/PetscFE.html#PetscFE">PetscFE</A> fe, <A HREF="../DM/PetscFE.html#PetscFE">PetscFE</A> *feRef)
+</PRE>
+Collective on <A HREF="../DM/PetscFE.html#PetscFE">PetscFE</A>
+<P>
+<H3><FONT COLOR="#CC3333">Input Parameter</FONT></H3>
+<DT><B>fe </B> -The initial <A HREF="../DM/PetscFE.html#PetscFE">PetscFE</A>
+<br>
+<P>
+<H3><FONT COLOR="#CC3333">Output Parameter</FONT></H3>
+<DT><B>feRef </B> -The refined <A HREF="../DM/PetscFE.html#PetscFE">PetscFE</A>
+<br>
+<P>
+
+<P>
+<H3><FONT COLOR="#CC3333">See Also</FONT></H3>
+ <A HREF="../DM/PetscFEType.html#PetscFEType">PetscFEType</A>, <A HREF="../DT/PetscFECreate.html#PetscFECreate">PetscFECreate</A>(), <A HREF="../DT/PetscFESetType.html#PetscFESetType">PetscFESetType</A>()
+<BR><P><B><P><B><FONT COLOR="#CC3333">Level:</FONT></B>developer
+<BR><FONT COLOR="#CC3333">Location:</FONT></B><A HREF="../../../src/dm/dt/interface/dtfe.c.html#PetscFERefine">src/dm/dt/interface/dtfe.c</A>
+<BR><A HREF="./index.html">Index of all DT routines</A>
+<BR><A HREF="../../index.html">Table of Contents for all manual pages</A>
+<BR><A HREF="../singleindex.html">Index of all manual pages</A>
+</BODY></HTML>

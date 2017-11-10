@@ -1,0 +1,1103 @@
+<center><a href="sfbasic.c">Actual source code: sfbasic.c</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/vec/is/sf/impls/basic/sfbasic.c.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:17:14+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/vec/is/sf/impls/basic/sfbasic.c.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+
+<a name="line2">  2: </a> #include <A href="../../../../../../include/petsc/private/sfimpl.h.html">&lt;petsc/private/sfimpl.h&gt;</A>
+
+<a name="line4">  4: </a><font color="#4169E1">typedef struct _n_PetscSFBasicPack *PetscSFBasicPack;</font>
+<a name="line5">  5: </a><font color="#4169E1"><a name="_n_PetscSFBasicPack"></a>struct _n_PetscSFBasicPack </font>{
+<a name="line6">  6: </a>  void (*Pack)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>*,const void*,void*);
+<a name="line7">  7: </a>  void (*UnpackInsert)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>*,void*,const void*);
+<a name="line8">  8: </a>  void (*UnpackAdd)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>*,void*,const void*);
+<a name="line9">  9: </a>  void (*UnpackMin)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>*,void*,const void*);
+<a name="line10"> 10: </a>  void (*UnpackMax)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>*,void*,const void*);
+<a name="line11"> 11: </a>  void (*UnpackMinloc)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>*,void*,const void*);
+<a name="line12"> 12: </a>  void (*UnpackMaxloc)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>*,void*,const void*);
+<a name="line13"> 13: </a>  void (*UnpackMult)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>*,void*,const void *);
+<a name="line14"> 14: </a>  void (*UnpackLAND)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>*,void*,const void *);
+<a name="line15"> 15: </a>  void (*UnpackBAND)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>*,void*,const void *);
+<a name="line16"> 16: </a>  void (*UnpackLOR)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>*,void*,const void *);
+<a name="line17"> 17: </a>  void (*UnpackBOR)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>*,void*,const void *);
+<a name="line18"> 18: </a>  void (*UnpackLXOR)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>*,void*,const void *);
+<a name="line19"> 19: </a>  void (*UnpackBXOR)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>*,void*,const void *);
+<a name="line20"> 20: </a>  void (*FetchAndInsert)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>*,void*,void*);
+<a name="line21"> 21: </a>  void (*FetchAndAdd)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>*,void*,void*);
+<a name="line22"> 22: </a>  void (*FetchAndMin)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>*,void*,void*);
+<a name="line23"> 23: </a>  void (*FetchAndMax)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>*,void*,void*);
+<a name="line24"> 24: </a>  void (*FetchAndMinloc)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>*,void*,void*);
+<a name="line25"> 25: </a>  void (*FetchAndMaxloc)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>*,void*,void*);
+<a name="line26"> 26: </a>  void (*FetchAndMult)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>*,void*,void*);
+<a name="line27"> 27: </a>  void (*FetchAndLAND)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>*,void*,void*);
+<a name="line28"> 28: </a>  void (*FetchAndBAND)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>*,void*,void*);
+<a name="line29"> 29: </a>  void (*FetchAndLOR)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>*,void*,void*);
+<a name="line30"> 30: </a>  void (*FetchAndBOR)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>*,void*,void*);
+<a name="line31"> 31: </a>  void (*FetchAndLXOR)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>*,void*,void*);
+<a name="line32"> 32: </a>  void (*FetchAndBXOR)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>*,void*,void*);
+
+<a name="line34"> 34: </a>  MPI_Datatype     unit;
+<a name="line35"> 35: </a>  size_t           unitbytes;   <font color="#B22222">/* Number of bytes in a unit */</font>
+<a name="line36"> 36: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>         bs;          <font color="#B22222">/* Number of basic units in a unit */</font>
+<a name="line37"> 37: </a>  const void       *key;        <font color="#B22222">/* Array used as key for operation */</font>
+<a name="line38"> 38: </a>  char             **root;      <font color="#B22222">/* Packed root data, indexed by leaf rank */</font>
+<a name="line39"> 39: </a>  char             **leaf;      <font color="#B22222">/* Packed leaf data, indexed by root rank */</font>
+<a name="line40"> 40: </a>  MPI_Request      *requests;   <font color="#B22222">/* Array of root requests followed by leaf requests */</font>
+<a name="line41"> 41: </a>  PetscSFBasicPack next;
+<a name="line42"> 42: </a>};
+
+<a name="line44"> 44: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line45"> 45: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>      tag;
+<a name="line46"> 46: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>      niranks;     <font color="#B22222">/* Number of incoming ranks (ranks accessing my roots) */</font>
+<a name="line47"> 47: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>      ndiranks;    <font color="#B22222">/* Number of incoming ranks (ranks accessing my roots) in distinguished set */</font>
+<a name="line48"> 48: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>      *iranks;     <font color="#B22222">/* Array of ranks that reference my roots */</font>
+<a name="line49"> 49: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>         itotal;      <font color="#B22222">/* Total number of graph edges referencing my roots */</font>
+<a name="line50"> 50: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>         *ioffset;    <font color="#B22222">/* Array of length niranks+1 holding offset in irootloc[] for each rank */</font>
+<a name="line51"> 51: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>         *irootloc;   <font color="#B22222">/* Incoming roots referenced by ranks starting at ioffset[rank] */</font>
+<a name="line52"> 52: </a>  PetscSFBasicPack avail;       <font color="#B22222">/* One or more entries per MPI Datatype, lazily constructed */</font>
+<a name="line53"> 53: </a>  PetscSFBasicPack inuse;       <font color="#B22222">/* Buffers being used for transactions that have not yet completed */</font>
+<a name="line54"> 54: </a>} PetscSF_Basic;
+
+<a name="line56"> 56: </a><font color="#A020F0">#if !defined(PETSC_HAVE_MPI_TYPE_DUP)</font>
+<a name="line57"> 57: </a><strong><font color="#4169E1"><a name="MPI_Type_dup"></a>PETSC_STATIC_INLINE int <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Type_dup.html#MPI_Type_dup">MPI_Type_dup</a>(MPI_Datatype datatype,MPI_Datatype *newtype)</font></strong>
+<a name="line58"> 58: </a>{
+<a name="line59"> 59: </a>  int ierr;
+<a name="line60"> 60: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Type_contiguous.html#MPI_Type_contiguous">MPI_Type_contiguous</a>(1,datatype,newtype); <font color="#4169E1">if</font> (ierr) <font color="#4169E1">return</font> ierr;
+<a name="line61"> 61: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Type_commit.html#MPI_Type_commit">MPI_Type_commit</a>(newtype); <font color="#4169E1">if</font> (ierr) <font color="#4169E1">return</font> ierr;
+<a name="line62"> 62: </a>  <font color="#4169E1">return</font> MPI_SUCCESS;
+<a name="line63"> 63: </a>}
+<a name="line64"> 64: </a><font color="#A020F0">#endif</font>
+
+<a name="line66"> 66: </a><font color="#B22222">/*</font>
+<a name="line67"> 67: </a><font color="#B22222"> * <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Reduce_local.html#MPI_Reduce_local">MPI_Reduce_local</a> is not really useful because it can't handle sparse data and it vectorizes "in the wrong direction",</font>
+<a name="line68"> 68: </a><font color="#B22222"> * therefore we pack data types manually. This section defines packing routines for the standard data types.</font>
+<a name="line69"> 69: </a><font color="#B22222"> */</font>
+
+<a name="line71"> 71: </a><strong><font color="#228B22">#define CPPJoin2_exp(a,b) a ## b</font></strong>
+<a name="line72"> 72: </a><strong><font color="#228B22">#define CPPJoin2(a,b) CPPJoin2_exp(a,b)</font></strong>
+<a name="line73"> 73: </a><strong><font color="#228B22">#define CPPJoin3_exp_(a,b,c) a ## b ## _ ## c</font></strong>
+<a name="line74"> 74: </a><strong><font color="#228B22">#define CPPJoin3_(a,b,c) CPPJoin3_exp_(a,b,c)</font></strong>
+
+<a name="line76"> 76: </a><font color="#B22222">/* Basic types without addition */</font>
+<a name="line77"> 77: </a><strong><font color="#228B22">#define DEF_PackNoInit(type,BS)                                         \</font></strong>
+<a name="line78"> 78: </a><strong><font color="#228B22">  static void CPPJoin3_(Pack_,type,BS)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> n,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> bs,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *idx,const void *unpacked,void *packed) { \</font></strong>
+<a name="line79"> 79: </a><strong><font color="#228B22">    const type *u = (const type*)unpacked;                              \</font></strong>
+<a name="line80"> 80: </a><strong><font color="#228B22">    type *p = (type*)packed;                                            \</font></strong>
+<a name="line81"> 81: </a><strong><font color="#228B22">    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i,j,k;                                                     \</font></strong>
+<a name="line82"> 82: </a><strong><font color="#228B22">    for (i=0; i&lt;n; i++)                                                 \</font></strong>
+<a name="line83"> 83: </a><strong><font color="#228B22">      for (j=0; j&lt;bs; j+=BS)                                            \</font></strong>
+<a name="line84"> 84: </a><strong><font color="#228B22">        for (k=j; k&lt;j+BS; k++)                                          \</font></strong>
+<a name="line85"> 85: </a><strong><font color="#228B22">          p[i*bs+k] = u[idx[i]*bs+k];                                   \</font></strong>
+<a name="line86"> 86: </a><strong><font color="#228B22">  }                                                                     \</font></strong>
+<a name="line87"> 87: </a><strong><font color="#228B22">  static void CPPJoin3_(UnpackInsert_,type,BS)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> n,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> bs,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *idx,void *unpacked,const void *packed) { \</font></strong>
+<a name="line88"> 88: </a><strong><font color="#228B22">    type *u = (type*)unpacked;                                          \</font></strong>
+<a name="line89"> 89: </a><strong><font color="#228B22">    const type *p = (const type*)packed;                                \</font></strong>
+<a name="line90"> 90: </a><strong><font color="#228B22">    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i,j,k;                                                     \</font></strong>
+<a name="line91"> 91: </a><strong><font color="#228B22">    for (i=0; i&lt;n; i++)                                                 \</font></strong>
+<a name="line92"> 92: </a><strong><font color="#228B22">      for (j=0; j&lt;bs; j+=BS)                                            \</font></strong>
+<a name="line93"> 93: </a><strong><font color="#228B22">        for (k=j; k&lt;j+BS; k++)                                          \</font></strong>
+<a name="line94"> 94: </a><strong><font color="#228B22">          u[idx[i]*bs+k] = p[i*bs+k];                                   \</font></strong>
+<a name="line95"> 95: </a><strong><font color="#228B22">  }                                                                     \</font></strong>
+<a name="line96"> 96: </a><strong><font color="#228B22">  static void CPPJoin3_(FetchAndInsert_,type,BS)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> n,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> bs,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *idx,void *unpacked,void *packed) { \</font></strong>
+<a name="line97"> 97: </a><strong><font color="#228B22">    type *u = (type*)unpacked;                                          \</font></strong>
+<a name="line98"> 98: </a><strong><font color="#228B22">    type *p = (type*)packed;                                            \</font></strong>
+<a name="line99"> 99: </a><strong><font color="#228B22">    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i,j,k;                                                     \</font></strong>
+<a name="line100">100: </a><strong><font color="#228B22">    for (i=0; i&lt;n; i++) {                                               \</font></strong>
+<a name="line101">101: </a><strong><font color="#228B22">      <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> ii = idx[i];                                             \</font></strong>
+<a name="line102">102: </a><strong><font color="#228B22">      for (j=0; j&lt;bs; j+=BS)                                            \</font></strong>
+<a name="line103">103: </a><strong><font color="#228B22">        for (k=j; k&lt;j+BS; k++) {                                        \</font></strong>
+<a name="line104">104: </a><strong><font color="#228B22">          type t = u[ii*bs+k];                                          \</font></strong>
+<a name="line105">105: </a><strong><font color="#228B22">          u[ii*bs+k] = p[i*bs+k];                                       \</font></strong>
+<a name="line106">106: </a><strong><font color="#228B22">          p[i*bs+k] = t;                                                \</font></strong>
+<a name="line107">107: </a><strong><font color="#228B22">        }                                                               \</font></strong>
+<a name="line108">108: </a><strong><font color="#228B22">    }                                                                   \</font></strong>
+<a name="line109">109: </a><strong><font color="#228B22">  }</font></strong>
+
+<a name="line111">111: </a><font color="#B22222">/* Basic types defining addition */</font>
+<a name="line112">112: </a><strong><font color="#228B22">#define DEF_PackAddNoInit(type,BS)                                      \</font></strong>
+<a name="line113">113: </a><strong><font color="#228B22">  DEF_PackNoInit(type,BS)                                               \</font></strong>
+<a name="line114">114: </a><strong><font color="#228B22">  static void CPPJoin3_(UnpackAdd_,type,BS)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> n,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> bs,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *idx,void *unpacked,const void *packed) { \</font></strong>
+<a name="line115">115: </a><strong><font color="#228B22">    type *u = (type*)unpacked;                                          \</font></strong>
+<a name="line116">116: </a><strong><font color="#228B22">    const type *p = (const type*)packed;                                \</font></strong>
+<a name="line117">117: </a><strong><font color="#228B22">    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i,j,k;                                                     \</font></strong>
+<a name="line118">118: </a><strong><font color="#228B22">    for (i=0; i&lt;n; i++)                                                 \</font></strong>
+<a name="line119">119: </a><strong><font color="#228B22">      for (j=0; j&lt;bs; j+=BS)                                            \</font></strong>
+<a name="line120">120: </a><strong><font color="#228B22">        for (k=j; k&lt;j+BS; k++)                                          \</font></strong>
+<a name="line121">121: </a><strong><font color="#228B22">          u[idx[i]*bs+k] += p[i*bs+k];                                  \</font></strong>
+<a name="line122">122: </a><strong><font color="#228B22">  }                                                                     \</font></strong>
+<a name="line123">123: </a><strong><font color="#228B22">  static void CPPJoin3_(FetchAndAdd_,type,BS)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> n,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> bs,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *idx,void *unpacked,void *packed) { \</font></strong>
+<a name="line124">124: </a><strong><font color="#228B22">    type *u = (type*)unpacked;                                          \</font></strong>
+<a name="line125">125: </a><strong><font color="#228B22">    type *p = (type*)packed;                                            \</font></strong>
+<a name="line126">126: </a><strong><font color="#228B22">    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i,j,k;                                                     \</font></strong>
+<a name="line127">127: </a><strong><font color="#228B22">    for (i=0; i&lt;n; i++) {                                               \</font></strong>
+<a name="line128">128: </a><strong><font color="#228B22">      <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> ii = idx[i];                                             \</font></strong>
+<a name="line129">129: </a><strong><font color="#228B22">      for (j=0; j&lt;bs; j+=BS)                                            \</font></strong>
+<a name="line130">130: </a><strong><font color="#228B22">        for (k=j; k&lt;j+BS; k++) {                                        \</font></strong>
+<a name="line131">131: </a><strong><font color="#228B22">          type t = u[ii*bs+k];                                          \</font></strong>
+<a name="line132">132: </a><strong><font color="#228B22">          u[ii*bs+k] = t + p[i*bs+k];                                   \</font></strong>
+<a name="line133">133: </a><strong><font color="#228B22">          p[i*bs+k] = t;                                                \</font></strong>
+<a name="line134">134: </a><strong><font color="#228B22">        }                                                               \</font></strong>
+<a name="line135">135: </a><strong><font color="#228B22">    }                                                                   \</font></strong>
+<a name="line136">136: </a><strong><font color="#228B22">  }                                                                     \</font></strong>
+<a name="line137">137: </a><strong><font color="#228B22">  static void CPPJoin3_(UnpackMult_,type,BS)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> n,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> bs,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *idx,void *unpacked,const void *packed) { \</font></strong>
+<a name="line138">138: </a><strong><font color="#228B22">    type *u = (type*)unpacked;                                          \</font></strong>
+<a name="line139">139: </a><strong><font color="#228B22">    const type *p = (const type*)packed;                                \</font></strong>
+<a name="line140">140: </a><strong><font color="#228B22">    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i,j,k;                                                     \</font></strong>
+<a name="line141">141: </a><strong><font color="#228B22">    for (i=0; i&lt;n; i++)                                                 \</font></strong>
+<a name="line142">142: </a><strong><font color="#228B22">      for (j=0; j&lt;bs; j+=BS)                                            \</font></strong>
+<a name="line143">143: </a><strong><font color="#228B22">        for (k=j; k&lt;j+BS; k++)                                          \</font></strong>
+<a name="line144">144: </a><strong><font color="#228B22">          u[idx[i]*bs+k] *= p[i*bs+k];                                  \</font></strong>
+<a name="line145">145: </a><strong><font color="#228B22">  }                                                                     \</font></strong>
+<a name="line146">146: </a><strong><font color="#228B22">  static void CPPJoin3_(FetchAndMult_,type,BS)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> n,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> bs,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *idx,void *unpacked,void *packed) { \</font></strong>
+<a name="line147">147: </a><strong><font color="#228B22">    type *u = (type*)unpacked;                                          \</font></strong>
+<a name="line148">148: </a><strong><font color="#228B22">    type *p = (type*)packed;                                            \</font></strong>
+<a name="line149">149: </a><strong><font color="#228B22">    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i,j,k;                                                     \</font></strong>
+<a name="line150">150: </a><strong><font color="#228B22">    for (i=0; i&lt;n; i++) {                                               \</font></strong>
+<a name="line151">151: </a><strong><font color="#228B22">      <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> ii = idx[i];                                             \</font></strong>
+<a name="line152">152: </a><strong><font color="#228B22">      for (j=0; j&lt;bs; j+=BS)                                            \</font></strong>
+<a name="line153">153: </a><strong><font color="#228B22">        for (k=j; k&lt;j+BS; k++) {                                        \</font></strong>
+<a name="line154">154: </a><strong><font color="#228B22">          type t = u[ii*bs+k];                                          \</font></strong>
+<a name="line155">155: </a><strong><font color="#228B22">          u[ii*bs+k] = t * p[i*bs+k];                                   \</font></strong>
+<a name="line156">156: </a><strong><font color="#228B22">          p[i*bs+k] = t;                                                \</font></strong>
+<a name="line157">157: </a><strong><font color="#228B22">        }                                                               \</font></strong>
+<a name="line158">158: </a><strong><font color="#228B22">    }                                                                   \</font></strong>
+<a name="line159">159: </a><strong><font color="#228B22">  }</font></strong>
+<a name="line160">160: </a><strong><font color="#228B22">#define DEF_Pack(type,BS)                                               \</font></strong>
+<a name="line161">161: </a><strong><font color="#228B22">  DEF_PackAddNoInit(type,BS)                                            \</font></strong>
+<a name="line162">162: </a><strong><font color="#228B22">  static void CPPJoin3_(PackInit_,type,BS)(PetscSFBasicPack link) {     \</font></strong>
+<a name="line163">163: </a><strong><font color="#228B22">    link-&gt;Pack = CPPJoin3_(Pack_,type,BS);                              \</font></strong>
+<a name="line164">164: </a><strong><font color="#228B22">    link-&gt;UnpackInsert = CPPJoin3_(UnpackInsert_,type,BS);              \</font></strong>
+<a name="line165">165: </a><strong><font color="#228B22">    link-&gt;UnpackAdd = CPPJoin3_(UnpackAdd_,type,BS);                    \</font></strong>
+<a name="line166">166: </a><strong><font color="#228B22">    link-&gt;UnpackMult = CPPJoin3_(UnpackMult_,type,BS);                  \</font></strong>
+<a name="line167">167: </a><strong><font color="#228B22">    link-&gt;FetchAndInsert = CPPJoin3_(FetchAndInsert_,type,BS);          \</font></strong>
+<a name="line168">168: </a><strong><font color="#228B22">    link-&gt;FetchAndAdd = CPPJoin3_(FetchAndAdd_,type,BS);                \</font></strong>
+<a name="line169">169: </a><strong><font color="#228B22">    link-&gt;FetchAndMult = CPPJoin3_(FetchAndMult_,type,BS);              \</font></strong>
+<a name="line170">170: </a><strong><font color="#228B22">    link-&gt;unitbytes = sizeof(type);                                     \</font></strong>
+<a name="line171">171: </a><strong><font color="#228B22">  }</font></strong>
+<a name="line172">172: </a><font color="#B22222">/* Comparable types */</font>
+<a name="line173">173: </a><strong><font color="#228B22">#define DEF_PackCmp(type)                                               \</font></strong>
+<a name="line174">174: </a><strong><font color="#228B22">  DEF_PackAddNoInit(type,1)                                             \</font></strong>
+<a name="line175">175: </a><strong><font color="#228B22">  static void CPPJoin2(UnpackMax_,type)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> n,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> bs,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *idx,void *unpacked,const void *packed) { \</font></strong>
+<a name="line176">176: </a><strong><font color="#228B22">    type *u = (type*)unpacked;                                          \</font></strong>
+<a name="line177">177: </a><strong><font color="#228B22">    const type *p = (const type*)packed;                                \</font></strong>
+<a name="line178">178: </a><strong><font color="#228B22">    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i;                                                         \</font></strong>
+<a name="line179">179: </a><strong><font color="#228B22">    for (i=0; i&lt;n; i++) {                                               \</font></strong>
+<a name="line180">180: </a><strong><font color="#228B22">      type v = u[idx[i]];                                               \</font></strong>
+<a name="line181">181: </a><strong><font color="#228B22">      u[idx[i]] = <a href="../../../../../../docs/manualpages/Sys/PetscMax.html#PetscMax">PetscMax</a>(v,p[i]);                                     \</font></strong>
+<a name="line182">182: </a><strong><font color="#228B22">    }                                                                   \</font></strong>
+<a name="line183">183: </a><strong><font color="#228B22">  }                                                                     \</font></strong>
+<a name="line184">184: </a><strong><font color="#228B22">  static void CPPJoin2(UnpackMin_,type)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> n,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> bs,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *idx,void *unpacked,const void *packed) { \</font></strong>
+<a name="line185">185: </a><strong><font color="#228B22">    type *u = (type*)unpacked;                                          \</font></strong>
+<a name="line186">186: </a><strong><font color="#228B22">    const type *p = (const type*)packed;                                \</font></strong>
+<a name="line187">187: </a><strong><font color="#228B22">    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i;                                                         \</font></strong>
+<a name="line188">188: </a><strong><font color="#228B22">    for (i=0; i&lt;n; i++) {                                               \</font></strong>
+<a name="line189">189: </a><strong><font color="#228B22">      type v = u[idx[i]];                                               \</font></strong>
+<a name="line190">190: </a><strong><font color="#228B22">      u[idx[i]] = <a href="../../../../../../docs/manualpages/Sys/PetscMin.html#PetscMin">PetscMin</a>(v,p[i]);                                     \</font></strong>
+<a name="line191">191: </a><strong><font color="#228B22">    }                                                                   \</font></strong>
+<a name="line192">192: </a><strong><font color="#228B22">  }                                                                     \</font></strong>
+<a name="line193">193: </a><strong><font color="#228B22">  static void CPPJoin2(FetchAndMax_,type)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> n,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> bs,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *idx,void *unpacked,void *packed) { \</font></strong>
+<a name="line194">194: </a><strong><font color="#228B22">    type *u = (type*)unpacked;                                          \</font></strong>
+<a name="line195">195: </a><strong><font color="#228B22">    type *p = (type*)packed;                                            \</font></strong>
+<a name="line196">196: </a><strong><font color="#228B22">    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i;                                                         \</font></strong>
+<a name="line197">197: </a><strong><font color="#228B22">    for (i=0; i&lt;n; i++) {                                               \</font></strong>
+<a name="line198">198: </a><strong><font color="#228B22">      <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> j = idx[i];                                              \</font></strong>
+<a name="line199">199: </a><strong><font color="#228B22">      type v = u[j];                                                    \</font></strong>
+<a name="line200">200: </a><strong><font color="#228B22">      u[j] = <a href="../../../../../../docs/manualpages/Sys/PetscMax.html#PetscMax">PetscMax</a>(v,p[i]);                                          \</font></strong>
+<a name="line201">201: </a><strong><font color="#228B22">      p[i] = v;                                                         \</font></strong>
+<a name="line202">202: </a><strong><font color="#228B22">    }                                                                   \</font></strong>
+<a name="line203">203: </a><strong><font color="#228B22">  }                                                                     \</font></strong>
+<a name="line204">204: </a><strong><font color="#228B22">  static void CPPJoin2(FetchAndMin_,type)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> n,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> bs,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *idx,void *unpacked,void *packed) { \</font></strong>
+<a name="line205">205: </a><strong><font color="#228B22">    type *u = (type*)unpacked;                                          \</font></strong>
+<a name="line206">206: </a><strong><font color="#228B22">    type *p = (type*)packed;                                            \</font></strong>
+<a name="line207">207: </a><strong><font color="#228B22">    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i;                                                         \</font></strong>
+<a name="line208">208: </a><strong><font color="#228B22">    for (i=0; i&lt;n; i++) {                                               \</font></strong>
+<a name="line209">209: </a><strong><font color="#228B22">      <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> j = idx[i];                                              \</font></strong>
+<a name="line210">210: </a><strong><font color="#228B22">      type v = u[j];                                                    \</font></strong>
+<a name="line211">211: </a><strong><font color="#228B22">      u[j] = <a href="../../../../../../docs/manualpages/Sys/PetscMin.html#PetscMin">PetscMin</a>(v,p[i]);                                          \</font></strong>
+<a name="line212">212: </a><strong><font color="#228B22">      p[i] = v;                                                         \</font></strong>
+<a name="line213">213: </a><strong><font color="#228B22">    }                                                                   \</font></strong>
+<a name="line214">214: </a><strong><font color="#228B22">  }                                                                     \</font></strong>
+<a name="line215">215: </a><strong><font color="#228B22">  static void CPPJoin2(PackInit_,type)(PetscSFBasicPack link) {         \</font></strong>
+<a name="line216">216: </a><strong><font color="#228B22">    link-&gt;Pack = CPPJoin3_(Pack_,type,1);                               \</font></strong>
+<a name="line217">217: </a><strong><font color="#228B22">    link-&gt;UnpackInsert = CPPJoin3_(UnpackInsert_,type,1);               \</font></strong>
+<a name="line218">218: </a><strong><font color="#228B22">    link-&gt;UnpackAdd  = CPPJoin3_(UnpackAdd_,type,1);                    \</font></strong>
+<a name="line219">219: </a><strong><font color="#228B22">    link-&gt;UnpackMax  = CPPJoin2(UnpackMax_,type);                       \</font></strong>
+<a name="line220">220: </a><strong><font color="#228B22">    link-&gt;UnpackMin  = CPPJoin2(UnpackMin_,type);                       \</font></strong>
+<a name="line221">221: </a><strong><font color="#228B22">    link-&gt;UnpackMult = CPPJoin3_(UnpackMult_,type,1);                   \</font></strong>
+<a name="line222">222: </a><strong><font color="#228B22">    link-&gt;FetchAndInsert = CPPJoin3_(FetchAndInsert_,type,1);           \</font></strong>
+<a name="line223">223: </a><strong><font color="#228B22">    link-&gt;FetchAndAdd = CPPJoin3_(FetchAndAdd_ ,type,1);                \</font></strong>
+<a name="line224">224: </a><strong><font color="#228B22">    link-&gt;FetchAndMax = CPPJoin2(FetchAndMax_ ,type);                   \</font></strong>
+<a name="line225">225: </a><strong><font color="#228B22">    link-&gt;FetchAndMin = CPPJoin2(FetchAndMin_ ,type);                   \</font></strong>
+<a name="line226">226: </a><strong><font color="#228B22">    link-&gt;FetchAndMult = CPPJoin3_(FetchAndMult_,type,1);               \</font></strong>
+<a name="line227">227: </a><strong><font color="#228B22">    link-&gt;unitbytes = sizeof(type);                                     \</font></strong>
+<a name="line228">228: </a><strong><font color="#228B22">  }</font></strong>
+
+<a name="line230">230: </a><font color="#B22222">/* Logical Types */</font>
+<a name="line231">231: </a><strong><font color="#228B22">#define DEF_PackLog(type)                                               \</font></strong>
+<a name="line232">232: </a><strong><font color="#228B22">  static void CPPJoin2(UnpackLAND_,type)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> n,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> bs,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *idx,void *unpacked,const void *packed) { \</font></strong>
+<a name="line233">233: </a><strong><font color="#228B22">    type *u = (type*)unpacked;                                          \</font></strong>
+<a name="line234">234: </a><strong><font color="#228B22">    const type *p = (const type*)packed;                                \</font></strong>
+<a name="line235">235: </a><strong><font color="#228B22">    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i;                                                         \</font></strong>
+<a name="line236">236: </a><strong><font color="#228B22">    for (i=0; i&lt;n; i++) {                                               \</font></strong>
+<a name="line237">237: </a><strong><font color="#228B22">      type v = u[idx[i]];                                               \</font></strong>
+<a name="line238">238: </a><strong><font color="#228B22">      u[idx[i]] = v &amp;&amp; p[i];                                            \</font></strong>
+<a name="line239">239: </a><strong><font color="#228B22">    }                                                                   \</font></strong>
+<a name="line240">240: </a><strong><font color="#228B22">  }                                                                     \</font></strong>
+<a name="line241">241: </a><strong><font color="#228B22">  static void CPPJoin2(UnpackLOR_,type)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> n,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> bs,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *idx,void *unpacked,const void *packed) { \</font></strong>
+<a name="line242">242: </a><strong><font color="#228B22">    type *u = (type*)unpacked;                                          \</font></strong>
+<a name="line243">243: </a><strong><font color="#228B22">    const type *p = (const type*)packed;                                \</font></strong>
+<a name="line244">244: </a><strong><font color="#228B22">    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i;                                                         \</font></strong>
+<a name="line245">245: </a><strong><font color="#228B22">    for (i=0; i&lt;n; i++) {                                               \</font></strong>
+<a name="line246">246: </a><strong><font color="#228B22">      type v = u[idx[i]];                                               \</font></strong>
+<a name="line247">247: </a><strong><font color="#228B22">      u[idx[i]] = v || p[i];                                            \</font></strong>
+<a name="line248">248: </a><strong><font color="#228B22">    }                                                                   \</font></strong>
+<a name="line249">249: </a><strong><font color="#228B22">  }                                                                     \</font></strong>
+<a name="line250">250: </a><strong><font color="#228B22">  static void CPPJoin2(UnpackLXOR_,type)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> n,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> bs,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *idx,void *unpacked,const void *packed) { \</font></strong>
+<a name="line251">251: </a><strong><font color="#228B22">    type *u = (type*)unpacked;                                          \</font></strong>
+<a name="line252">252: </a><strong><font color="#228B22">    const type *p = (const type*)packed;                                \</font></strong>
+<a name="line253">253: </a><strong><font color="#228B22">    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i;                                                         \</font></strong>
+<a name="line254">254: </a><strong><font color="#228B22">    for (i=0; i&lt;n; i++) {                                               \</font></strong>
+<a name="line255">255: </a><strong><font color="#228B22">      type v = u[idx[i]];                                               \</font></strong>
+<a name="line256">256: </a><strong><font color="#228B22">      u[idx[i]] = (!v)!=(!p[i]);                                        \</font></strong>
+<a name="line257">257: </a><strong><font color="#228B22">    }                                                                   \</font></strong>
+<a name="line258">258: </a><strong><font color="#228B22">  }                                                                     \</font></strong>
+<a name="line259">259: </a><strong><font color="#228B22">  static void CPPJoin2(FetchAndLAND_,type)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> n,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> bs,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *idx,void *unpacked,void *packed) { \</font></strong>
+<a name="line260">260: </a><strong><font color="#228B22">    type *u = (type*)unpacked;                                          \</font></strong>
+<a name="line261">261: </a><strong><font color="#228B22">    type *p = (type*)packed;                                            \</font></strong>
+<a name="line262">262: </a><strong><font color="#228B22">    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i;                                                         \</font></strong>
+<a name="line263">263: </a><strong><font color="#228B22">    for (i=0; i&lt;n; i++) {                                               \</font></strong>
+<a name="line264">264: </a><strong><font color="#228B22">      <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> j = idx[i];                                              \</font></strong>
+<a name="line265">265: </a><strong><font color="#228B22">      type v = u[j];                                                    \</font></strong>
+<a name="line266">266: </a><strong><font color="#228B22">      u[j] = v &amp;&amp; p[i];                                                 \</font></strong>
+<a name="line267">267: </a><strong><font color="#228B22">      p[i] = v;                                                         \</font></strong>
+<a name="line268">268: </a><strong><font color="#228B22">    }                                                                   \</font></strong>
+<a name="line269">269: </a><strong><font color="#228B22">  }                                                                     \</font></strong>
+<a name="line270">270: </a><strong><font color="#228B22">  static void CPPJoin2(FetchAndLOR_,type)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> n,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> bs,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *idx,void *unpacked,void *packed) { \</font></strong>
+<a name="line271">271: </a><strong><font color="#228B22">    type *u = (type*)unpacked;                                          \</font></strong>
+<a name="line272">272: </a><strong><font color="#228B22">    type *p = (type*)packed;                                            \</font></strong>
+<a name="line273">273: </a><strong><font color="#228B22">    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i;                                                         \</font></strong>
+<a name="line274">274: </a><strong><font color="#228B22">    for (i=0; i&lt;n; i++) {                                               \</font></strong>
+<a name="line275">275: </a><strong><font color="#228B22">      <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> j = idx[i];                                              \</font></strong>
+<a name="line276">276: </a><strong><font color="#228B22">      type v = u[j];                                                    \</font></strong>
+<a name="line277">277: </a><strong><font color="#228B22">      u[j] = v || p[i];                                                 \</font></strong>
+<a name="line278">278: </a><strong><font color="#228B22">      p[i] = v;                                                         \</font></strong>
+<a name="line279">279: </a><strong><font color="#228B22">    }                                                                   \</font></strong>
+<a name="line280">280: </a><strong><font color="#228B22">  }                                                                     \</font></strong>
+<a name="line281">281: </a><strong><font color="#228B22">  static void CPPJoin2(FetchAndLXOR_,type)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> n,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> bs,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *idx,void *unpacked,void *packed) { \</font></strong>
+<a name="line282">282: </a><strong><font color="#228B22">    type *u = (type*)unpacked;                                          \</font></strong>
+<a name="line283">283: </a><strong><font color="#228B22">    type *p = (type*)packed;                                            \</font></strong>
+<a name="line284">284: </a><strong><font color="#228B22">    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i;                                                         \</font></strong>
+<a name="line285">285: </a><strong><font color="#228B22">    for (i=0; i&lt;n; i++) {                                               \</font></strong>
+<a name="line286">286: </a><strong><font color="#228B22">      <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> j = idx[i];                                              \</font></strong>
+<a name="line287">287: </a><strong><font color="#228B22">      type v = u[j];                                                    \</font></strong>
+<a name="line288">288: </a><strong><font color="#228B22">      u[j] = (!v)!=(!p[i]);                                             \</font></strong>
+<a name="line289">289: </a><strong><font color="#228B22">      p[i] = v;                                                         \</font></strong>
+<a name="line290">290: </a><strong><font color="#228B22">    }                                                                   \</font></strong>
+<a name="line291">291: </a><strong><font color="#228B22">  }                                                                     \</font></strong>
+<a name="line292">292: </a><strong><font color="#228B22">  static void CPPJoin2(PackInit_Logical_,type)(PetscSFBasicPack link) { \</font></strong>
+<a name="line293">293: </a><strong><font color="#228B22">    link-&gt;UnpackLAND = CPPJoin2(UnpackLAND_,type);                      \</font></strong>
+<a name="line294">294: </a><strong><font color="#228B22">    link-&gt;UnpackLOR  = CPPJoin2(UnpackLOR_,type);                       \</font></strong>
+<a name="line295">295: </a><strong><font color="#228B22">    link-&gt;UnpackLXOR = CPPJoin2(UnpackLXOR_,type);                      \</font></strong>
+<a name="line296">296: </a><strong><font color="#228B22">    link-&gt;FetchAndLAND = CPPJoin2(FetchAndLAND_,type);                  \</font></strong>
+<a name="line297">297: </a><strong><font color="#228B22">    link-&gt;FetchAndLOR  = CPPJoin2(FetchAndLOR_,type);                   \</font></strong>
+<a name="line298">298: </a><strong><font color="#228B22">    link-&gt;FetchAndLXOR = CPPJoin2(FetchAndLXOR_,type);                  \</font></strong>
+<a name="line299">299: </a><strong><font color="#228B22">  }</font></strong>
+
+
+<a name="line302">302: </a><font color="#B22222">/* Bitwise Types */</font>
+<a name="line303">303: </a><strong><font color="#228B22">#define DEF_PackBit(type)                                               \</font></strong>
+<a name="line304">304: </a><strong><font color="#228B22">  static void CPPJoin2(UnpackBAND_,type)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> n,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> bs,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *idx,void *unpacked,const void *packed) { \</font></strong>
+<a name="line305">305: </a><strong><font color="#228B22">    type *u = (type*)unpacked;                                          \</font></strong>
+<a name="line306">306: </a><strong><font color="#228B22">    const type *p = (const type*)packed;                                \</font></strong>
+<a name="line307">307: </a><strong><font color="#228B22">    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i;                                                         \</font></strong>
+<a name="line308">308: </a><strong><font color="#228B22">    for (i=0; i&lt;n; i++) {                                               \</font></strong>
+<a name="line309">309: </a><strong><font color="#228B22">      type v = u[idx[i]];                                               \</font></strong>
+<a name="line310">310: </a><strong><font color="#228B22">      u[idx[i]] = v &amp; p[i];                                             \</font></strong>
+<a name="line311">311: </a><strong><font color="#228B22">    }                                                                   \</font></strong>
+<a name="line312">312: </a><strong><font color="#228B22">  }                                                                     \</font></strong>
+<a name="line313">313: </a><strong><font color="#228B22">  static void CPPJoin2(UnpackBOR_,type)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> n,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> bs,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *idx,void *unpacked,const void *packed) { \</font></strong>
+<a name="line314">314: </a><strong><font color="#228B22">    type *u = (type*)unpacked;                                          \</font></strong>
+<a name="line315">315: </a><strong><font color="#228B22">    const type *p = (const type*)packed;                                \</font></strong>
+<a name="line316">316: </a><strong><font color="#228B22">    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i;                                                         \</font></strong>
+<a name="line317">317: </a><strong><font color="#228B22">    for (i=0; i&lt;n; i++) {                                               \</font></strong>
+<a name="line318">318: </a><strong><font color="#228B22">      type v = u[idx[i]];                                               \</font></strong>
+<a name="line319">319: </a><strong><font color="#228B22">      u[idx[i]] = v | p[i];                                             \</font></strong>
+<a name="line320">320: </a><strong><font color="#228B22">    }                                                                   \</font></strong>
+<a name="line321">321: </a><strong><font color="#228B22">  }                                                                     \</font></strong>
+<a name="line322">322: </a><strong><font color="#228B22">  static void CPPJoin2(UnpackBXOR_,type)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> n,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> bs,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *idx,void *unpacked,const void *packed) { \</font></strong>
+<a name="line323">323: </a><strong><font color="#228B22">    type *u = (type*)unpacked;                                          \</font></strong>
+<a name="line324">324: </a><strong><font color="#228B22">    const type *p = (const type*)packed;                                \</font></strong>
+<a name="line325">325: </a><strong><font color="#228B22">    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i;                                                         \</font></strong>
+<a name="line326">326: </a><strong><font color="#228B22">    for (i=0; i&lt;n; i++) {                                               \</font></strong>
+<a name="line327">327: </a><strong><font color="#228B22">      type v = u[idx[i]];                                               \</font></strong>
+<a name="line328">328: </a><strong><font color="#228B22">      u[idx[i]] = v^p[i];                                               \</font></strong>
+<a name="line329">329: </a><strong><font color="#228B22">    }                                                                   \</font></strong>
+<a name="line330">330: </a><strong><font color="#228B22">  }                                                                     \</font></strong>
+<a name="line331">331: </a><strong><font color="#228B22">  static void CPPJoin2(FetchAndBAND_,type)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> n,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> bs,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *idx,void *unpacked,void *packed) { \</font></strong>
+<a name="line332">332: </a><strong><font color="#228B22">    type *u = (type*)unpacked;                                          \</font></strong>
+<a name="line333">333: </a><strong><font color="#228B22">    type *p = (type*)packed;                                            \</font></strong>
+<a name="line334">334: </a><strong><font color="#228B22">    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i;                                                         \</font></strong>
+<a name="line335">335: </a><strong><font color="#228B22">    for (i=0; i&lt;n; i++) {                                               \</font></strong>
+<a name="line336">336: </a><strong><font color="#228B22">      <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> j = idx[i];                                              \</font></strong>
+<a name="line337">337: </a><strong><font color="#228B22">      type v = u[j];                                                    \</font></strong>
+<a name="line338">338: </a><strong><font color="#228B22">      u[j] = v &amp; p[i];                                                  \</font></strong>
+<a name="line339">339: </a><strong><font color="#228B22">      p[i] = v;                                                         \</font></strong>
+<a name="line340">340: </a><strong><font color="#228B22">    }                                                                   \</font></strong>
+<a name="line341">341: </a><strong><font color="#228B22">  }                                                                     \</font></strong>
+<a name="line342">342: </a><strong><font color="#228B22">  static void CPPJoin2(FetchAndBOR_,type)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> n,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> bs,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *idx,void *unpacked,void *packed) { \</font></strong>
+<a name="line343">343: </a><strong><font color="#228B22">    type *u = (type*)unpacked;                                          \</font></strong>
+<a name="line344">344: </a><strong><font color="#228B22">    type *p = (type*)packed;                                            \</font></strong>
+<a name="line345">345: </a><strong><font color="#228B22">    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i;                                                         \</font></strong>
+<a name="line346">346: </a><strong><font color="#228B22">    for (i=0; i&lt;n; i++) {                                               \</font></strong>
+<a name="line347">347: </a><strong><font color="#228B22">      <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> j = idx[i];                                              \</font></strong>
+<a name="line348">348: </a><strong><font color="#228B22">      type v = u[j];                                                    \</font></strong>
+<a name="line349">349: </a><strong><font color="#228B22">      u[j] = v | p[i];                                                  \</font></strong>
+<a name="line350">350: </a><strong><font color="#228B22">      p[i] = v;                                                         \</font></strong>
+<a name="line351">351: </a><strong><font color="#228B22">    }                                                                   \</font></strong>
+<a name="line352">352: </a><strong><font color="#228B22">  }                                                                     \</font></strong>
+<a name="line353">353: </a><strong><font color="#228B22">  static void CPPJoin2(FetchAndBXOR_,type)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> n,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> bs,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *idx,void *unpacked,void *packed) { \</font></strong>
+<a name="line354">354: </a><strong><font color="#228B22">    type *u = (type*)unpacked;                                          \</font></strong>
+<a name="line355">355: </a><strong><font color="#228B22">    type *p = (type*)packed;                                            \</font></strong>
+<a name="line356">356: </a><strong><font color="#228B22">    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i;                                                         \</font></strong>
+<a name="line357">357: </a><strong><font color="#228B22">    for (i=0; i&lt;n; i++) {                                               \</font></strong>
+<a name="line358">358: </a><strong><font color="#228B22">      <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> j = idx[i];                                              \</font></strong>
+<a name="line359">359: </a><strong><font color="#228B22">      type v = u[j];                                                    \</font></strong>
+<a name="line360">360: </a><strong><font color="#228B22">      u[j] = v^p[i];                                                    \</font></strong>
+<a name="line361">361: </a><strong><font color="#228B22">      p[i] = v;                                                         \</font></strong>
+<a name="line362">362: </a><strong><font color="#228B22">    }                                                                   \</font></strong>
+<a name="line363">363: </a><strong><font color="#228B22">  }                                                                     \</font></strong>
+<a name="line364">364: </a><strong><font color="#228B22">  static void CPPJoin2(PackInit_Bitwise_,type)(PetscSFBasicPack link) { \</font></strong>
+<a name="line365">365: </a><strong><font color="#228B22">    link-&gt;UnpackBAND = CPPJoin2(UnpackBAND_,type);                      \</font></strong>
+<a name="line366">366: </a><strong><font color="#228B22">    link-&gt;UnpackBOR  = CPPJoin2(UnpackBOR_,type);                       \</font></strong>
+<a name="line367">367: </a><strong><font color="#228B22">    link-&gt;UnpackBXOR = CPPJoin2(UnpackBXOR_,type);                      \</font></strong>
+<a name="line368">368: </a><strong><font color="#228B22">    link-&gt;FetchAndBAND = CPPJoin2(FetchAndBAND_,type);                  \</font></strong>
+<a name="line369">369: </a><strong><font color="#228B22">    link-&gt;FetchAndBOR  = CPPJoin2(FetchAndBOR_,type);                   \</font></strong>
+<a name="line370">370: </a><strong><font color="#228B22">    link-&gt;FetchAndBXOR = CPPJoin2(FetchAndBXOR_,type);                  \</font></strong>
+<a name="line371">371: </a><strong><font color="#228B22">  }</font></strong>
+
+<a name="line373">373: </a><font color="#B22222">/* Pair types */</font>
+<a name="line374">374: </a><strong><font color="#228B22">#define CPPJoinloc_exp(base,op,t1,t2) base ## op ## loc_ ## t1 ## _ ## t2</font></strong>
+<a name="line375">375: </a><strong><font color="#228B22">#define CPPJoinloc(base,op,t1,t2) CPPJoinloc_exp(base,op,t1,t2)</font></strong>
+<a name="line376">376: </a><strong><font color="#228B22">#define PairType(type1,type2) CPPJoin3_(_pairtype_,type1,type2)</font></strong>
+<a name="line377">377: </a><strong><font color="#228B22">#define DEF_UnpackXloc(type1,type2,locname,op)                              \</font></strong>
+<a name="line378">378: </a><strong><font color="#228B22">  static void CPPJoinloc(Unpack,locname,type1,type2)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> n,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> bs,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *idx,void *unpacked,const void *packed) { \</font></strong>
+<a name="line379">379: </a><strong><font color="#228B22">    PairType(type1,type2) *u = (PairType(type1,type2)*)unpacked;        \</font></strong>
+<a name="line380">380: </a><strong><font color="#228B22">    const PairType(type1,type2) *p = (const PairType(type1,type2)*)packed; \</font></strong>
+<a name="line381">381: </a><strong><font color="#228B22">    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i;                                                         \</font></strong>
+<a name="line382">382: </a><strong><font color="#228B22">    for (i=0; i&lt;n; i++) {                                               \</font></strong>
+<a name="line383">383: </a><strong><font color="#228B22">      <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> j = idx[i];                                              \</font></strong>
+<a name="line384">384: </a><strong><font color="#228B22">      if (p[i].a op u[j].a) {                                           \</font></strong>
+<a name="line385">385: </a><strong><font color="#228B22">        u[j].a = p[i].a;                                                \</font></strong>
+<a name="line386">386: </a><strong><font color="#228B22">        u[j].b = p[i].b;                                                \</font></strong>
+<a name="line387">387: </a><strong><font color="#228B22">      } else if (u[j].a == p[i].a) {                                    \</font></strong>
+<a name="line388">388: </a><strong><font color="#228B22">        u[j].b = <a href="../../../../../../docs/manualpages/Sys/PetscMin.html#PetscMin">PetscMin</a>(u[j].b,p[i].b);                               \</font></strong>
+<a name="line389">389: </a><strong><font color="#228B22">      }                                                                 \</font></strong>
+<a name="line390">390: </a><strong><font color="#228B22">    }                                                                   \</font></strong>
+<a name="line391">391: </a><strong><font color="#228B22">  }                                                                     \</font></strong>
+<a name="line392">392: </a><strong><font color="#228B22">  static void CPPJoinloc(FetchAnd,locname,type1,type2)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> n,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> bs,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *idx,void *unpacked,void *packed) { \</font></strong>
+<a name="line393">393: </a><strong><font color="#228B22">    PairType(type1,type2) *u = (PairType(type1,type2)*)unpacked;        \</font></strong>
+<a name="line394">394: </a><strong><font color="#228B22">    PairType(type1,type2) *p = (PairType(type1,type2)*)packed;          \</font></strong>
+<a name="line395">395: </a><strong><font color="#228B22">    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i;                                                         \</font></strong>
+<a name="line396">396: </a><strong><font color="#228B22">    for (i=0; i&lt;n; i++) {                                               \</font></strong>
+<a name="line397">397: </a><strong><font color="#228B22">      <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> j = idx[i];                                              \</font></strong>
+<a name="line398">398: </a><strong><font color="#228B22">      PairType(type1,type2) v;                                          \</font></strong>
+<a name="line399">399: </a><strong><font color="#228B22">      v.a = u[j].a;                                                     \</font></strong>
+<a name="line400">400: </a><strong><font color="#228B22">      v.b = u[j].b;                                                     \</font></strong>
+<a name="line401">401: </a><strong><font color="#228B22">      if (p[i].a op u[j].a) {                                           \</font></strong>
+<a name="line402">402: </a><strong><font color="#228B22">        u[j].a = p[i].a;                                                \</font></strong>
+<a name="line403">403: </a><strong><font color="#228B22">        u[j].b = p[i].b;                                                \</font></strong>
+<a name="line404">404: </a><strong><font color="#228B22">      } else if (u[j].a == p[i].a) {                                    \</font></strong>
+<a name="line405">405: </a><strong><font color="#228B22">        u[j].b = <a href="../../../../../../docs/manualpages/Sys/PetscMin.html#PetscMin">PetscMin</a>(u[j].b,p[i].b);                               \</font></strong>
+<a name="line406">406: </a><strong><font color="#228B22">      }                                                                 \</font></strong>
+<a name="line407">407: </a><strong><font color="#228B22">      p[i].a = v.a;                                                     \</font></strong>
+<a name="line408">408: </a><strong><font color="#228B22">      p[i].b = v.b;                                                     \</font></strong>
+<a name="line409">409: </a><strong><font color="#228B22">    }                                                                   \</font></strong>
+<a name="line410">410: </a><strong><font color="#228B22">  }</font></strong>
+<a name="line411">411: </a><strong><font color="#228B22">#define DEF_PackPair(type1,type2)                                       \</font></strong>
+<a name="line412">412: </a><strong><font color="#228B22">  typedef struct {type1 a; type2 b;} PairType(type1,type2);             \</font></strong>
+<a name="line413">413: </a><strong><font color="#228B22">  static void CPPJoin3_(Pack_,type1,type2)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> n,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> bs,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *idx,const void *unpacked,void *packed) { \</font></strong>
+<a name="line414">414: </a><strong><font color="#228B22">    const PairType(type1,type2) *u = (const PairType(type1,type2)*)unpacked; \</font></strong>
+<a name="line415">415: </a><strong><font color="#228B22">    PairType(type1,type2) *p = (PairType(type1,type2)*)packed;          \</font></strong>
+<a name="line416">416: </a><strong><font color="#228B22">    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i;                                                         \</font></strong>
+<a name="line417">417: </a><strong><font color="#228B22">    for (i=0; i&lt;n; i++) {                                               \</font></strong>
+<a name="line418">418: </a><strong><font color="#228B22">      p[i].a = u[idx[i]].a;                                             \</font></strong>
+<a name="line419">419: </a><strong><font color="#228B22">      p[i].b = u[idx[i]].b;                                             \</font></strong>
+<a name="line420">420: </a><strong><font color="#228B22">    }                                                                   \</font></strong>
+<a name="line421">421: </a><strong><font color="#228B22">  }                                                                     \</font></strong>
+<a name="line422">422: </a><strong><font color="#228B22">  static void CPPJoin3_(UnpackInsert_,type1,type2)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> n,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> bs,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *idx,void *unpacked,const void *packed) { \</font></strong>
+<a name="line423">423: </a><strong><font color="#228B22">    PairType(type1,type2) *u = (PairType(type1,type2)*)unpacked;       \</font></strong>
+<a name="line424">424: </a><strong><font color="#228B22">    const PairType(type1,type2) *p = (const PairType(type1,type2)*)packed; \</font></strong>
+<a name="line425">425: </a><strong><font color="#228B22">    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i;                                                         \</font></strong>
+<a name="line426">426: </a><strong><font color="#228B22">    for (i=0; i&lt;n; i++) {                                               \</font></strong>
+<a name="line427">427: </a><strong><font color="#228B22">      u[idx[i]].a = p[i].a;                                             \</font></strong>
+<a name="line428">428: </a><strong><font color="#228B22">      u[idx[i]].b = p[i].b;                                             \</font></strong>
+<a name="line429">429: </a><strong><font color="#228B22">    }                                                                   \</font></strong>
+<a name="line430">430: </a><strong><font color="#228B22">  }                                                                     \</font></strong>
+<a name="line431">431: </a><strong><font color="#228B22">  static void CPPJoin3_(UnpackAdd_,type1,type2)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> n,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> bs,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *idx,void *unpacked,const void *packed) { \</font></strong>
+<a name="line432">432: </a><strong><font color="#228B22">    PairType(type1,type2) *u = (PairType(type1,type2)*)unpacked;       \</font></strong>
+<a name="line433">433: </a><strong><font color="#228B22">    const PairType(type1,type2) *p = (const PairType(type1,type2)*)packed; \</font></strong>
+<a name="line434">434: </a><strong><font color="#228B22">    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i;                                                         \</font></strong>
+<a name="line435">435: </a><strong><font color="#228B22">    for (i=0; i&lt;n; i++) {                                               \</font></strong>
+<a name="line436">436: </a><strong><font color="#228B22">      u[idx[i]].a += p[i].a;                                            \</font></strong>
+<a name="line437">437: </a><strong><font color="#228B22">      u[idx[i]].b += p[i].b;                                            \</font></strong>
+<a name="line438">438: </a><strong><font color="#228B22">    }                                                                   \</font></strong>
+<a name="line439">439: </a><strong><font color="#228B22">  }                                                                     \</font></strong>
+<a name="line440">440: </a><strong><font color="#228B22">  static void CPPJoin3_(FetchAndInsert_,type1,type2)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> n,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> bs,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *idx,void *unpacked,void *packed) { \</font></strong>
+<a name="line441">441: </a><strong><font color="#228B22">    PairType(type1,type2) *u = (PairType(type1,type2)*)unpacked;        \</font></strong>
+<a name="line442">442: </a><strong><font color="#228B22">    PairType(type1,type2) *p = (PairType(type1,type2)*)packed;          \</font></strong>
+<a name="line443">443: </a><strong><font color="#228B22">    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i;                                                         \</font></strong>
+<a name="line444">444: </a><strong><font color="#228B22">    for (i=0; i&lt;n; i++) {                                               \</font></strong>
+<a name="line445">445: </a><strong><font color="#228B22">      <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> j = idx[i];                                              \</font></strong>
+<a name="line446">446: </a><strong><font color="#228B22">      PairType(type1,type2) v;                                          \</font></strong>
+<a name="line447">447: </a><strong><font color="#228B22">      v.a = u[j].a;                                                     \</font></strong>
+<a name="line448">448: </a><strong><font color="#228B22">      v.b = u[j].b;                                                     \</font></strong>
+<a name="line449">449: </a><strong><font color="#228B22">      u[j].a = p[i].a;                                                  \</font></strong>
+<a name="line450">450: </a><strong><font color="#228B22">      u[j].b = p[i].b;                                                  \</font></strong>
+<a name="line451">451: </a><strong><font color="#228B22">      p[i].a = v.a;                                                     \</font></strong>
+<a name="line452">452: </a><strong><font color="#228B22">      p[i].b = v.b;                                                     \</font></strong>
+<a name="line453">453: </a><strong><font color="#228B22">    }                                                                   \</font></strong>
+<a name="line454">454: </a><strong><font color="#228B22">  }                                                                     \</font></strong>
+<a name="line455">455: </a><strong><font color="#228B22">  static void FetchAndAdd_ ## type1 ## _ ## type2(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> n,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> bs,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *idx,void *unpacked,void *packed) { \</font></strong>
+<a name="line456">456: </a><strong><font color="#228B22">    PairType(type1,type2) *u = (PairType(type1,type2)*)unpacked;       \</font></strong>
+<a name="line457">457: </a><strong><font color="#228B22">    PairType(type1,type2) *p = (PairType(type1,type2)*)packed;         \</font></strong>
+<a name="line458">458: </a><strong><font color="#228B22">    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i;                                                         \</font></strong>
+<a name="line459">459: </a><strong><font color="#228B22">    for (i=0; i&lt;n; i++) {                                               \</font></strong>
+<a name="line460">460: </a><strong><font color="#228B22">      <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> j = idx[i];                                              \</font></strong>
+<a name="line461">461: </a><strong><font color="#228B22">      PairType(type1,type2) v;                                          \</font></strong>
+<a name="line462">462: </a><strong><font color="#228B22">      v.a = u[j].a;                                                     \</font></strong>
+<a name="line463">463: </a><strong><font color="#228B22">      v.b = u[j].b;                                                     \</font></strong>
+<a name="line464">464: </a><strong><font color="#228B22">      u[j].a = v.a + p[i].a;                                            \</font></strong>
+<a name="line465">465: </a><strong><font color="#228B22">      u[j].b = v.b + p[i].b;                                            \</font></strong>
+<a name="line466">466: </a><strong><font color="#228B22">      p[i].a = v.a;                                                     \</font></strong>
+<a name="line467">467: </a><strong><font color="#228B22">      p[i].b = v.b;                                                     \</font></strong>
+<a name="line468">468: </a><strong><font color="#228B22">    }                                                                   \</font></strong>
+<a name="line469">469: </a><strong><font color="#228B22">  }                                                                     \</font></strong>
+<a name="line470">470: </a><strong><font color="#228B22">  DEF_UnpackXloc(type1,type2,Max,&gt;)                                     \</font></strong>
+<a name="line471">471: </a><strong><font color="#228B22">  DEF_UnpackXloc(type1,type2,Min,&lt;)                                     \</font></strong>
+<a name="line472">472: </a><strong><font color="#228B22">  static void CPPJoin3_(PackInit_,type1,type2)(PetscSFBasicPack link) { \</font></strong>
+<a name="line473">473: </a><strong><font color="#228B22">    link-&gt;Pack = CPPJoin3_(Pack_,type1,type2);                          \</font></strong>
+<a name="line474">474: </a><strong><font color="#228B22">    link-&gt;UnpackInsert = CPPJoin3_(UnpackInsert_,type1,type2);          \</font></strong>
+<a name="line475">475: </a><strong><font color="#228B22">    link-&gt;UnpackAdd = CPPJoin3_(UnpackAdd_,type1,type2);                \</font></strong>
+<a name="line476">476: </a><strong><font color="#228B22">    link-&gt;UnpackMaxloc = CPPJoin3_(UnpackMaxloc_,type1,type2);          \</font></strong>
+<a name="line477">477: </a><strong><font color="#228B22">    link-&gt;UnpackMinloc = CPPJoin3_(UnpackMinloc_,type1,type2);          \</font></strong>
+<a name="line478">478: </a><strong><font color="#228B22">    link-&gt;FetchAndInsert = CPPJoin3_(FetchAndInsert_,type1,type2);      \</font></strong>
+<a name="line479">479: </a><strong><font color="#228B22">    link-&gt;FetchAndAdd = CPPJoin3_(FetchAndAdd_,type1,type2);            \</font></strong>
+<a name="line480">480: </a><strong><font color="#228B22">    link-&gt;FetchAndMaxloc = CPPJoin3_(FetchAndMaxloc_,type1,type2);      \</font></strong>
+<a name="line481">481: </a><strong><font color="#228B22">    link-&gt;FetchAndMinloc = CPPJoin3_(FetchAndMinloc_,type1,type2);      \</font></strong>
+<a name="line482">482: </a><strong><font color="#228B22">    link-&gt;unitbytes = sizeof(PairType(type1,type2));                    \</font></strong>
+<a name="line483">483: </a><strong><font color="#228B22">  }</font></strong>
+
+<a name="line485">485: </a><font color="#B22222">/* Currently only dumb blocks of data */</font>
+<a name="line486">486: </a><strong><font color="#228B22">#define BlockType(unit,count) CPPJoin3_(_blocktype_,unit,count)</font></strong>
+<a name="line487">487: </a><strong><font color="#228B22">#define DEF_Block(unit,count)                                           \</font></strong>
+<a name="line488">488: </a><strong><font color="#228B22">  typedef struct {unit v[count];} BlockType(unit,count);                \</font></strong>
+<a name="line489">489: </a><strong><font color="#228B22">  DEF_PackNoInit(BlockType(unit,count),1)                               \</font></strong>
+<a name="line490">490: </a><strong><font color="#228B22">  static void CPPJoin3_(PackInit_block_,unit,count)(PetscSFBasicPack link) { \</font></strong>
+<a name="line491">491: </a><strong><font color="#228B22">    link-&gt;Pack = CPPJoin3_(Pack_,BlockType(unit,count),1);               \</font></strong>
+<a name="line492">492: </a><strong><font color="#228B22">    link-&gt;UnpackInsert = CPPJoin3_(UnpackInsert_,BlockType(unit,count),1); \</font></strong>
+<a name="line493">493: </a><strong><font color="#228B22">    link-&gt;FetchAndInsert = CPPJoin3_(FetchAndInsert_,BlockType(unit,count),1); \</font></strong>
+<a name="line494">494: </a><strong><font color="#228B22">    link-&gt;unitbytes = sizeof(BlockType(unit,count));                    \</font></strong>
+<a name="line495">495: </a><strong><font color="#228B22">  }</font></strong>
+
+<a name="line497">497: </a><strong><font color="#4169E1"><a name="EF_PackCmp"></a>DEF_PackCmp(int)</font></strong>
+<a name="line498">498: </a><strong><font color="#4169E1">DEF_PackBit(int)</font></strong>
+<a name="line499">499: </a><strong><font color="#4169E1">DEF_PackLog(int)</font></strong>
+<a name="line500">500: </a><strong><font color="#4169E1">DEF_PackCmp(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>)</font></strong>
+<a name="line501">501: </a><strong><font color="#4169E1">DEF_PackBit(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>)</font></strong>
+<a name="line502">502: </a><strong><font color="#4169E1">DEF_PackLog(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>)</font></strong>
+<a name="line503">503: </a>DEF_Pack(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,2)
+<a name="line504">504: </a>DEF_Pack(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,3)
+<a name="line505">505: </a>DEF_Pack(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,4)
+<a name="line506">506: </a>DEF_Pack(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,5)
+<a name="line507">507: </a>DEF_Pack(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,7)
+<a name="line508">508: </a><strong><font color="#4169E1"><a name="EF_PackCmp"></a>DEF_PackCmp(<a href="../../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>)</font></strong>
+<a name="line509">509: </a><strong><font color="#4169E1">DEF_PackLog(<a href="../../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>)</font></strong>
+<a name="line510">510: </a>DEF_Pack(<a href="../../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>,2)
+<a name="line511">511: </a>DEF_Pack(<a href="../../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>,3)
+<a name="line512">512: </a>DEF_Pack(<a href="../../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>,4)
+<a name="line513">513: </a>DEF_Pack(<a href="../../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>,5)
+<a name="line514">514: </a>DEF_Pack(<a href="../../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>,7)
+<a name="line515">515: </a><font color="#A020F0">#if defined(PETSC_HAVE_COMPLEX)</font>
+<a name="line516">516: </a>DEF_Pack(<a href="../../../../../../docs/manualpages/Sys/PetscComplex.html#PetscComplex">PetscComplex</a>,1)
+<a name="line517">517: </a>DEF_Pack(<a href="../../../../../../docs/manualpages/Sys/PetscComplex.html#PetscComplex">PetscComplex</a>,2)
+<a name="line518">518: </a>DEF_Pack(<a href="../../../../../../docs/manualpages/Sys/PetscComplex.html#PetscComplex">PetscComplex</a>,3)
+<a name="line519">519: </a>DEF_Pack(<a href="../../../../../../docs/manualpages/Sys/PetscComplex.html#PetscComplex">PetscComplex</a>,4)
+<a name="line520">520: </a>DEF_Pack(<a href="../../../../../../docs/manualpages/Sys/PetscComplex.html#PetscComplex">PetscComplex</a>,5)
+<a name="line521">521: </a>DEF_Pack(<a href="../../../../../../docs/manualpages/Sys/PetscComplex.html#PetscComplex">PetscComplex</a>,7)
+<a name="line522">522: </a><font color="#A020F0">#endif</font>
+<a name="line523">523: </a><strong><font color="#4169E1"><a name="EF_PackPair"></a>DEF_PackPair(int,int)</font></strong>
+<a name="line524">524: </a><strong><font color="#4169E1">DEF_PackPair(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>)</font></strong>
+<a name="line525">525: </a>DEF_Block(int,1)
+<a name="line526">526: </a>DEF_Block(int,2)
+<a name="line527">527: </a>DEF_Block(int,3)
+<a name="line528">528: </a>DEF_Block(int,4)
+<a name="line529">529: </a>DEF_Block(int,5)
+<a name="line530">530: </a>DEF_Block(int,6)
+<a name="line531">531: </a>DEF_Block(int,7)
+<a name="line532">532: </a>DEF_Block(int,8)
+
+<a name="line534">534: </a><strong><font color="#4169E1"><a name="PetscSFSetUp_Basic"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscSFSetUp_Basic(<a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf)</font></strong>
+<a name="line535">535: </a>{
+<a name="line536">536: </a>  PetscSF_Basic *bas = (PetscSF_Basic*)sf-&gt;data;
+<a name="line538">538: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *rlengths,*ilengths,i;
+<a name="line539">539: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> rank,niranks,*iranks;
+<a name="line540">540: </a>  <a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a> comm;
+<a name="line541">541: </a>  MPI_Group group;
+<a name="line542">542: </a>  MPI_Request *rootreqs,*leafreqs;
+
+<a name="line545">545: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_group.html#MPI_Comm_group">MPI_Comm_group</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,&amp;group);
+<a name="line546">546: </a>  <a href="../../../../../../docs/manualpages/PetscSF/PetscSFSetUpRanks.html#PetscSFSetUpRanks">PetscSFSetUpRanks</a>(sf,group);
+<a name="line547">547: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Group_free.html#MPI_Group_free">MPI_Group_free</a>(&amp;group);
+<a name="line548">548: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectGetComm.html#PetscObjectGetComm">PetscObjectGetComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sf,&amp;comm);
+<a name="line549">549: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectGetNewTag.html#PetscObjectGetNewTag">PetscObjectGetNewTag</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sf,&amp;bas-&gt;tag);
+<a name="line550">550: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm,&amp;rank);
+<a name="line551">551: </a>  <font color="#B22222">/*</font>
+<a name="line552">552: </a><font color="#B22222">   * Inform roots about how many leaves and from which ranks</font>
+<a name="line553">553: </a><font color="#B22222">   */</font>
+<a name="line554">554: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(sf-&gt;nranks,&amp;rlengths);
+<a name="line555">555: </a>  <font color="#B22222">/* Determine number, sending ranks, and length of incoming */</font>
+<a name="line556">556: </a>  <font color="#4169E1">for</font> (i=0; i&lt;sf-&gt;nranks; i++) {
+<a name="line557">557: </a>    rlengths[i] = sf-&gt;roffset[i+1] - sf-&gt;roffset[i]; <font color="#B22222">/* Number of roots referenced by my leaves; for rank sf-&gt;ranks[i] */</font>
+<a name="line558">558: </a>  }
+<a name="line559">559: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscCommBuildTwoSided.html#PetscCommBuildTwoSided">PetscCommBuildTwoSided</a>(comm,1,MPIU_INT,sf-&gt;nranks-sf-&gt;ndranks,sf-&gt;ranks+sf-&gt;ndranks,rlengths+sf-&gt;ndranks,&amp;niranks,&amp;iranks,(void**)&amp;ilengths);
+
+<a name="line561">561: </a>  <font color="#B22222">/* Partition into distinguished and non-distinguished incoming ranks */</font>
+<a name="line562">562: </a>  bas-&gt;ndiranks = sf-&gt;ndranks;
+<a name="line563">563: </a>  bas-&gt;niranks = bas-&gt;ndiranks + niranks;
+<a name="line564">564: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMalloc2.html#PetscMalloc2">PetscMalloc2</a>(bas-&gt;niranks,&amp;bas-&gt;iranks,bas-&gt;niranks+1,&amp;bas-&gt;ioffset);
+<a name="line565">565: </a>  bas-&gt;ioffset[0] = 0;
+<a name="line566">566: </a>  <font color="#4169E1">for</font> (i=0; i&lt;bas-&gt;ndiranks; i++) {
+<a name="line567">567: </a>    bas-&gt;iranks[i] = sf-&gt;ranks[i];
+<a name="line568">568: </a>    bas-&gt;ioffset[i+1] = bas-&gt;ioffset[i] + rlengths[i];
+<a name="line569">569: </a>  }
+<a name="line570">570: </a>  <font color="#4169E1">if</font> (bas-&gt;ndiranks &gt; 1 || (bas-&gt;ndiranks == 1 &amp;&amp; bas-&gt;iranks[0] != rank)) <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_PLIB,<font color="#666666">"Broken setup for shared ranks"</font>);
+<a name="line571">571: </a>  <font color="#4169E1">for</font> ( ; i&lt;bas-&gt;niranks; i++) {
+<a name="line572">572: </a>    bas-&gt;iranks[i] = iranks[i-bas-&gt;ndiranks];
+<a name="line573">573: </a>    bas-&gt;ioffset[i+1] = bas-&gt;ioffset[i] + ilengths[i-bas-&gt;ndiranks];
+<a name="line574">574: </a>  }
+<a name="line575">575: </a>  bas-&gt;itotal = bas-&gt;ioffset[i];
+<a name="line576">576: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(rlengths);
+<a name="line577">577: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(iranks);
+<a name="line578">578: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(ilengths);
+
+<a name="line580">580: </a>  <font color="#B22222">/* Send leaf identities to roots */</font>
+<a name="line581">581: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(bas-&gt;itotal,&amp;bas-&gt;irootloc);
+<a name="line582">582: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMalloc2.html#PetscMalloc2">PetscMalloc2</a>(bas-&gt;niranks-bas-&gt;ndiranks,&amp;rootreqs,sf-&gt;nranks-sf-&gt;ndranks,&amp;leafreqs);
+<a name="line583">583: </a>  <font color="#4169E1">for</font> (i=bas-&gt;ndiranks; i&lt;bas-&gt;niranks; i++) {
+<a name="line584">584: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Irecv.html#MPI_Irecv">MPI_Irecv</a>(bas-&gt;irootloc+bas-&gt;ioffset[i],bas-&gt;ioffset[i+1]-bas-&gt;ioffset[i],MPIU_INT,bas-&gt;iranks[i],bas-&gt;tag,comm,&amp;rootreqs[i-bas-&gt;ndiranks]);
+<a name="line585">585: </a>  }
+<a name="line586">586: </a>  <font color="#4169E1">for</font> (i=0; i&lt;sf-&gt;nranks; i++) {
+<a name="line587">587: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> npoints;
+<a name="line588">588: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscMPIIntCast.html#PetscMPIIntCast">PetscMPIIntCast</a>(sf-&gt;roffset[i+1] - sf-&gt;roffset[i],&amp;npoints);
+<a name="line589">589: </a>    <font color="#4169E1">if</font> (i &lt; sf-&gt;ndranks) {
+<a name="line590">590: </a>      <font color="#4169E1">if</font> (sf-&gt;ranks[i] != rank) <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_PLIB,<font color="#666666">"Cannot interpret distinguished leaf rank"</font>);
+<a name="line591">591: </a>      <font color="#4169E1">if</font> (bas-&gt;iranks[0] != rank) <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_PLIB,<font color="#666666">"Cannot interpret distinguished root rank"</font>);
+<a name="line592">592: </a>      <font color="#4169E1">if</font> (npoints != bas-&gt;ioffset[1]-bas-&gt;ioffset[0]) <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_PLIB,<font color="#666666">"Distinguished rank exchange has mismatched lengths"</font>);
+<a name="line593">593: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(bas-&gt;irootloc+bas-&gt;ioffset[0],sf-&gt;rremote+sf-&gt;roffset[i],npoints*<font color="#4169E1">sizeof</font>(bas-&gt;irootloc[0]));
+<a name="line594">594: </a>      <font color="#4169E1">continue</font>;
+<a name="line595">595: </a>    }
+<a name="line596">596: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Isend.html#MPI_Isend">MPI_Isend</a>(sf-&gt;rremote+sf-&gt;roffset[i],npoints,MPIU_INT,sf-&gt;ranks[i],bas-&gt;tag,comm,&amp;leafreqs[i-sf-&gt;ndranks]);
+<a name="line597">597: </a>  }
+<a name="line598">598: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Waitall.html#MPI_Waitall">MPI_Waitall</a>(bas-&gt;niranks-bas-&gt;ndiranks,rootreqs,MPI_STATUSES_IGNORE);
+<a name="line599">599: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Waitall.html#MPI_Waitall">MPI_Waitall</a>(sf-&gt;nranks-sf-&gt;ndranks,leafreqs,MPI_STATUSES_IGNORE);
+<a name="line600">600: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree2.html#PetscFree2">PetscFree2</a>(rootreqs,leafreqs);
+<a name="line601">601: </a>  <font color="#4169E1">return</font>(0);
+<a name="line602">602: </a>}
+
+<a name="line604">604: </a><strong><font color="#4169E1"><a name="PetscSFBasicPackTypeSetup"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscSFBasicPackTypeSetup(PetscSFBasicPack link,MPI_Datatype unit)</font></strong>
+<a name="line605">605: </a>{
+<a name="line607">607: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>      isInt,isPetscInt,isPetscReal,is2Int,is2PetscInt;
+<a name="line608">608: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       nPetscIntContig,nPetscRealContig;
+<a name="line609">609: </a><font color="#A020F0">#if defined(PETSC_HAVE_COMPLEX)</font>
+<a name="line610">610: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> isPetscComplex;
+<a name="line611">611: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> nPetscComplexContig;
+<a name="line612">612: </a><font color="#A020F0">#endif</font>
+
+<a name="line615">615: </a>  MPIPetsc_Type_compare(unit,MPI_INT,&amp;isInt);
+<a name="line616">616: </a>  MPIPetsc_Type_compare(unit,MPIU_INT,&amp;isPetscInt);
+<a name="line617">617: </a>  MPIPetsc_Type_compare_contig(unit,MPIU_INT,&amp;nPetscIntContig);
+<a name="line618">618: </a>  MPIPetsc_Type_compare(unit,MPIU_REAL,&amp;isPetscReal);
+<a name="line619">619: </a>  MPIPetsc_Type_compare_contig(unit,MPIU_REAL,&amp;nPetscRealContig);
+<a name="line620">620: </a><font color="#A020F0">#if defined(PETSC_HAVE_COMPLEX)</font>
+<a name="line621">621: </a>  MPIPetsc_Type_compare(unit,MPIU_COMPLEX,&amp;isPetscComplex);
+<a name="line622">622: </a>  MPIPetsc_Type_compare_contig(unit,MPIU_COMPLEX,&amp;nPetscComplexContig);
+<a name="line623">623: </a><font color="#A020F0">#endif</font>
+<a name="line624">624: </a>  MPIPetsc_Type_compare(unit,MPI_2INT,&amp;is2Int);
+<a name="line625">625: </a>  MPIPetsc_Type_compare(unit,MPIU_2INT,&amp;is2PetscInt);
+<a name="line626">626: </a>  link-&gt;bs = 1;
+<a name="line627">627: </a>  <font color="#4169E1">if</font> (isInt) {PackInit_int(link); PackInit_Logical_int(link); PackInit_Bitwise_int(link);}
+<a name="line628">628: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (isPetscInt) {PackInit_PetscInt(link); PackInit_Logical_PetscInt(link); PackInit_Bitwise_PetscInt(link);}
+<a name="line629">629: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (isPetscReal) {PackInit_PetscReal(link); PackInit_Logical_PetscReal(link);}
+<a name="line630">630: </a><font color="#A020F0">#if defined(PETSC_HAVE_COMPLEX)</font>
+<a name="line631">631: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (isPetscComplex) PackInit_PetscComplex_1(link);
+<a name="line632">632: </a><font color="#A020F0">#endif</font>
+<a name="line633">633: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (is2Int) PackInit_int_int(link);
+<a name="line634">634: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (is2PetscInt) PackInit_PetscInt_PetscInt(link);
+<a name="line635">635: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (nPetscIntContig) {
+<a name="line636">636: </a>    <font color="#4169E1">if</font> (nPetscIntContig%7 == 0) PackInit_PetscInt_7(link);
+<a name="line637">637: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (nPetscIntContig%5 == 0) PackInit_PetscInt_5(link);
+<a name="line638">638: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (nPetscIntContig%4 == 0) PackInit_PetscInt_4(link);
+<a name="line639">639: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (nPetscIntContig%3 == 0) PackInit_PetscInt_3(link);
+<a name="line640">640: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (nPetscIntContig%2 == 0) PackInit_PetscInt_2(link);
+<a name="line641">641: </a>    <font color="#4169E1">else</font> PackInit_PetscInt(link);
+<a name="line642">642: </a>    link-&gt;bs = nPetscIntContig;
+<a name="line643">643: </a>    link-&gt;unitbytes *= nPetscIntContig;
+<a name="line644">644: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (nPetscRealContig) {
+<a name="line645">645: </a>    <font color="#4169E1">if</font> (nPetscRealContig%7 == 0) PackInit_PetscReal_7(link);
+<a name="line646">646: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (nPetscRealContig%5 == 0) PackInit_PetscReal_5(link);
+<a name="line647">647: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (nPetscRealContig%4 == 0) PackInit_PetscReal_4(link);
+<a name="line648">648: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (nPetscRealContig%3 == 0) PackInit_PetscReal_3(link);
+<a name="line649">649: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (nPetscRealContig%2 == 0) PackInit_PetscReal_2(link);
+<a name="line650">650: </a>    <font color="#4169E1">else</font> PackInit_PetscReal(link);
+<a name="line651">651: </a>    link-&gt;bs = nPetscRealContig;
+<a name="line652">652: </a>    link-&gt;unitbytes *= nPetscRealContig;
+<a name="line653">653: </a><font color="#A020F0">#if defined(PETSC_HAVE_COMPLEX)</font>
+<a name="line654">654: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (nPetscComplexContig) {
+<a name="line655">655: </a>    <font color="#4169E1">if</font> (nPetscComplexContig%7 == 0) PackInit_PetscComplex_7(link);
+<a name="line656">656: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (nPetscComplexContig%5 == 0) PackInit_PetscComplex_5(link);
+<a name="line657">657: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (nPetscComplexContig%4 == 0) PackInit_PetscComplex_4(link);
+<a name="line658">658: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (nPetscComplexContig%3 == 0) PackInit_PetscComplex_3(link);
+<a name="line659">659: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (nPetscComplexContig%2 == 0) PackInit_PetscComplex_2(link);
+<a name="line660">660: </a>    <font color="#4169E1">else</font> PackInit_PetscComplex_1(link);
+<a name="line661">661: </a>    link-&gt;bs = nPetscComplexContig;
+<a name="line662">662: </a>    link-&gt;unitbytes *= nPetscComplexContig;
+<a name="line663">663: </a><font color="#A020F0">#endif</font>
+<a name="line664">664: </a>  } <font color="#4169E1">else</font> {
+<a name="line665">665: </a>    MPI_Aint lb,bytes;
+<a name="line666">666: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Type_get_extent.html#MPI_Type_get_extent">MPI_Type_get_extent</a>(unit,&amp;lb,&amp;bytes);
+<a name="line667">667: </a>    <font color="#4169E1">if</font> (lb != 0) <a href="../../../../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_SUP,<font color="#666666">"Datatype with nonzero lower bound %ld\n"</font>,(long)lb);
+<a name="line668">668: </a>    <font color="#4169E1">if</font> (bytes % <font color="#4169E1">sizeof</font>(int)) <a href="../../../../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_SUP,<font color="#666666">"No support for type size not divisible by %D"</font>,<font color="#4169E1">sizeof</font>(int));
+<a name="line669">669: </a>    <font color="#4169E1">switch</font> (bytes / <font color="#4169E1">sizeof</font>(int)) {
+<a name="line670">670: </a>    <font color="#4169E1">case</font> 1: PackInit_block_int_1(link); <font color="#4169E1">break</font>;
+<a name="line671">671: </a>    <font color="#4169E1">case</font> 2: PackInit_block_int_2(link); <font color="#4169E1">break</font>;
+<a name="line672">672: </a>    <font color="#4169E1">case</font> 3: PackInit_block_int_3(link); <font color="#4169E1">break</font>;
+<a name="line673">673: </a>    <font color="#4169E1">case</font> 4: PackInit_block_int_4(link); <font color="#4169E1">break</font>;
+<a name="line674">674: </a>    <font color="#4169E1">case</font> 5: PackInit_block_int_5(link); <font color="#4169E1">break</font>;
+<a name="line675">675: </a>    <font color="#4169E1">case</font> 6: PackInit_block_int_6(link); <font color="#4169E1">break</font>;
+<a name="line676">676: </a>    <font color="#4169E1">case</font> 7: PackInit_block_int_7(link); <font color="#4169E1">break</font>;
+<a name="line677">677: </a>    <font color="#4169E1">case</font> 8: PackInit_block_int_8(link); <font color="#4169E1">break</font>;
+<a name="line678">678: </a><strong><font color="#FF0000">    default:</font></strong> <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_SUP,<font color="#666666">"No support for arbitrary block sizes"</font>);
+<a name="line679">679: </a>    }
+<a name="line680">680: </a>  }
+<a name="line681">681: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Type_dup.html#MPI_Type_dup">MPI_Type_dup</a>(unit,&amp;link-&gt;unit);
+<a name="line682">682: </a>  <font color="#4169E1">return</font>(0);
+<a name="line683">683: </a>}
+
+<a name="line685">685: </a><strong><font color="#4169E1"><a name="PetscSFBasicPackGetUnpackOp"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscSFBasicPackGetUnpackOp(<a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,PetscSFBasicPack link,MPI_Op op,void (**UnpackOp)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>*,void*,const void*))</font></strong>
+<a name="line686">686: </a>{
+<a name="line688">688: </a>  *UnpackOp = NULL;
+<a name="line689">689: </a>  <font color="#4169E1">if</font> (op == MPIU_REPLACE) *UnpackOp = link-&gt;UnpackInsert;
+<a name="line690">690: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (op == MPI_SUM || op == MPIU_SUM) *UnpackOp = link-&gt;UnpackAdd;
+<a name="line691">691: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (op == MPI_PROD) *UnpackOp = link-&gt;UnpackMult;
+<a name="line692">692: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (op == MPI_MAX || op == MPIU_MAX) *UnpackOp = link-&gt;UnpackMax;
+<a name="line693">693: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (op == MPI_MIN || op == MPIU_MIN) *UnpackOp = link-&gt;UnpackMin;
+<a name="line694">694: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (op == MPI_LAND) *UnpackOp = link-&gt;UnpackLAND;
+<a name="line695">695: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (op == MPI_BAND) *UnpackOp = link-&gt;UnpackBAND;
+<a name="line696">696: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (op == MPI_LOR) *UnpackOp = link-&gt;UnpackLOR;
+<a name="line697">697: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (op == MPI_BOR) *UnpackOp = link-&gt;UnpackBOR;
+<a name="line698">698: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (op == MPI_LXOR) *UnpackOp = link-&gt;UnpackLXOR;
+<a name="line699">699: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (op == MPI_BXOR) *UnpackOp = link-&gt;UnpackBXOR;
+<a name="line700">700: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (op == MPI_MAXLOC) *UnpackOp = link-&gt;UnpackMaxloc;
+<a name="line701">701: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (op == MPI_MINLOC) *UnpackOp = link-&gt;UnpackMinloc;
+<a name="line702">702: </a>  <font color="#4169E1">else</font> *UnpackOp = NULL;
+<a name="line703">703: </a>  <font color="#4169E1">return</font>(0);
+<a name="line704">704: </a>}
+<a name="line705">705: </a><strong><font color="#4169E1"><a name="PetscSFBasicPackGetFetchAndOp"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscSFBasicPackGetFetchAndOp(<a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,PetscSFBasicPack link,MPI_Op op,void (**FetchAndOp)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>*,void*,void*))</font></strong>
+<a name="line706">706: </a>{
+<a name="line708">708: </a>  *FetchAndOp = NULL;
+<a name="line709">709: </a>  <font color="#4169E1">if</font> (op == MPIU_REPLACE) *FetchAndOp = link-&gt;FetchAndInsert;
+<a name="line710">710: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (op == MPI_SUM || op == MPIU_SUM) *FetchAndOp = link-&gt;FetchAndAdd;
+<a name="line711">711: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (op == MPI_MAX || op == MPIU_MAX) *FetchAndOp = link-&gt;FetchAndMax;
+<a name="line712">712: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (op == MPI_MIN || op == MPIU_MIN) *FetchAndOp = link-&gt;FetchAndMin;
+<a name="line713">713: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (op == MPI_MAXLOC) *FetchAndOp = link-&gt;FetchAndMaxloc;
+<a name="line714">714: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (op == MPI_MINLOC) *FetchAndOp = link-&gt;FetchAndMinloc;
+<a name="line715">715: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (op == MPI_PROD)   *FetchAndOp = link-&gt;FetchAndMult;
+<a name="line716">716: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (op == MPI_LAND)   *FetchAndOp = link-&gt;FetchAndLAND;
+<a name="line717">717: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (op == MPI_BAND)   *FetchAndOp = link-&gt;FetchAndBAND;
+<a name="line718">718: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (op == MPI_LOR)    *FetchAndOp = link-&gt;FetchAndLOR;
+<a name="line719">719: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (op == MPI_BOR)    *FetchAndOp = link-&gt;FetchAndBOR;
+<a name="line720">720: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (op == MPI_LXOR)   *FetchAndOp = link-&gt;FetchAndLXOR;
+<a name="line721">721: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (op == MPI_BXOR)   *FetchAndOp = link-&gt;FetchAndBXOR;
+<a name="line722">722: </a>  <font color="#4169E1">else</font> <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sf),PETSC_ERR_SUP,<font color="#666666">"No support for MPI_Op"</font>);
+<a name="line723">723: </a>  <font color="#4169E1">return</font>(0);
+<a name="line724">724: </a>}
+
+<a name="line726">726: </a><strong><font color="#4169E1"><a name="PetscSFBasicPackGetReqs"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscSFBasicPackGetReqs(<a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,PetscSFBasicPack link,MPI_Request **rootreqs,MPI_Request **leafreqs)</font></strong>
+<a name="line727">727: </a>{
+<a name="line728">728: </a>  PetscSF_Basic *bas = (PetscSF_Basic*)sf-&gt;data;
+
+<a name="line731">731: </a>  <font color="#4169E1">if</font> (rootreqs) *rootreqs = link-&gt;requests;
+<a name="line732">732: </a>  <font color="#4169E1">if</font> (leafreqs) *leafreqs = link-&gt;requests + (bas-&gt;niranks - bas-&gt;ndiranks);
+<a name="line733">733: </a>  <font color="#4169E1">return</font>(0);
+<a name="line734">734: </a>}
+
+<a name="line736">736: </a><strong><font color="#4169E1"><a name="PetscSFBasicPackWaitall"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscSFBasicPackWaitall(<a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,PetscSFBasicPack link)</font></strong>
+<a name="line737">737: </a>{
+<a name="line738">738: </a>  PetscSF_Basic  *bas = (PetscSF_Basic*)sf-&gt;data;
+
+<a name="line742">742: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Waitall.html#MPI_Waitall">MPI_Waitall</a>(bas-&gt;niranks+sf-&gt;nranks-(bas-&gt;ndiranks+sf-&gt;ndranks),link-&gt;requests,MPI_STATUSES_IGNORE);
+<a name="line743">743: </a>  <font color="#4169E1">return</font>(0);
+<a name="line744">744: </a>}
+
+<a name="line746">746: </a><strong><font color="#4169E1"><a name="PetscSFBasicGetRootInfo"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscSFBasicGetRootInfo(<a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *nrootranks,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *ndrootranks,const <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> **rootranks,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> **rootoffset,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> **rootloc)</font></strong>
+<a name="line747">747: </a>{
+<a name="line748">748: </a>  PetscSF_Basic *bas = (PetscSF_Basic*)sf-&gt;data;
+
+<a name="line751">751: </a>  <font color="#4169E1">if</font> (nrootranks)  *nrootranks  = bas-&gt;niranks;
+<a name="line752">752: </a>  <font color="#4169E1">if</font> (ndrootranks) *ndrootranks = bas-&gt;ndiranks;
+<a name="line753">753: </a>  <font color="#4169E1">if</font> (rootranks)   *rootranks   = bas-&gt;iranks;
+<a name="line754">754: </a>  <font color="#4169E1">if</font> (rootoffset)  *rootoffset  = bas-&gt;ioffset;
+<a name="line755">755: </a>  <font color="#4169E1">if</font> (rootloc)     *rootloc     = bas-&gt;irootloc;
+<a name="line756">756: </a>  <font color="#4169E1">return</font>(0);
+<a name="line757">757: </a>}
+
+<a name="line759">759: </a><strong><font color="#4169E1"><a name="PetscSFBasicGetLeafInfo"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscSFBasicGetLeafInfo(<a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *nleafranks,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *ndleafranks,const <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> **leafranks,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> **leafoffset,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> **leafloc)</font></strong>
+<a name="line760">760: </a>{
+<a name="line762">762: </a>  <font color="#4169E1">if</font> (nleafranks)  *nleafranks  = sf-&gt;nranks;
+<a name="line763">763: </a>  <font color="#4169E1">if</font> (ndleafranks) *ndleafranks = sf-&gt;ndranks;
+<a name="line764">764: </a>  <font color="#4169E1">if</font> (leafranks)   *leafranks   = sf-&gt;ranks;
+<a name="line765">765: </a>  <font color="#4169E1">if</font> (leafoffset)  *leafoffset  = sf-&gt;roffset;
+<a name="line766">766: </a>  <font color="#4169E1">if</font> (leafloc)     *leafloc     = sf-&gt;rmine;
+<a name="line767">767: </a>  <font color="#4169E1">return</font>(0);
+<a name="line768">768: </a>}
+
+<a name="line770">770: </a><strong><font color="#4169E1"><a name="PetscSFBasicGetPack"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscSFBasicGetPack(<a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,MPI_Datatype unit,const void *key,PetscSFBasicPack *mylink)</font></strong>
+<a name="line771">771: </a>{
+<a name="line772">772: </a>  PetscSF_Basic    *bas = (PetscSF_Basic*)sf-&gt;data;
+<a name="line773">773: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr;
+<a name="line774">774: </a>  PetscSFBasicPack link,*p;
+<a name="line775">775: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>         nrootranks,ndrootranks,nleafranks,ndleafranks,i;
+<a name="line776">776: </a>  const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>   *rootoffset,*leafoffset;
+
+<a name="line779">779: </a>  <font color="#B22222">/* Look for types in cache */</font>
+<a name="line780">780: </a>  <font color="#4169E1">for</font> (p=&amp;bas-&gt;avail; (link=*p); p=&amp;link-&gt;next) {
+<a name="line781">781: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> match;
+<a name="line782">782: </a>    MPIPetsc_Type_compare(unit,link-&gt;unit,&amp;match);
+<a name="line783">783: </a>    <font color="#4169E1">if</font> (match) {
+<a name="line784">784: </a>      *p = link-&gt;next;          <font color="#B22222">/* Remove from available list */</font>
+<a name="line785">785: </a>      <font color="#4169E1">goto</font> found;
+<a name="line786">786: </a>    }
+<a name="line787">787: </a>  }
+
+<a name="line789">789: </a>  <font color="#B22222">/* Create new composite types for each send rank */</font>
+<a name="line790">790: </a>  PetscSFBasicGetRootInfo(sf,&amp;nrootranks,&amp;ndrootranks,NULL,&amp;rootoffset,NULL);
+<a name="line791">791: </a>  PetscSFBasicGetLeafInfo(sf,&amp;nleafranks,&amp;ndleafranks,NULL,&amp;leafoffset,NULL);
+<a name="line792">792: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscNew.html#PetscNew">PetscNew</a>(&amp;link);
+<a name="line793">793: </a>  PetscSFBasicPackTypeSetup(link,unit);
+<a name="line794">794: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMalloc2.html#PetscMalloc2">PetscMalloc2</a>(nrootranks,&amp;link-&gt;root,nleafranks,&amp;link-&gt;leaf);
+<a name="line795">795: </a>  <font color="#4169E1">for</font> (i=0; i&lt;nrootranks; i++) {
+<a name="line796">796: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscMalloc.html#PetscMalloc">PetscMalloc</a>((rootoffset[i+1]-rootoffset[i])*link-&gt;unitbytes,&amp;link-&gt;root[i]);
+<a name="line797">797: </a>  }
+<a name="line798">798: </a>  <font color="#4169E1">for</font> (i=0; i&lt;nleafranks; i++) {
+<a name="line799">799: </a>    <font color="#4169E1">if</font> (i &lt; ndleafranks) {      <font color="#B22222">/* Leaf buffers for distinguished ranks are pointers directly into root buffers */</font>
+<a name="line800">800: </a>      <font color="#4169E1">if</font> (ndrootranks != 1) <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_PLIB,<font color="#666666">"Cannot match distinguished ranks"</font>);
+<a name="line801">801: </a>      link-&gt;leaf[i] = link-&gt;root[0];
+<a name="line802">802: </a>      <font color="#4169E1">continue</font>;
+<a name="line803">803: </a>    }
+<a name="line804">804: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscMalloc.html#PetscMalloc">PetscMalloc</a>((leafoffset[i+1]-leafoffset[i])*link-&gt;unitbytes,&amp;link-&gt;leaf[i]);
+<a name="line805">805: </a>  }
+<a name="line806">806: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscCalloc1.html#PetscCalloc1">PetscCalloc1</a>(nrootranks+nleafranks,&amp;link-&gt;requests);
+
+<a name="line808">808: </a><strong><font color="#FF0000">found:</font></strong>
+<a name="line809">809: </a>  link-&gt;key  = key;
+<a name="line810">810: </a>  link-&gt;next = bas-&gt;inuse;
+<a name="line811">811: </a>  bas-&gt;inuse = link;
+
+<a name="line813">813: </a>  *mylink = link;
+<a name="line814">814: </a>  <font color="#4169E1">return</font>(0);
+<a name="line815">815: </a>}
+
+<a name="line817">817: </a><strong><font color="#4169E1"><a name="PetscSFBasicGetPackInUse"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscSFBasicGetPackInUse(<a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,MPI_Datatype unit,const void *key,<a href="../../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PetscCopyMode</a> cmode,PetscSFBasicPack *mylink)</font></strong>
+<a name="line818">818: </a>{
+<a name="line819">819: </a>  PetscSF_Basic    *bas = (PetscSF_Basic*)sf-&gt;data;
+<a name="line820">820: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr;
+<a name="line821">821: </a>  PetscSFBasicPack link,*p;
+
+<a name="line824">824: </a>  <font color="#B22222">/* Look for types in cache */</font>
+<a name="line825">825: </a>  <font color="#4169E1">for</font> (p=&amp;bas-&gt;inuse; (link=*p); p=&amp;link-&gt;next) {
+<a name="line826">826: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> match;
+<a name="line827">827: </a>    MPIPetsc_Type_compare(unit,link-&gt;unit,&amp;match);
+<a name="line828">828: </a>    <font color="#4169E1">if</font> (match &amp;&amp; (key == link-&gt;key)) {
+<a name="line829">829: </a>      <font color="#4169E1">switch</font> (cmode) {
+<a name="line830">830: </a>      <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_OWN_POINTER</a>: *p = link-&gt;next; <font color="#4169E1">break</font>; <font color="#B22222">/* Remove from inuse list */</font>
+<a name="line831">831: </a>      <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_USE_POINTER</a>: <font color="#4169E1">break</font>;
+<a name="line832">832: </a><strong><font color="#FF0000">      default:</font></strong> <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_INCOMP,<font color="#666666">"invalid cmode"</font>);
+<a name="line833">833: </a>      }
+<a name="line834">834: </a>      *mylink = link;
+<a name="line835">835: </a>      <font color="#4169E1">return</font>(0);
+<a name="line836">836: </a>    }
+<a name="line837">837: </a>  }
+<a name="line838">838: </a>  <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sf),PETSC_ERR_ARG_WRONGSTATE,<font color="#666666">"Could not find pack"</font>);
+<a name="line839">839: </a>  <font color="#4169E1">return</font>(0);
+<a name="line840">840: </a>}
+
+<a name="line842">842: </a><strong><font color="#4169E1"><a name="PetscSFBasicReclaimPack"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscSFBasicReclaimPack(<a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,PetscSFBasicPack *link)</font></strong>
+<a name="line843">843: </a>{
+<a name="line844">844: </a>  PetscSF_Basic *bas = (PetscSF_Basic*)sf-&gt;data;
+
+<a name="line847">847: </a>  (*link)-&gt;key  = NULL;
+<a name="line848">848: </a>  (*link)-&gt;next = bas-&gt;avail;
+<a name="line849">849: </a>  bas-&gt;avail    = *link;
+<a name="line850">850: </a>  *link         = NULL;
+<a name="line851">851: </a>  <font color="#4169E1">return</font>(0);
+<a name="line852">852: </a>}
+
+<a name="line854">854: </a><strong><font color="#4169E1"><a name="PetscSFSetFromOptions_Basic"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscSFSetFromOptions_Basic(PetscOptionItems *PetscOptionsObject,<a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf)</font></strong>
+<a name="line855">855: </a>{
+
+<a name="line859">859: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscOptionsHead.html#PetscOptionsHead">PetscOptionsHead</a>(PetscOptionsObject,<font color="#666666">"<a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> Basic options"</font>);
+<a name="line860">860: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscOptionsTail.html#PetscOptionsTail">PetscOptionsTail</a>();
+<a name="line861">861: </a>  <font color="#4169E1">return</font>(0);
+<a name="line862">862: </a>}
+
+<a name="line864">864: </a><strong><font color="#4169E1"><a name="PetscSFReset_Basic"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscSFReset_Basic(<a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf)</font></strong>
+<a name="line865">865: </a>{
+<a name="line866">866: </a>  PetscSF_Basic    *bas = (PetscSF_Basic*)sf-&gt;data;
+<a name="line867">867: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr;
+<a name="line868">868: </a>  PetscSFBasicPack link,next;
+
+<a name="line871">871: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree2.html#PetscFree2">PetscFree2</a>(bas-&gt;iranks,bas-&gt;ioffset);
+<a name="line872">872: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(bas-&gt;irootloc);
+<a name="line873">873: </a>  <font color="#4169E1">if</font> (bas-&gt;inuse) <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sf),PETSC_ERR_ARG_WRONGSTATE,<font color="#666666">"Outstanding operation has not been completed"</font>);
+<a name="line874">874: </a>  <font color="#4169E1">for</font> (link=bas-&gt;avail; link; link=next) {
+<a name="line875">875: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i;
+<a name="line876">876: </a>    next = link-&gt;next;
+<a name="line877">877: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Type_free.html#MPI_Type_free">MPI_Type_free</a>(&amp;link-&gt;unit);
+<a name="line878">878: </a>    <font color="#4169E1">for</font> (i=0; i&lt;bas-&gt;niranks; i++) {<a href="../../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(link-&gt;root[i]);}
+<a name="line879">879: </a>    <font color="#4169E1">for</font> (i=sf-&gt;ndranks; i&lt;sf-&gt;nranks; i++) {<a href="../../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(link-&gt;leaf[i]);} <font color="#B22222">/* Free only non-distinguished leaf buffers */</font>
+<a name="line880">880: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscFree2.html#PetscFree2">PetscFree2</a>(link-&gt;root,link-&gt;leaf);
+<a name="line881">881: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(link-&gt;requests);
+<a name="line882">882: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(link);
+<a name="line883">883: </a>  }
+<a name="line884">884: </a>  bas-&gt;avail = NULL;
+<a name="line885">885: </a>  <font color="#4169E1">return</font>(0);
+<a name="line886">886: </a>}
+
+<a name="line888">888: </a><strong><font color="#4169E1"><a name="PetscSFDestroy_Basic"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscSFDestroy_Basic(<a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf)</font></strong>
+<a name="line889">889: </a>{
+
+<a name="line893">893: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(sf-&gt;data);
+<a name="line894">894: </a>  <font color="#4169E1">return</font>(0);
+<a name="line895">895: </a>}
+
+<a name="line897">897: </a><strong><font color="#4169E1"><a name="PetscSFView_Basic"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscSFView_Basic(<a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer)</font></strong>
+<a name="line898">898: </a>{
+<a name="line899">899: </a>  <font color="#B22222">/* PetscSF_Basic *bas = (PetscSF_Basic*)sf-&gt;data; */</font>
+<a name="line901">901: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>      iascii;
+
+<a name="line904">904: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html#PETSCVIEWERASCII">PETSCVIEWERASCII</a>,&amp;iascii);
+<a name="line905">905: </a>  <font color="#4169E1">if</font> (iascii) {
+<a name="line906">906: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"  sort=%s\n"</font>,sf-&gt;rankorder ? <font color="#666666">"rank-order"</font> : <font color="#666666">"unordered"</font>);
+<a name="line907">907: </a>  }
+<a name="line908">908: </a>  <font color="#4169E1">return</font>(0);
+<a name="line909">909: </a>}
+
+<a name="line911">911: </a><font color="#B22222">/* Send from roots to leaves */</font>
+<a name="line912">912: </a><strong><font color="#4169E1"><a name="PetscSFBcastBegin_Basic"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscSFBcastBegin_Basic(<a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,MPI_Datatype unit,const void *rootdata,void *leafdata)</font></strong>
+<a name="line913">913: </a>{
+<a name="line914">914: </a>  PetscSF_Basic     *bas = (PetscSF_Basic*)sf-&gt;data;
+<a name="line915">915: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+<a name="line916">916: </a>  PetscSFBasicPack  link;
+<a name="line917">917: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          i,nrootranks,ndrootranks,nleafranks,ndleafranks;
+<a name="line918">918: </a>  const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>    *rootoffset,*leafoffset,*rootloc,*leafloc;
+<a name="line919">919: </a>  const <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> *rootranks,*leafranks;
+<a name="line920">920: </a>  MPI_Request       *rootreqs,*leafreqs;
+
+<a name="line923">923: </a>  PetscSFBasicGetRootInfo(sf,&amp;nrootranks,&amp;ndrootranks,&amp;rootranks,&amp;rootoffset,&amp;rootloc);
+<a name="line924">924: </a>  PetscSFBasicGetLeafInfo(sf,&amp;nleafranks,&amp;ndleafranks,&amp;leafranks,&amp;leafoffset,&amp;leafloc);
+<a name="line925">925: </a>  PetscSFBasicGetPack(sf,unit,rootdata,&amp;link);
+
+<a name="line927">927: </a>  PetscSFBasicPackGetReqs(sf,link,&amp;rootreqs,&amp;leafreqs);
+<a name="line928">928: </a>  <font color="#B22222">/* Eagerly post leaf receives, but only from non-distinguished ranks -- distinguished ranks will receive via shared memory */</font>
+<a name="line929">929: </a>  <font color="#4169E1">for</font> (i=ndleafranks; i&lt;nleafranks; i++) {
+<a name="line930">930: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> n = leafoffset[i+1] - leafoffset[i];
+<a name="line931">931: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Irecv.html#MPI_Irecv">MPI_Irecv</a>(link-&gt;leaf[i],n,unit,leafranks[i],bas-&gt;tag,<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sf),&amp;leafreqs[i-ndleafranks]);
+<a name="line932">932: </a>  }
+<a name="line933">933: </a>  <font color="#B22222">/* Pack and send root data */</font>
+<a name="line934">934: </a>  <font color="#4169E1">for</font> (i=0; i&lt;nrootranks; i++) {
+<a name="line935">935: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> n          = rootoffset[i+1] - rootoffset[i];
+<a name="line936">936: </a>    void        *packstart = link-&gt;root[i];
+<a name="line937">937: </a>    (*link-&gt;Pack)(n,link-&gt;bs,rootloc+rootoffset[i],rootdata,packstart);
+<a name="line938">938: </a>    <font color="#4169E1">if</font> (i &lt; ndrootranks) <font color="#4169E1">continue</font>; <font color="#B22222">/* shared memory */</font>
+<a name="line939">939: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Isend.html#MPI_Isend">MPI_Isend</a>(packstart,n,unit,rootranks[i],bas-&gt;tag,<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sf),&amp;rootreqs[i-ndrootranks]);
+<a name="line940">940: </a>  }
+<a name="line941">941: </a>  <font color="#4169E1">return</font>(0);
+<a name="line942">942: </a>}
+
+<a name="line944">944: </a><strong><font color="#4169E1"><a name="PetscSFBcastEnd_Basic"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscSFBcastEnd_Basic(<a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,MPI_Datatype unit,const void *rootdata,void *leafdata)</font></strong>
+<a name="line945">945: </a>{
+<a name="line946">946: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr;
+<a name="line947">947: </a>  PetscSFBasicPack link;
+<a name="line948">948: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>         i,nleafranks,ndleafranks;
+<a name="line949">949: </a>  const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>   *leafoffset,*leafloc;
+
+<a name="line952">952: </a>  PetscSFBasicGetPackInUse(sf,unit,rootdata,<a href="../../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_OWN_POINTER</a>,&amp;link);
+<a name="line953">953: </a>  PetscSFBasicPackWaitall(sf,link);
+<a name="line954">954: </a>  PetscSFBasicGetLeafInfo(sf,&amp;nleafranks,&amp;ndleafranks,NULL,&amp;leafoffset,&amp;leafloc);
+<a name="line955">955: </a>  <font color="#4169E1">for</font> (i=0; i&lt;nleafranks; i++) {
+<a name="line956">956: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> n          = leafoffset[i+1] - leafoffset[i];
+<a name="line957">957: </a>    const void  *packstart = link-&gt;leaf[i];
+<a name="line958">958: </a>    (*link-&gt;UnpackInsert)(n,link-&gt;bs,leafloc+leafoffset[i],leafdata,packstart);
+<a name="line959">959: </a>  }
+<a name="line960">960: </a>  PetscSFBasicReclaimPack(sf,&amp;link);
+<a name="line961">961: </a>  <font color="#4169E1">return</font>(0);
+<a name="line962">962: </a>}
+
+<a name="line964">964: </a><font color="#B22222">/* leaf -&gt; root with reduction */</font>
+<a name="line965">965: </a><strong><font color="#4169E1"><a name="PetscSFReduceBegin_Basic"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscSFReduceBegin_Basic(<a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,MPI_Datatype unit,const void *leafdata,void *rootdata,MPI_Op op)</font></strong>
+<a name="line966">966: </a>{
+<a name="line967">967: </a>  PetscSF_Basic     *bas = (PetscSF_Basic*)sf-&gt;data;
+<a name="line968">968: </a>  PetscSFBasicPack  link;
+<a name="line969">969: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+<a name="line970">970: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          i,nrootranks,ndrootranks,nleafranks,ndleafranks;
+<a name="line971">971: </a>  const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>    *rootoffset,*leafoffset,*rootloc,*leafloc;
+<a name="line972">972: </a>  const <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> *rootranks,*leafranks;
+<a name="line973">973: </a>  MPI_Request       *rootreqs,*leafreqs;
+
+<a name="line976">976: </a>  PetscSFBasicGetRootInfo(sf,&amp;nrootranks,&amp;ndrootranks,&amp;rootranks,&amp;rootoffset,&amp;rootloc);
+<a name="line977">977: </a>  PetscSFBasicGetLeafInfo(sf,&amp;nleafranks,&amp;ndleafranks,&amp;leafranks,&amp;leafoffset,&amp;leafloc);
+<a name="line978">978: </a>  PetscSFBasicGetPack(sf,unit,rootdata,&amp;link);
+
+<a name="line980">980: </a>  PetscSFBasicPackGetReqs(sf,link,&amp;rootreqs,&amp;leafreqs);
+<a name="line981">981: </a>  <font color="#B22222">/* Eagerly post root receives for non-distinguished ranks */</font>
+<a name="line982">982: </a>  <font color="#4169E1">for</font> (i=ndrootranks; i&lt;nrootranks; i++) {
+<a name="line983">983: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> n = rootoffset[i+1] - rootoffset[i];
+<a name="line984">984: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Irecv.html#MPI_Irecv">MPI_Irecv</a>(link-&gt;root[i],n,unit,rootranks[i],bas-&gt;tag,<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sf),&amp;rootreqs[i-ndrootranks]);
+<a name="line985">985: </a>  }
+<a name="line986">986: </a>  <font color="#B22222">/* Pack and send leaf data */</font>
+<a name="line987">987: </a>  <font color="#4169E1">for</font> (i=0; i&lt;nleafranks; i++) {
+<a name="line988">988: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> n          = leafoffset[i+1] - leafoffset[i];
+<a name="line989">989: </a>    void        *packstart = link-&gt;leaf[i];
+<a name="line990">990: </a>    (*link-&gt;Pack)(n,link-&gt;bs,leafloc+leafoffset[i],leafdata,packstart);
+<a name="line991">991: </a>    <font color="#4169E1">if</font> (i &lt; ndleafranks) <font color="#4169E1">continue</font>; <font color="#B22222">/* shared memory */</font>
+<a name="line992">992: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Isend.html#MPI_Isend">MPI_Isend</a>(packstart,n,unit,leafranks[i],bas-&gt;tag,<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sf),&amp;leafreqs[i-ndleafranks]);
+<a name="line993">993: </a>  }
+<a name="line994">994: </a>  <font color="#4169E1">return</font>(0);
+<a name="line995">995: </a>}
+
+<a name="line997">997: </a><strong><font color="#4169E1"><a name="PetscSFReduceEnd_Basic"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscSFReduceEnd_Basic(<a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,MPI_Datatype unit,const void *leafdata,void *rootdata,MPI_Op op)</font></strong>
+<a name="line998">998: </a>{
+<a name="line999">999: </a>  void             (*UnpackOp)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>*,void*,const void*);
+<a name="line1000">1000: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr;
+<a name="line1001">1001: </a>  PetscSFBasicPack link;
+<a name="line1002">1002: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>         i,nrootranks;
+<a name="line1003">1003: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>      typesize = -1;
+<a name="line1004">1004: </a>  const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>   *rootoffset,*rootloc;
+
+<a name="line1007">1007: </a>  PetscSFBasicGetPackInUse(sf,unit,rootdata,<a href="../../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_OWN_POINTER</a>,&amp;link);
+<a name="line1008">1008: </a>  <font color="#B22222">/* This implementation could be changed to unpack as receives arrive, at the cost of non-determinism */</font>
+<a name="line1009">1009: </a>  PetscSFBasicPackWaitall(sf,link);
+<a name="line1010">1010: </a>  PetscSFBasicGetRootInfo(sf,&amp;nrootranks,NULL,NULL,&amp;rootoffset,&amp;rootloc);
+<a name="line1011">1011: </a>  PetscSFBasicPackGetUnpackOp(sf,link,op,&amp;UnpackOp);
+<a name="line1012">1012: </a>  <font color="#4169E1">if</font> (UnpackOp) {
+<a name="line1013">1013: </a>    typesize = link-&gt;unitbytes;
+<a name="line1014">1014: </a>  }
+<a name="line1015">1015: </a>  <font color="#4169E1">else</font> {
+<a name="line1016">1016: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Type_size.html#MPI_Type_size">MPI_Type_size</a>(unit,&amp;typesize);
+<a name="line1017">1017: </a>  }
+<a name="line1018">1018: </a>  <font color="#4169E1">for</font> (i=0; i&lt;nrootranks; i++) {
+<a name="line1019">1019: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> n   = rootoffset[i+1] - rootoffset[i];
+<a name="line1020">1020: </a>    char *packstart = (char *) link-&gt;root[i];
+
+<a name="line1022">1022: </a>    <font color="#4169E1">if</font> (UnpackOp) {
+<a name="line1023">1023: </a>      (*UnpackOp)(n,link-&gt;bs,rootloc+rootoffset[i],rootdata,(const void *)packstart);
+<a name="line1024">1024: </a>    }
+<a name="line1025">1025: </a><font color="#A020F0">#if PETSC_HAVE_MPI_REDUCE_LOCAL</font>
+<a name="line1026">1026: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (n) { <font color="#B22222">/* the op should be defined to operate on the whole datatype, so we ignore link-&gt;bs */</font>
+<a name="line1027">1027: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> j;
+
+<a name="line1029">1029: </a>      <font color="#4169E1">for</font> (j = 0; j &lt; n; j++) {
+<a name="line1030">1030: </a>        <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Reduce_local.html#MPI_Reduce_local">MPI_Reduce_local</a>(packstart+j*typesize,((char *) rootdata)+(rootloc[rootoffset[i]+j])*typesize,1,unit,op);
+<a name="line1031">1031: </a>      }
+<a name="line1032">1032: </a>    }
+<a name="line1033">1033: </a><font color="#A020F0">#else</font>
+<a name="line1034">1034: </a>    <font color="#4169E1">else</font> {
+<a name="line1035">1035: </a>      <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_SUP,<font color="#666666">"No unpacking reduction operation for this MPI_Op"</font>);
+<a name="line1036">1036: </a>    }
+<a name="line1037">1037: </a><font color="#A020F0">#endif</font>
+<a name="line1038">1038: </a>  }
+<a name="line1039">1039: </a>  PetscSFBasicReclaimPack(sf,&amp;link);
+<a name="line1040">1040: </a>  <font color="#4169E1">return</font>(0);
+<a name="line1041">1041: </a>}
+
+<a name="line1043">1043: </a><strong><font color="#4169E1"><a name="PetscSFFetchAndOpBegin_Basic"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscSFFetchAndOpBegin_Basic(<a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,MPI_Datatype unit,void *rootdata,const void *leafdata,void *leafupdate,MPI_Op op)</font></strong>
+<a name="line1044">1044: </a>{
+
+<a name="line1048">1048: </a>  PetscSFReduceBegin_Basic(sf,unit,leafdata,rootdata,op);
+<a name="line1049">1049: </a>  <font color="#4169E1">return</font>(0);
+<a name="line1050">1050: </a>}
+
+<a name="line1052">1052: </a><strong><font color="#4169E1"><a name="PetscSFFetchAndOpEnd_Basic"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscSFFetchAndOpEnd_Basic(<a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,MPI_Datatype unit,void *rootdata,const void *leafdata,void *leafupdate,MPI_Op op)</font></strong>
+<a name="line1053">1053: </a>{
+<a name="line1054">1054: </a>  PetscSF_Basic     *bas = (PetscSF_Basic*)sf-&gt;data;
+<a name="line1055">1055: </a>  void              (*FetchAndOp)(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>,const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>*,void*,void*);
+<a name="line1056">1056: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+<a name="line1057">1057: </a>  PetscSFBasicPack  link;
+<a name="line1058">1058: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          i,nrootranks,ndrootranks,nleafranks,ndleafranks;
+<a name="line1059">1059: </a>  const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>    *rootoffset,*leafoffset,*rootloc,*leafloc;
+<a name="line1060">1060: </a>  const <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> *rootranks,*leafranks;
+<a name="line1061">1061: </a>  MPI_Request       *rootreqs,*leafreqs;
+
+<a name="line1064">1064: </a>  PetscSFBasicGetPackInUse(sf,unit,rootdata,<a href="../../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_OWN_POINTER</a>,&amp;link);
+<a name="line1065">1065: </a>  <font color="#B22222">/* This implementation could be changed to unpack as receives arrive, at the cost of non-determinism */</font>
+<a name="line1066">1066: </a>  PetscSFBasicPackWaitall(sf,link);
+<a name="line1067">1067: </a>  PetscSFBasicGetRootInfo(sf,&amp;nrootranks,&amp;ndrootranks,&amp;rootranks,&amp;rootoffset,&amp;rootloc);
+<a name="line1068">1068: </a>  PetscSFBasicGetLeafInfo(sf,&amp;nleafranks,&amp;ndleafranks,&amp;leafranks,&amp;leafoffset,&amp;leafloc);
+<a name="line1069">1069: </a>  PetscSFBasicPackGetReqs(sf,link,&amp;rootreqs,&amp;leafreqs);
+<a name="line1070">1070: </a>  <font color="#B22222">/* Post leaf receives */</font>
+<a name="line1071">1071: </a>  <font color="#4169E1">for</font> (i=ndleafranks; i&lt;nleafranks; i++) {
+<a name="line1072">1072: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> n = leafoffset[i+1] - leafoffset[i];
+<a name="line1073">1073: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Irecv.html#MPI_Irecv">MPI_Irecv</a>(link-&gt;leaf[i],n,unit,leafranks[i],bas-&gt;tag,<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sf),&amp;leafreqs[i-ndleafranks]);
+<a name="line1074">1074: </a>  }
+<a name="line1075">1075: </a>  <font color="#B22222">/* Process local fetch-and-op, post root sends */</font>
+<a name="line1076">1076: </a>  PetscSFBasicPackGetFetchAndOp(sf,link,op,&amp;FetchAndOp);
+<a name="line1077">1077: </a>  <font color="#4169E1">for</font> (i=0; i&lt;nrootranks; i++) {
+<a name="line1078">1078: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> n          = rootoffset[i+1] - rootoffset[i];
+<a name="line1079">1079: </a>    void        *packstart = link-&gt;root[i];
+
+<a name="line1081">1081: </a>    (*FetchAndOp)(n,link-&gt;bs,rootloc+rootoffset[i],rootdata,packstart);
+<a name="line1082">1082: </a>    <font color="#4169E1">if</font> (i &lt; ndrootranks) <font color="#4169E1">continue</font>; <font color="#B22222">/* shared memory */</font>
+<a name="line1083">1083: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Isend.html#MPI_Isend">MPI_Isend</a>(packstart,n,unit,rootranks[i],bas-&gt;tag,<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sf),&amp;rootreqs[i-ndrootranks]);
+<a name="line1084">1084: </a>  }
+<a name="line1085">1085: </a>  PetscSFBasicPackWaitall(sf,link);
+<a name="line1086">1086: </a>  <font color="#4169E1">for</font> (i=0; i&lt;nleafranks; i++) {
+<a name="line1087">1087: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> n          = leafoffset[i+1] - leafoffset[i];
+<a name="line1088">1088: </a>    const void  *packstart = link-&gt;leaf[i];
+<a name="line1089">1089: </a>    (*link-&gt;UnpackInsert)(n,link-&gt;bs,leafloc+leafoffset[i],leafupdate,packstart);
+<a name="line1090">1090: </a>  }
+<a name="line1091">1091: </a>  PetscSFBasicReclaimPack(sf,&amp;link);
+<a name="line1092">1092: </a>  <font color="#4169E1">return</font>(0);
+<a name="line1093">1093: </a>}
+
+<a name="line1095">1095: </a><strong><font color="#4169E1"><a name="PetscSFCreate_Basic"></a>PETSC_EXTERN <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscSFCreate_Basic(<a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf)</font></strong>
+<a name="line1096">1096: </a>{
+<a name="line1097">1097: </a>  PetscSF_Basic  *bas = (PetscSF_Basic*)sf-&gt;data;
+
+<a name="line1101">1101: </a>  sf-&gt;ops-&gt;SetUp           = PetscSFSetUp_Basic;
+<a name="line1102">1102: </a>  sf-&gt;ops-&gt;SetFromOptions  = PetscSFSetFromOptions_Basic;
+<a name="line1103">1103: </a>  sf-&gt;ops-&gt;Reset           = PetscSFReset_Basic;
+<a name="line1104">1104: </a>  sf-&gt;ops-&gt;Destroy         = PetscSFDestroy_Basic;
+<a name="line1105">1105: </a>  sf-&gt;ops-&gt;View            = PetscSFView_Basic;
+<a name="line1106">1106: </a>  sf-&gt;ops-&gt;BcastBegin      = PetscSFBcastBegin_Basic;
+<a name="line1107">1107: </a>  sf-&gt;ops-&gt;BcastEnd        = PetscSFBcastEnd_Basic;
+<a name="line1108">1108: </a>  sf-&gt;ops-&gt;ReduceBegin     = PetscSFReduceBegin_Basic;
+<a name="line1109">1109: </a>  sf-&gt;ops-&gt;ReduceEnd       = PetscSFReduceEnd_Basic;
+<a name="line1110">1110: </a>  sf-&gt;ops-&gt;FetchAndOpBegin = PetscSFFetchAndOpBegin_Basic;
+<a name="line1111">1111: </a>  sf-&gt;ops-&gt;FetchAndOpEnd   = PetscSFFetchAndOpEnd_Basic;
+
+<a name="line1113">1113: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscNewLog.html#PetscNewLog">PetscNewLog</a>(sf,&amp;bas);
+<a name="line1114">1114: </a>  sf-&gt;data = (void*)bas;
+<a name="line1115">1115: </a>  <font color="#4169E1">return</font>(0);
+<a name="line1116">1116: </a>}
+</pre>
+</body>
+
+</html>

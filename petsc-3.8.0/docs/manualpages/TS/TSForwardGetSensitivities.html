@@ -1,0 +1,45 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML3.2 EN">
+<HTML>
+<HEAD> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/TS/TSForwardGetSensitivities.html" />
+<META NAME="GENERATOR" CONTENT="DOCTEXT">
+<TITLE>TSForwardGetSensitivities</TITLE>
+</HEAD>
+<BODY BGCOLOR="FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 docs/manualpages/TS/TSForwardGetSensitivities.html "><small>Report Typos and Errors</small></a></div>
+<A NAME="TSForwardGetSensitivities"><H1>TSForwardGetSensitivities</H1></A>
+Returns the trajectory sensitivities 
+<H3><FONT COLOR="#CC3333">Synopsis</FONT></H3>
+<PRE>
+#include "petscts.h"  
+<A HREF="../Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</A> <A HREF="../TS/TSForwardGetSensitivities.html#TSForwardGetSensitivities">TSForwardGetSensitivities</A>(<A HREF="../TS/TS.html#TS">TS</A> ts,<A HREF="../Sys/PetscInt.html#PetscInt">PetscInt</A> *nump,<A HREF="../Vec/Vec.html#Vec">Vec</A> **sp,<A HREF="../Sys/PetscInt.html#PetscInt">PetscInt</A> *num,<A HREF="../Vec/Vec.html#Vec">Vec</A> **s)
+</PRE>
+Not Collective, but <A HREF="../Vec/Vec.html#Vec">Vec</A> returned is parallel if <A HREF="../TS/TS.html#TS">TS</A> is parallel
+<P>
+<H3><FONT COLOR="#CC3333">Output Parameter</FONT></H3>
+<TABLE border="0" cellpadding="0" cellspacing="0">
+<TR><TD WIDTH=40></TD><TD ALIGN=LEFT VALIGN=TOP><B>ts </B></TD><TD>- the <A HREF="../TS/TS.html#TS">TS</A> context obtained from <A HREF="../TS/TSCreate.html#TSCreate">TSCreate</A>()
+</TD></TR>
+<TR><TD WIDTH=40></TD><TD ALIGN=LEFT VALIGN=TOP><B>nump </B></TD><TD>- number of parameters
+</TD></TR>
+<TR><TD WIDTH=40></TD><TD ALIGN=LEFT VALIGN=TOP><B>sp </B></TD><TD>- sensitivities with respect to the parameters, the number of entries in these vectors is the same as the number of parameters
+</TD></TR>
+<TR><TD WIDTH=40></TD><TD ALIGN=LEFT VALIGN=TOP><B>num </B></TD><TD>- number of initial values
+</TD></TR>
+<TR><TD WIDTH=40></TD><TD ALIGN=LEFT VALIGN=TOP><B>s </B></TD><TD>- sensitivities with respect to the (selected) initial condition variables, the dimension and parallel layout of these vectors is the same as the ODE solution vector
+</TD></TR></TABLE>
+<P>
+
+<P>
+<H3><FONT COLOR="#CC3333">Keywords</FONT></H3>
+ <A HREF="../TS/TS.html#TS">TS</A>, forward sensitivity
+<BR>
+<P>
+<H3><FONT COLOR="#CC3333">See Also</FONT></H3>
+ <A HREF="../TS/TSForwardSetSensitivities.html#TSForwardSetSensitivities">TSForwardSetSensitivities</A>(), <A HREF="../TS/TSForwardSetIntegralGradients.html#TSForwardSetIntegralGradients">TSForwardSetIntegralGradients</A>(), <A HREF="../TS/TSForwardGetIntegralGradients.html#TSForwardGetIntegralGradients">TSForwardGetIntegralGradients</A>(), <A HREF="../TS/TSForwardStep.html#TSForwardStep">TSForwardStep</A>()
+<BR><P><B><P><B><FONT COLOR="#CC3333">Level:</FONT></B>intermediate
+<BR><FONT COLOR="#CC3333">Location:</FONT></B><A HREF="../../../src/ts/interface/tsfwdsen.c.html#TSForwardGetSensitivities">src/ts/interface/tsfwdsen.c</A>
+<BR><A HREF="./index.html">Index of all TS routines</A>
+<BR><A HREF="../../index.html">Table of Contents for all manual pages</A>
+<BR><A HREF="../singleindex.html">Index of all manual pages</A>
+</BODY></HTML>

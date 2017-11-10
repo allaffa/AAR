@@ -1,0 +1,30 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML3.2 EN">
+<HTML>
+<HEAD> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/IS/PetscSectionSym.html" />
+<META NAME="GENERATOR" CONTENT="DOCTEXT">
+<TITLE>PetscSectionSym</TITLE>
+</HEAD>
+<BODY BGCOLOR="FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 docs/manualpages/IS/PetscSectionSym.html "><small>Report Typos and Errors</small></a></div>
+<A NAME="PetscSectionSym"><H1>PetscSectionSym</H1></A>
+Symmetries of the data referenced by a <A HREF="../IS/PetscSection.html#PetscSection">PetscSection</A>. 
+<H3><FONT COLOR="#CC3333">Synopsis</FONT></H3>
+<PRE>
+typedef struct _p_PetscSectionSym *<A HREF="../IS/PetscSectionSym.html#PetscSectionSym">PetscSectionSym</A>;
+</PRE>
+Often the order of data index by a <A HREF="../IS/PetscSection.html#PetscSection">PetscSection</A> is meaningful, and describes additional structure, such as points on a
+line, grid, or lattice.  If the data is accessed from a different "orientation", then the image of the data under
+access then undergoes a symmetry transformation.  A <A HREF="../IS/PetscSectionSym.html#PetscSectionSym">PetscSectionSym</A> specifies these symmetries.  The types of
+symmetries that can be specified are of the form R * P, where R is a diagonal matrix of scalars, and P is a permutation.
+<P>
+
+<P>
+<H3><FONT COLOR="#CC3333">See Also</FONT></H3>
+ <A HREF="../IS/PetscSectionSymCreate.html#PetscSectionSymCreate">PetscSectionSymCreate</A>(), <A HREF="../IS/PetscSectionSymDestroy.html#PetscSectionSymDestroy">PetscSectionSymDestroy</A>(), <A HREF="../IS/PetscSectionSetSym.html#PetscSectionSetSym">PetscSectionSetSym</A>(), <A HREF="../IS/PetscSectionGetSym.html#PetscSectionGetSym">PetscSectionGetSym</A>(), <A HREF="../IS/PetscSectionSetFieldSym.html#PetscSectionSetFieldSym">PetscSectionSetFieldSym</A>(), <A HREF="../IS/PetscSectionGetFieldSym.html#PetscSectionGetFieldSym">PetscSectionGetFieldSym</A>(), PetscSectionGetSymPoints()
+<BR><P><B><P><B><FONT COLOR="#CC3333">Level:</FONT></B>developer
+<BR><FONT COLOR="#CC3333">Location:</FONT></B><A HREF="../../../src/vec/is/is/../../../../include/petscistypes.h.html#PetscSectionSym">src/vec/is/is/../../../../include/petscistypes.h</A>
+<BR><A HREF="./index.html">Index of all IS routines</A>
+<BR><A HREF="../../index.html">Table of Contents for all manual pages</A>
+<BR><A HREF="../singleindex.html">Index of all manual pages</A>
+</BODY></HTML>

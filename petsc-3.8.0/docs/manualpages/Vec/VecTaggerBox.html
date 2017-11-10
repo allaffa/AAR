@@ -1,0 +1,28 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML3.2 EN">
+<HTML>
+<HEAD> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/Vec/VecTaggerBox.html" />
+<META NAME="GENERATOR" CONTENT="DOCTEXT">
+<TITLE>VecTaggerBox</TITLE>
+</HEAD>
+<BODY BGCOLOR="FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 docs/manualpages/Vec/VecTaggerBox.html "><small>Report Typos and Errors</small></a></div>
+<A NAME="VecTaggerBox"><H1>VecTaggerBox</H1></A>
+A box range used to tag values.  For real scalars, this is just a closed interval; for complex scalars, the box is the closed region in the complex plane such that real(min) &lt;= real(z) &lt;= real(max) and imag(min) &lt;= imag(z) &lt;= imag(max).  INF is an acceptable endpoint. 
+<H3><FONT COLOR="#CC3333">Synopsis</FONT></H3>
+<PRE>
+typedef struct {
+  <A HREF="../Sys/PetscScalar.html#PetscScalar">PetscScalar</A> min;
+  <A HREF="../Sys/PetscScalar.html#PetscScalar">PetscScalar</A> max;
+} <A HREF="../Vec/VecTaggerBox.html#VecTaggerBox">VecTaggerBox</A>;
+</PRE>
+
+<P>
+<H3><FONT COLOR="#CC3333">See Also</FONT></H3>
+ VecTaggerComputeIntervals()
+<BR><P><B><P><B><FONT COLOR="#CC3333">Level:</FONT></B>beginner
+<BR><FONT COLOR="#CC3333">Location:</FONT></B><A HREF="../../../src/vec/vec/utils/tagger../../../../../include/petscvec.h.html#VecTaggerBox">src/vec/vec/utils/tagger../../../../../include/petscvec.h</A>
+<BR><A HREF="./index.html">Index of all Vec routines</A>
+<BR><A HREF="../../index.html">Table of Contents for all manual pages</A>
+<BR><A HREF="../singleindex.html">Index of all manual pages</A>
+</BODY></HTML>

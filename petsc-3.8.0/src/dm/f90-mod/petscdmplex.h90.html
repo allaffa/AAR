@@ -1,0 +1,261 @@
+<center><a href="petscdmplex.h90">Actual source code: petscdmplex.h90</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/dm/f90-mod/petscdmplex.h90.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:47:36+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/dm/f90-mod/petscdmplex.h90.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+
+<a name="line2">  2: </a>      Interface
+<a name="line3">  3: </a>        Subroutine <a href="../..90-mod/../docs/manualpages/DMPLEX/DMPlexGetCone.html#DMPlexGetCone">DMPlexGetCone</a>(m,p,cone,ierr)
+<a name="line4">  4: </a>          use petscdmdef
+<a name="line5">  5: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>     p
+<a name="line6">  6: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>, pointer :: cone(:)
+<a name="line7">  7: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line8">  8: </a>          <a href="../..90-mod/../docs/manualpages/DM/DM.html#DM">DM</a> m
+<a name="line9">  9: </a>        End Subroutine
+<a name="line10"> 10: </a>      End Interface
+
+<a name="line12"> 12: </a>      Interface
+<a name="line13"> 13: </a>        Subroutine DMPlexRestoreCone(m,p,cone,ierr)
+<a name="line14"> 14: </a>          use petscdmdef
+<a name="line15"> 15: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>     p
+<a name="line16"> 16: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>, pointer :: cone(:)
+<a name="line17"> 17: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line18"> 18: </a>          <a href="../..90-mod/../docs/manualpages/DM/DM.html#DM">DM</a> m
+<a name="line19"> 19: </a>        End Subroutine
+<a name="line20"> 20: </a>      End Interface
+
+<a name="line22"> 22: </a>      Interface
+<a name="line23"> 23: </a>        Subroutine <a href="../..90-mod/../docs/manualpages/DMPLEX/DMPlexGetConeOrientation.html#DMPlexGetConeOrientation">DMPlexGetConeOrientation</a>(m,p,coneOrient,ierr)
+<a name="line24"> 24: </a>          use petscdmdef
+<a name="line25"> 25: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>     p
+<a name="line26"> 26: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>, pointer :: coneOrient(:)
+<a name="line27"> 27: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line28"> 28: </a>          <a href="../..90-mod/../docs/manualpages/DM/DM.html#DM">DM</a> m
+<a name="line29"> 29: </a>        End Subroutine
+<a name="line30"> 30: </a>      End Interface
+
+<a name="line32"> 32: </a>      Interface
+<a name="line33"> 33: </a>        Subroutine <a href="../..90-mod/../docs/manualpages/DMPLEX/DMPlexGetSupport.html#DMPlexGetSupport">DMPlexGetSupport</a>(m,p,support,ierr)
+<a name="line34"> 34: </a>          use petscdmdef
+<a name="line35"> 35: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>     p
+<a name="line36"> 36: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>, pointer :: support(:)
+<a name="line37"> 37: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line38"> 38: </a>          <a href="../..90-mod/../docs/manualpages/DM/DM.html#DM">DM</a> m
+<a name="line39"> 39: </a>        End Subroutine
+<a name="line40"> 40: </a>      End Interface
+
+<a name="line42"> 42: </a>      Interface
+<a name="line43"> 43: </a>        Subroutine DMPlexRestoreSupport(m,p,support,ierr)
+<a name="line44"> 44: </a>          use petscdmdef
+<a name="line45"> 45: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>     p
+<a name="line46"> 46: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>, pointer :: support(:)
+<a name="line47"> 47: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line48"> 48: </a>          <a href="../..90-mod/../docs/manualpages/DM/DM.html#DM">DM</a> m
+<a name="line49"> 49: </a>        End Subroutine
+<a name="line50"> 50: </a>      End Interface
+
+<a name="line52"> 52: </a>      Interface
+<a name="line53"> 53: </a>        Subroutine <a href="../..90-mod/../docs/manualpages/DMPLEX/DMPlexGetTransitiveClosure.html#DMPlexGetTransitiveClosure">DMPlexGetTransitiveClosure</a>(m,p,useCone,points,ierr)
+<a name="line54"> 54: </a>          use petscdmdef
+<a name="line55"> 55: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>     p
+<a name="line56"> 56: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>    useCone
+<a name="line57"> 57: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>, pointer :: points(:)
+<a name="line58"> 58: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line59"> 59: </a>          <a href="../..90-mod/../docs/manualpages/DM/DM.html#DM">DM</a> m
+<a name="line60"> 60: </a>        End Subroutine
+<a name="line61"> 61: </a>      End Interface
+
+<a name="line63"> 63: </a>      Interface
+<a name="line64"> 64: </a>        Subroutine <a href="../..90-mod/../docs/manualpages/DMPLEX/DMPlexRestoreTransitiveClosure.html#DMPlexRestoreTransitiveClosure">DMPlexRestoreTransitiveClosure</a>(m,p,uC,points,ierr)
+<a name="line65"> 65: </a>          use petscdmdef
+<a name="line66"> 66: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>     p
+<a name="line67"> 67: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>    uC
+<a name="line68"> 68: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>, pointer :: points(:)
+<a name="line69"> 69: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line70"> 70: </a>          <a href="../..90-mod/../docs/manualpages/DM/DM.html#DM">DM</a> m
+<a name="line71"> 71: </a>        End Subroutine
+<a name="line72"> 72: </a>      End Interface
+
+<a name="line74"> 74: </a>      Interface
+<a name="line75"> 75: </a>        Subroutine <a href="../..90-mod/../docs/manualpages/DMPLEX/DMPlexGetJoin.html#DMPlexGetJoin">DMPlexGetJoin</a>(m,numPoints,points,join,ierr)
+<a name="line76"> 76: </a>          use petscdmdef
+<a name="line77"> 77: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>     numPoints
+<a name="line78"> 78: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>, pointer :: points(:)
+<a name="line79"> 79: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>, pointer :: join(:)
+<a name="line80"> 80: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line81"> 81: </a>          <a href="../..90-mod/../docs/manualpages/DM/DM.html#DM">DM</a> m
+<a name="line82"> 82: </a>        End Subroutine
+<a name="line83"> 83: </a>      End Interface
+
+<a name="line85"> 85: </a>      Interface
+<a name="line86"> 86: </a>        Subroutine <a href="../..90-mod/../docs/manualpages/DMPLEX/DMPlexGetFullJoin.html#DMPlexGetFullJoin">DMPlexGetFullJoin</a>(m,numPoints,points,join,ierr)
+<a name="line87"> 87: </a>          use petscdmdef
+<a name="line88"> 88: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>     numPoints
+<a name="line89"> 89: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>, pointer :: points(:)
+<a name="line90"> 90: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>, pointer :: join(:)
+<a name="line91"> 91: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line92"> 92: </a>          <a href="../..90-mod/../docs/manualpages/DM/DM.html#DM">DM</a> m
+<a name="line93"> 93: </a>        End Subroutine
+<a name="line94"> 94: </a>      End Interface
+
+<a name="line96"> 96: </a>      Interface
+<a name="line97"> 97: </a>        Subroutine <a href="../..90-mod/../docs/manualpages/DMPLEX/DMPlexRestoreJoin.html#DMPlexRestoreJoin">DMPlexRestoreJoin</a>(m,numPoints,points,join,ierr)
+<a name="line98"> 98: </a>          use petscdmdef
+<a name="line99"> 99: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>     numPoints
+<a name="line100">100: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>, pointer :: points(:)
+<a name="line101">101: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>, pointer :: join(:)
+<a name="line102">102: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line103">103: </a>          <a href="../..90-mod/../docs/manualpages/DM/DM.html#DM">DM</a> m
+<a name="line104">104: </a>        End Subroutine
+<a name="line105">105: </a>      End Interface
+
+<a name="line107">107: </a>      Interface
+<a name="line108">108: </a>        Subroutine <a href="../..90-mod/../docs/manualpages/DMPLEX/DMPlexGetMeet.html#DMPlexGetMeet">DMPlexGetMeet</a>(m,numPoints,points,meet,ierr)
+<a name="line109">109: </a>          use petscdmdef
+<a name="line110">110: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>     numPoints
+<a name="line111">111: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>, pointer :: points(:)
+<a name="line112">112: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>, pointer :: meet(:)
+<a name="line113">113: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line114">114: </a>          <a href="../..90-mod/../docs/manualpages/DM/DM.html#DM">DM</a> m
+<a name="line115">115: </a>        End Subroutine
+<a name="line116">116: </a>      End Interface
+
+<a name="line118">118: </a>      Interface
+<a name="line119">119: </a>        Subroutine <a href="../..90-mod/../docs/manualpages/DMPLEX/DMPlexGetFullMeet.html#DMPlexGetFullMeet">DMPlexGetFullMeet</a>(m,numPoints,points,meet,ierr)
+<a name="line120">120: </a>          use petscdmdef
+<a name="line121">121: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>     numPoints
+<a name="line122">122: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>, pointer :: points(:)
+<a name="line123">123: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>, pointer :: meet(:)
+<a name="line124">124: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line125">125: </a>          <a href="../..90-mod/../docs/manualpages/DM/DM.html#DM">DM</a> m
+<a name="line126">126: </a>        End Subroutine
+<a name="line127">127: </a>      End Interface
+
+<a name="line129">129: </a>      Interface
+<a name="line130">130: </a>        Subroutine <a href="../..90-mod/../docs/manualpages/DMPLEX/DMPlexRestoreMeet.html#DMPlexRestoreMeet">DMPlexRestoreMeet</a>(m,numPoints,points,meet,ierr)
+<a name="line131">131: </a>          use petscdmdef
+<a name="line132">132: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>     numPoints
+<a name="line133">133: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>, pointer :: points(:)
+<a name="line134">134: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>, pointer :: meet(:)
+<a name="line135">135: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line136">136: </a>          <a href="../..90-mod/../docs/manualpages/DM/DM.html#DM">DM</a> m
+<a name="line137">137: </a>        End Subroutine
+<a name="line138">138: </a>      End Interface
+
+<a name="line140">140: </a>      Interface
+<a name="line141">141: </a>        Subroutine <a href="../..90-mod/../docs/manualpages/DMPLEX/DMPlexVecGetClosure.html#DMPlexVecGetClosure">DMPlexVecGetClosure</a>(m,section,v,point,values,ierr)
+<a name="line142">142: </a>          use petscdmdef
+<a name="line143">143: </a>          <a href="../..90-mod/../docs/manualpages/IS/PetscSection.html#PetscSection">PetscSection</a> section
+<a name="line144">144: </a>          <a href="../..90-mod/../docs/manualpages/Vec/Vec.html#Vec">Vec</a>     v
+<a name="line145">145: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>     point
+<a name="line146">146: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>, pointer :: values(:)
+<a name="line147">147: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line148">148: </a>          <a href="../..90-mod/../docs/manualpages/DM/DM.html#DM">DM</a> m
+<a name="line149">149: </a>        End Subroutine
+<a name="line150">150: </a>      End Interface
+
+<a name="line152">152: </a>      Interface
+<a name="line153">153: </a>        Subroutine <a href="../..90-mod/../docs/manualpages/DMPLEX/DMPlexVecRestoreClosure.html#DMPlexVecRestoreClosure">DMPlexVecRestoreClosure</a>(m,section,v,point,vs,ierr)
+<a name="line154">154: </a>          use petscdmdef
+<a name="line155">155: </a>          <a href="../..90-mod/../docs/manualpages/IS/PetscSection.html#PetscSection">PetscSection</a> section
+<a name="line156">156: </a>          <a href="../..90-mod/../docs/manualpages/Vec/Vec.html#Vec">Vec</a>     v
+<a name="line157">157: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>     point
+<a name="line158">158: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>, pointer :: vs(:)
+<a name="line159">159: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line160">160: </a>          <a href="../..90-mod/../docs/manualpages/DM/DM.html#DM">DM</a> m
+<a name="line161">161: </a>        End Subroutine
+<a name="line162">162: </a>      End Interface
+
+<a name="line164">164: </a>      Interface
+<a name="line165">165: </a>        Subroutine <a href="../..90-mod/../docs/manualpages/DMPLEX/DMPlexVecSetClosure.html#DMPlexVecSetClosure">DMPlexVecSetClosure</a>(m,sec,v,point,vs,mode,ierr)
+<a name="line166">166: </a>          use petscdmdef
+<a name="line167">167: </a>          <a href="../..90-mod/../docs/manualpages/IS/PetscSection.html#PetscSection">PetscSection</a> sec
+<a name="line168">168: </a>          <a href="../..90-mod/../docs/manualpages/Vec/Vec.html#Vec">Vec</a>     v
+<a name="line169">169: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>     point
+<a name="line170">170: </a>          <a href="../..90-mod/../docs/manualpages/Sys/InsertMode.html#InsertMode">InsertMode</a>   mode
+<a name="line171">171: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>, pointer :: vs(:)
+<a name="line172">172: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line173">173: </a>          <a href="../..90-mod/../docs/manualpages/DM/DM.html#DM">DM</a> m
+<a name="line174">174: </a>        End Subroutine
+<a name="line175">175: </a>      End Interface
+
+<a name="line177">177: </a>      Interface
+<a name="line178">178: </a>        Subroutine <a href="../..90-mod/../docs/manualpages/DMPLEX/DMPlexMatSetClosure.html#DMPlexMatSetClosure">DMPlexMatSetClosure</a>(m,s,gS,A,p,v,mode,ierr)
+<a name="line179">179: </a>          use petscdmdef
+<a name="line180">180: </a>          <a href="../..90-mod/../docs/manualpages/IS/PetscSection.html#PetscSection">PetscSection</a> s
+<a name="line181">181: </a>          <a href="../..90-mod/../docs/manualpages/IS/PetscSection.html#PetscSection">PetscSection</a> gS
+<a name="line182">182: </a>          <a href="../..90-mod/../docs/manualpages/Mat/Mat.html#Mat">Mat</a>     A
+<a name="line183">183: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>     p
+<a name="line184">184: </a>          <a href="../..90-mod/../docs/manualpages/Sys/InsertMode.html#InsertMode">InsertMode</a>   mode
+<a name="line185">185: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>, pointer :: v(:)
+<a name="line186">186: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line187">187: </a>          <a href="../..90-mod/../docs/manualpages/DM/DM.html#DM">DM</a> m
+<a name="line188">188: </a>        End Subroutine
+<a name="line189">189: </a>      End Interface
+
+<a name="line191">191: </a>      Interface
+<a name="line192">192: </a>        Subroutine <a href="../..90-mod/../docs/manualpages/DMPLEX/DMPlexCreateSection.html#DMPlexCreateSection">DMPlexCreateSection</a>(m,d,nF,nC,nD,nB,bF,bC,bP,pm,sc,e)
+<a name="line193">193: </a>          use petscdmdef
+<a name="line194">194: </a>          <a href="../..90-mod/../docs/manualpages/IS/PetscSection.html#PetscSection">PetscSection</a> sc
+<a name="line195">195: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>     d, nF, nB
+<a name="line196">196: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>, pointer :: nC(:)
+<a name="line197">197: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>, pointer :: nD(:)
+<a name="line198">198: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>, pointer :: bF(:)
+<a name="line199">199: </a>          <a href="../..90-mod/../docs/manualpages/IS/IS.html#IS">IS</a>,  pointer :: bC(:)
+<a name="line200">200: </a>          <a href="../..90-mod/../docs/manualpages/IS/IS.html#IS">IS</a>,  pointer :: bP(:)
+<a name="line201">201: </a>          <a href="../..90-mod/../docs/manualpages/IS/IS.html#IS">IS</a> pm
+<a name="line202">202: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> e
+<a name="line203">203: </a>          <a href="../..90-mod/../docs/manualpages/DM/DM.html#DM">DM</a> m
+<a name="line204">204: </a>        End Subroutine
+<a name="line205">205: </a>      End Interface
+
+<a name="line207">207: </a>      Interface
+<a name="line208">208: </a>        Subroutine <a href="../..90-mod/../docs/manualpages/DMPLEX/DMPlexComputeCellGeometryAffineFEM.html#DMPlexComputeCellGeometryAffineFEM">DMPlexComputeCellGeometryAffineFEM</a>(m,c,v0,J,iJ,dJ,er)
+<a name="line209">209: </a>          use petscdmdef
+<a name="line210">210: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>   c
+<a name="line211">211: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>, pointer :: v0(:)
+<a name="line212">212: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>, pointer :: J(:)
+<a name="line213">213: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>, pointer :: iJ(:)
+<a name="line214">214: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>  dJ
+<a name="line215">215: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> er
+<a name="line216">216: </a>          <a href="../..90-mod/../docs/manualpages/DM/DM.html#DM">DM</a> m
+<a name="line217">217: </a>        End Subroutine
+<a name="line218">218: </a>      End Interface
+
+<a name="line220">220: </a>      Interface
+<a name="line221">221: </a>        Subroutine <a href="../..90-mod/../docs/manualpages/DMPLEX/DMPlexComputeCellGeometryFEM.html#DMPlexComputeCellGeometryFEM">DMPlexComputeCellGeometryFEM</a>(m,c,fe,v0,J,iJ,dJ,er)
+<a name="line222">222: </a>          use petscdmdef
+<a name="line223">223: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>   c
+<a name="line224">224: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>, pointer :: v0(:)
+<a name="line225">225: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>, pointer :: J(:)
+<a name="line226">226: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>, pointer :: iJ(:)
+<a name="line227">227: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>  dJ
+<a name="line228">228: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> er
+<a name="line229">229: </a>          <a href="../..90-mod/../docs/manualpages/DM/PetscFE.html#PetscFE">PetscFE</a> fe
+<a name="line230">230: </a>          <a href="../..90-mod/../docs/manualpages/DM/DM.html#DM">DM</a> m
+<a name="line231">231: </a>        End Subroutine
+<a name="line232">232: </a>      End Interface
+
+<a name="line234">234: </a>      Interface
+<a name="line235">235: </a>        Subroutine <a href="../..90-mod/../docs/manualpages/DMPLEX/DMPlexComputeCellGeometryFVM.html#DMPlexComputeCellGeometryFVM">DMPlexComputeCellGeometryFVM</a>(m,cell,vol,ct,nm,ierr)
+<a name="line236">236: </a>          use petscdmdef
+<a name="line237">237: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>   cell
+<a name="line238">238: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>  vol
+<a name="line239">239: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>, pointer :: ct(:)
+<a name="line240">240: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>, pointer :: nm(:)
+<a name="line241">241: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line242">242: </a>          <a href="../..90-mod/../docs/manualpages/DM/DM.html#DM">DM</a> m
+<a name="line243">243: </a>        End Subroutine
+<a name="line244">244: </a>      End Interface
+</pre>
+</body>
+
+</html>

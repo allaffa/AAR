@@ -1,0 +1,44 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML3.2 EN">
+<HTML>
+<HEAD> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/TS/TSGetTimeError.html" />
+<META NAME="GENERATOR" CONTENT="DOCTEXT">
+<TITLE>TSGetTimeError</TITLE>
+</HEAD>
+<BODY BGCOLOR="FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 docs/manualpages/TS/TSGetTimeError.html "><small>Report Typos and Errors</small></a></div>
+<A NAME="TSGetTimeError"><H1>TSGetTimeError</H1></A>
+Returns the estimated error vector, if the chosen <A HREF="../TS/TSType.html#TSType">TSType</A> has an error estimation functionality. 
+<H3><FONT COLOR="#CC3333">Synopsis</FONT></H3>
+<PRE>
+#include "petscts.h"  
+<A HREF="../Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</A>  <A HREF="../TS/TSGetTimeError.html#TSGetTimeError">TSGetTimeError</A>(<A HREF="../TS/TS.html#TS">TS</A> ts,<A HREF="../Sys/PetscInt.html#PetscInt">PetscInt</A> n,<A HREF="../Vec/Vec.html#Vec">Vec</A> *v)
+</PRE>
+Not Collective, but <A HREF="../Vec/Vec.html#Vec">Vec</A> returned is parallel if <A HREF="../TS/TS.html#TS">TS</A> is parallel
+<P>
+Note: MUST call after <A HREF="../TS/TSSetUp.html#TSSetUp">TSSetUp</A>()
+<P>
+<H3><FONT COLOR="#CC3333">Parameters </FONT></H3>
+<DT><B>ts </B> -the <A HREF="../TS/TS.html#TS">TS</A> context obtained from <A HREF="../TS/TSCreate.html#TSCreate">TSCreate</A>() (input parameter).
+<br>
+<DT><B>n </B> -current estimate (n=0) or previous one (n=-1)
+<br>
+<DT><B>v </B> -the vector containing the error (same size as the solution).
+<br>
+<P>
+
+<P>
+<H3><FONT COLOR="#CC3333">See Also</FONT></H3>
+ <A HREF="../TS/TSGetSolution.html#TSGetSolution">TSGetSolution</A>(), <A HREF="../TS/TSSetTimeError.html#TSSetTimeError">TSSetTimeError</A>()
+<BR>
+<P>
+<H3><FONT COLOR="#CC3333">Keywords</FONT></H3>
+ <A HREF="../TS/TS.html#TS">TS</A>, timestep, get, error
+<BR><P><B><P><B><FONT COLOR="#CC3333">Level:</FONT></B>intermediate
+<BR><FONT COLOR="#CC3333">Location:</FONT></B><A HREF="../../../src/ts/interface/ts.c.html#TSGetTimeError">src/ts/interface/ts.c</A>
+<BR><A HREF="./index.html">Index of all TS routines</A>
+<BR><A HREF="../../index.html">Table of Contents for all manual pages</A>
+<BR><A HREF="../singleindex.html">Index of all manual pages</A>
+<P><H3><FONT COLOR="#CC3333">Examples</FONT></H3>
+<A HREF="../../../src/ts/examples/tutorials/ex31.c.html">src/ts/examples/tutorials/ex31.c.html</A><BR>
+</BODY></HTML>

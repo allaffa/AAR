@@ -1,0 +1,306 @@
+<HTML>
+<HEAD> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/DT/index.html" />
+<TITLE>DT Manual Pages</TITLE>
+</HEAD>
+<BODY BGCOLOR="FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 docs/manualpages/DT/index.html "><small>Report Typos and Errors</small></a></div>
+
+<H2> DT <A HREF="../../../src/dm/dt/examples/tutorials/index.html">Examples</A></H2>
+
+DT objects are discretization technology, for instance quadrature, finite element, or finite volume support.
+<P>
+
+<P>
+<TABLE>
+<TR><TD WIDTH=250 COLSPAN="3"><B>Beginner - Basic usage</B></TD></TR>
+ <TD WIDTH=250><A HREF="./PetscDSAddDiscretization.html">PetscDSAddDiscretization</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDSGetFieldSize.html">PetscDSGetFieldSize</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFVCreate.html">PetscFVCreate</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSCreate.html">PetscDSCreate</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDSGetNumFields.html">PetscDSGetNumFields</A></TD>
+ <TD WIDTH=250><A HREF="./PetscLimiterCreate.html">PetscLimiterCreate</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSGetComponentDerivativeOffsets.html">PetscDSGetComponentDerivativeOffsets</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDSGetSpatialDimension.html">PetscDSGetSpatialDimension</A></TD>
+ <TD WIDTH=250><A HREF="./PetscQuadratureCreate.html">PetscQuadratureCreate</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSGetComponentOffset.html">PetscDSGetComponentOffset</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDSGetTotalComponents.html">PetscDSGetTotalComponents</A></TD>
+ <TD WIDTH=250><A HREF="./PetscQuadratureDestroy.html">PetscQuadratureDestroy</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSGetComponentOffsets.html">PetscDSGetComponentOffsets</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDSGetTotalDimension.html">PetscDSGetTotalDimension</A></TD>
+ <TD WIDTH=250><A HREF="./PetscQuadratureDuplicate.html">PetscQuadratureDuplicate</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSGetComponents.html">PetscDSGetComponents</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDSSetDiscretization.html">PetscDSSetDiscretization</A></TD>
+ <TD WIDTH=250><A HREF="./PetscQuadratureView.html">PetscQuadratureView</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSGetDimensions.html">PetscDSGetDimensions</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDualSpaceCreate.html">PetscDualSpaceCreate</A></TD>
+ <TD WIDTH=250><A HREF="./PetscSpaceCreate.html">PetscSpaceCreate</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSGetDiscretization.html">PetscDSGetDiscretization</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDualSpaceDuplicate.html">PetscDualSpaceDuplicate</A></TD>
+ <TD WIDTH=250><A HREF="./PetscSpacePolynomialGetTensor.html">PetscSpacePolynomialGetTensor</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSGetFieldIndex.html">PetscDSGetFieldIndex</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFECreate.html">PetscFECreate</A></TD>
+ <TD WIDTH=250><A HREF="./PetscSpacePolynomialSetTensor.html">PetscSpacePolynomialSetTensor</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSGetFieldOffset.html">PetscDSGetFieldOffset</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFECreateDefault.html">PetscFECreateDefault</A></TD>
+ <TD WIDTH=250><A HREF="./"></A></TD>
+<TR>
+<TR><TD WIDTH=250 COLSPAN="3"><B>Intermediate - Setting options for algorithms and data structures</B></TD></TR>
+ <TD WIDTH=250><A HREF="./PETSCDSBASIC.html">PETSCDSBASIC</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDSSetBdResidual.html">PetscDSSetBdResidual</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFEGetNumComponents.html">PetscFEGetNumComponents</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PETSCDUALSPACELAGRANGE.html">PETSCDUALSPACELAGRANGE</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDSSetConstants.html">PetscDSSetConstants</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFEGetNumDof.html">PetscFEGetNumDof</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PETSCDUALSPACESIMPLE.html">PETSCDUALSPACESIMPLE</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDSSetDynamicJacobian.html">PetscDSSetDynamicJacobian</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFEGetQuadrature.html">PetscFEGetQuadrature</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PETSCFEBASIC.html">PETSCFEBASIC</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDSSetExactSolution.html">PetscDSSetExactSolution</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFEGetSpatialDimension.html">PetscFEGetSpatialDimension</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PETSCFECOMPOSITE.html">PETSCFECOMPOSITE</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDSSetJacobian.html">PetscDSSetJacobian</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFEGetTabulation.html">PetscFEGetTabulation</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PETSCFENONAFFINE.html">PETSCFENONAFFINE</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDSSetJacobianPreconditioner.html">PetscDSSetJacobianPreconditioner</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFEGetTileSizes.html">PetscFEGetTileSizes</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PETSCFEOPENCL.html">PETSCFEOPENCL</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDSSetResidual.html">PetscDSSetResidual</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFEGetType.html">PetscFEGetType</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PETSCFVLEASTSQUARES.html">PETSCFVLEASTSQUARES</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDSSetRiemannSolver.html">PetscDSSetRiemannSolver</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFESetBasisSpace.html">PetscFESetBasisSpace</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PETSCFVUPWIND.html">PETSCFVUPWIND</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDSSetType.html">PetscDSSetType</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFESetDualSpace.html">PetscFESetDualSpace</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PETSCLIMITERMC.html">PETSCLIMITERMC</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDSSetUpdate.html">PetscDSSetUpdate</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFESetFaceQuadrature.html">PetscFESetFaceQuadrature</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PETSCLIMITERMINMOD.html">PETSCLIMITERMINMOD</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDTGaussJacobiQuadrature.html">PetscDTGaussJacobiQuadrature</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFESetNumComponents.html">PetscFESetNumComponents</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PETSCLIMITERNONE.html">PETSCLIMITERNONE</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDTGaussQuadrature.html">PetscDTGaussQuadrature</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFESetQuadrature.html">PetscFESetQuadrature</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PETSCLIMITERSIN.html">PETSCLIMITERSIN</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDTGaussTensorQuadrature.html">PetscDTGaussTensorQuadrature</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFESetTileSizes.html">PetscFESetTileSizes</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PETSCLIMITERSUPERBEE.html">PETSCLIMITERSUPERBEE</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDTLegendreEval.html">PetscDTLegendreEval</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFESetType.html">PetscFESetType</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PETSCLIMITERVANALBADA.html">PETSCLIMITERVANALBADA</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDTTanhSinhTensorQuadrature.html">PetscDTTanhSinhTensorQuadrature</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFVGetType.html">PetscFVGetType</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PETSCLIMITERVANLEER.html">PETSCLIMITERVANLEER</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDualSpaceGetDM.html">PetscDualSpaceGetDM</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFVLeastSquaresSetMaxFaces.html">PetscFVLeastSquaresSetMaxFaces</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PETSCLIMITERZERO.html">PETSCLIMITERZERO</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDualSpaceGetDimension.html">PetscDualSpaceGetDimension</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFVSetDualSpace.html">PetscFVSetDualSpace</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PETSCSPACEPOINT.html">PETSCSPACEPOINT</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDualSpaceGetFunctional.html">PetscDualSpaceGetFunctional</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFVSetType.html">PetscFVSetType</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PETSCSPACEPOLYNOMIAL.html">PETSCSPACEPOLYNOMIAL</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDualSpaceGetNumComponents.html">PetscDualSpaceGetNumComponents</A></TD>
+ <TD WIDTH=250><A HREF="./PetscLimiterGetType.html">PetscLimiterGetType</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSCopyEquations.html">PetscDSCopyEquations</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDualSpaceGetNumDof.html">PetscDualSpaceGetNumDof</A></TD>
+ <TD WIDTH=250><A HREF="./PetscLimiterSetType.html">PetscLimiterSetType</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSGetBdJacobian.html">PetscDSGetBdJacobian</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDualSpaceGetOrder.html">PetscDualSpaceGetOrder</A></TD>
+ <TD WIDTH=250><A HREF="./PetscQuadratureExpandComposite.html">PetscQuadratureExpandComposite</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSGetBdResidual.html">PetscDSGetBdResidual</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDualSpaceGetType.html">PetscDualSpaceGetType</A></TD>
+ <TD WIDTH=250><A HREF="./PetscQuadratureGetData.html">PetscQuadratureGetData</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSGetConstants.html">PetscDSGetConstants</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDualSpaceLagrangeGetContinuity.html">PetscDualSpaceLagrangeGetContinuity</A></TD>
+ <TD WIDTH=250><A HREF="./PetscQuadratureGetNumComponents.html">PetscQuadratureGetNumComponents</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSGetDynamicJacobian.html">PetscDSGetDynamicJacobian</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDualSpaceLagrangeGetTensor.html">PetscDualSpaceLagrangeGetTensor</A></TD>
+ <TD WIDTH=250><A HREF="./PetscQuadratureGetOrder.html">PetscQuadratureGetOrder</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSGetExactSolution.html">PetscDSGetExactSolution</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDualSpaceLagrangeSetContinuity.html">PetscDualSpaceLagrangeSetContinuity</A></TD>
+ <TD WIDTH=250><A HREF="./PetscQuadratureSetData.html">PetscQuadratureSetData</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSGetFaceTabulation.html">PetscDSGetFaceTabulation</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDualSpaceLagrangeSetTensor.html">PetscDualSpaceLagrangeSetTensor</A></TD>
+ <TD WIDTH=250><A HREF="./PetscQuadratureSetNumComponents.html">PetscQuadratureSetNumComponents</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSGetJacobian.html">PetscDSGetJacobian</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDualSpaceSetDM.html">PetscDualSpaceSetDM</A></TD>
+ <TD WIDTH=250><A HREF="./PetscQuadratureSetOrder.html">PetscQuadratureSetOrder</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSGetJacobianPreconditioner.html">PetscDSGetJacobianPreconditioner</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDualSpaceSetNumComponents.html">PetscDualSpaceSetNumComponents</A></TD>
+ <TD WIDTH=250><A HREF="./PetscSpaceGetDimension.html">PetscSpaceGetDimension</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSGetNumBoundary.html">PetscDSGetNumBoundary</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDualSpaceSetOrder.html">PetscDualSpaceSetOrder</A></TD>
+ <TD WIDTH=250><A HREF="./PetscSpaceGetNumComponents.html">PetscSpaceGetNumComponents</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSGetResidual.html">PetscDSGetResidual</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDualSpaceSetType.html">PetscDualSpaceSetType</A></TD>
+ <TD WIDTH=250><A HREF="./PetscSpaceGetOrder.html">PetscSpaceGetOrder</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSGetRiemannSolver.html">PetscDSGetRiemannSolver</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDualSpaceSimpleSetDimension.html">PetscDualSpaceSimpleSetDimension</A></TD>
+ <TD WIDTH=250><A HREF="./PetscSpaceGetType.html">PetscSpaceGetType</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSGetTabulation.html">PetscDSGetTabulation</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDualSpaceSimpleSetFunctional.html">PetscDualSpaceSimpleSetFunctional</A></TD>
+ <TD WIDTH=250><A HREF="./PetscSpacePointGetPoints.html">PetscSpacePointGetPoints</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSGetType.html">PetscDSGetType</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFECompositeGetMapping.html">PetscFECompositeGetMapping</A></TD>
+ <TD WIDTH=250><A HREF="./PetscSpacePointSetPoints.html">PetscSpacePointSetPoints</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSGetUpdate.html">PetscDSGetUpdate</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFEGetBasisSpace.html">PetscFEGetBasisSpace</A></TD>
+ <TD WIDTH=250><A HREF="./PetscSpaceSetNumComponents.html">PetscSpaceSetNumComponents</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSHasDynamicJacobian.html">PetscDSHasDynamicJacobian</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFEGetDefaultTabulation.html">PetscFEGetDefaultTabulation</A></TD>
+ <TD WIDTH=250><A HREF="./PetscSpaceSetOrder.html">PetscSpaceSetOrder</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSHasJacobian.html">PetscDSHasJacobian</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFEGetDimension.html">PetscFEGetDimension</A></TD>
+ <TD WIDTH=250><A HREF="./PetscSpaceSetType.html">PetscSpaceSetType</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSHasJacobianPreconditioner.html">PetscDSHasJacobianPreconditioner</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFEGetDualSpace.html">PetscFEGetDualSpace</A></TD>
+ <TD WIDTH=250><A HREF="./"></A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSSetBdJacobian.html">PetscDSSetBdJacobian</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFEGetFaceQuadrature.html">PetscFEGetFaceQuadrature</A></TD>
+ <TD WIDTH=250><A HREF="./"></A></TD>
+<TR>
+<TR><TD WIDTH=250 COLSPAN="3"><B>Advanced - Setting more advanced options and customization</B></TD></TR>
+ <TD WIDTH=250><A HREF="./PetscDSRegister.html">PetscDSRegister</A></TD>
+ <TD WIDTH=250><A HREF="./PetscDualSpaceRegister.html">PetscDualSpaceRegister</A></TD>
+ <TD WIDTH=250><A HREF="./PetscSpaceEvaluate.html">PetscSpaceEvaluate</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDTReconstructPoly.html">PetscDTReconstructPoly</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFERegister.html">PetscFERegister</A></TD>
+ <TD WIDTH=250><A HREF="./PetscSpaceGetHeightSubspace.html">PetscSpaceGetHeightSubspace</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDualSpaceCreateReferenceCell.html">PetscDualSpaceCreateReferenceCell</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFVRegister.html">PetscFVRegister</A></TD>
+ <TD WIDTH=250><A HREF="./PetscSpaceRegister.html">PetscSpaceRegister</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDualSpaceGetHeightSubspace.html">PetscDualSpaceGetHeightSubspace</A></TD>
+ <TD WIDTH=250><A HREF="./PetscLimiterRegister.html">PetscLimiterRegister</A></TD>
+ <TD WIDTH=250><A HREF="./"></A></TD>
+<TR>
+<TR><TD WIDTH=250 COLSPAN="3"><B>Developer - Interfaces intended primarily for library developers, not for typical applications programmers</B></TD></TR>
+ <TD WIDTH=250><A HREF="./PetscDSAddBoundary.html">PetscDSAddBoundary</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFEIntegrate.html">PetscFEIntegrate</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFVSetComponentName.html">PetscFVSetComponentName</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSDestroy.html">PetscDSDestroy</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFEIntegrateBdJacobian.html">PetscFEIntegrateBdJacobian</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFVSetComputeGradients.html">PetscFVSetComputeGradients</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSGetAdjacency.html">PetscDSGetAdjacency</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFEIntegrateBdResidual.html">PetscFEIntegrateBdResidual</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFVSetFromOptions.html">PetscFVSetFromOptions</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSGetBoundary.html">PetscDSGetBoundary</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFEIntegrateJacobian.html">PetscFEIntegrateJacobian</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFVSetLimiter.html">PetscFVSetLimiter</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSGetImplicit.html">PetscDSGetImplicit</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFEIntegrateResidual.html">PetscFEIntegrateResidual</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFVSetNumComponents.html">PetscFVSetNumComponents</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSSetAdjacency.html">PetscDSSetAdjacency</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFERefine.html">PetscFERefine</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFVSetQuadrature.html">PetscFVSetQuadrature</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSSetFromOptions.html">PetscDSSetFromOptions</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFESetFromOptions.html">PetscFESetFromOptions</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFVSetSpatialDimension.html">PetscFVSetSpatialDimension</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSSetImplicit.html">PetscDSSetImplicit</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFESetUp.html">PetscFESetUp</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFVSetUp.html">PetscFVSetUp</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSSetUp.html">PetscDSSetUp</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFEView.html">PetscFEView</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFVView.html">PetscFVView</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDSView.html">PetscDSView</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFVComputeGradient.html">PetscFVComputeGradient</A></TD>
+ <TD WIDTH=250><A HREF="./PetscLimiterDestroy.html">PetscLimiterDestroy</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDualSpaceApply.html">PetscDualSpaceApply</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFVDestroy.html">PetscFVDestroy</A></TD>
+ <TD WIDTH=250><A HREF="./PetscLimiterSetFromOptions.html">PetscLimiterSetFromOptions</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDualSpaceApplyDefault.html">PetscDualSpaceApplyDefault</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFVGetComponentName.html">PetscFVGetComponentName</A></TD>
+ <TD WIDTH=250><A HREF="./PetscLimiterSetUp.html">PetscLimiterSetUp</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDualSpaceApplyFVM.html">PetscDualSpaceApplyFVM</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFVGetComputeGradients.html">PetscFVGetComputeGradients</A></TD>
+ <TD WIDTH=250><A HREF="./PetscLimiterView.html">PetscLimiterView</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDualSpaceDestroy.html">PetscDualSpaceDestroy</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFVGetDualSpace.html">PetscFVGetDualSpace</A></TD>
+ <TD WIDTH=250><A HREF="./PetscSpaceDestroy.html">PetscSpaceDestroy</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDualSpaceGetSymmetries.html">PetscDualSpaceGetSymmetries</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFVGetLimiter.html">PetscFVGetLimiter</A></TD>
+ <TD WIDTH=250><A HREF="./PetscSpaceSetFromOptions.html">PetscSpaceSetFromOptions</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDualSpaceSetFromOptions.html">PetscDualSpaceSetFromOptions</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFVGetNumComponents.html">PetscFVGetNumComponents</A></TD>
+ <TD WIDTH=250><A HREF="./PetscSpaceSetUp.html">PetscSpaceSetUp</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDualSpaceSetUp.html">PetscDualSpaceSetUp</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFVGetQuadrature.html">PetscFVGetQuadrature</A></TD>
+ <TD WIDTH=250><A HREF="./PetscSpaceView.html">PetscSpaceView</A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscDualSpaceView.html">PetscDualSpaceView</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFVGetSpatialDimension.html">PetscFVGetSpatialDimension</A></TD>
+ <TD WIDTH=250><A HREF="./"></A></TD>
+<TR>
+ <TD WIDTH=250><A HREF="./PetscFEDestroy.html">PetscFEDestroy</A></TD>
+ <TD WIDTH=250><A HREF="./PetscFVRefine.html">PetscFVRefine</A></TD>
+ <TD WIDTH=250><A HREF="./"></A></TD>
+<TR>
+<TR><TD WIDTH=250 COLSPAN="3"><B>No deprecated routines</B></TD></TR>
+</TABLE>
+<BR><A HREF="../../index.html">Table of Contents</A>

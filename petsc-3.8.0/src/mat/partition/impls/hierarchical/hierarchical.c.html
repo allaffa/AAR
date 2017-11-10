@@ -1,0 +1,398 @@
+<center><a href="hierarchical.c">Actual source code: hierarchical.c</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/mat/partition/impls/hierarchical/hierarchical.c.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:36:33+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/mat/partition/impls/hierarchical/hierarchical.c.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+
+<a name="line2">  2: </a> #include <A href="../../../../../include/../src/mat/impls/adj/mpi/mpiadj.h.html">&lt;../src/mat/impls/adj/mpi/mpiadj.h&gt;</A>
+<a name="line3">  3: </a> #include <A href="../../../../../include/petscsf.h.html">&lt;petscsf.h&gt;</A>
+<a name="line4">  4: </a> #include <A href="../../../../../include/petsc/private/matimpl.h.html">&lt;petsc/private/matimpl.h&gt;</A>
+
+<a name="line6">  6: </a><font color="#B22222">/*</font>
+<a name="line7">  7: </a><font color="#B22222">  It is a hierarchical partitioning. The partitioner has two goals:</font>
+<a name="line8">  8: </a><font color="#B22222">  (1) Most of current partitioners fail at a large scale. The hierarchical partitioning</font>
+<a name="line9">  9: </a><font color="#B22222">  strategy is trying to produce large number of subdomains when number of processor cores is large.</font>
+<a name="line10"> 10: </a><font color="#B22222">  (2) <a href="../../../../../docs/manualpages/PC/PCGASM.html#PCGASM">PCGASM</a> needs one 'big' subdomain across multi-cores. The partitioner provides two</font>
+<a name="line11"> 11: </a><font color="#B22222">  consistent partitions, coarse parts and fine parts. A coarse part is a 'big' subdomain consisting</font>
+<a name="line12"> 12: </a><font color="#B22222">  of several small subdomains.</font>
+<a name="line13"> 13: </a><font color="#B22222">*/</font>
+
+<a name="line15"> 15: </a><strong><font color="#4169E1"><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatPartitioningHierarchical_DetermineDestination(<a href="../../../../../docs/manualpages/Mat/MatPartitioning.html#MatPartitioning">MatPartitioning</a> part, <a href="../../../../../docs/manualpages/IS/IS.html#IS">IS</a> partitioning, <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> pstart, <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> pend, <a href="../../../../../docs/manualpages/IS/IS.html#IS">IS</a> *destination)</font></strong>;
+<a name="line16"> 16: </a><strong><font color="#4169E1"><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatPartitioningHierarchical_AssembleSubdomain(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> adj,<a href="../../../../../docs/manualpages/IS/IS.html#IS">IS</a> destination,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> *sadj, <a href="../../../../../docs/manualpages/IS/ISLocalToGlobalMapping.html#ISLocalToGlobalMapping">ISLocalToGlobalMapping</a> *mapping)</font></strong>;
+<a name="line17"> 17: </a><strong><font color="#4169E1"><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatPartitioningHierarchical_ReassembleFineparts(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> adj, <a href="../../../../../docs/manualpages/IS/IS.html#IS">IS</a> fineparts, <a href="../../../../../docs/manualpages/IS/ISLocalToGlobalMapping.html#ISLocalToGlobalMapping">ISLocalToGlobalMapping</a> mapping, <a href="../../../../../docs/manualpages/IS/IS.html#IS">IS</a> *sfineparts)</font></strong>;
+
+<a name="line19"> 19: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line20"> 20: </a>  char*                fineparttype; <font color="#B22222">/* partitioner on fine level */</font>
+<a name="line21"> 21: </a>  char*                coarseparttype; <font color="#B22222">/* partitioner on coarse level */</font>
+<a name="line22"> 22: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>             Nfineparts; <font color="#B22222">/* number of fine parts on each coarse subdomain */</font>
+<a name="line23"> 23: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>             Ncoarseparts; <font color="#B22222">/* number of coarse parts */</font>
+<a name="line24"> 24: </a>  <a href="../../../../../docs/manualpages/IS/IS.html#IS">IS</a>                   coarseparts; <font color="#B22222">/* partitioning on coarse level */</font>
+<a name="line25"> 25: </a>  <a href="../../../../../docs/manualpages/IS/IS.html#IS">IS</a>                   fineparts; <font color="#B22222">/* partitioning on fine level */</font>
+<a name="line26"> 26: </a>} MatPartitioning_Hierarchical;
+
+<a name="line28"> 28: </a><font color="#B22222">/*</font>
+<a name="line29"> 29: </a><font color="#B22222">   Uses a hierarchical partitioning strategy to partition the matrix in parallel.</font>
+<a name="line30"> 30: </a><font color="#B22222">   Use this interface to make the partitioner consistent with others</font>
+<a name="line31"> 31: </a><font color="#B22222">*/</font>
+<a name="line32"> 32: </a><strong><font color="#4169E1"><a name="MatPartitioningApply_Hierarchical"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatPartitioningApply_Hierarchical(<a href="../../../../../docs/manualpages/Mat/MatPartitioning.html#MatPartitioning">MatPartitioning</a> part,<a href="../../../../../docs/manualpages/IS/IS.html#IS">IS</a> *partitioning)</font></strong>
+<a name="line33"> 33: </a>{
+<a name="line34"> 34: </a>  MatPartitioning_Hierarchical *hpart  = (MatPartitioning_Hierarchical*)part-&gt;data;
+<a name="line35"> 35: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>               *fineparts_indices, *coarseparts_indices;
+<a name="line36"> 36: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>                     *parts_indices,i,j,mat_localsize;
+<a name="line37"> 37: </a>  <a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>                           mat    = part-&gt;adj,adj,sadj;
+<a name="line38"> 38: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>                     flg;
+<a name="line39"> 39: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>                      bs     = 1;
+<a name="line40"> 40: </a>  <a href="../../../../../docs/manualpages/Mat/MatPartitioning.html#MatPartitioning">MatPartitioning</a>               finePart, coarsePart;
+<a name="line41"> 41: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>                     *coarse_vertex_weights = 0;
+<a name="line42"> 42: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>                   size,rank;
+<a name="line43"> 43: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a>                      comm,scomm;
+<a name="line44"> 44: </a>  <a href="../../../../../docs/manualpages/IS/IS.html#IS">IS</a>                            destination,fineparts_temp;
+<a name="line45"> 45: </a>  <a href="../../../../../docs/manualpages/IS/ISLocalToGlobalMapping.html#ISLocalToGlobalMapping">ISLocalToGlobalMapping</a>        mapping;
+<a name="line46"> 46: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>                ierr;
+
+<a name="line49"> 49: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectGetComm.html#PetscObjectGetComm">PetscObjectGetComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)part,&amp;comm);
+<a name="line50"> 50: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm,&amp;size);
+<a name="line51"> 51: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm,&amp;rank);
+<a name="line52"> 52: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)mat,<a href="../../../../../docs/manualpages/Mat/MATMPIADJ.html#MATMPIADJ">MATMPIADJ</a>,&amp;flg);
+<a name="line53"> 53: </a>  <font color="#4169E1">if</font> (flg) {
+<a name="line54"> 54: </a>    adj = mat;
+<a name="line55"> 55: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html#PetscObjectReference">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)adj);
+<a name="line56"> 56: </a>  }<font color="#4169E1">else</font> {
+<a name="line57"> 57: </a>    <font color="#B22222">/* bs indicates if the converted matrix is "reduced" from the original and hence the</font>
+<a name="line58"> 58: </a><font color="#B22222">       resulting partition results need to be stretched to match the original matrix */</font>
+<a name="line59"> 59: </a>   <a href="../../../../../docs/manualpages/Mat/MatConvert.html#MatConvert">MatConvert</a>(mat,<a href="../../../../../docs/manualpages/Mat/MATMPIADJ.html#MATMPIADJ">MATMPIADJ</a>,<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MAT_INITIAL_MATRIX</a>,&amp;adj);
+<a name="line60"> 60: </a>   <font color="#4169E1">if</font> (adj-&gt;rmap-&gt;n &gt; 0) bs = mat-&gt;rmap-&gt;n/adj-&gt;rmap-&gt;n;
+<a name="line61"> 61: </a>  }
+<a name="line62"> 62: </a>  <font color="#B22222">/* local size of mat */</font>
+<a name="line63"> 63: </a>  mat_localsize = adj-&gt;rmap-&gt;n;
+<a name="line64"> 64: </a>  <font color="#B22222">/* check parameters */</font>
+<a name="line65"> 65: </a>  <font color="#B22222">/* how many small subdomains we want from a given 'big' suddomain */</font>
+<a name="line66"> 66: </a>  <font color="#4169E1">if</font>(!hpart-&gt;Nfineparts) <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_WRONG,<font color="#666666">" must set number of small subdomains for each big subdomain \n"</font>);
+<a name="line67"> 67: </a>  <font color="#4169E1">if</font>(!hpart-&gt;Ncoarseparts &amp;&amp; !part-&gt;n) <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_WRONGSTATE,<font color="#666666">" did not either set number of coarse parts or total number of parts \n"</font>);
+<a name="line68"> 68: </a>  <font color="#4169E1">if</font>(part-&gt;n &amp;&amp; part-&gt;n%hpart-&gt;Nfineparts!=0) <a href="../../../../../docs/manualpages/Sys/SETERRQ2.html#SETERRQ2">SETERRQ2</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_INCOMP,
+<a name="line69"> 69: </a>                   <font color="#666666">" total number of parts %D can not be divided by number of fine parts %D\n"</font>,part-&gt;n,hpart-&gt;Nfineparts);
+<a name="line70"> 70: </a>  <font color="#4169E1">if</font>(part-&gt;n){
+<a name="line71"> 71: </a>    hpart-&gt;Ncoarseparts = part-&gt;n/hpart-&gt;Nfineparts;
+<a name="line72"> 72: </a>  }<font color="#4169E1">else</font>{
+<a name="line73"> 73: </a>        part-&gt;n = hpart-&gt;Ncoarseparts*hpart-&gt;Nfineparts;
+<a name="line74"> 74: </a>  }
+<a name="line75"> 75: </a>   <font color="#B22222">/* we do not support this case currently, but this restriction should be</font>
+<a name="line76"> 76: </a><font color="#B22222">     * removed in the further</font>
+<a name="line77"> 77: </a><font color="#B22222">     * */</font>
+<a name="line78"> 78: </a>  <font color="#4169E1">if</font>(hpart-&gt;Ncoarseparts&gt;size) <a href="../../../../../docs/manualpages/Sys/SETERRQ2.html#SETERRQ2">SETERRQ2</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_SUP,<font color="#666666">" we do not support number of coarse parts %D &gt; size %D \n"</font>,hpart-&gt;Ncoarseparts,size);
+<a name="line79"> 79: </a>  <a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningCreate.html#MatPartitioningCreate">MatPartitioningCreate</a>(comm,&amp;coarsePart);
+<a name="line80"> 80: </a>    <font color="#B22222">/* if did not set partitioning type yet, use parmetis by default */</font>
+<a name="line81"> 81: </a>  <font color="#4169E1">if</font> (!hpart-&gt;coarseparttype){
+<a name="line82"> 82: </a><font color="#A020F0">#if defined(PETSC_HAVE_PARMETIS)</font>
+<a name="line83"> 83: </a>    <a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningSetType.html#MatPartitioningSetType">MatPartitioningSetType</a>(coarsePart,<a href="../../../../../docs/manualpages/MatOrderings/MATPARTITIONINGPARMETIS.html#MATPARTITIONINGPARMETIS">MATPARTITIONINGPARMETIS</a>);
+<a name="line84"> 84: </a><font color="#A020F0">#else</font>
+<a name="line85"> 85: </a>    <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)mat),PETSC_ERR_SUP,<font color="#666666">"Requires PETSc be installed with ParMetis or run with -mat_partitioning_hierarchical_coarseparttype partitiontype"</font>);
+<a name="line86"> 86: </a><font color="#A020F0">#endif</font>
+<a name="line87"> 87: </a>  } <font color="#4169E1">else</font> {
+<a name="line88"> 88: </a>    <a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningSetType.html#MatPartitioningSetType">MatPartitioningSetType</a>(coarsePart,hpart-&gt;coarseparttype);
+<a name="line89"> 89: </a>  }
+<a name="line90"> 90: </a>  <a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningSetAdjacency.html#MatPartitioningSetAdjacency">MatPartitioningSetAdjacency</a>(coarsePart,adj);
+<a name="line91"> 91: </a>  <a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningSetNParts.html#MatPartitioningSetNParts">MatPartitioningSetNParts</a>(coarsePart, hpart-&gt;Ncoarseparts);
+<a name="line92"> 92: </a>  <font color="#B22222">/* copy over vertex weights */</font>
+<a name="line93"> 93: </a>  <font color="#4169E1">if</font>(part-&gt;vertex_weights){
+<a name="line94"> 94: </a>   <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(mat_localsize,&amp;coarse_vertex_weights);
+<a name="line95"> 95: </a>   <a href="../../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(coarse_vertex_weights,part-&gt;vertex_weights,<font color="#4169E1">sizeof</font>(<a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>)*mat_localsize);
+<a name="line96"> 96: </a>   <a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningSetVertexWeights.html#MatPartitioningSetVertexWeights">MatPartitioningSetVertexWeights</a>(coarsePart,coarse_vertex_weights);
+<a name="line97"> 97: </a>  }
+<a name="line98"> 98: </a>  <font color="#B22222">/* It looks nontrivial to support part weights,</font>
+<a name="line99"> 99: </a><font color="#B22222">   * I will return back to implement it when have</font>
+<a name="line100">100: </a><font color="#B22222">   * an idea.</font>
+<a name="line101">101: </a><font color="#B22222">   *  */</font>
+<a name="line102">102: </a>  <a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningApply.html#MatPartitioningApply">MatPartitioningApply</a>(coarsePart,&amp;hpart-&gt;coarseparts);
+<a name="line103">103: </a>  <a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningDestroy.html#MatPartitioningDestroy">MatPartitioningDestroy</a>(&amp;coarsePart);
+<a name="line104">104: </a>  <font color="#B22222">/* In the current implementation, destination should be the same as hpart-&gt;coarseparts,</font>
+<a name="line105">105: </a><font color="#B22222">   * and this interface is preserved to deal with the case hpart-&gt;coarseparts&gt;size in the</font>
+<a name="line106">106: </a><font color="#B22222">   * future.</font>
+<a name="line107">107: </a><font color="#B22222">   * */</font>
+<a name="line108">108: </a>  MatPartitioningHierarchical_DetermineDestination(part,hpart-&gt;coarseparts,0,hpart-&gt;Ncoarseparts,&amp;destination);
+<a name="line109">109: </a>  <font color="#B22222">/* assemble a submatrix for partitioning subdomains  */</font>
+<a name="line110">110: </a>  MatPartitioningHierarchical_AssembleSubdomain(adj,destination,&amp;sadj,&amp;mapping);
+<a name="line111">111: </a>  <a href="../../../../../docs/manualpages/IS/ISDestroy.html#ISDestroy">ISDestroy</a>(&amp;destination);
+<a name="line112">112: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectGetComm.html#PetscObjectGetComm">PetscObjectGetComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sadj,&amp;scomm);
+<a name="line113">113: </a>  <font color="#B22222">/* create a fine partitioner */</font>
+<a name="line114">114: </a>  <a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningCreate.html#MatPartitioningCreate">MatPartitioningCreate</a>(scomm,&amp;finePart);
+<a name="line115">115: </a>  <font color="#B22222">/* if do not set partitioning type, use parmetis by default */</font>
+<a name="line116">116: </a>  <font color="#4169E1">if</font>(!hpart-&gt;fineparttype){
+<a name="line117">117: </a><font color="#A020F0">#if defined(PETSC_HAVE_PARMETIS)</font>
+<a name="line118">118: </a>    <a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningSetType.html#MatPartitioningSetType">MatPartitioningSetType</a>(finePart,<a href="../../../../../docs/manualpages/MatOrderings/MATPARTITIONINGPARMETIS.html#MATPARTITIONINGPARMETIS">MATPARTITIONINGPARMETIS</a>);
+<a name="line119">119: </a><font color="#A020F0">#else</font>
+<a name="line120">120: </a>    <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)mat),PETSC_ERR_SUP,<font color="#666666">"Requires PETSc be installed with ParMetis or run with -mat_partitioning_hierarchical_coarseparttype partitiontype"</font>);
+<a name="line121">121: </a><font color="#A020F0">#endif</font>
+<a name="line122">122: </a>  } <font color="#4169E1">else</font> {
+<a name="line123">123: </a>    <a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningSetType.html#MatPartitioningSetType">MatPartitioningSetType</a>(finePart,hpart-&gt;fineparttype);
+<a name="line124">124: </a>  }
+<a name="line125">125: </a>  <a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningSetAdjacency.html#MatPartitioningSetAdjacency">MatPartitioningSetAdjacency</a>(finePart,sadj);
+<a name="line126">126: </a>  <a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningSetNParts.html#MatPartitioningSetNParts">MatPartitioningSetNParts</a>(finePart, hpart-&gt;Nfineparts);
+<a name="line127">127: </a>  <a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningApply.html#MatPartitioningApply">MatPartitioningApply</a>(finePart,&amp;fineparts_temp);
+<a name="line128">128: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;sadj);
+<a name="line129">129: </a>  <a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningDestroy.html#MatPartitioningDestroy">MatPartitioningDestroy</a>(&amp;finePart);
+<a name="line130">130: </a>  MatPartitioningHierarchical_ReassembleFineparts(adj,fineparts_temp,mapping,&amp;hpart-&gt;fineparts);
+<a name="line131">131: </a>  <a href="../../../../../docs/manualpages/IS/ISDestroy.html#ISDestroy">ISDestroy</a>(&amp;fineparts_temp);
+<a name="line132">132: </a>  <a href="../../../../../docs/manualpages/IS/ISLocalToGlobalMappingDestroy.html#ISLocalToGlobalMappingDestroy">ISLocalToGlobalMappingDestroy</a>(&amp;mapping);
+
+<a name="line134">134: </a>  <a href="../../../../../docs/manualpages/IS/ISGetIndices.html#ISGetIndices">ISGetIndices</a>(hpart-&gt;fineparts,&amp;fineparts_indices);
+<a name="line135">135: </a>  <a href="../../../../../docs/manualpages/IS/ISGetIndices.html#ISGetIndices">ISGetIndices</a>(hpart-&gt;coarseparts,&amp;coarseparts_indices);
+<a name="line136">136: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(bs*adj-&gt;rmap-&gt;n,&amp;parts_indices);
+<a name="line137">137: </a>  <font color="#4169E1">for</font>(i=0; i&lt;adj-&gt;rmap-&gt;n; i++){
+<a name="line138">138: </a>    <font color="#4169E1">for</font>(j=0; j&lt;bs; j++){
+<a name="line139">139: </a>      parts_indices[bs*i+j] = fineparts_indices[i]+coarseparts_indices[i]*hpart-&gt;Nfineparts;
+<a name="line140">140: </a>    }
+<a name="line141">141: </a>  }
+<a name="line142">142: </a>  <a href="../../../../../docs/manualpages/IS/ISCreateGeneral.html#ISCreateGeneral">ISCreateGeneral</a>(comm,bs*adj-&gt;rmap-&gt;n,parts_indices,<a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_OWN_POINTER</a>,partitioning);
+<a name="line143">143: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;adj);
+<a name="line144">144: </a>  <font color="#4169E1">return</font>(0);
+<a name="line145">145: </a>}
+
+
+<a name="line148">148: </a><strong><font color="#4169E1"><a name="MatPartitioningHierarchical_ReassembleFineparts"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatPartitioningHierarchical_ReassembleFineparts(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> adj, <a href="../../../../../docs/manualpages/IS/IS.html#IS">IS</a> fineparts, <a href="../../../../../docs/manualpages/IS/ISLocalToGlobalMapping.html#ISLocalToGlobalMapping">ISLocalToGlobalMapping</a> mapping, <a href="../../../../../docs/manualpages/IS/IS.html#IS">IS</a> *sfineparts)</font></strong>
+<a name="line149">149: </a>{
+<a name="line150">150: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            *local_indices, *global_indices,*owners,*sfineparts_indices,localsize,i;
+<a name="line151">151: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>      *ranges,*fineparts_indices;
+<a name="line152">152: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>         rank;
+<a name="line153">153: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a>            comm;
+<a name="line154">154: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayout.html#PetscLayout">PetscLayout</a>         rmap;
+<a name="line155">155: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFNode.html#PetscSFNode">PetscSFNode</a>        *remote;
+<a name="line156">156: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a>             sf;
+<a name="line157">157: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>      ierr;
+
+<a name="line160">160: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectGetComm.html#PetscObjectGetComm">PetscObjectGetComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)adj,&amp;comm);
+<a name="line161">161: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm,&amp;rank);
+<a name="line162">162: </a>  <a href="../../../../../docs/manualpages/Mat/MatGetLayouts.html#MatGetLayouts">MatGetLayouts</a>(adj,&amp;rmap,NULL);
+<a name="line163">163: </a>  <a href="../../../../../docs/manualpages/IS/ISGetLocalSize.html#ISGetLocalSize">ISGetLocalSize</a>(fineparts,&amp;localsize);
+<a name="line164">164: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCalloc2.html#PetscCalloc2">PetscCalloc2</a>(localsize,&amp;global_indices,localsize,&amp;local_indices);
+<a name="line165">165: </a>  <font color="#4169E1">for</font>(i=0; i&lt;localsize; i++){
+<a name="line166">166: </a>        local_indices[i] = i;
+<a name="line167">167: </a>  }
+<a name="line168">168: </a>  <font color="#B22222">/* map local indices back to global so that we can permulate data globally */</font>
+<a name="line169">169: </a>  <a href="../../../../../docs/manualpages/IS/ISLocalToGlobalMappingApply.html#ISLocalToGlobalMappingApply">ISLocalToGlobalMappingApply</a>(mapping,localsize,local_indices,global_indices);
+<a name="line170">170: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCalloc1.html#PetscCalloc1">PetscCalloc1</a>(localsize,&amp;owners);
+<a name="line171">171: </a>  <font color="#B22222">/* find owners for global indices */</font>
+<a name="line172">172: </a>  <font color="#4169E1">for</font>(i=0; i&lt;localsize; i++){
+<a name="line173">173: </a>        <a href="../../../../../docs/manualpages/IS/PetscLayoutFindOwner.html#PetscLayoutFindOwner">PetscLayoutFindOwner</a>(rmap,global_indices[i],&amp;owners[i]);
+<a name="line174">174: </a>  }
+<a name="line175">175: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutGetRanges.html#PetscLayoutGetRanges">PetscLayoutGetRanges</a>(rmap,&amp;ranges);
+<a name="line176">176: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCalloc1.html#PetscCalloc1">PetscCalloc1</a>(ranges[rank+1]-ranges[rank],&amp;sfineparts_indices);
+<a name="line177">177: </a>  <a href="../../../../../docs/manualpages/IS/ISGetIndices.html#ISGetIndices">ISGetIndices</a>(fineparts,&amp;fineparts_indices);
+<a name="line178">178: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFCreate.html#PetscSFCreate">PetscSFCreate</a>(comm,&amp;sf);
+<a name="line179">179: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCalloc1.html#PetscCalloc1">PetscCalloc1</a>(localsize,&amp;remote);
+<a name="line180">180: </a>  <font color="#4169E1">for</font>(i=0; i&lt;localsize; i++){
+<a name="line181">181: </a>        remote[i].rank  = owners[i];
+<a name="line182">182: </a>        remote[i].index = global_indices[i]-ranges[owners[i]];
+<a name="line183">183: </a>  }
+<a name="line184">184: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetType.html#PetscSFSetType">PetscSFSetType</a>(sf,PETSCSFBASIC);
+<a name="line185">185: </a>  <font color="#B22222">/* not sure how to add prefix to sf */</font>
+<a name="line186">186: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetFromOptions.html#PetscSFSetFromOptions">PetscSFSetFromOptions</a>(sf);
+<a name="line187">187: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html#PetscSFSetGraph">PetscSFSetGraph</a>(sf,localsize,localsize,NULL,<a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_OWN_POINTER</a>,remote,<a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_OWN_POINTER</a>);
+<a name="line188">188: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFReduceBegin.html#PetscSFReduceBegin">PetscSFReduceBegin</a>(sf,MPIU_INT,fineparts_indices,sfineparts_indices,MPIU_REPLACE);
+<a name="line189">189: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFReduceEnd.html#PetscSFReduceEnd">PetscSFReduceEnd</a>(sf,MPIU_INT,fineparts_indices,sfineparts_indices,MPIU_REPLACE);
+<a name="line190">190: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFDestroy.html#PetscSFDestroy">PetscSFDestroy</a>(&amp;sf);
+<a name="line191">191: </a>  <a href="../../../../../docs/manualpages/IS/ISRestoreIndices.html#ISRestoreIndices">ISRestoreIndices</a>(fineparts,&amp;fineparts_indices);
+<a name="line192">192: </a>  <a href="../../../../../docs/manualpages/IS/ISCreateGeneral.html#ISCreateGeneral">ISCreateGeneral</a>(comm,ranges[rank+1]-ranges[rank],sfineparts_indices,<a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_OWN_POINTER</a>,sfineparts);
+<a name="line193">193: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree2.html#PetscFree2">PetscFree2</a>(global_indices,local_indices);
+<a name="line194">194: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(owners);
+<a name="line195">195: </a>  <font color="#4169E1">return</font>(0);
+<a name="line196">196: </a>}
+
+
+<a name="line199">199: </a><strong><font color="#4169E1"><a name="MatPartitioningHierarchical_AssembleSubdomain"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatPartitioningHierarchical_AssembleSubdomain(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> adj,<a href="../../../../../docs/manualpages/IS/IS.html#IS">IS</a> destination,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> *sadj, <a href="../../../../../docs/manualpages/IS/ISLocalToGlobalMapping.html#ISLocalToGlobalMapping">ISLocalToGlobalMapping</a> *mapping)</font></strong>
+<a name="line200">200: </a>{
+<a name="line201">201: </a>  <a href="../../../../../docs/manualpages/IS/IS.html#IS">IS</a>              irows,icols;
+<a name="line202">202: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>        irows_ln;
+<a name="line203">203: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>     rank;
+<a name="line204">204: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *irows_indices;
+<a name="line205">205: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a>        comm;
+<a name="line206">206: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  ierr;
+
+<a name="line209">209: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectGetComm.html#PetscObjectGetComm">PetscObjectGetComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)adj,&amp;comm);
+<a name="line210">210: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm,&amp;rank);
+<a name="line211">211: </a>  <font color="#B22222">/* figure out where data comes from  */</font>
+<a name="line212">212: </a>  <a href="../../../../../docs/manualpages/IS/ISBuildTwoSided.html#ISBuildTwoSided">ISBuildTwoSided</a>(destination,NULL,&amp;irows);
+<a name="line213">213: </a>  <a href="../../../../../docs/manualpages/IS/ISDuplicate.html#ISDuplicate">ISDuplicate</a>(irows,&amp;icols);
+<a name="line214">214: </a>  <a href="../../../../../docs/manualpages/IS/ISGetLocalSize.html#ISGetLocalSize">ISGetLocalSize</a>(irows,&amp;irows_ln);
+<a name="line215">215: </a>  <a href="../../../../../docs/manualpages/IS/ISGetIndices.html#ISGetIndices">ISGetIndices</a>(irows,&amp;irows_indices);
+<a name="line216">216: </a>  <a href="../../../../../docs/manualpages/IS/ISLocalToGlobalMappingCreate.html#ISLocalToGlobalMappingCreate">ISLocalToGlobalMappingCreate</a>(comm,1,irows_ln,irows_indices,<a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_COPY_VALUES</a>,mapping);
+<a name="line217">217: </a>  <a href="../../../../../docs/manualpages/IS/ISRestoreIndices.html#ISRestoreIndices">ISRestoreIndices</a>(irows,&amp;irows_indices);
+<a name="line218">218: </a>  <a href="../../../../../docs/manualpages/Mat/MatCreateSubMatrices.html#MatCreateSubMatrices">MatCreateSubMatrices</a>(adj,1,&amp;irows,&amp;icols,<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MAT_INITIAL_MATRIX</a>,&amp;sadj);
+<a name="line219">219: </a>  <a href="../../../../../docs/manualpages/IS/ISDestroy.html#ISDestroy">ISDestroy</a>(&amp;irows);
+<a name="line220">220: </a>  <a href="../../../../../docs/manualpages/IS/ISDestroy.html#ISDestroy">ISDestroy</a>(&amp;icols);
+<a name="line221">221: </a>  <font color="#4169E1">return</font>(0);
+<a name="line222">222: </a>}
+
+
+<a name="line225">225: </a><strong><font color="#4169E1"><a name="MatPartitioningHierarchical_DetermineDestination"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatPartitioningHierarchical_DetermineDestination(<a href="../../../../../docs/manualpages/Mat/MatPartitioning.html#MatPartitioning">MatPartitioning</a> part, <a href="../../../../../docs/manualpages/IS/IS.html#IS">IS</a> partitioning, <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> pstart, <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> pend, <a href="../../../../../docs/manualpages/IS/IS.html#IS">IS</a> *destination)</font></strong>
+<a name="line226">226: </a>{
+<a name="line227">227: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a>            comm;
+<a name="line228">228: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>         rank,size,target;
+<a name="line229">229: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            plocalsize,*dest_indices,i;
+<a name="line230">230: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>     *part_indices;
+<a name="line231">231: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>      ierr;
+
+<a name="line234">234: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectGetComm.html#PetscObjectGetComm">PetscObjectGetComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)part,&amp;comm);
+<a name="line235">235: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm,&amp;rank);
+<a name="line236">236: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm,&amp;size);
+<a name="line237">237: </a>  <font color="#4169E1">if</font>((pend-pstart)&gt;size) <a href="../../../../../docs/manualpages/Sys/SETERRQ3.html#SETERRQ3">SETERRQ3</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_INCOMP,<font color="#666666">"range [%D, %D] should be smaller than or equal to size %D"</font>,pstart,pend,size);
+<a name="line238">238: </a>  <font color="#4169E1">if</font>(pstart&gt;pend) <a href="../../../../../docs/manualpages/Sys/SETERRQ2.html#SETERRQ2">SETERRQ2</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_INCOMP,<font color="#666666">" pstart %D should be smaller than pend %D"</font>,pstart,pend);
+<a name="line239">239: </a>  <a href="../../../../../docs/manualpages/IS/ISGetLocalSize.html#ISGetLocalSize">ISGetLocalSize</a>(partitioning,&amp;plocalsize);
+<a name="line240">240: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCalloc1.html#PetscCalloc1">PetscCalloc1</a>(plocalsize,&amp;dest_indices);
+<a name="line241">241: </a>  <a href="../../../../../docs/manualpages/IS/ISGetIndices.html#ISGetIndices">ISGetIndices</a>(partitioning,&amp;part_indices);
+<a name="line242">242: </a>  <font color="#4169E1">for</font>(i=0; i&lt;plocalsize; i++){
+<a name="line243">243: </a>        <font color="#B22222">/* compute target */</font>
+<a name="line244">244: </a>    target = part_indices[i]-pstart;
+<a name="line245">245: </a>    <font color="#B22222">/* mark out of range entity as -1 */</font>
+<a name="line246">246: </a>    <font color="#4169E1">if</font>(part_indices[i]&lt;pstart || part_indices[i]&gt;pend) target = -1;
+<a name="line247">247: </a>        dest_indices[i] = target;
+<a name="line248">248: </a>  }
+<a name="line249">249: </a>  <a href="../../../../../docs/manualpages/IS/ISCreateGeneral.html#ISCreateGeneral">ISCreateGeneral</a>(comm,plocalsize,dest_indices,<a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_OWN_POINTER</a>,destination);
+<a name="line250">250: </a>  <font color="#4169E1">return</font>(0);
+<a name="line251">251: </a>}
+
+
+<a name="line254">254: </a><strong><font color="#4169E1"><a name="MatPartitioningView_Hierarchical"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatPartitioningView_Hierarchical(<a href="../../../../../docs/manualpages/Mat/MatPartitioning.html#MatPartitioning">MatPartitioning</a> part,<a href="../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer)</font></strong>
+<a name="line255">255: </a>{
+<a name="line256">256: </a>  MatPartitioning_Hierarchical *hpart = (MatPartitioning_Hierarchical*)part-&gt;data;
+<a name="line257">257: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>           ierr;
+<a name="line258">258: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>              rank;
+<a name="line259">259: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>                iascii;
+
+<a name="line262">262: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)part),&amp;rank);
+<a name="line263">263: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<a href="../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html#PETSCVIEWERASCII">PETSCVIEWERASCII</a>,&amp;iascii);
+<a name="line264">264: </a>  <font color="#4169E1">if</font>(iascii){
+<a name="line265">265: </a>         <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">" Fine partitioner %s \n"</font>,hpart-&gt;fineparttype);
+<a name="line266">266: </a>         <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">" Coarse partitioner %s \n"</font>,hpart-&gt;coarseparttype);
+<a name="line267">267: </a>         <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">" Number of coarse parts %D \n"</font>,hpart-&gt;Ncoarseparts);
+<a name="line268">268: </a>         <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">" Number of fine parts %D \n"</font>,hpart-&gt;Nfineparts);
+<a name="line269">269: </a>  }
+<a name="line270">270: </a>  <font color="#4169E1">return</font>(0);
+<a name="line271">271: </a>}
+
+
+<a name="line274">274: </a><strong><font color="#4169E1"><a name="MatPartitioningHierarchicalGetFineparts"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatPartitioningHierarchicalGetFineparts(<a href="../../../../../docs/manualpages/Mat/MatPartitioning.html#MatPartitioning">MatPartitioning</a> part,<a href="../../../../../docs/manualpages/IS/IS.html#IS">IS</a> *fineparts)</font></strong>
+<a name="line275">275: </a>{
+<a name="line276">276: </a>  MatPartitioning_Hierarchical *hpart = (MatPartitioning_Hierarchical*)part-&gt;data;
+<a name="line277">277: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>                ierr;
+
+<a name="line280">280: </a>  *fineparts = hpart-&gt;fineparts;
+<a name="line281">281: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html#PetscObjectReference">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)hpart-&gt;fineparts);
+<a name="line282">282: </a>  <font color="#4169E1">return</font>(0);
+<a name="line283">283: </a>}
+
+<a name="line285">285: </a><strong><font color="#4169E1"><a name="MatPartitioningHierarchicalGetCoarseparts"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatPartitioningHierarchicalGetCoarseparts(<a href="../../../../../docs/manualpages/Mat/MatPartitioning.html#MatPartitioning">MatPartitioning</a> part,<a href="../../../../../docs/manualpages/IS/IS.html#IS">IS</a> *coarseparts)</font></strong>
+<a name="line286">286: </a>{
+<a name="line287">287: </a>  MatPartitioning_Hierarchical *hpart = (MatPartitioning_Hierarchical*)part-&gt;data;
+<a name="line288">288: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>                ierr;
+
+<a name="line291">291: </a>  *coarseparts = hpart-&gt;coarseparts;
+<a name="line292">292: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html#PetscObjectReference">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)hpart-&gt;coarseparts);
+<a name="line293">293: </a>  <font color="#4169E1">return</font>(0);
+<a name="line294">294: </a>}
+
+<a name="line296">296: </a><strong><font color="#4169E1"><a name="MatPartitioningHierarchicalSetNcoarseparts"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatPartitioningHierarchicalSetNcoarseparts(<a href="../../../../../docs/manualpages/Mat/MatPartitioning.html#MatPartitioning">MatPartitioning</a> part, <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> Ncoarseparts)</font></strong>
+<a name="line297">297: </a>{
+<a name="line298">298: </a>  MatPartitioning_Hierarchical *hpart = (MatPartitioning_Hierarchical*)part-&gt;data;
+
+<a name="line301">301: </a>  hpart-&gt;Ncoarseparts = Ncoarseparts;
+<a name="line302">302: </a>  <font color="#4169E1">return</font>(0);
+<a name="line303">303: </a>}
+
+<a name="line305">305: </a><strong><font color="#4169E1"><a name="MatPartitioningHierarchicalSetNfineparts"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatPartitioningHierarchicalSetNfineparts(<a href="../../../../../docs/manualpages/Mat/MatPartitioning.html#MatPartitioning">MatPartitioning</a> part, <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> Nfineparts)</font></strong>
+<a name="line306">306: </a>{
+<a name="line307">307: </a>  MatPartitioning_Hierarchical *hpart = (MatPartitioning_Hierarchical*)part-&gt;data;
+
+<a name="line310">310: </a>  hpart-&gt;Nfineparts = Nfineparts;
+<a name="line311">311: </a>  <font color="#4169E1">return</font>(0);
+<a name="line312">312: </a>}
+
+<a name="line314">314: </a><strong><font color="#4169E1"><a name="MatPartitioningSetFromOptions_Hierarchical"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatPartitioningSetFromOptions_Hierarchical(PetscOptionItems *PetscOptionsObject,<a href="../../../../../docs/manualpages/Mat/MatPartitioning.html#MatPartitioning">MatPartitioning</a> part)</font></strong>
+<a name="line315">315: </a>{
+<a name="line316">316: </a>  MatPartitioning_Hierarchical *hpart = (MatPartitioning_Hierarchical*)part-&gt;data;
+<a name="line318">318: </a>  char           value[1024];
+<a name="line319">319: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>      flag = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+
+<a name="line322">322: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsHead.html#PetscOptionsHead">PetscOptionsHead</a>(PetscOptionsObject,<font color="#666666">"Set hierarchical partitioning options"</font>);
+<a name="line323">323: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsString.html#PetscOptionsString">PetscOptionsString</a>(<font color="#666666">"-mat_partitioning_hierarchical_coarseparttype"</font>,<font color="#666666">"coarse part type"</font>,NULL,NULL,value,1024,&amp;flag);
+<a name="line324">324: </a>  <font color="#4169E1">if</font>(flag){
+<a name="line325">325: </a>   <a href="../../../../../docs/manualpages/Sys/PetscCalloc1.html#PetscCalloc1">PetscCalloc1</a>(1024,&amp;hpart-&gt;coarseparttype);
+<a name="line326">326: </a>   <a href="../../../../../docs/manualpages/Sys/PetscStrcpy.html#PetscStrcpy">PetscStrcpy</a>(hpart-&gt;coarseparttype,value);
+<a name="line327">327: </a>  }
+<a name="line328">328: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsString.html#PetscOptionsString">PetscOptionsString</a>(<font color="#666666">"-mat_partitioning_hierarchical_fineparttype"</font>,<font color="#666666">"fine part type"</font>,NULL,NULL,value,1024,&amp;flag);
+<a name="line329">329: </a>  <font color="#4169E1">if</font>(flag){
+<a name="line330">330: </a>    <a href="../../../../../docs/manualpages/Sys/PetscCalloc1.html#PetscCalloc1">PetscCalloc1</a>(1024,&amp;hpart-&gt;fineparttype);
+<a name="line331">331: </a>    <a href="../../../../../docs/manualpages/Sys/PetscStrcpy.html#PetscStrcpy">PetscStrcpy</a>(hpart-&gt;fineparttype,value);
+<a name="line332">332: </a>  }
+<a name="line333">333: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsInt.html#PetscOptionsInt">PetscOptionsInt</a>(<font color="#666666">"-mat_partitioning_hierarchical_Ncoarseparts"</font>,<font color="#666666">"number of coarse parts"</font>,NULL,0,&amp;hpart-&gt;Ncoarseparts,&amp;flag);
+<a name="line334">334: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsInt.html#PetscOptionsInt">PetscOptionsInt</a>(<font color="#666666">"-mat_partitioning_hierarchical_Nfineparts"</font>,<font color="#666666">"number of fine parts"</font>,NULL,1,&amp;hpart-&gt;Nfineparts,&amp;flag);
+<a name="line335">335: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsTail.html#PetscOptionsTail">PetscOptionsTail</a>();
+<a name="line336">336: </a>  <font color="#4169E1">return</font>(0);
+<a name="line337">337: </a>}
+
+
+<a name="line340">340: </a><strong><font color="#4169E1"><a name="MatPartitioningDestroy_Hierarchical"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatPartitioningDestroy_Hierarchical(<a href="../../../../../docs/manualpages/Mat/MatPartitioning.html#MatPartitioning">MatPartitioning</a> part)</font></strong>
+<a name="line341">341: </a>{
+<a name="line342">342: </a>  MatPartitioning_Hierarchical *hpart = (MatPartitioning_Hierarchical*)part-&gt;data;
+<a name="line343">343: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>           ierr;
+
+<a name="line346">346: </a>  <font color="#4169E1">if</font>(hpart-&gt;coarseparttype) {<a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(hpart-&gt;coarseparttype);}
+<a name="line347">347: </a>  <font color="#4169E1">if</font>(hpart-&gt;fineparttype) {<a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(hpart-&gt;fineparttype);}
+<a name="line348">348: </a>  <a href="../../../../../docs/manualpages/IS/ISDestroy.html#ISDestroy">ISDestroy</a>(&amp;hpart-&gt;fineparts);
+<a name="line349">349: </a>  <a href="../../../../../docs/manualpages/IS/ISDestroy.html#ISDestroy">ISDestroy</a>(&amp;hpart-&gt;coarseparts);
+<a name="line350">350: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(hpart);
+<a name="line351">351: </a>  <font color="#4169E1">return</font>(0);
+<a name="line352">352: </a>}
+
+
+<a name="line355">355: </a><font color="#B22222">/*MC</font>
+<a name="line356">356: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/MatOrderings/MATPARTITIONINGHIERARCHPART.html#MATPARTITIONINGHIERARCHPART">MATPARTITIONINGHIERARCHPART</a> - Creates a partitioning context via hierarchical partitioning strategy.</font>
+
+<a name="line358">358: </a><font color="#B22222">   Collective on <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a></font>
+
+<a name="line360">360: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line361">361: </a><font color="#B22222">.  part - the partitioning context</font>
+
+<a name="line363">363: </a><font color="#B22222">   Options Database Keys:</font>
+
+<a name="line365">365: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line367">367: </a><font color="#B22222">.keywords: Partitioning, create, context</font>
+
+<a name="line369">369: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningSetType.html#MatPartitioningSetType">MatPartitioningSetType</a>(), <a href="../../../../../docs/manualpages/Mat/MatPartitioningType.html#MatPartitioningType">MatPartitioningType</a></font>
+
+<a name="line371">371: </a><font color="#B22222">M*/</font>
+
+<a name="line373">373: </a><strong><font color="#4169E1"><a name="MatPartitioningCreate_Hierarchical"></a>PETSC_EXTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatPartitioningCreate_Hierarchical(<a href="../../../../../docs/manualpages/Mat/MatPartitioning.html#MatPartitioning">MatPartitioning</a> part)</font></strong>
+<a name="line374">374: </a>{
+<a name="line375">375: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>                ierr;
+<a name="line376">376: </a>  MatPartitioning_Hierarchical *hpart;
+
+<a name="line379">379: </a>  <a href="../../../../../docs/manualpages/Sys/PetscNewLog.html#PetscNewLog">PetscNewLog</a>(part,&amp;hpart);
+<a name="line380">380: </a>  part-&gt;data = (void*)hpart;
+
+<a name="line382">382: </a>  hpart-&gt;fineparttype       = 0; <font color="#B22222">/* fine level partitioner */</font>
+<a name="line383">383: </a>  hpart-&gt;coarseparttype     = 0; <font color="#B22222">/* coarse level partitioner */</font>
+<a name="line384">384: </a>  hpart-&gt;Nfineparts         = 1; <font color="#B22222">/* we do not further partition coarse partition any more by default */</font>
+<a name="line385">385: </a>  hpart-&gt;Ncoarseparts       = 0; <font color="#B22222">/* number of coarse parts (first level) */</font>
+<a name="line386">386: </a>  hpart-&gt;coarseparts        = 0;
+<a name="line387">387: </a>  hpart-&gt;fineparts          = 0;
+
+<a name="line389">389: </a>  part-&gt;ops-&gt;apply          = MatPartitioningApply_Hierarchical;
+<a name="line390">390: </a>  part-&gt;ops-&gt;view           = MatPartitioningView_Hierarchical;
+<a name="line391">391: </a>  part-&gt;ops-&gt;destroy        = MatPartitioningDestroy_Hierarchical;
+<a name="line392">392: </a>  part-&gt;ops-&gt;setfromoptions = MatPartitioningSetFromOptions_Hierarchical;
+<a name="line393">393: </a>  <font color="#4169E1">return</font>(0);
+<a name="line394">394: </a>}
+</pre>
+</body>
+
+</html>

@@ -1,0 +1,35 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML3.2 EN">
+<HTML>
+<HEAD> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/DM/DMMoabFEMCreateQuadratureDefault.html" />
+<META NAME="GENERATOR" CONTENT="DOCTEXT">
+<TITLE>DMMoabFEMCreateQuadratureDefault</TITLE>
+</HEAD>
+<BODY BGCOLOR="FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 docs/manualpages/DM/DMMoabFEMCreateQuadratureDefault.html "><small>Report Typos and Errors</small></a></div>
+<A NAME="DMMoabFEMCreateQuadratureDefault"><H1>DMMoabFEMCreateQuadratureDefault</H1></A>
+Create default quadrature rules for integration over an element with a given dimension and polynomial order (deciphered from number of element vertices). 
+<H3><FONT COLOR="#CC3333">Synopsis</FONT></H3>
+<PRE>
+#include "petscdt.h" 
+#include "petscdmmoab.h"   
+<A HREF="../Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</A> <A HREF="../DM/DMMoabFEMCreateQuadratureDefault.html#DMMoabFEMCreateQuadratureDefault">DMMoabFEMCreateQuadratureDefault</A> ( const <A HREF="../Sys/PetscInt.html#PetscInt">PetscInt</A> dim, const <A HREF="../Sys/PetscInt.html#PetscInt">PetscInt</A> nverts, <A HREF="../DM/PetscQuadrature.html#PetscQuadrature">PetscQuadrature</A> *quadrature )
+</PRE>
+<H3><FONT COLOR="#CC3333">Input Parameter</FONT></H3>
+<P>
+<DT><B><A HREF="../Sys/PetscInt.html#PetscInt">PetscInt</A>  dim,           the element dimension (1=EDGE, 2=QUAD/TRI, 3=HEX/TET)</B> -.  <A HREF="../Sys/PetscInt.html#PetscInt">PetscInt</A> nverts,      the number of vertices in the physical element
+<br>
+<P>
+<H3><FONT COLOR="#CC3333">Output Parameter</FONT></H3>
+<DT><B><A HREF="../DM/PetscQuadrature.html#PetscQuadrature">PetscQuadrature</A> quadrature,  the quadrature object with default settings to integrate polynomials defined over the element</B> -
+
+<br>
+<P>
+<H3><FONT COLOR="#CC3333">Keywords</FONT></H3>
+ DMMoab, Quadrature, PetscDT
+<BR><P><B><P><B><FONT COLOR="#CC3333">Level:</FONT></B>advanced
+<BR><FONT COLOR="#CC3333">Location:</FONT></B><A HREF="../../../src/dm/impls/moab/dmmbfem.cxx#DMMoabFEMCreateQuadratureDefault">src/dm/impls/moab/dmmbfem.cxx</A>
+<BR><A HREF="./index.html">Index of all DM routines</A>
+<BR><A HREF="../../index.html">Table of Contents for all manual pages</A>
+<BR><A HREF="../singleindex.html">Index of all manual pages</A>
+</BODY></HTML>

@@ -1,0 +1,25 @@
+Instructions to run the AAR_Complex code:
+This code is for solving complex-valued systems of equations using the AAR method, with the complex-valued Helmholtz 
+equation provided as an example. 
+
+(1) Modules required to compile the code:intel/15.0, mvapich2/2.1, fftw/3.3.4, mkl/11.2, petsc/3.5.4-complex
+
+(2) Compile the code by typing "make" in the root directory $AAR_petsc.
+    
+(3) Input file  :    "test.in" 
+    Output file :    "test.out" - prints number of processors used, input parameters, time taken by the solver.
+
+(4) Parameters in the input file:
+    aar_pc - 0 or 1 indicates use of Jacobi or Block-Jacobi preconditioning respectively
+    solver_tol - convergence tolerance for the solver
+    m_aar - AAR solver parameter (history)
+    p_aar - AAR solver parameter (frequency of Anderson extrapolation, if p_aar=1, then it is AR)
+    beta_aar - AAR solver parameter (relaxation)
+    
+(5) Running the code: (e.g. for 64 processors)
+
+           mpirun -env MV2_ENABLE_AFFINITY=1 -env MV2_CPU_BINDING_POLICY=bunch -n 64 ./AAR -name test -log_summary>test.out
+	   
+(6) The executable (AAR) is created in the root directory and the source code is in the file named AAR_Complex.cc. 
+
+

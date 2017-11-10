@@ -1,0 +1,42 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML3.2 EN">
+<HTML>
+<HEAD> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/Vec/VecTaggerComputeIS.html" />
+<META NAME="GENERATOR" CONTENT="DOCTEXT">
+<TITLE>VecTaggerComputeIS</TITLE>
+</HEAD>
+<BODY BGCOLOR="FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 docs/manualpages/Vec/VecTaggerComputeIS.html "><small>Report Typos and Errors</small></a></div>
+<A NAME="VecTaggerComputeIS"><H1>VecTaggerComputeIS</H1></A>
+Use a <A HREF="../Vec/VecTagger.html#VecTagger">VecTagger</A> context to tag a set of indices based on a vector's values 
+<H3><FONT COLOR="#CC3333">Synopsis</FONT></H3>
+<PRE>
+#include "petscvec.h" 
+<A HREF="../Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</A> <A HREF="../Vec/VecTaggerComputeIS.html#VecTaggerComputeIS">VecTaggerComputeIS</A>(<A HREF="../Vec/VecTagger.html#VecTagger">VecTagger</A> tagger,<A HREF="../Vec/Vec.html#Vec">Vec</A> vec,<A HREF="../IS/IS.html#IS">IS</A> *is)
+</PRE>
+Collective on <A HREF="../Vec/VecTagger.html#VecTagger">VecTagger</A>
+<P>
+<H3><FONT COLOR="#CC3333">Input Aguments</FONT></H3>
+<TABLE border="0" cellpadding="0" cellspacing="0">
+<TR><TD WIDTH=40></TD><TD ALIGN=LEFT VALIGN=TOP><B>tagger </B></TD><TD>- the <A HREF="../Vec/VecTagger.html#VecTagger">VecTagger</A> context
+</TD></TR>
+<TR><TD WIDTH=40></TD><TD ALIGN=LEFT VALIGN=TOP><B>vec </B></TD><TD>- the vec to tag
+</TD></TR></TABLE>
+<P>
+<H3><FONT COLOR="#CC3333">Output Arguments</FONT></H3>
+<DT><B><A HREF="../IS/IS.html#IS">IS</A> </B> -a list of the indices tagged by the tagger, i.e., if the number of local indices will be n / bs, where n is <A HREF="../Vec/VecGetLocalSize.html#VecGetLocalSize">VecGetLocalSize</A>() and bs is <A HREF="../Vec/VecTaggerGetBlockSize.html#VecTaggerGetBlockSize">VecTaggerGetBlockSize</A>().
+<br>
+<P>
+
+<P>
+<H3><FONT COLOR="#CC3333">See Also</FONT></H3>
+ <A HREF="../Vec/VecTaggerComputeBoxes.html#VecTaggerComputeBoxes">VecTaggerComputeBoxes</A>()
+<BR><P><B><P><B><FONT COLOR="#CC3333">Level:</FONT></B>advanced
+<BR><FONT COLOR="#CC3333">Location:</FONT></B><A HREF="../../../src/vec/vec/utils/tagger/interfacetagger.c.html#VecTaggerComputeIS">src/vec/vec/utils/tagger/interfacetagger.c</A>
+<BR><A HREF="./index.html">Index of all Vec routines</A>
+<BR><A HREF="../../index.html">Table of Contents for all manual pages</A>
+<BR><A HREF="../singleindex.html">Index of all manual pages</A>
+<P><H3><FONT COLOR="#CC3333">Examples</FONT></H3>
+<A HREF="../../../src/vec/vec/utils/tagger/examples/tutorials/ex1.c.html">src/vec/vec/utils/tagger/examples/tutorials/ex1.c.html</A><BR>
+<A HREF="../../../src/ts/examples/tutorials/ex11.c.html">src/ts/examples/tutorials/ex11.c.html</A><BR>
+</BODY></HTML>

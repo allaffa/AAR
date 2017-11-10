@@ -1,0 +1,1033 @@
+<center><a href="bddcfetidp.c">Actual source code: bddcfetidp.c</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/ksp/pc/impls/bddc/bddcfetidp.c.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:56:53+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/ksp/pc/impls/bddc/bddcfetidp.c.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+<a name="line1">  1: </a> #include <A href="../../../../../include/../src/ksp/pc/impls/bddc/bddc.h.html">&lt;../src/ksp/pc/impls/bddc/bddc.h&gt;</A>
+<a name="line2">  2: </a> #include <A href="../../../../../include/../src/ksp/pc/impls/bddc/bddcprivate.h.html">&lt;../src/ksp/pc/impls/bddc/bddcprivate.h&gt;</A>
+<a name="line3">  3: </a> #include <A href="../../../../../include/petscblaslapack.h.html">&lt;petscblaslapack.h&gt;</A>
+
+<a name="line5">  5: </a><strong><font color="#4169E1"><a name="MatMult_BDdelta_deluxe_nonred"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatMult_BDdelta_deluxe_nonred(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> A, <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> x, <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> y)</font></strong>
+<a name="line6">  6: </a>{
+<a name="line7">  7: </a>  BDdelta_DN     ctx;
+
+<a name="line11"> 11: </a>  <a href="../../../../../docs/manualpages/Mat/MatShellGetContext.html#MatShellGetContext">MatShellGetContext</a>(A,(void**)&amp;ctx);
+<a name="line12"> 12: </a>  <a href="../../../../../docs/manualpages/Mat/MatMultTranspose.html#MatMultTranspose">MatMultTranspose</a>(ctx-&gt;BD,x,ctx-&gt;work);
+<a name="line13"> 13: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSolveTranspose.html#KSPSolveTranspose">KSPSolveTranspose</a>(ctx-&gt;kBD,ctx-&gt;work,y);
+<a name="line14"> 14: </a>  <font color="#4169E1">return</font>(0);
+<a name="line15"> 15: </a>}
+
+<a name="line17"> 17: </a><strong><font color="#4169E1"><a name="MatMultTranspose_BDdelta_deluxe_nonred"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatMultTranspose_BDdelta_deluxe_nonred(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> A, <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> x, <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> y)</font></strong>
+<a name="line18"> 18: </a>{
+<a name="line19"> 19: </a>  BDdelta_DN     ctx;
+
+<a name="line23"> 23: </a>  <a href="../../../../../docs/manualpages/Mat/MatShellGetContext.html#MatShellGetContext">MatShellGetContext</a>(A,(void**)&amp;ctx);
+<a name="line24"> 24: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSolve.html#KSPSolve">KSPSolve</a>(ctx-&gt;kBD,x,ctx-&gt;work);
+<a name="line25"> 25: </a>  <a href="../../../../../docs/manualpages/Mat/MatMult.html#MatMult">MatMult</a>(ctx-&gt;BD,ctx-&gt;work,y);
+<a name="line26"> 26: </a>  <font color="#4169E1">return</font>(0);
+<a name="line27"> 27: </a>}
+
+<a name="line29"> 29: </a><strong><font color="#4169E1"><a name="MatDestroy_BDdelta_deluxe_nonred"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatDestroy_BDdelta_deluxe_nonred(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> A)</font></strong>
+<a name="line30"> 30: </a>{
+<a name="line31"> 31: </a>  BDdelta_DN     ctx;
+
+<a name="line35"> 35: </a>  <a href="../../../../../docs/manualpages/Mat/MatShellGetContext.html#MatShellGetContext">MatShellGetContext</a>(A,(void**)&amp;ctx);
+<a name="line36"> 36: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;ctx-&gt;BD);
+<a name="line37"> 37: </a>  <a href="../../../../../docs/manualpages/KSP/KSPDestroy.html#KSPDestroy">KSPDestroy</a>(&amp;ctx-&gt;kBD);
+<a name="line38"> 38: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;ctx-&gt;work);
+<a name="line39"> 39: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(ctx);
+<a name="line40"> 40: </a>  <font color="#4169E1">return</font>(0);
+<a name="line41"> 41: </a>}
+
+
+<a name="line44"> 44: </a><strong><font color="#4169E1"><a name="PCBDDCCreateFETIDPMatContext"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PCBDDCCreateFETIDPMatContext(<a href="../../../../../docs/manualpages/PC/PC.html#PC">PC</a> pc, FETIDPMat_ctx *fetidpmat_ctx)</font></strong>
+<a name="line45"> 45: </a>{
+<a name="line46"> 46: </a>  FETIDPMat_ctx  newctx;
+
+<a name="line50"> 50: </a>  <a href="../../../../../docs/manualpages/Sys/PetscNew.html#PetscNew">PetscNew</a>(&amp;newctx);
+<a name="line51"> 51: </a>  <font color="#B22222">/* increase the reference count for BDDC preconditioner */</font>
+<a name="line52"> 52: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html#PetscObjectReference">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)pc);
+<a name="line53"> 53: </a>  newctx-&gt;pc              = pc;
+<a name="line54"> 54: </a>  *fetidpmat_ctx          = newctx;
+<a name="line55"> 55: </a>  <font color="#4169E1">return</font>(0);
+<a name="line56"> 56: </a>}
+
+<a name="line58"> 58: </a><strong><font color="#4169E1"><a name="PCBDDCCreateFETIDPPCContext"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PCBDDCCreateFETIDPPCContext(<a href="../../../../../docs/manualpages/PC/PC.html#PC">PC</a> pc, FETIDPPC_ctx *fetidppc_ctx)</font></strong>
+<a name="line59"> 59: </a>{
+<a name="line60"> 60: </a>  FETIDPPC_ctx   newctx;
+
+<a name="line64"> 64: </a>  <a href="../../../../../docs/manualpages/Sys/PetscNew.html#PetscNew">PetscNew</a>(&amp;newctx);
+<a name="line65"> 65: </a>  <font color="#B22222">/* increase the reference count for BDDC preconditioner */</font>
+<a name="line66"> 66: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html#PetscObjectReference">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)pc);
+<a name="line67"> 67: </a>  newctx-&gt;pc              = pc;
+<a name="line68"> 68: </a>  *fetidppc_ctx           = newctx;
+<a name="line69"> 69: </a>  <font color="#4169E1">return</font>(0);
+<a name="line70"> 70: </a>}
+
+<a name="line72"> 72: </a><strong><font color="#4169E1"><a name="PCBDDCDestroyFETIDPMat"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PCBDDCDestroyFETIDPMat(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> A)</font></strong>
+<a name="line73"> 73: </a>{
+<a name="line74"> 74: </a>  FETIDPMat_ctx  mat_ctx;
+
+<a name="line78"> 78: </a>  <a href="../../../../../docs/manualpages/Mat/MatShellGetContext.html#MatShellGetContext">MatShellGetContext</a>(A,(void**)&amp;mat_ctx);
+<a name="line79"> 79: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;mat_ctx-&gt;lambda_local);
+<a name="line80"> 80: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;mat_ctx-&gt;temp_solution_D);
+<a name="line81"> 81: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;mat_ctx-&gt;temp_solution_B);
+<a name="line82"> 82: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;mat_ctx-&gt;B_delta);
+<a name="line83"> 83: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;mat_ctx-&gt;B_Ddelta);
+<a name="line84"> 84: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;mat_ctx-&gt;B_BB);
+<a name="line85"> 85: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;mat_ctx-&gt;B_BI);
+<a name="line86"> 86: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;mat_ctx-&gt;Bt_BB);
+<a name="line87"> 87: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;mat_ctx-&gt;Bt_BI);
+<a name="line88"> 88: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;mat_ctx-&gt;C);
+<a name="line89"> 89: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;mat_ctx-&gt;rhs_flip);
+<a name="line90"> 90: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;mat_ctx-&gt;vP);
+<a name="line91"> 91: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;mat_ctx-&gt;xPg);
+<a name="line92"> 92: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;mat_ctx-&gt;yPg);
+<a name="line93"> 93: </a>  <a href="../../../../../docs/manualpages/Vec/VecScatterDestroy.html#VecScatterDestroy">VecScatterDestroy</a>(&amp;mat_ctx-&gt;l2g_lambda);
+<a name="line94"> 94: </a>  <a href="../../../../../docs/manualpages/Vec/VecScatterDestroy.html#VecScatterDestroy">VecScatterDestroy</a>(&amp;mat_ctx-&gt;l2g_lambda_only);
+<a name="line95"> 95: </a>  <a href="../../../../../docs/manualpages/Vec/VecScatterDestroy.html#VecScatterDestroy">VecScatterDestroy</a>(&amp;mat_ctx-&gt;l2g_p);
+<a name="line96"> 96: </a>  <a href="../../../../../docs/manualpages/Vec/VecScatterDestroy.html#VecScatterDestroy">VecScatterDestroy</a>(&amp;mat_ctx-&gt;g2g_p);
+<a name="line97"> 97: </a>  <a href="../../../../../docs/manualpages/PC/PCDestroy.html#PCDestroy">PCDestroy</a>(&amp;mat_ctx-&gt;pc); <font color="#B22222">/* decrease <a href="../../../../../docs/manualpages/PC/PCBDDC.html#PCBDDC">PCBDDC</a> reference count */</font>
+<a name="line98"> 98: </a>  <a href="../../../../../docs/manualpages/IS/ISDestroy.html#ISDestroy">ISDestroy</a>(&amp;mat_ctx-&gt;pressure);
+<a name="line99"> 99: </a>  <a href="../../../../../docs/manualpages/IS/ISDestroy.html#ISDestroy">ISDestroy</a>(&amp;mat_ctx-&gt;lagrange);
+<a name="line100">100: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(mat_ctx);
+<a name="line101">101: </a>  <font color="#4169E1">return</font>(0);
+<a name="line102">102: </a>}
+
+<a name="line104">104: </a><strong><font color="#4169E1"><a name="PCBDDCDestroyFETIDPPC"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PCBDDCDestroyFETIDPPC(<a href="../../../../../docs/manualpages/PC/PC.html#PC">PC</a> pc)</font></strong>
+<a name="line105">105: </a>{
+<a name="line106">106: </a>  FETIDPPC_ctx   pc_ctx;
+
+<a name="line110">110: </a>  <a href="../../../../../docs/manualpages/PC/PCShellGetContext.html#PCShellGetContext">PCShellGetContext</a>(pc,(void**)&amp;pc_ctx);
+<a name="line111">111: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;pc_ctx-&gt;lambda_local);
+<a name="line112">112: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;pc_ctx-&gt;B_Ddelta);
+<a name="line113">113: </a>  <a href="../../../../../docs/manualpages/Vec/VecScatterDestroy.html#VecScatterDestroy">VecScatterDestroy</a>(&amp;pc_ctx-&gt;l2g_lambda);
+<a name="line114">114: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;pc_ctx-&gt;S_j);
+<a name="line115">115: </a>  <a href="../../../../../docs/manualpages/PC/PCDestroy.html#PCDestroy">PCDestroy</a>(&amp;pc_ctx-&gt;pc); <font color="#B22222">/* decrease <a href="../../../../../docs/manualpages/PC/PCBDDC.html#PCBDDC">PCBDDC</a> reference count */</font>
+<a name="line116">116: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;pc_ctx-&gt;xPg);
+<a name="line117">117: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;pc_ctx-&gt;yPg);
+<a name="line118">118: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(pc_ctx);
+<a name="line119">119: </a>  <font color="#4169E1">return</font>(0);
+<a name="line120">120: </a>}
+
+<a name="line122">122: </a><strong><font color="#4169E1"><a name="PCBDDCSetupFETIDPMatContext"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PCBDDCSetupFETIDPMatContext(FETIDPMat_ctx fetidpmat_ctx )</font></strong>
+<a name="line123">123: </a>{
+<a name="line125">125: </a>  PC_IS          *pcis=(PC_IS*)fetidpmat_ctx-&gt;pc-&gt;data;
+<a name="line126">126: </a>  PC_BDDC        *pcbddc=(PC_BDDC*)fetidpmat_ctx-&gt;pc-&gt;data;
+<a name="line127">127: </a>  PCBDDCGraph    mat_graph=pcbddc-&gt;mat_graph;
+<a name="line128">128: </a><font color="#A020F0">#if defined(PETSC_USE_DEBUG)</font>
+<a name="line129">129: </a>  Mat_IS         *matis  = (Mat_IS*)fetidpmat_ctx-&gt;pc-&gt;pmat-&gt;data;
+<a name="line130">130: </a><font color="#A020F0">#endif</font>
+<a name="line131">131: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a>       comm;
+<a name="line132">132: </a>  <a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>            ScalingMat,BD1,BD2;
+<a name="line133">133: </a>  <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>            fetidp_global;
+<a name="line134">134: </a>  <a href="../../../../../docs/manualpages/IS/IS.html#IS">IS</a>             IS_l2g_lambda;
+<a name="line135">135: </a>  <a href="../../../../../docs/manualpages/IS/IS.html#IS">IS</a>             subset,subset_mult,subset_n,isvert;
+<a name="line136">136: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>      skip_node,fully_redundant;
+<a name="line137">137: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       i,j,k,s,n_boundary_dofs,n_global_lambda,n_vertices,partial_sum;
+<a name="line138">138: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       cum,n_local_lambda,n_lambda_for_dof,dual_size,n_neg_values,n_pos_values;
+<a name="line139">139: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>    rank,size,buf_size,neigh;
+<a name="line140">140: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>    scalar_value;
+<a name="line141">141: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *vertex_indices;
+<a name="line142">142: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       *dual_dofs_boundary_indices,*aux_local_numbering_1;
+<a name="line143">143: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *aux_global_numbering;
+<a name="line144">144: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       *aux_sums,*cols_B_delta,*l2g_indices;
+<a name="line145">145: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>    *array,*scaling_factors,*vals_B_delta;
+<a name="line146">146: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>    **all_factors;
+<a name="line147">147: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       *aux_local_numbering_2;
+<a name="line148">148: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayout.html#PetscLayout">PetscLayout</a>    llay;
+
+<a name="line150">150: </a>  <font color="#B22222">/* saddlepoint */</font>
+<a name="line151">151: </a>  <a href="../../../../../docs/manualpages/IS/ISLocalToGlobalMapping.html#ISLocalToGlobalMapping">ISLocalToGlobalMapping</a> l2gmap_p;
+<a name="line152">152: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayout.html#PetscLayout">PetscLayout</a>            play;
+<a name="line153">153: </a>  <a href="../../../../../docs/manualpages/IS/IS.html#IS">IS</a>                     gP,pP;
+<a name="line154">154: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>               nPl,nPg,nPgl;
+
+<a name="line157">157: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectGetComm.html#PetscObjectGetComm">PetscObjectGetComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)(fetidpmat_ctx-&gt;pc),&amp;comm);
+<a name="line158">158: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm,&amp;rank);
+<a name="line159">159: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm,&amp;size);
+
+<a name="line161">161: </a>  <font color="#B22222">/* saddlepoint */</font>
+<a name="line162">162: </a>  nPl      = 0;
+<a name="line163">163: </a>  nPg      = 0;
+<a name="line164">164: </a>  nPgl     = 0;
+<a name="line165">165: </a>  gP       = NULL;
+<a name="line166">166: </a>  pP       = NULL;
+<a name="line167">167: </a>  l2gmap_p = NULL;
+<a name="line168">168: </a>  play     = NULL;
+<a name="line169">169: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectQuery.html#PetscObjectQuery">PetscObjectQuery</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)fetidpmat_ctx-&gt;pc,<font color="#666666">"__KSPFETIDP_pP"</font>,(<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>*)&amp;pP);
+<a name="line170">170: </a>  <font color="#4169E1">if</font> (pP) { <font color="#B22222">/* saddle point */</font>
+<a name="line171">171: </a>    <font color="#B22222">/* subdomain pressures in global numbering */</font>
+<a name="line172">172: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectQuery.html#PetscObjectQuery">PetscObjectQuery</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)fetidpmat_ctx-&gt;pc,<font color="#666666">"__KSPFETIDP_gP"</font>,(<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>*)&amp;gP);
+<a name="line173">173: </a>    <font color="#4169E1">if</font> (!gP) <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_PLIB,<font color="#666666">"gP not present"</font>);
+<a name="line174">174: </a>    <a href="../../../../../docs/manualpages/IS/ISGetLocalSize.html#ISGetLocalSize">ISGetLocalSize</a>(gP,&amp;nPl);
+<a name="line175">175: </a>    <a href="../../../../../docs/manualpages/Vec/VecCreate.html#VecCreate">VecCreate</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,&amp;fetidpmat_ctx-&gt;vP);
+<a name="line176">176: </a>    <a href="../../../../../docs/manualpages/Vec/VecSetSizes.html#VecSetSizes">VecSetSizes</a>(fetidpmat_ctx-&gt;vP,nPl,nPl);
+<a name="line177">177: </a>    <a href="../../../../../docs/manualpages/Vec/VecSetType.html#VecSetType">VecSetType</a>(fetidpmat_ctx-&gt;vP,<a href="../../../../../docs/manualpages/Vec/VECSTANDARD.html#VECSTANDARD">VECSTANDARD</a>);
+<a name="line178">178: </a>    <a href="../../../../../docs/manualpages/Vec/VecSetUp.html#VecSetUp">VecSetUp</a>(fetidpmat_ctx-&gt;vP);
+
+<a name="line180">180: </a>    <font color="#B22222">/* pressure matrix */</font>
+<a name="line181">181: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectQuery.html#PetscObjectQuery">PetscObjectQuery</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)fetidpmat_ctx-&gt;pc,<font color="#666666">"__KSPFETIDP_C"</font>,(<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>*)&amp;fetidpmat_ctx-&gt;C);
+<a name="line182">182: </a>    <font color="#4169E1">if</font> (!fetidpmat_ctx-&gt;C) { <font color="#B22222">/* null pressure block, compute layout and global numbering for pressures */</font>
+<a name="line183">183: </a>      <a href="../../../../../docs/manualpages/IS/IS.html#IS">IS</a> Pg;
+
+<a name="line185">185: </a>      <a href="../../../../../docs/manualpages/IS/ISRenumber.html#ISRenumber">ISRenumber</a>(gP,NULL,&amp;nPg,&amp;Pg);
+<a name="line186">186: </a>      <a href="../../../../../docs/manualpages/IS/ISLocalToGlobalMappingCreateIS.html#ISLocalToGlobalMappingCreateIS">ISLocalToGlobalMappingCreateIS</a>(Pg,&amp;l2gmap_p);
+<a name="line187">187: </a>      <a href="../../../../../docs/manualpages/IS/ISDestroy.html#ISDestroy">ISDestroy</a>(&amp;Pg);
+<a name="line188">188: </a>      <a href="../../../../../docs/manualpages/IS/PetscLayoutCreate.html#PetscLayoutCreate">PetscLayoutCreate</a>(comm,&amp;play);
+<a name="line189">189: </a>      <a href="../../../../../docs/manualpages/IS/PetscLayoutSetBlockSize.html#PetscLayoutSetBlockSize">PetscLayoutSetBlockSize</a>(play,1);
+<a name="line190">190: </a>      <a href="../../../../../docs/manualpages/IS/PetscLayoutSetSize.html#PetscLayoutSetSize">PetscLayoutSetSize</a>(play,nPg);
+<a name="line191">191: </a>      <a href="../../../../../docs/manualpages/IS/ISGetLocalSize.html#ISGetLocalSize">ISGetLocalSize</a>(pP,&amp;nPgl);
+<a name="line192">192: </a>      <a href="../../../../../docs/manualpages/IS/PetscLayoutSetLocalSize.html#PetscLayoutSetLocalSize">PetscLayoutSetLocalSize</a>(play,nPgl);
+<a name="line193">193: </a>      <a href="../../../../../docs/manualpages/IS/PetscLayoutSetUp.html#PetscLayoutSetUp">PetscLayoutSetUp</a>(play);
+<a name="line194">194: </a>    } <font color="#4169E1">else</font> {
+<a name="line195">195: </a>      <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html#PetscObjectReference">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)fetidpmat_ctx-&gt;C);
+<a name="line196">196: </a>      <a href="../../../../../docs/manualpages/Mat/MatGetLocalToGlobalMapping.html#MatGetLocalToGlobalMapping">MatGetLocalToGlobalMapping</a>(fetidpmat_ctx-&gt;C,&amp;l2gmap_p,NULL);
+<a name="line197">197: </a>      <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html#PetscObjectReference">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)l2gmap_p);
+<a name="line198">198: </a>      <a href="../../../../../docs/manualpages/Mat/MatGetSize.html#MatGetSize">MatGetSize</a>(fetidpmat_ctx-&gt;C,&amp;nPg,NULL);
+<a name="line199">199: </a>      <a href="../../../../../docs/manualpages/Mat/MatGetLocalSize.html#MatGetLocalSize">MatGetLocalSize</a>(fetidpmat_ctx-&gt;C,NULL,&amp;nPgl);
+<a name="line200">200: </a>      <a href="../../../../../docs/manualpages/Mat/MatGetLayouts.html#MatGetLayouts">MatGetLayouts</a>(fetidpmat_ctx-&gt;C,NULL,&amp;llay);
+<a name="line201">201: </a>      <a href="../../../../../docs/manualpages/IS/PetscLayoutReference.html#PetscLayoutReference">PetscLayoutReference</a>(llay,&amp;play);
+<a name="line202">202: </a>    }
+<a name="line203">203: </a>    <a href="../../../../../docs/manualpages/Vec/VecCreateMPIWithArray.html#VecCreateMPIWithArray">VecCreateMPIWithArray</a>(comm,1,nPgl,nPg,NULL,&amp;fetidpmat_ctx-&gt;xPg);
+<a name="line204">204: </a>    <a href="../../../../../docs/manualpages/Vec/VecCreateMPIWithArray.html#VecCreateMPIWithArray">VecCreateMPIWithArray</a>(comm,1,nPgl,nPg,NULL,&amp;fetidpmat_ctx-&gt;yPg);
+
+<a name="line206">206: </a>    <font color="#B22222">/* import matrices for pressures coupling */</font>
+<a name="line207">207: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectQuery.html#PetscObjectQuery">PetscObjectQuery</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)fetidpmat_ctx-&gt;pc,<font color="#666666">"__KSPFETIDP_B_BI"</font>,(<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>*)&amp;fetidpmat_ctx-&gt;B_BI);
+<a name="line208">208: </a>    <font color="#4169E1">if</font> (!fetidpmat_ctx-&gt;B_BI) <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_PLIB,<font color="#666666">"B_BI not present"</font>);
+<a name="line209">209: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html#PetscObjectReference">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)fetidpmat_ctx-&gt;B_BI);
+
+<a name="line211">211: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectQuery.html#PetscObjectQuery">PetscObjectQuery</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)fetidpmat_ctx-&gt;pc,<font color="#666666">"__KSPFETIDP_B_BB"</font>,(<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>*)&amp;fetidpmat_ctx-&gt;B_BB);
+<a name="line212">212: </a>    <font color="#4169E1">if</font> (!fetidpmat_ctx-&gt;B_BB) <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_PLIB,<font color="#666666">"B_BB not present"</font>);
+<a name="line213">213: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html#PetscObjectReference">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)fetidpmat_ctx-&gt;B_BB);
+
+<a name="line215">215: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectQuery.html#PetscObjectQuery">PetscObjectQuery</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)fetidpmat_ctx-&gt;pc,<font color="#666666">"__KSPFETIDP_Bt_BI"</font>,(<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>*)&amp;fetidpmat_ctx-&gt;Bt_BI);
+<a name="line216">216: </a>    <font color="#4169E1">if</font> (!fetidpmat_ctx-&gt;Bt_BI) <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_PLIB,<font color="#666666">"Bt_BI not present"</font>);
+<a name="line217">217: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html#PetscObjectReference">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)fetidpmat_ctx-&gt;Bt_BI);
+
+<a name="line219">219: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectQuery.html#PetscObjectQuery">PetscObjectQuery</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)fetidpmat_ctx-&gt;pc,<font color="#666666">"__KSPFETIDP_Bt_BB"</font>,(<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>*)&amp;fetidpmat_ctx-&gt;Bt_BB);
+<a name="line220">220: </a>    <font color="#4169E1">if</font> (!fetidpmat_ctx-&gt;Bt_BB) <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_PLIB,<font color="#666666">"Bt_BB not present"</font>);
+<a name="line221">221: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html#PetscObjectReference">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)fetidpmat_ctx-&gt;Bt_BB);
+
+<a name="line223">223: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectQuery.html#PetscObjectQuery">PetscObjectQuery</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)fetidpmat_ctx-&gt;pc,<font color="#666666">"__KSPFETIDP_flip"</font> ,(<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>*)&amp;fetidpmat_ctx-&gt;rhs_flip);
+<a name="line224">224: </a>    <font color="#4169E1">if</font> (fetidpmat_ctx-&gt;rhs_flip) {
+<a name="line225">225: </a>      <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html#PetscObjectReference">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)fetidpmat_ctx-&gt;rhs_flip);
+<a name="line226">226: </a>    }
+<a name="line227">227: </a>  }
+
+<a name="line229">229: </a>  <font color="#B22222">/* Default type of lagrange multipliers is non-redundant */</font>
+<a name="line230">230: </a>  fully_redundant = fetidpmat_ctx-&gt;fully_redundant;
+
+<a name="line232">232: </a>  <font color="#B22222">/* Evaluate local and global number of lagrange multipliers */</font>
+<a name="line233">233: </a>  <a href="../../../../../docs/manualpages/Vec/VecSet.html#VecSet">VecSet</a>(pcis-&gt;vec1_N,0.0);
+<a name="line234">234: </a>  n_local_lambda = 0;
+<a name="line235">235: </a>  partial_sum = 0;
+<a name="line236">236: </a>  n_boundary_dofs = 0;
+<a name="line237">237: </a>  s = 0;
+
+<a name="line239">239: </a>  <font color="#B22222">/* Get Vertices used to define the BDDC */</font>
+<a name="line240">240: </a>  PCBDDCGraphGetCandidatesIS(pcbddc-&gt;mat_graph,NULL,NULL,NULL,NULL,&amp;isvert);
+<a name="line241">241: </a>  <a href="../../../../../docs/manualpages/IS/ISGetLocalSize.html#ISGetLocalSize">ISGetLocalSize</a>(isvert,&amp;n_vertices);
+<a name="line242">242: </a>  <a href="../../../../../docs/manualpages/IS/ISGetIndices.html#ISGetIndices">ISGetIndices</a>(isvert,&amp;vertex_indices);
+
+<a name="line244">244: </a>  dual_size = pcis-&gt;n_B-n_vertices;
+<a name="line245">245: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(dual_size,&amp;dual_dofs_boundary_indices);
+<a name="line246">246: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(dual_size,&amp;aux_local_numbering_1);
+<a name="line247">247: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(dual_size,&amp;aux_local_numbering_2);
+
+<a name="line249">249: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetArray.html#VecGetArray">VecGetArray</a>(pcis-&gt;vec1_N,&amp;array);
+<a name="line250">250: </a>  <font color="#4169E1">for</font> (i=0;i&lt;pcis-&gt;n;i++){
+<a name="line251">251: </a>    j = mat_graph-&gt;count[i]; <font color="#B22222">/* RECALL: mat_graph-&gt;count[i] does not count myself */</font>
+<a name="line252">252: </a>    <font color="#4169E1">if</font> (j &gt; 0) n_boundary_dofs++;
+<a name="line253">253: </a>    skip_node = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+<a name="line254">254: </a>    <font color="#4169E1">if</font> (s &lt; n_vertices &amp;&amp; vertex_indices[s] == i) { <font color="#B22222">/* it works for a sorted set of vertices */</font>
+<a name="line255">255: </a>      skip_node = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+<a name="line256">256: </a>      s++;
+<a name="line257">257: </a>    }
+<a name="line258">258: </a>    <font color="#4169E1">if</font> (j &lt; 1) skip_node = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+<a name="line259">259: </a>    <font color="#4169E1">if</font> (mat_graph-&gt;special_dof[i] == PCBDDCGRAPH_DIRICHLET_MARK) skip_node = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+<a name="line260">260: </a>    <font color="#4169E1">if</font> (!skip_node) {
+<a name="line261">261: </a>      <font color="#4169E1">if</font> (fully_redundant) {
+<a name="line262">262: </a>        <font color="#B22222">/* fully redundant set of lagrange multipliers */</font>
+<a name="line263">263: </a>        n_lambda_for_dof = (j*(j+1))/2;
+<a name="line264">264: </a>      } <font color="#4169E1">else</font> {
+<a name="line265">265: </a>        n_lambda_for_dof = j;
+<a name="line266">266: </a>      }
+<a name="line267">267: </a>      n_local_lambda += j;
+<a name="line268">268: </a>      <font color="#B22222">/* needed to evaluate global number of lagrange multipliers */</font>
+<a name="line269">269: </a>      array[i]=(1.0*n_lambda_for_dof)/(j+1.0); <font color="#B22222">/* already scaled for the next global sum */</font>
+<a name="line270">270: </a>      <font color="#B22222">/* store some data needed */</font>
+<a name="line271">271: </a>      dual_dofs_boundary_indices[partial_sum] = n_boundary_dofs-1;
+<a name="line272">272: </a>      aux_local_numbering_1[partial_sum] = i;
+<a name="line273">273: </a>      aux_local_numbering_2[partial_sum] = n_lambda_for_dof;
+<a name="line274">274: </a>      partial_sum++;
+<a name="line275">275: </a>    }
+<a name="line276">276: </a>  }
+<a name="line277">277: </a>  <a href="../../../../../docs/manualpages/Vec/VecRestoreArray.html#VecRestoreArray">VecRestoreArray</a>(pcis-&gt;vec1_N,&amp;array);
+<a name="line278">278: </a>  <a href="../../../../../docs/manualpages/IS/ISRestoreIndices.html#ISRestoreIndices">ISRestoreIndices</a>(isvert,&amp;vertex_indices);
+<a name="line279">279: </a>  PCBDDCGraphRestoreCandidatesIS(pcbddc-&gt;mat_graph,NULL,NULL,NULL,NULL,&amp;isvert);
+<a name="line280">280: </a>  dual_size = partial_sum;
+
+<a name="line282">282: </a>  <font color="#B22222">/* compute global ordering of lagrange multipliers and associate l2g map */</font>
+<a name="line283">283: </a>  <a href="../../../../../docs/manualpages/IS/ISCreateGeneral.html#ISCreateGeneral">ISCreateGeneral</a>(comm,partial_sum,aux_local_numbering_1,<a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_COPY_VALUES</a>,&amp;subset_n);
+<a name="line284">284: </a>  <a href="../../../../../docs/manualpages/IS/ISLocalToGlobalMappingApplyIS.html#ISLocalToGlobalMappingApplyIS">ISLocalToGlobalMappingApplyIS</a>(pcis-&gt;mapping,subset_n,&amp;subset);
+<a name="line285">285: </a>  <a href="../../../../../docs/manualpages/IS/ISDestroy.html#ISDestroy">ISDestroy</a>(&amp;subset_n);
+<a name="line286">286: </a>  <a href="../../../../../docs/manualpages/IS/ISCreateGeneral.html#ISCreateGeneral">ISCreateGeneral</a>(comm,partial_sum,aux_local_numbering_2,<a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_OWN_POINTER</a>,&amp;subset_mult);
+<a name="line287">287: </a>  <a href="../../../../../docs/manualpages/IS/ISRenumber.html#ISRenumber">ISRenumber</a>(subset,subset_mult,&amp;fetidpmat_ctx-&gt;n_lambda,&amp;subset_n);
+<a name="line288">288: </a>  <a href="../../../../../docs/manualpages/IS/ISDestroy.html#ISDestroy">ISDestroy</a>(&amp;subset);
+
+<a name="line290">290: </a><font color="#A020F0">#if defined(PETSC_USE_DEBUG)</font>
+<a name="line291">291: </a>  <a href="../../../../../docs/manualpages/Vec/VecSet.html#VecSet">VecSet</a>(pcis-&gt;vec1_global,0.0);
+<a name="line292">292: </a>  <a href="../../../../../docs/manualpages/Vec/VecScatterBegin.html#VecScatterBegin">VecScatterBegin</a>(matis-&gt;rctx,pcis-&gt;vec1_N,pcis-&gt;vec1_global,<a href="../../../../../docs/manualpages/Sys/ADD_VALUES.html#ADD_VALUES">ADD_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_REVERSE.html#SCATTER_REVERSE">SCATTER_REVERSE</a>);
+<a name="line293">293: </a>  <a href="../../../../../docs/manualpages/Vec/VecScatterEnd.html#VecScatterEnd">VecScatterEnd</a>(matis-&gt;rctx,pcis-&gt;vec1_N,pcis-&gt;vec1_global,<a href="../../../../../docs/manualpages/Sys/ADD_VALUES.html#ADD_VALUES">ADD_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_REVERSE.html#SCATTER_REVERSE">SCATTER_REVERSE</a>);
+<a name="line294">294: </a>  <a href="../../../../../docs/manualpages/Vec/VecSum.html#VecSum">VecSum</a>(pcis-&gt;vec1_global,&amp;scalar_value);
+<a name="line295">295: </a>  i = (<a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>)PetscRealPart(scalar_value);
+<a name="line296">296: </a>  <font color="#4169E1">if</font> (i != fetidpmat_ctx-&gt;n_lambda) <a href="../../../../../docs/manualpages/Sys/SETERRQ2.html#SETERRQ2">SETERRQ2</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,PETSC_ERR_PLIB,<font color="#666666">"Global number of multipliers mismatch! (%d!=%d)\n"</font>,fetidpmat_ctx-&gt;n_lambda,i);
+<a name="line297">297: </a><font color="#A020F0">#endif</font>
+
+<a name="line299">299: </a>  <font color="#B22222">/* init data for scaling factors exchange */</font>
+<a name="line300">300: </a>  <font color="#4169E1">if</font> (!pcbddc-&gt;use_deluxe_scaling) {
+<a name="line301">301: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>    *ptrs_buffer,neigh_position;
+<a name="line302">302: </a>    <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> *send_buffer,*recv_buffer;
+<a name="line303">303: </a>    MPI_Request *send_reqs,*recv_reqs;
+
+<a name="line305">305: </a>    partial_sum = 0;
+<a name="line306">306: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(pcis-&gt;n_neigh,&amp;ptrs_buffer);
+<a name="line307">307: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(<a href="../../../../../docs/manualpages/Sys/PetscMax.html#PetscMax">PetscMax</a>(pcis-&gt;n_neigh-1,0),&amp;send_reqs);
+<a name="line308">308: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(<a href="../../../../../docs/manualpages/Sys/PetscMax.html#PetscMax">PetscMax</a>(pcis-&gt;n_neigh-1,0),&amp;recv_reqs);
+<a name="line309">309: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(pcis-&gt;n+1,&amp;all_factors);
+<a name="line310">310: </a>    <font color="#4169E1">if</font> (pcis-&gt;n_neigh &gt; 0) ptrs_buffer[0]=0;
+<a name="line311">311: </a>    <font color="#4169E1">for</font> (i=1;i&lt;pcis-&gt;n_neigh;i++) {
+<a name="line312">312: </a>      partial_sum += pcis-&gt;n_shared[i];
+<a name="line313">313: </a>      ptrs_buffer[i] = ptrs_buffer[i-1]+pcis-&gt;n_shared[i];
+<a name="line314">314: </a>    }
+<a name="line315">315: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(partial_sum,&amp;send_buffer);
+<a name="line316">316: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(partial_sum,&amp;recv_buffer);
+<a name="line317">317: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(partial_sum,&amp;all_factors[0]);
+<a name="line318">318: </a>    <font color="#4169E1">for</font> (i=0;i&lt;pcis-&gt;n-1;i++) {
+<a name="line319">319: </a>      j = mat_graph-&gt;count[i];
+<a name="line320">320: </a>      all_factors[i+1]=all_factors[i]+j;
+<a name="line321">321: </a>    }
+
+<a name="line323">323: </a>    <font color="#B22222">/* scatter B scaling to N vec */</font>
+<a name="line324">324: </a>    <a href="../../../../../docs/manualpages/Vec/VecScatterBegin.html#VecScatterBegin">VecScatterBegin</a>(pcis-&gt;N_to_B,pcis-&gt;D,pcis-&gt;vec1_N,<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_REVERSE.html#SCATTER_REVERSE">SCATTER_REVERSE</a>);
+<a name="line325">325: </a>    <a href="../../../../../docs/manualpages/Vec/VecScatterEnd.html#VecScatterEnd">VecScatterEnd</a>(pcis-&gt;N_to_B,pcis-&gt;D,pcis-&gt;vec1_N,<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_REVERSE.html#SCATTER_REVERSE">SCATTER_REVERSE</a>);
+<a name="line326">326: </a>    <font color="#B22222">/* communications */</font>
+<a name="line327">327: </a>    <a href="../../../../../docs/manualpages/Vec/VecGetArrayRead.html#VecGetArrayRead">VecGetArrayRead</a>(pcis-&gt;vec1_N,(const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>**)&amp;array);
+<a name="line328">328: </a>    <font color="#4169E1">for</font> (i=1;i&lt;pcis-&gt;n_neigh;i++) {
+<a name="line329">329: </a>      <font color="#4169E1">for</font> (j=0;j&lt;pcis-&gt;n_shared[i];j++) {
+<a name="line330">330: </a>        send_buffer[ptrs_buffer[i-1]+j]=array[pcis-&gt;shared[i][j]];
+<a name="line331">331: </a>      }
+<a name="line332">332: </a>      <a href="../../../../../docs/manualpages/Sys/PetscMPIIntCast.html#PetscMPIIntCast">PetscMPIIntCast</a>(ptrs_buffer[i]-ptrs_buffer[i-1],&amp;buf_size);
+<a name="line333">333: </a>      <a href="../../../../../docs/manualpages/Sys/PetscMPIIntCast.html#PetscMPIIntCast">PetscMPIIntCast</a>(pcis-&gt;neigh[i],&amp;neigh);
+<a name="line334">334: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Isend.html#MPI_Isend">MPI_Isend</a>(&amp;send_buffer[ptrs_buffer[i-1]],buf_size,<a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html#MPIU_SCALAR">MPIU_SCALAR</a>,neigh,0,comm,&amp;send_reqs[i-1]);
+<a name="line335">335: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Irecv.html#MPI_Irecv">MPI_Irecv</a>(&amp;recv_buffer[ptrs_buffer[i-1]],buf_size,<a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html#MPIU_SCALAR">MPIU_SCALAR</a>,neigh,0,comm,&amp;recv_reqs[i-1]);
+<a name="line336">336: </a>    }
+<a name="line337">337: </a>    <a href="../../../../../docs/manualpages/Vec/VecRestoreArrayRead.html#VecRestoreArrayRead">VecRestoreArrayRead</a>(pcis-&gt;vec1_N,(const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>**)&amp;array);
+<a name="line338">338: </a>    <font color="#4169E1">if</font> (pcis-&gt;n_neigh &gt; 0) {
+<a name="line339">339: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Waitall.html#MPI_Waitall">MPI_Waitall</a>(pcis-&gt;n_neigh-1,recv_reqs,MPI_STATUSES_IGNORE);
+<a name="line340">340: </a>    }
+<a name="line341">341: </a>    <font color="#B22222">/* put values in correct places */</font>
+<a name="line342">342: </a>    <font color="#4169E1">for</font> (i=1;i&lt;pcis-&gt;n_neigh;i++) {
+<a name="line343">343: </a>      <font color="#4169E1">for</font> (j=0;j&lt;pcis-&gt;n_shared[i];j++) {
+<a name="line344">344: </a>        k = pcis-&gt;shared[i][j];
+<a name="line345">345: </a>        neigh_position = 0;
+<a name="line346">346: </a>        <font color="#4169E1">while</font>(mat_graph-&gt;neighbours_set[k][neigh_position] != pcis-&gt;neigh[i]) {neigh_position++;}
+<a name="line347">347: </a>        all_factors[k][neigh_position]=recv_buffer[ptrs_buffer[i-1]+j];
+<a name="line348">348: </a>      }
+<a name="line349">349: </a>    }
+<a name="line350">350: </a>    <font color="#4169E1">if</font> (pcis-&gt;n_neigh &gt; 0) {
+<a name="line351">351: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Waitall.html#MPI_Waitall">MPI_Waitall</a>(pcis-&gt;n_neigh-1,send_reqs,MPI_STATUSES_IGNORE);
+<a name="line352">352: </a>    }
+<a name="line353">353: </a>    <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(send_reqs);
+<a name="line354">354: </a>    <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(recv_reqs);
+<a name="line355">355: </a>    <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(send_buffer);
+<a name="line356">356: </a>    <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(recv_buffer);
+<a name="line357">357: </a>    <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(ptrs_buffer);
+<a name="line358">358: </a>  }
+
+<a name="line360">360: </a>  <font color="#B22222">/* Compute B and B_delta (local actions) */</font>
+<a name="line361">361: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(pcis-&gt;n_neigh,&amp;aux_sums);
+<a name="line362">362: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(n_local_lambda,&amp;l2g_indices);
+<a name="line363">363: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(n_local_lambda,&amp;vals_B_delta);
+<a name="line364">364: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(n_local_lambda,&amp;cols_B_delta);
+<a name="line365">365: </a>  <font color="#4169E1">if</font> (!pcbddc-&gt;use_deluxe_scaling) {
+<a name="line366">366: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(n_local_lambda,&amp;scaling_factors);
+<a name="line367">367: </a>  } <font color="#4169E1">else</font> {
+<a name="line368">368: </a>    scaling_factors = NULL;
+<a name="line369">369: </a>    all_factors     = NULL;
+<a name="line370">370: </a>  }
+<a name="line371">371: </a>  <a href="../../../../../docs/manualpages/IS/ISGetIndices.html#ISGetIndices">ISGetIndices</a>(subset_n,&amp;aux_global_numbering);
+<a name="line372">372: </a>  partial_sum=0;
+<a name="line373">373: </a>  cum = 0;
+<a name="line374">374: </a>  <font color="#4169E1">for</font> (i=0;i&lt;dual_size;i++) {
+<a name="line375">375: </a>    n_global_lambda = aux_global_numbering[cum];
+<a name="line376">376: </a>    j = mat_graph-&gt;count[aux_local_numbering_1[i]];
+<a name="line377">377: </a>    aux_sums[0]=0;
+<a name="line378">378: </a>    <font color="#4169E1">for</font> (s=1;s&lt;j;s++) {
+<a name="line379">379: </a>      aux_sums[s]=aux_sums[s-1]+j-s+1;
+<a name="line380">380: </a>    }
+<a name="line381">381: </a>    <font color="#4169E1">if</font> (all_factors) array = all_factors[aux_local_numbering_1[i]];
+<a name="line382">382: </a>    n_neg_values = 0;
+<a name="line383">383: </a>    <font color="#4169E1">while</font>(n_neg_values &lt; j &amp;&amp; mat_graph-&gt;neighbours_set[aux_local_numbering_1[i]][n_neg_values] &lt; rank) {n_neg_values++;}
+<a name="line384">384: </a>    n_pos_values = j - n_neg_values;
+<a name="line385">385: </a>    <font color="#4169E1">if</font> (fully_redundant) {
+<a name="line386">386: </a>      <font color="#4169E1">for</font> (s=0;s&lt;n_neg_values;s++) {
+<a name="line387">387: </a>        l2g_indices    [partial_sum+s]=aux_sums[s]+n_neg_values-s-1+n_global_lambda;
+<a name="line388">388: </a>        cols_B_delta   [partial_sum+s]=dual_dofs_boundary_indices[i];
+<a name="line389">389: </a>        vals_B_delta   [partial_sum+s]=-1.0;
+<a name="line390">390: </a>        <font color="#4169E1">if</font> (!pcbddc-&gt;use_deluxe_scaling) scaling_factors[partial_sum+s]=array[s];
+<a name="line391">391: </a>      }
+<a name="line392">392: </a>      <font color="#4169E1">for</font> (s=0;s&lt;n_pos_values;s++) {
+<a name="line393">393: </a>        l2g_indices    [partial_sum+s+n_neg_values]=aux_sums[n_neg_values]+s+n_global_lambda;
+<a name="line394">394: </a>        cols_B_delta   [partial_sum+s+n_neg_values]=dual_dofs_boundary_indices[i];
+<a name="line395">395: </a>        vals_B_delta   [partial_sum+s+n_neg_values]=1.0;
+<a name="line396">396: </a>        <font color="#4169E1">if</font> (!pcbddc-&gt;use_deluxe_scaling) scaling_factors[partial_sum+s+n_neg_values]=array[s+n_neg_values];
+<a name="line397">397: </a>      }
+<a name="line398">398: </a>      partial_sum += j;
+<a name="line399">399: </a>    } <font color="#4169E1">else</font> {
+<a name="line400">400: </a>      <font color="#B22222">/* l2g_indices and default cols and vals of B_delta */</font>
+<a name="line401">401: </a>      <font color="#4169E1">for</font> (s=0;s&lt;j;s++) {
+<a name="line402">402: </a>        l2g_indices    [partial_sum+s]=n_global_lambda+s;
+<a name="line403">403: </a>        cols_B_delta   [partial_sum+s]=dual_dofs_boundary_indices[i];
+<a name="line404">404: </a>        vals_B_delta   [partial_sum+s]=0.0;
+<a name="line405">405: </a>      }
+<a name="line406">406: </a>      <font color="#B22222">/* B_delta */</font>
+<a name="line407">407: </a>      <font color="#4169E1">if</font> ( n_neg_values &gt; 0 ) { <font color="#B22222">/* there's a rank next to me to the left */</font>
+<a name="line408">408: </a>        vals_B_delta   [partial_sum+n_neg_values-1]=-1.0;
+<a name="line409">409: </a>      }
+<a name="line410">410: </a>      <font color="#4169E1">if</font> ( n_neg_values &lt; j ) { <font color="#B22222">/* there's a rank next to me to the right */</font>
+<a name="line411">411: </a>        vals_B_delta   [partial_sum+n_neg_values]=1.0;
+<a name="line412">412: </a>      }
+<a name="line413">413: </a>      <font color="#B22222">/* scaling as in Klawonn-Widlund 1999 */</font>
+<a name="line414">414: </a>      <font color="#4169E1">if</font> (!pcbddc-&gt;use_deluxe_scaling) {
+<a name="line415">415: </a>        <font color="#4169E1">for</font> (s=0;s&lt;n_neg_values;s++) {
+<a name="line416">416: </a>          scalar_value = 0.0;
+<a name="line417">417: </a>          <font color="#4169E1">for</font> (k=0;k&lt;s+1;k++) scalar_value += array[k];
+<a name="line418">418: </a>          scaling_factors[partial_sum+s] = -scalar_value;
+<a name="line419">419: </a>        }
+<a name="line420">420: </a>        <font color="#4169E1">for</font> (s=0;s&lt;n_pos_values;s++) {
+<a name="line421">421: </a>          scalar_value = 0.0;
+<a name="line422">422: </a>          <font color="#4169E1">for</font> (k=s+n_neg_values;k&lt;j;k++) scalar_value += array[k];
+<a name="line423">423: </a>          scaling_factors[partial_sum+s+n_neg_values] = scalar_value;
+<a name="line424">424: </a>        }
+<a name="line425">425: </a>      }
+<a name="line426">426: </a>      partial_sum += j;
+<a name="line427">427: </a>    }
+<a name="line428">428: </a>    cum += aux_local_numbering_2[i];
+<a name="line429">429: </a>  }
+<a name="line430">430: </a>  <a href="../../../../../docs/manualpages/IS/ISRestoreIndices.html#ISRestoreIndices">ISRestoreIndices</a>(subset_n,&amp;aux_global_numbering);
+<a name="line431">431: </a>  <a href="../../../../../docs/manualpages/IS/ISDestroy.html#ISDestroy">ISDestroy</a>(&amp;subset_mult);
+<a name="line432">432: </a>  <a href="../../../../../docs/manualpages/IS/ISDestroy.html#ISDestroy">ISDestroy</a>(&amp;subset_n);
+<a name="line433">433: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(aux_sums);
+<a name="line434">434: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(aux_local_numbering_1);
+<a name="line435">435: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(dual_dofs_boundary_indices);
+<a name="line436">436: </a>  <font color="#4169E1">if</font> (all_factors) {
+<a name="line437">437: </a>    <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(all_factors[0]);
+<a name="line438">438: </a>    <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(all_factors);
+<a name="line439">439: </a>  }
+
+<a name="line441">441: </a>  <font color="#B22222">/* Create local part of B_delta */</font>
+<a name="line442">442: </a>  <a href="../../../../../docs/manualpages/Mat/MatCreate.html#MatCreate">MatCreate</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,&amp;fetidpmat_ctx-&gt;B_delta);
+<a name="line443">443: </a>  <a href="../../../../../docs/manualpages/Mat/MatSetSizes.html#MatSetSizes">MatSetSizes</a>(fetidpmat_ctx-&gt;B_delta,n_local_lambda,pcis-&gt;n_B,n_local_lambda,pcis-&gt;n_B);
+<a name="line444">444: </a>  <a href="../../../../../docs/manualpages/Mat/MatSetType.html#MatSetType">MatSetType</a>(fetidpmat_ctx-&gt;B_delta,<a href="../../../../../docs/manualpages/Mat/MATSEQAIJ.html#MATSEQAIJ">MATSEQAIJ</a>);
+<a name="line445">445: </a>  <a href="../../../../../docs/manualpages/Mat/MatSeqAIJSetPreallocation.html#MatSeqAIJSetPreallocation">MatSeqAIJSetPreallocation</a>(fetidpmat_ctx-&gt;B_delta,1,NULL);
+<a name="line446">446: </a>  <a href="../../../../../docs/manualpages/Mat/MatSetOption.html#MatSetOption">MatSetOption</a>(fetidpmat_ctx-&gt;B_delta,<a href="../../../../../docs/manualpages/Mat/MatOption.html#MatOption">MAT_IGNORE_ZERO_ENTRIES</a>,<a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>);
+<a name="line447">447: </a>  <font color="#4169E1">for</font> (i=0;i&lt;n_local_lambda;i++) {
+<a name="line448">448: </a>    <a href="../../../../../docs/manualpages/Mat/MatSetValue.html#MatSetValue">MatSetValue</a>(fetidpmat_ctx-&gt;B_delta,i,cols_B_delta[i],vals_B_delta[i],<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>);
+<a name="line449">449: </a>  }
+<a name="line450">450: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(vals_B_delta);
+<a name="line451">451: </a>  <a href="../../../../../docs/manualpages/Mat/MatAssemblyBegin.html#MatAssemblyBegin">MatAssemblyBegin</a>(fetidpmat_ctx-&gt;B_delta,<a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+<a name="line452">452: </a>  <a href="../../../../../docs/manualpages/Mat/MatAssemblyEnd.html#MatAssemblyEnd">MatAssemblyEnd</a>(fetidpmat_ctx-&gt;B_delta,<a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+
+<a name="line454">454: </a>  BD1 = NULL;
+<a name="line455">455: </a>  BD2 = NULL;
+<a name="line456">456: </a>  <font color="#4169E1">if</font> (fully_redundant) {
+<a name="line457">457: </a>    <font color="#4169E1">if</font> (pcbddc-&gt;use_deluxe_scaling) <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(comm,PETSC_ERR_SUP,<font color="#666666">"Deluxe FETIDP with fully-redundant multipliers to be implemented"</font>);
+<a name="line458">458: </a>    <a href="../../../../../docs/manualpages/Mat/MatCreate.html#MatCreate">MatCreate</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,&amp;ScalingMat);
+<a name="line459">459: </a>    <a href="../../../../../docs/manualpages/Mat/MatSetSizes.html#MatSetSizes">MatSetSizes</a>(ScalingMat,n_local_lambda,n_local_lambda,n_local_lambda,n_local_lambda);
+<a name="line460">460: </a>    <a href="../../../../../docs/manualpages/Mat/MatSetType.html#MatSetType">MatSetType</a>(ScalingMat,<a href="../../../../../docs/manualpages/Mat/MATSEQAIJ.html#MATSEQAIJ">MATSEQAIJ</a>);
+<a name="line461">461: </a>    <a href="../../../../../docs/manualpages/Mat/MatSeqAIJSetPreallocation.html#MatSeqAIJSetPreallocation">MatSeqAIJSetPreallocation</a>(ScalingMat,1,NULL);
+<a name="line462">462: </a>    <font color="#4169E1">for</font> (i=0;i&lt;n_local_lambda;i++) {
+<a name="line463">463: </a>      <a href="../../../../../docs/manualpages/Mat/MatSetValue.html#MatSetValue">MatSetValue</a>(ScalingMat,i,i,scaling_factors[i],<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>);
+<a name="line464">464: </a>    }
+<a name="line465">465: </a>    <a href="../../../../../docs/manualpages/Mat/MatAssemblyBegin.html#MatAssemblyBegin">MatAssemblyBegin</a>(ScalingMat,<a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+<a name="line466">466: </a>    <a href="../../../../../docs/manualpages/Mat/MatAssemblyEnd.html#MatAssemblyEnd">MatAssemblyEnd</a>(ScalingMat,<a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+<a name="line467">467: </a>    <a href="../../../../../docs/manualpages/Mat/MatMatMult.html#MatMatMult">MatMatMult</a>(ScalingMat,fetidpmat_ctx-&gt;B_delta,<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MAT_INITIAL_MATRIX</a>,<a href="../../../../../docs/manualpages/Sys/PETSC_DEFAULT.html#PETSC_DEFAULT">PETSC_DEFAULT</a>,&amp;fetidpmat_ctx-&gt;B_Ddelta);
+<a name="line468">468: </a>    <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;ScalingMat);
+<a name="line469">469: </a>  } <font color="#4169E1">else</font> {
+<a name="line470">470: </a>    <a href="../../../../../docs/manualpages/Mat/MatCreate.html#MatCreate">MatCreate</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,&amp;fetidpmat_ctx-&gt;B_Ddelta);
+<a name="line471">471: </a>    <a href="../../../../../docs/manualpages/Mat/MatSetSizes.html#MatSetSizes">MatSetSizes</a>(fetidpmat_ctx-&gt;B_Ddelta,n_local_lambda,pcis-&gt;n_B,n_local_lambda,pcis-&gt;n_B);
+<a name="line472">472: </a>    <font color="#4169E1">if</font> (!pcbddc-&gt;use_deluxe_scaling) {
+<a name="line473">473: </a>      <a href="../../../../../docs/manualpages/Mat/MatSetType.html#MatSetType">MatSetType</a>(fetidpmat_ctx-&gt;B_Ddelta,<a href="../../../../../docs/manualpages/Mat/MATSEQAIJ.html#MATSEQAIJ">MATSEQAIJ</a>);
+<a name="line474">474: </a>      <a href="../../../../../docs/manualpages/Mat/MatSeqAIJSetPreallocation.html#MatSeqAIJSetPreallocation">MatSeqAIJSetPreallocation</a>(fetidpmat_ctx-&gt;B_Ddelta,1,NULL);
+<a name="line475">475: </a>      <font color="#4169E1">for</font> (i=0;i&lt;n_local_lambda;i++) {
+<a name="line476">476: </a>        <a href="../../../../../docs/manualpages/Mat/MatSetValue.html#MatSetValue">MatSetValue</a>(fetidpmat_ctx-&gt;B_Ddelta,i,cols_B_delta[i],scaling_factors[i],<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>);
+<a name="line477">477: </a>      }
+<a name="line478">478: </a>      <a href="../../../../../docs/manualpages/Mat/MatAssemblyBegin.html#MatAssemblyBegin">MatAssemblyBegin</a>(fetidpmat_ctx-&gt;B_Ddelta,<a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+<a name="line479">479: </a>      <a href="../../../../../docs/manualpages/Mat/MatAssemblyEnd.html#MatAssemblyEnd">MatAssemblyEnd</a>(fetidpmat_ctx-&gt;B_Ddelta,<a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+<a name="line480">480: </a>    } <font color="#4169E1">else</font> {
+<a name="line481">481: </a>      <font color="#B22222">/* scaling as in Klawonn-Widlund 1999 */</font>
+<a name="line482">482: </a>      PCBDDCDeluxeScaling deluxe_ctx = pcbddc-&gt;deluxe_ctx;
+<a name="line483">483: </a>      PCBDDCSubSchurs     sub_schurs = pcbddc-&gt;sub_schurs;
+<a name="line484">484: </a>      <a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>                 T;
+<a name="line485">485: </a>      <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>         *W,lwork,*Bwork;
+<a name="line486">486: </a>      const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>      *idxs = NULL;
+<a name="line487">487: </a>      <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>            cum,mss,*nnz;
+<a name="line488">488: </a>      <a href="../../../../../docs/manualpages/Sys/PetscBLASInt.html#PetscBLASInt">PetscBLASInt</a>        *pivots,B_lwork,B_N,B_ierr;
+
+<a name="line490">490: </a>      <font color="#4169E1">if</font> (!pcbddc-&gt;deluxe_singlemat) <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(comm,PETSC_ERR_USER,<font color="#666666">"Cannot compute B_Ddelta! rerun with -pc_bddc_deluxe_singlemat"</font>);
+<a name="line491">491: </a>      mss  = 0;
+<a name="line492">492: </a>      <a href="../../../../../docs/manualpages/Sys/PetscCalloc1.html#PetscCalloc1">PetscCalloc1</a>(pcis-&gt;n_B,&amp;nnz);
+<a name="line493">493: </a>      <font color="#4169E1">if</font> (sub_schurs-&gt;is_Ej_all) {
+<a name="line494">494: </a>        <a href="../../../../../docs/manualpages/IS/ISGetIndices.html#ISGetIndices">ISGetIndices</a>(sub_schurs-&gt;is_Ej_all,&amp;idxs);
+<a name="line495">495: </a>        <font color="#4169E1">for</font> (i=0,cum=0;i&lt;sub_schurs-&gt;n_subs;i++) {
+<a name="line496">496: </a>          <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> subset_size;
+
+<a name="line498">498: </a>          <a href="../../../../../docs/manualpages/IS/ISGetLocalSize.html#ISGetLocalSize">ISGetLocalSize</a>(sub_schurs-&gt;is_subs[i],&amp;subset_size);
+<a name="line499">499: </a>          <font color="#4169E1">for</font> (j=0;j&lt;subset_size;j++) nnz[idxs[j+cum]] = subset_size;
+<a name="line500">500: </a>          mss  = <a href="../../../../../docs/manualpages/Sys/PetscMax.html#PetscMax">PetscMax</a>(mss,subset_size);
+<a name="line501">501: </a>          cum += subset_size;
+<a name="line502">502: </a>        }
+<a name="line503">503: </a>      }
+<a name="line504">504: </a>      <a href="../../../../../docs/manualpages/Mat/MatCreate.html#MatCreate">MatCreate</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,&amp;T);
+<a name="line505">505: </a>      <a href="../../../../../docs/manualpages/Mat/MatSetSizes.html#MatSetSizes">MatSetSizes</a>(T,pcis-&gt;n_B,pcis-&gt;n_B,pcis-&gt;n_B,pcis-&gt;n_B);
+<a name="line506">506: </a>      <a href="../../../../../docs/manualpages/Mat/MatSetType.html#MatSetType">MatSetType</a>(T,<a href="../../../../../docs/manualpages/Mat/MATSEQAIJ.html#MATSEQAIJ">MATSEQAIJ</a>);
+<a name="line507">507: </a>      <a href="../../../../../docs/manualpages/Mat/MatSeqAIJSetPreallocation.html#MatSeqAIJSetPreallocation">MatSeqAIJSetPreallocation</a>(T,0,nnz);
+<a name="line508">508: </a>      <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(nnz);
+
+<a name="line510">510: </a>      <font color="#B22222">/* workspace allocation */</font>
+<a name="line511">511: </a>      B_lwork = 0;
+<a name="line512">512: </a>      <font color="#4169E1">if</font> (mss) {
+<a name="line513">513: </a>        <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> dummy = 1;
+
+<a name="line515">515: </a>        B_lwork = -1;
+<a name="line516">516: </a>        <a href="../../../../../docs/manualpages/Sys/PetscBLASIntCast.html#PetscBLASIntCast">PetscBLASIntCast</a>(mss,&amp;B_N);
+<a name="line517">517: </a>        <a href="../../../../../docs/manualpages/Sys/PetscFPTrapPush.html#PetscFPTrapPush">PetscFPTrapPush</a>(PETSC_FP_TRAP_OFF);
+<a name="line518">518: </a>        PetscStackCallBLAS(<font color="#666666">"LAPACKgetri"</font>,LAPACKgetri_(&amp;B_N,&amp;dummy,&amp;B_N,&amp;B_N,&amp;lwork,&amp;B_lwork,&amp;B_ierr));
+<a name="line519">519: </a>        <a href="../../../../../docs/manualpages/Sys/PetscFPTrapPop.html#PetscFPTrapPop">PetscFPTrapPop</a>();
+<a name="line520">520: </a>        <font color="#4169E1">if</font> (B_ierr) <a href="../../../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_LIB,<font color="#666666">"Error in query to GETRI Lapack routine %d"</font>,(int)B_ierr);
+<a name="line521">521: </a>        <a href="../../../../../docs/manualpages/Sys/PetscBLASIntCast.html#PetscBLASIntCast">PetscBLASIntCast</a>((<a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>)PetscRealPart(lwork),&amp;B_lwork);
+<a name="line522">522: </a>      }
+<a name="line523">523: </a>      <a href="../../../../../docs/manualpages/Sys/PetscMalloc3.html#PetscMalloc3">PetscMalloc3</a>(mss*mss,&amp;W,mss,&amp;pivots,B_lwork,&amp;Bwork);
+
+<a name="line525">525: </a>      <font color="#4169E1">for</font> (i=0,cum=0;i&lt;sub_schurs-&gt;n_subs;i++) {
+<a name="line526">526: </a>        <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>  *M;
+<a name="line527">527: </a>        <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>     subset_size;
+
+<a name="line529">529: </a>        <a href="../../../../../docs/manualpages/IS/ISGetLocalSize.html#ISGetLocalSize">ISGetLocalSize</a>(sub_schurs-&gt;is_subs[i],&amp;subset_size);
+<a name="line530">530: </a>        <a href="../../../../../docs/manualpages/Sys/PetscBLASIntCast.html#PetscBLASIntCast">PetscBLASIntCast</a>(subset_size,&amp;B_N);
+<a name="line531">531: </a>        <a href="../../../../../docs/manualpages/Mat/MatDenseGetArray.html#MatDenseGetArray">MatDenseGetArray</a>(deluxe_ctx-&gt;seq_mat[i],&amp;M);
+<a name="line532">532: </a>        <a href="../../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(W,M,subset_size*subset_size*<font color="#4169E1">sizeof</font>(<a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>));
+<a name="line533">533: </a>        <a href="../../../../../docs/manualpages/Mat/MatDenseRestoreArray.html#MatDenseRestoreArray">MatDenseRestoreArray</a>(deluxe_ctx-&gt;seq_mat[i],&amp;M);
+<a name="line534">534: </a>        <a href="../../../../../docs/manualpages/Sys/PetscFPTrapPush.html#PetscFPTrapPush">PetscFPTrapPush</a>(PETSC_FP_TRAP_OFF);
+<a name="line535">535: </a>        PetscStackCallBLAS(<font color="#666666">"LAPACKgetrf"</font>,LAPACKgetrf_(&amp;B_N,&amp;B_N,W,&amp;B_N,pivots,&amp;B_ierr));
+<a name="line536">536: </a>        <font color="#4169E1">if</font> (B_ierr) <a href="../../../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_LIB,<font color="#666666">"Error in GETRF Lapack routine %d"</font>,(int)B_ierr);
+<a name="line537">537: </a>        PetscStackCallBLAS(<font color="#666666">"LAPACKgetri"</font>,LAPACKgetri_(&amp;B_N,W,&amp;B_N,pivots,Bwork,&amp;B_lwork,&amp;B_ierr));
+<a name="line538">538: </a>        <font color="#4169E1">if</font> (B_ierr) <a href="../../../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_LIB,<font color="#666666">"Error in GETRI Lapack routine %d"</font>,(int)B_ierr);
+<a name="line539">539: </a>        <a href="../../../../../docs/manualpages/Sys/PetscFPTrapPop.html#PetscFPTrapPop">PetscFPTrapPop</a>();
+<a name="line540">540: </a>        <font color="#B22222">/* silent static analyzer */</font>
+<a name="line541">541: </a>        <font color="#4169E1">if</font> (!idxs) <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_PLIB,<font color="#666666">"IDXS not present"</font>);
+<a name="line542">542: </a>        <a href="../../../../../docs/manualpages/Mat/MatSetValues.html#MatSetValues">MatSetValues</a>(T,subset_size,idxs+cum,subset_size,idxs+cum,W,<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>);
+<a name="line543">543: </a>        cum += subset_size;
+<a name="line544">544: </a>      }
+<a name="line545">545: </a>      <a href="../../../../../docs/manualpages/Mat/MatAssemblyBegin.html#MatAssemblyBegin">MatAssemblyBegin</a>(T,<a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+<a name="line546">546: </a>      <a href="../../../../../docs/manualpages/Mat/MatAssemblyEnd.html#MatAssemblyEnd">MatAssemblyEnd</a>(T,<a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+<a name="line547">547: </a>      <a href="../../../../../docs/manualpages/Mat/MatMatTransposeMult.html#MatMatTransposeMult">MatMatTransposeMult</a>(T,fetidpmat_ctx-&gt;B_delta,<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MAT_INITIAL_MATRIX</a>,<a href="../../../../../docs/manualpages/Sys/PETSC_DEFAULT.html#PETSC_DEFAULT">PETSC_DEFAULT</a>,&amp;BD1);
+<a name="line548">548: </a>      <a href="../../../../../docs/manualpages/Mat/MatMatMult.html#MatMatMult">MatMatMult</a>(fetidpmat_ctx-&gt;B_delta,BD1,<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MAT_INITIAL_MATRIX</a>,<a href="../../../../../docs/manualpages/Sys/PETSC_DEFAULT.html#PETSC_DEFAULT">PETSC_DEFAULT</a>,&amp;BD2);
+<a name="line549">549: </a>      <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;T);
+<a name="line550">550: </a>      <a href="../../../../../docs/manualpages/Sys/PetscFree3.html#PetscFree3">PetscFree3</a>(W,pivots,Bwork);
+<a name="line551">551: </a>      <font color="#4169E1">if</font> (sub_schurs-&gt;is_Ej_all) {
+<a name="line552">552: </a>        <a href="../../../../../docs/manualpages/IS/ISRestoreIndices.html#ISRestoreIndices">ISRestoreIndices</a>(sub_schurs-&gt;is_Ej_all,&amp;idxs);
+<a name="line553">553: </a>      }
+<a name="line554">554: </a>    }
+<a name="line555">555: </a>  }
+<a name="line556">556: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(scaling_factors);
+<a name="line557">557: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(cols_B_delta);
+
+<a name="line559">559: </a>  <font color="#B22222">/* Layout of multipliers */</font>
+<a name="line560">560: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutCreate.html#PetscLayoutCreate">PetscLayoutCreate</a>(comm,&amp;llay);
+<a name="line561">561: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutSetBlockSize.html#PetscLayoutSetBlockSize">PetscLayoutSetBlockSize</a>(llay,1);
+<a name="line562">562: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutSetSize.html#PetscLayoutSetSize">PetscLayoutSetSize</a>(llay,fetidpmat_ctx-&gt;n_lambda);
+<a name="line563">563: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutSetUp.html#PetscLayoutSetUp">PetscLayoutSetUp</a>(llay);
+<a name="line564">564: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutGetLocalSize.html#PetscLayoutGetLocalSize">PetscLayoutGetLocalSize</a>(llay,&amp;fetidpmat_ctx-&gt;n);
+
+<a name="line566">566: </a>  <font color="#B22222">/* Local work vector of multipliers */</font>
+<a name="line567">567: </a>  <a href="../../../../../docs/manualpages/Vec/VecCreate.html#VecCreate">VecCreate</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,&amp;fetidpmat_ctx-&gt;lambda_local);
+<a name="line568">568: </a>  <a href="../../../../../docs/manualpages/Vec/VecSetSizes.html#VecSetSizes">VecSetSizes</a>(fetidpmat_ctx-&gt;lambda_local,n_local_lambda,n_local_lambda);
+<a name="line569">569: </a>  <a href="../../../../../docs/manualpages/Vec/VecSetType.html#VecSetType">VecSetType</a>(fetidpmat_ctx-&gt;lambda_local,<a href="../../../../../docs/manualpages/Vec/VECSEQ.html#VECSEQ">VECSEQ</a>);
+
+<a name="line571">571: </a>  <font color="#4169E1">if</font> (BD2) {
+<a name="line572">572: </a>    <a href="../../../../../docs/manualpages/IS/ISLocalToGlobalMapping.html#ISLocalToGlobalMapping">ISLocalToGlobalMapping</a> l2g;
+<a name="line573">573: </a>    <a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>                    T,TA,*pT;
+<a name="line574">574: </a>    <a href="../../../../../docs/manualpages/IS/IS.html#IS">IS</a>                     is;
+<a name="line575">575: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>               nl,N;
+<a name="line576">576: </a>    BDdelta_DN             ctx;
+
+<a name="line578">578: </a>    <a href="../../../../../docs/manualpages/IS/PetscLayoutGetLocalSize.html#PetscLayoutGetLocalSize">PetscLayoutGetLocalSize</a>(llay,&amp;nl);
+<a name="line579">579: </a>    <a href="../../../../../docs/manualpages/IS/PetscLayoutGetSize.html#PetscLayoutGetSize">PetscLayoutGetSize</a>(llay,&amp;N);
+<a name="line580">580: </a>    <a href="../../../../../docs/manualpages/Mat/MatCreate.html#MatCreate">MatCreate</a>(comm,&amp;T);
+<a name="line581">581: </a>    <a href="../../../../../docs/manualpages/Mat/MatSetSizes.html#MatSetSizes">MatSetSizes</a>(T,nl,nl,N,N);
+<a name="line582">582: </a>    <a href="../../../../../docs/manualpages/Mat/MatSetType.html#MatSetType">MatSetType</a>(T,<a href="../../../../../docs/manualpages/Mat/MATIS.html#MATIS">MATIS</a>);
+<a name="line583">583: </a>    <a href="../../../../../docs/manualpages/IS/ISLocalToGlobalMappingCreate.html#ISLocalToGlobalMappingCreate">ISLocalToGlobalMappingCreate</a>(comm,1,n_local_lambda,l2g_indices,<a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_COPY_VALUES</a>,&amp;l2g);
+<a name="line584">584: </a>    <a href="../../../../../docs/manualpages/Mat/MatSetLocalToGlobalMapping.html#MatSetLocalToGlobalMapping">MatSetLocalToGlobalMapping</a>(T,l2g,l2g);
+<a name="line585">585: </a>    <a href="../../../../../docs/manualpages/IS/ISLocalToGlobalMappingDestroy.html#ISLocalToGlobalMappingDestroy">ISLocalToGlobalMappingDestroy</a>(&amp;l2g);
+<a name="line586">586: </a>    <a href="../../../../../docs/manualpages/Mat/MatISSetLocalMat.html#MatISSetLocalMat">MatISSetLocalMat</a>(T,BD2);
+<a name="line587">587: </a>    <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;BD2);
+<a name="line588">588: </a>    <a href="../../../../../docs/manualpages/Mat/MatISGetMPIXAIJ.html#MatISGetMPIXAIJ">MatISGetMPIXAIJ</a>(T,<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MAT_INITIAL_MATRIX</a>,&amp;TA);
+<a name="line589">589: </a>    <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;T);
+<a name="line590">590: </a>    <a href="../../../../../docs/manualpages/IS/ISCreateGeneral.html#ISCreateGeneral">ISCreateGeneral</a>(comm,n_local_lambda,l2g_indices,<a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_USE_POINTER</a>,&amp;is);
+<a name="line591">591: </a>    <a href="../../../../../docs/manualpages/Mat/MatCreateSubMatrices.html#MatCreateSubMatrices">MatCreateSubMatrices</a>(TA,1,&amp;is,&amp;is,<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MAT_INITIAL_MATRIX</a>,&amp;pT);
+<a name="line592">592: </a>    <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;TA);
+<a name="line593">593: </a>    <a href="../../../../../docs/manualpages/IS/ISDestroy.html#ISDestroy">ISDestroy</a>(&amp;is);
+<a name="line594">594: </a>    BD2  = pT[0];
+<a name="line595">595: </a>    <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(pT);
+
+<a name="line597">597: </a>    <font color="#B22222">/* B_Ddelta for non-redundant multipliers with deluxe scaling */</font>
+<a name="line598">598: </a>    <a href="../../../../../docs/manualpages/Sys/PetscNew.html#PetscNew">PetscNew</a>(&amp;ctx);
+<a name="line599">599: </a>    <a href="../../../../../docs/manualpages/Mat/MatSetType.html#MatSetType">MatSetType</a>(fetidpmat_ctx-&gt;B_Ddelta,<a href="../../../../../docs/manualpages/Mat/MATSHELL.html#MATSHELL">MATSHELL</a>);
+<a name="line600">600: </a>    <a href="../../../../../docs/manualpages/Mat/MatShellSetContext.html#MatShellSetContext">MatShellSetContext</a>(fetidpmat_ctx-&gt;B_Ddelta,(void *)ctx);
+<a name="line601">601: </a>    <a href="../../../../../docs/manualpages/Mat/MatShellSetOperation.html#MatShellSetOperation">MatShellSetOperation</a>(fetidpmat_ctx-&gt;B_Ddelta,MATOP_MULT,(void (*)(void))MatMult_BDdelta_deluxe_nonred);
+<a name="line602">602: </a>    <a href="../../../../../docs/manualpages/Mat/MatShellSetOperation.html#MatShellSetOperation">MatShellSetOperation</a>(fetidpmat_ctx-&gt;B_Ddelta,MATOP_MULT_TRANSPOSE,(void (*)(void))MatMultTranspose_BDdelta_deluxe_nonred);
+<a name="line603">603: </a>    <a href="../../../../../docs/manualpages/Mat/MatShellSetOperation.html#MatShellSetOperation">MatShellSetOperation</a>(fetidpmat_ctx-&gt;B_Ddelta,MATOP_DESTROY,(void (*)(void))MatDestroy_BDdelta_deluxe_nonred);
+<a name="line604">604: </a>    <a href="../../../../../docs/manualpages/Mat/MatSetUp.html#MatSetUp">MatSetUp</a>(fetidpmat_ctx-&gt;B_Ddelta);
+
+<a name="line606">606: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html#PetscObjectReference">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)BD1);
+<a name="line607">607: </a>    ctx-&gt;BD = BD1;
+<a name="line608">608: </a>    <a href="../../../../../docs/manualpages/KSP/KSPCreate.html#KSPCreate">KSPCreate</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,&amp;ctx-&gt;kBD);
+<a name="line609">609: </a>    <a href="../../../../../docs/manualpages/KSP/KSPSetOperators.html#KSPSetOperators">KSPSetOperators</a>(ctx-&gt;kBD,BD2,BD2);
+<a name="line610">610: </a>    <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html#VecDuplicate">VecDuplicate</a>(fetidpmat_ctx-&gt;lambda_local,&amp;ctx-&gt;work);
+<a name="line611">611: </a>    fetidpmat_ctx-&gt;deluxe_nonred = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+<a name="line612">612: </a>  }
+<a name="line613">613: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;BD1);
+<a name="line614">614: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;BD2);
+
+<a name="line616">616: </a>  <font color="#B22222">/* fetidpmat sizes */</font>
+<a name="line617">617: </a>  fetidpmat_ctx-&gt;n += nPgl;
+<a name="line618">618: </a>  fetidpmat_ctx-&gt;N  = fetidpmat_ctx-&gt;n_lambda+nPg;
+
+<a name="line620">620: </a>  <font color="#B22222">/* Global vector for FETI-DP linear system */</font>
+<a name="line621">621: </a>  <a href="../../../../../docs/manualpages/Vec/VecCreate.html#VecCreate">VecCreate</a>(comm,&amp;fetidp_global);
+<a name="line622">622: </a>  <a href="../../../../../docs/manualpages/Vec/VecSetSizes.html#VecSetSizes">VecSetSizes</a>(fetidp_global,fetidpmat_ctx-&gt;n,fetidpmat_ctx-&gt;N);
+<a name="line623">623: </a>  <a href="../../../../../docs/manualpages/Vec/VecSetType.html#VecSetType">VecSetType</a>(fetidp_global,<a href="../../../../../docs/manualpages/Vec/VECMPI.html#VECMPI">VECMPI</a>);
+<a name="line624">624: </a>  <a href="../../../../../docs/manualpages/Vec/VecSetUp.html#VecSetUp">VecSetUp</a>(fetidp_global);
+
+<a name="line626">626: </a>  <font color="#B22222">/* Decide layout for fetidp dofs: if it is a saddle point problem</font>
+<a name="line627">627: </a><font color="#B22222">     pressure is ordered first in the local part of the global vector</font>
+<a name="line628">628: </a><font color="#B22222">     of the FETI-DP linear system */</font>
+<a name="line629">629: </a>  <font color="#4169E1">if</font> (nPg) {
+<a name="line630">630: </a>    <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>            v;
+<a name="line631">631: </a>    <a href="../../../../../docs/manualpages/IS/IS.html#IS">IS</a>             IS_l2g_p,ais;
+<a name="line632">632: </a>    <a href="../../../../../docs/manualpages/IS/PetscLayout.html#PetscLayout">PetscLayout</a>    alay;
+<a name="line633">633: </a>    const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *idxs,*pranges,*aranges,*lranges;
+<a name="line634">634: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       *l2g_indices_p,rst;
+<a name="line635">635: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>    rank;
+
+<a name="line637">637: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(nPl,&amp;l2g_indices_p);
+<a name="line638">638: </a>    <a href="../../../../../docs/manualpages/Vec/VecGetLayout.html#VecGetLayout">VecGetLayout</a>(fetidp_global,&amp;alay);
+<a name="line639">639: </a>    <a href="../../../../../docs/manualpages/IS/PetscLayoutGetRanges.html#PetscLayoutGetRanges">PetscLayoutGetRanges</a>(alay,&amp;aranges);
+<a name="line640">640: </a>    <a href="../../../../../docs/manualpages/IS/PetscLayoutGetRanges.html#PetscLayoutGetRanges">PetscLayoutGetRanges</a>(play,&amp;pranges);
+<a name="line641">641: </a>    <a href="../../../../../docs/manualpages/IS/PetscLayoutGetRanges.html#PetscLayoutGetRanges">PetscLayoutGetRanges</a>(llay,&amp;lranges);
+
+<a name="line643">643: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)fetidp_global),&amp;rank);
+<a name="line644">644: </a>    <a href="../../../../../docs/manualpages/IS/ISCreateStride.html#ISCreateStride">ISCreateStride</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)fetidp_global),pranges[rank+1]-pranges[rank],aranges[rank],1,&amp;fetidpmat_ctx-&gt;pressure);
+<a name="line645">645: </a>    <a href="../../../../../docs/manualpages/IS/ISCreateStride.html#ISCreateStride">ISCreateStride</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)fetidp_global),lranges[rank+1]-lranges[rank],aranges[rank]+pranges[rank+1]-pranges[rank],1,&amp;fetidpmat_ctx-&gt;lagrange);
+<a name="line646">646: </a>    <a href="../../../../../docs/manualpages/IS/ISLocalToGlobalMappingGetIndices.html#ISLocalToGlobalMappingGetIndices">ISLocalToGlobalMappingGetIndices</a>(l2gmap_p,&amp;idxs);
+<a name="line647">647: </a>    <font color="#B22222">/* shift local to global indices for pressure */</font>
+<a name="line648">648: </a>    <font color="#4169E1">for</font> (i=0;i&lt;nPl;i++) {
+<a name="line649">649: </a>      <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> owner;
+
+<a name="line651">651: </a>      <a href="../../../../../docs/manualpages/IS/PetscLayoutFindOwner.html#PetscLayoutFindOwner">PetscLayoutFindOwner</a>(play,idxs[i],&amp;owner);
+<a name="line652">652: </a>      l2g_indices_p[i] = idxs[i]-pranges[owner]+aranges[owner];
+<a name="line653">653: </a>    }
+<a name="line654">654: </a>    <a href="../../../../../docs/manualpages/IS/ISLocalToGlobalMappingRestoreIndices.html#ISLocalToGlobalMappingRestoreIndices">ISLocalToGlobalMappingRestoreIndices</a>(l2gmap_p,&amp;idxs);
+<a name="line655">655: </a>    <a href="../../../../../docs/manualpages/IS/ISCreateGeneral.html#ISCreateGeneral">ISCreateGeneral</a>(comm,nPl,l2g_indices_p,<a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_OWN_POINTER</a>,&amp;IS_l2g_p);
+
+<a name="line657">657: </a>    <font color="#B22222">/* local to global scatter for pressure */</font>
+<a name="line658">658: </a>    <a href="../../../../../docs/manualpages/Vec/VecScatterCreate.html#VecScatterCreate">VecScatterCreate</a>(fetidpmat_ctx-&gt;vP,NULL,fetidp_global,IS_l2g_p,&amp;fetidpmat_ctx-&gt;l2g_p);
+<a name="line659">659: </a>    <a href="../../../../../docs/manualpages/IS/ISDestroy.html#ISDestroy">ISDestroy</a>(&amp;IS_l2g_p);
+
+<a name="line661">661: </a>    <font color="#B22222">/* scatter for lagrange multipliers only */</font>
+<a name="line662">662: </a>    <a href="../../../../../docs/manualpages/Vec/VecCreate.html#VecCreate">VecCreate</a>(comm,&amp;v);
+<a name="line663">663: </a>    <a href="../../../../../docs/manualpages/Vec/VecSetType.html#VecSetType">VecSetType</a>(v,<a href="../../../../../docs/manualpages/Vec/VECSTANDARD.html#VECSTANDARD">VECSTANDARD</a>);
+<a name="line664">664: </a>    <a href="../../../../../docs/manualpages/Vec/VecSetLayout.html#VecSetLayout">VecSetLayout</a>(v,llay);
+<a name="line665">665: </a>    <a href="../../../../../docs/manualpages/Vec/VecSetUp.html#VecSetUp">VecSetUp</a>(v);
+<a name="line666">666: </a>    <a href="../../../../../docs/manualpages/IS/ISCreateGeneral.html#ISCreateGeneral">ISCreateGeneral</a>(comm,n_local_lambda,l2g_indices,<a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_COPY_VALUES</a>,&amp;ais);
+<a name="line667">667: </a>    <a href="../../../../../docs/manualpages/Vec/VecScatterCreate.html#VecScatterCreate">VecScatterCreate</a>(fetidpmat_ctx-&gt;lambda_local,NULL,v,ais,&amp;fetidpmat_ctx-&gt;l2g_lambda_only);
+<a name="line668">668: </a>    <a href="../../../../../docs/manualpages/IS/ISDestroy.html#ISDestroy">ISDestroy</a>(&amp;ais);
+<a name="line669">669: </a>    <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;v);
+
+<a name="line671">671: </a>    <font color="#B22222">/* shift local to global indices for multipliers */</font>
+<a name="line672">672: </a>    <font color="#4169E1">for</font> (i=0;i&lt;n_local_lambda;i++) {
+<a name="line673">673: </a>      <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> owner,ps;
+
+<a name="line675">675: </a>      <a href="../../../../../docs/manualpages/IS/PetscLayoutFindOwner.html#PetscLayoutFindOwner">PetscLayoutFindOwner</a>(llay,l2g_indices[i],&amp;owner);
+<a name="line676">676: </a>      ps = pranges[owner+1]-pranges[owner];
+<a name="line677">677: </a>      l2g_indices[i] = l2g_indices[i]-lranges[owner]+aranges[owner]+ps;
+<a name="line678">678: </a>    }
+
+<a name="line680">680: </a>    <font color="#B22222">/* scatter from alldofs to pressures global fetidp vector */</font>
+<a name="line681">681: </a>    <a href="../../../../../docs/manualpages/IS/PetscLayoutGetRange.html#PetscLayoutGetRange">PetscLayoutGetRange</a>(alay,&amp;rst,NULL);
+<a name="line682">682: </a>    <a href="../../../../../docs/manualpages/IS/ISCreateStride.html#ISCreateStride">ISCreateStride</a>(comm,nPgl,rst,1,&amp;ais);
+<a name="line683">683: </a>    <a href="../../../../../docs/manualpages/Vec/VecScatterCreate.html#VecScatterCreate">VecScatterCreate</a>(pcis-&gt;vec1_global,pP,fetidp_global,ais,&amp;fetidpmat_ctx-&gt;g2g_p);
+<a name="line684">684: </a>    <a href="../../../../../docs/manualpages/IS/ISDestroy.html#ISDestroy">ISDestroy</a>(&amp;ais);
+<a name="line685">685: </a>  }
+<a name="line686">686: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutDestroy.html#PetscLayoutDestroy">PetscLayoutDestroy</a>(&amp;llay);
+<a name="line687">687: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutDestroy.html#PetscLayoutDestroy">PetscLayoutDestroy</a>(&amp;play);
+<a name="line688">688: </a>  <a href="../../../../../docs/manualpages/IS/ISCreateGeneral.html#ISCreateGeneral">ISCreateGeneral</a>(comm,n_local_lambda,l2g_indices,<a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_OWN_POINTER</a>,&amp;IS_l2g_lambda);
+
+<a name="line690">690: </a>  <font color="#B22222">/* scatter from local to global multipliers */</font>
+<a name="line691">691: </a>  <a href="../../../../../docs/manualpages/Vec/VecScatterCreate.html#VecScatterCreate">VecScatterCreate</a>(fetidpmat_ctx-&gt;lambda_local,NULL,fetidp_global,IS_l2g_lambda,&amp;fetidpmat_ctx-&gt;l2g_lambda);
+<a name="line692">692: </a>  <a href="../../../../../docs/manualpages/IS/ISDestroy.html#ISDestroy">ISDestroy</a>(&amp;IS_l2g_lambda);
+<a name="line693">693: </a>  <a href="../../../../../docs/manualpages/IS/ISLocalToGlobalMappingDestroy.html#ISLocalToGlobalMappingDestroy">ISLocalToGlobalMappingDestroy</a>(&amp;l2gmap_p);
+<a name="line694">694: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;fetidp_global);
+
+<a name="line696">696: </a>  <font color="#B22222">/* Create some work vectors needed by fetidp */</font>
+<a name="line697">697: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html#VecDuplicate">VecDuplicate</a>(pcis-&gt;vec1_B,&amp;fetidpmat_ctx-&gt;temp_solution_B);
+<a name="line698">698: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html#VecDuplicate">VecDuplicate</a>(pcis-&gt;vec1_D,&amp;fetidpmat_ctx-&gt;temp_solution_D);
+<a name="line699">699: </a>  <font color="#4169E1">return</font>(0);
+<a name="line700">700: </a>}
+
+
+<a name="line703">703: </a><strong><font color="#4169E1"><a name="PCBDDCSetupFETIDPPCContext"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PCBDDCSetupFETIDPPCContext(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> fetimat, FETIDPPC_ctx fetidppc_ctx)</font></strong>
+<a name="line704">704: </a>{
+<a name="line705">705: </a>  FETIDPMat_ctx  mat_ctx;
+<a name="line706">706: </a>  PC_BDDC        *pcbddc = (PC_BDDC*)fetidppc_ctx-&gt;pc-&gt;data;
+<a name="line707">707: </a>  PC_IS          *pcis = (PC_IS*)fetidppc_ctx-&gt;pc-&gt;data;
+<a name="line708">708: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>      lumped = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+
+<a name="line712">712: </a>  <a href="../../../../../docs/manualpages/Mat/MatShellGetContext.html#MatShellGetContext">MatShellGetContext</a>(fetimat,(void**)&amp;mat_ctx);
+<a name="line713">713: </a>  <font color="#B22222">/* get references from objects created when setting up feti mat context */</font>
+<a name="line714">714: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html#PetscObjectReference">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)mat_ctx-&gt;lambda_local);
+<a name="line715">715: </a>  fetidppc_ctx-&gt;lambda_local = mat_ctx-&gt;lambda_local;
+<a name="line716">716: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html#PetscObjectReference">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)mat_ctx-&gt;B_Ddelta);
+<a name="line717">717: </a>  fetidppc_ctx-&gt;B_Ddelta = mat_ctx-&gt;B_Ddelta;
+<a name="line718">718: </a>  <font color="#4169E1">if</font> (mat_ctx-&gt;deluxe_nonred) {
+<a name="line719">719: </a>    <a href="../../../../../docs/manualpages/PC/PC.html#PC">PC</a>               pc,mpc;
+<a name="line720">720: </a>    BDdelta_DN       ctx;
+<a name="line721">721: </a>    <a href="../../../../../docs/manualpages/Mat/MatSolverPackage.html#MatSolverPackage">MatSolverPackage</a> solver;
+<a name="line722">722: </a>    const char       *prefix;
+
+<a name="line724">724: </a>    <a href="../../../../../docs/manualpages/Mat/MatShellGetContext.html#MatShellGetContext">MatShellGetContext</a>(mat_ctx-&gt;B_Ddelta,&amp;ctx);
+<a name="line725">725: </a>    <a href="../../../../../docs/manualpages/KSP/KSPSetType.html#KSPSetType">KSPSetType</a>(ctx-&gt;kBD,<a href="../../../../../docs/manualpages/KSP/KSPPREONLY.html#KSPPREONLY">KSPPREONLY</a>);
+<a name="line726">726: </a>    <a href="../../../../../docs/manualpages/KSP/KSPGetPC.html#KSPGetPC">KSPGetPC</a>(ctx-&gt;kBD,&amp;mpc);
+<a name="line727">727: </a>    <a href="../../../../../docs/manualpages/KSP/KSPGetPC.html#KSPGetPC">KSPGetPC</a>(pcbddc-&gt;ksp_D,&amp;pc);
+<a name="line728">728: </a>    <a href="../../../../../docs/manualpages/PC/PCSetType.html#PCSetType">PCSetType</a>(mpc,<a href="../../../../../docs/manualpages/PC/PCLU.html#PCLU">PCLU</a>);
+<a name="line729">729: </a>    <a href="../../../../../docs/manualpages/PC/PCFactorGetMatSolverPackage.html#PCFactorGetMatSolverPackage">PCFactorGetMatSolverPackage</a>(pc,(const <a href="../../../../../docs/manualpages/Mat/MatSolverPackage.html#MatSolverPackage">MatSolverPackage</a>*)&amp;solver);
+<a name="line730">730: </a>    <font color="#4169E1">if</font> (solver) {
+<a name="line731">731: </a>      <a href="../../../../../docs/manualpages/PC/PCFactorSetMatSolverPackage.html#PCFactorSetMatSolverPackage">PCFactorSetMatSolverPackage</a>(mpc,solver);
+<a name="line732">732: </a>    }
+<a name="line733">733: </a>    <a href="../../../../../docs/manualpages/Mat/MatGetOptionsPrefix.html#MatGetOptionsPrefix">MatGetOptionsPrefix</a>(fetimat,&amp;prefix);
+<a name="line734">734: </a>    <a href="../../../../../docs/manualpages/KSP/KSPSetOptionsPrefix.html#KSPSetOptionsPrefix">KSPSetOptionsPrefix</a>(ctx-&gt;kBD,prefix);
+<a name="line735">735: </a>    <a href="../../../../../docs/manualpages/KSP/KSPAppendOptionsPrefix.html#KSPAppendOptionsPrefix">KSPAppendOptionsPrefix</a>(ctx-&gt;kBD,<font color="#666666">"bddelta_"</font>);
+<a name="line736">736: </a>    <a href="../../../../../docs/manualpages/KSP/KSPSetFromOptions.html#KSPSetFromOptions">KSPSetFromOptions</a>(ctx-&gt;kBD);
+<a name="line737">737: </a>  }
+
+<a name="line739">739: </a>  <font color="#4169E1">if</font> (mat_ctx-&gt;l2g_lambda_only) {
+<a name="line740">740: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html#PetscObjectReference">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)mat_ctx-&gt;l2g_lambda_only);
+<a name="line741">741: </a>    fetidppc_ctx-&gt;l2g_lambda = mat_ctx-&gt;l2g_lambda_only;
+<a name="line742">742: </a>  } <font color="#4169E1">else</font> {
+<a name="line743">743: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html#PetscObjectReference">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)mat_ctx-&gt;l2g_lambda);
+<a name="line744">744: </a>    fetidppc_ctx-&gt;l2g_lambda = mat_ctx-&gt;l2g_lambda;
+<a name="line745">745: </a>  }
+<a name="line746">746: </a>  <font color="#B22222">/* Dirichlet preconditioner */</font>
+<a name="line747">747: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsGetBool.html#PetscOptionsGetBool">PetscOptionsGetBool</a>(NULL,((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)fetimat)-&gt;prefix,<font color="#666666">"-pc_lumped"</font>,&amp;lumped,NULL);
+<a name="line748">748: </a>  <font color="#4169E1">if</font> (!lumped) {
+<a name="line749">749: </a>    <a href="../../../../../docs/manualpages/IS/IS.html#IS">IS</a>        iV;
+<a name="line750">750: </a>    <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> discrete_harmonic = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+
+<a name="line752">752: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectQuery.html#PetscObjectQuery">PetscObjectQuery</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)fetidppc_ctx-&gt;pc,<font color="#666666">"__KSPFETIDP_iV"</font>,(<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>*)&amp;iV);
+<a name="line753">753: </a>    <font color="#4169E1">if</font> (iV) {
+<a name="line754">754: </a>      <a href="../../../../../docs/manualpages/Sys/PetscOptionsGetBool.html#PetscOptionsGetBool">PetscOptionsGetBool</a>(NULL,((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)fetimat)-&gt;prefix,<font color="#666666">"-pc_discrete_harmonic"</font>,&amp;discrete_harmonic,NULL);
+<a name="line755">755: </a>    }
+<a name="line756">756: </a>    <font color="#4169E1">if</font> (discrete_harmonic) {
+<a name="line757">757: </a>      <a href="../../../../../docs/manualpages/KSP/KSP.html#KSP">KSP</a>             sksp;
+<a name="line758">758: </a>      <a href="../../../../../docs/manualpages/PC/PC.html#PC">PC</a>              pc;
+<a name="line759">759: </a>      PCBDDCSubSchurs sub_schurs = pcbddc-&gt;sub_schurs;
+<a name="line760">760: </a>      <a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>             A_II,A_IB,A_BI;
+<a name="line761">761: </a>      <a href="../../../../../docs/manualpages/IS/IS.html#IS">IS</a>              iP = NULL;
+<a name="line762">762: </a>      <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>       isshell,reuse = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+<a name="line763">763: </a>      <a href="../../../../../docs/manualpages/KSP/KSPType.html#KSPType">KSPType</a>         ksptype;
+<a name="line764">764: </a>      const char      *prefix;
+
+<a name="line766">766: </a>      <font color="#B22222">/*</font>
+<a name="line767">767: </a><font color="#B22222">        We constructs a Schur complement for</font>
+
+<a name="line769">769: </a><font color="#B22222">        | A_II A_ID |</font>
+<a name="line770">770: </a><font color="#B22222">        | A_DI A_DD |</font>
+
+<a name="line772">772: </a><font color="#B22222">        instead of</font>
+
+<a name="line774">774: </a><font color="#B22222">        | A_II  B^t_II A_ID |</font>
+<a name="line775">775: </a><font color="#B22222">        | B_II -C_II   B_ID |</font>
+<a name="line776">776: </a><font color="#B22222">        | A_DI  B^t_ID A_DD |</font>
+
+<a name="line778">778: </a><font color="#B22222">      */</font>
+<a name="line779">779: </a>      <font color="#4169E1">if</font> (sub_schurs &amp;&amp; sub_schurs-&gt;reuse_solver) {
+<a name="line780">780: </a>        <a href="../../../../../docs/manualpages/Sys/PetscObjectQuery.html#PetscObjectQuery">PetscObjectQuery</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sub_schurs-&gt;A,<font color="#666666">"__KSPFETIDP_iP"</font>,(<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>*)&amp;iP);
+<a name="line781">781: </a>        <font color="#4169E1">if</font> (iP) reuse = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+<a name="line782">782: </a>      }
+<a name="line783">783: </a>      <font color="#4169E1">if</font> (!reuse) {
+<a name="line784">784: </a>        <a href="../../../../../docs/manualpages/IS/IS.html#IS">IS</a>       aB;
+<a name="line785">785: </a>        <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> nb;
+<a name="line786">786: </a>        <a href="../../../../../docs/manualpages/IS/ISGetLocalSize.html#ISGetLocalSize">ISGetLocalSize</a>(pcis-&gt;is_B_local,&amp;nb);
+<a name="line787">787: </a>        <a href="../../../../../docs/manualpages/IS/ISCreateStride.html#ISCreateStride">ISCreateStride</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)pcis-&gt;A_II),nb,0,1,&amp;aB);
+<a name="line788">788: </a>        <a href="../../../../../docs/manualpages/Mat/MatCreateSubMatrix.html#MatCreateSubMatrix">MatCreateSubMatrix</a>(pcis-&gt;A_II,iV,iV,<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MAT_INITIAL_MATRIX</a>,&amp;A_II);
+<a name="line789">789: </a>        <a href="../../../../../docs/manualpages/Mat/MatCreateSubMatrix.html#MatCreateSubMatrix">MatCreateSubMatrix</a>(pcis-&gt;A_IB,iV,aB,<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MAT_INITIAL_MATRIX</a>,&amp;A_IB);
+<a name="line790">790: </a>        <a href="../../../../../docs/manualpages/Mat/MatCreateSubMatrix.html#MatCreateSubMatrix">MatCreateSubMatrix</a>(pcis-&gt;A_BI,aB,iV,<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MAT_INITIAL_MATRIX</a>,&amp;A_BI);
+<a name="line791">791: </a>        <a href="../../../../../docs/manualpages/IS/ISDestroy.html#ISDestroy">ISDestroy</a>(&amp;aB);
+<a name="line792">792: </a>      } <font color="#4169E1">else</font> {
+<a name="line793">793: </a>        <a href="../../../../../docs/manualpages/Mat/MatCreateSubMatrix.html#MatCreateSubMatrix">MatCreateSubMatrix</a>(sub_schurs-&gt;A,pcis-&gt;is_I_local,pcis-&gt;is_B_local,<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MAT_INITIAL_MATRIX</a>,&amp;A_IB);
+<a name="line794">794: </a>        <a href="../../../../../docs/manualpages/Mat/MatCreateSubMatrix.html#MatCreateSubMatrix">MatCreateSubMatrix</a>(sub_schurs-&gt;A,pcis-&gt;is_B_local,pcis-&gt;is_I_local,<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MAT_INITIAL_MATRIX</a>,&amp;A_BI);
+<a name="line795">795: </a>        <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html#PetscObjectReference">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)pcis-&gt;A_II);
+<a name="line796">796: </a>        A_II = pcis-&gt;A_II;
+<a name="line797">797: </a>      }
+<a name="line798">798: </a>      <a href="../../../../../docs/manualpages/KSP/MatCreateSchurComplement.html#MatCreateSchurComplement">MatCreateSchurComplement</a>(A_II,A_II,A_IB,A_BI,pcis-&gt;A_BB,&amp;fetidppc_ctx-&gt;S_j);
+
+<a name="line800">800: </a>      <font color="#B22222">/* propagate settings of solver */</font>
+<a name="line801">801: </a>      <a href="../../../../../docs/manualpages/KSP/MatSchurComplementGetKSP.html#MatSchurComplementGetKSP">MatSchurComplementGetKSP</a>(fetidppc_ctx-&gt;S_j,&amp;sksp);
+<a name="line802">802: </a>      <a href="../../../../../docs/manualpages/KSP/KSPGetType.html#KSPGetType">KSPGetType</a>(pcis-&gt;ksp_D,&amp;ksptype);
+<a name="line803">803: </a>      <a href="../../../../../docs/manualpages/KSP/KSPSetType.html#KSPSetType">KSPSetType</a>(sksp,ksptype);
+<a name="line804">804: </a>      <a href="../../../../../docs/manualpages/KSP/KSPGetPC.html#KSPGetPC">KSPGetPC</a>(pcis-&gt;ksp_D,&amp;pc);
+<a name="line805">805: </a>      <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)pc,<a href="../../../../../docs/manualpages/PC/PCSHELL.html#PCSHELL">PCSHELL</a>,&amp;isshell);
+<a name="line806">806: </a>      <font color="#4169E1">if</font> (!isshell) {
+<a name="line807">807: </a>        <a href="../../../../../docs/manualpages/Mat/MatSolverPackage.html#MatSolverPackage">MatSolverPackage</a> solver;
+<a name="line808">808: </a>        <a href="../../../../../docs/manualpages/PC/PCType.html#PCType">PCType</a>           pctype;
+
+<a name="line810">810: </a>        <a href="../../../../../docs/manualpages/PC/PCGetType.html#PCGetType">PCGetType</a>(pc,&amp;pctype);
+<a name="line811">811: </a>        <a href="../../../../../docs/manualpages/PC/PCFactorGetMatSolverPackage.html#PCFactorGetMatSolverPackage">PCFactorGetMatSolverPackage</a>(pc,(const <a href="../../../../../docs/manualpages/Mat/MatSolverPackage.html#MatSolverPackage">MatSolverPackage</a>*)&amp;solver);
+<a name="line812">812: </a>        <a href="../../../../../docs/manualpages/KSP/KSPGetPC.html#KSPGetPC">KSPGetPC</a>(sksp,&amp;pc);
+<a name="line813">813: </a>        <a href="../../../../../docs/manualpages/PC/PCSetType.html#PCSetType">PCSetType</a>(pc,pctype);
+<a name="line814">814: </a>        <font color="#4169E1">if</font> (solver) {
+<a name="line815">815: </a>          <a href="../../../../../docs/manualpages/PC/PCFactorSetMatSolverPackage.html#PCFactorSetMatSolverPackage">PCFactorSetMatSolverPackage</a>(pc,solver);
+<a name="line816">816: </a>        }
+<a name="line817">817: </a>      } <font color="#4169E1">else</font> {
+<a name="line818">818: </a>        <a href="../../../../../docs/manualpages/KSP/KSPGetPC.html#KSPGetPC">KSPGetPC</a>(sksp,&amp;pc);
+<a name="line819">819: </a>        <a href="../../../../../docs/manualpages/PC/PCSetType.html#PCSetType">PCSetType</a>(pc,<a href="../../../../../docs/manualpages/PC/PCLU.html#PCLU">PCLU</a>);
+<a name="line820">820: </a>      }
+<a name="line821">821: </a>      <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;A_II);
+<a name="line822">822: </a>      <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;A_IB);
+<a name="line823">823: </a>      <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;A_BI);
+<a name="line824">824: </a>      <a href="../../../../../docs/manualpages/Mat/MatGetOptionsPrefix.html#MatGetOptionsPrefix">MatGetOptionsPrefix</a>(fetimat,&amp;prefix);
+<a name="line825">825: </a>      <a href="../../../../../docs/manualpages/KSP/KSPSetOptionsPrefix.html#KSPSetOptionsPrefix">KSPSetOptionsPrefix</a>(sksp,prefix);
+<a name="line826">826: </a>      <a href="../../../../../docs/manualpages/KSP/KSPAppendOptionsPrefix.html#KSPAppendOptionsPrefix">KSPAppendOptionsPrefix</a>(sksp,<font color="#666666">"harmonic_"</font>);
+<a name="line827">827: </a>      <a href="../../../../../docs/manualpages/KSP/KSPSetFromOptions.html#KSPSetFromOptions">KSPSetFromOptions</a>(sksp);
+<a name="line828">828: </a>      <font color="#4169E1">if</font> (reuse) {
+<a name="line829">829: </a>        <a href="../../../../../docs/manualpages/KSP/KSPSetPC.html#KSPSetPC">KSPSetPC</a>(sksp,sub_schurs-&gt;reuse_solver-&gt;interior_solver);
+<a name="line830">830: </a>      }
+<a name="line831">831: </a>    } <font color="#4169E1">else</font> { <font color="#B22222">/* default Dirichlet preconditioner is pde-harmonic */</font>
+<a name="line832">832: </a>      <a href="../../../../../docs/manualpages/KSP/MatCreateSchurComplement.html#MatCreateSchurComplement">MatCreateSchurComplement</a>(pcis-&gt;A_II,pcis-&gt;A_II,pcis-&gt;A_IB,pcis-&gt;A_BI,pcis-&gt;A_BB,&amp;fetidppc_ctx-&gt;S_j);
+<a name="line833">833: </a>      <a href="../../../../../docs/manualpages/KSP/MatSchurComplementSetKSP.html#MatSchurComplementSetKSP">MatSchurComplementSetKSP</a>(fetidppc_ctx-&gt;S_j,pcis-&gt;ksp_D);
+<a name="line834">834: </a>    }
+<a name="line835">835: </a>  } <font color="#4169E1">else</font> {
+<a name="line836">836: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html#PetscObjectReference">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)pcis-&gt;A_BB);
+<a name="line837">837: </a>    fetidppc_ctx-&gt;S_j = pcis-&gt;A_BB;
+<a name="line838">838: </a>  }
+<a name="line839">839: </a>  <font color="#B22222">/* saddle-point */</font>
+<a name="line840">840: </a>  <font color="#4169E1">if</font> (mat_ctx-&gt;xPg) {
+<a name="line841">841: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html#PetscObjectReference">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)mat_ctx-&gt;xPg);
+<a name="line842">842: </a>    fetidppc_ctx-&gt;xPg = mat_ctx-&gt;xPg;
+<a name="line843">843: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html#PetscObjectReference">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)mat_ctx-&gt;yPg);
+<a name="line844">844: </a>    fetidppc_ctx-&gt;yPg = mat_ctx-&gt;yPg;
+<a name="line845">845: </a>  }
+<a name="line846">846: </a>  <font color="#4169E1">return</font>(0);
+<a name="line847">847: </a>}
+
+<a name="line849">849: </a><strong><font color="#4169E1"><a name="FETIDPMatMult_Kernel"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> FETIDPMatMult_Kernel(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> fetimat, <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> x, <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> y, <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> trans)</font></strong>
+<a name="line850">850: </a>{
+<a name="line851">851: </a>  FETIDPMat_ctx  mat_ctx;
+<a name="line852">852: </a>  PC_BDDC        *pcbddc;
+<a name="line853">853: </a>  PC_IS          *pcis;
+
+<a name="line857">857: </a>  <a href="../../../../../docs/manualpages/Mat/MatShellGetContext.html#MatShellGetContext">MatShellGetContext</a>(fetimat,(void**)&amp;mat_ctx);
+<a name="line858">858: </a>  pcis = (PC_IS*)mat_ctx-&gt;pc-&gt;data;
+<a name="line859">859: </a>  pcbddc = (PC_BDDC*)mat_ctx-&gt;pc-&gt;data;
+<a name="line860">860: </a>  <font color="#B22222">/* Application of B_delta^T */</font>
+<a name="line861">861: </a>  <a href="../../../../../docs/manualpages/Vec/VecSet.html#VecSet">VecSet</a>(pcis-&gt;vec1_B,0.);
+<a name="line862">862: </a>  <a href="../../../../../docs/manualpages/Vec/VecScatterBegin.html#VecScatterBegin">VecScatterBegin</a>(mat_ctx-&gt;l2g_lambda,x,mat_ctx-&gt;lambda_local,<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_REVERSE.html#SCATTER_REVERSE">SCATTER_REVERSE</a>);
+<a name="line863">863: </a>  <a href="../../../../../docs/manualpages/Vec/VecScatterEnd.html#VecScatterEnd">VecScatterEnd</a>(mat_ctx-&gt;l2g_lambda,x,mat_ctx-&gt;lambda_local,<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_REVERSE.html#SCATTER_REVERSE">SCATTER_REVERSE</a>);
+<a name="line864">864: </a>  <a href="../../../../../docs/manualpages/Mat/MatMultTranspose.html#MatMultTranspose">MatMultTranspose</a>(mat_ctx-&gt;B_delta,mat_ctx-&gt;lambda_local,pcis-&gt;vec1_B);
+
+<a name="line866">866: </a>  <font color="#B22222">/* Add contribution from saddle point */</font>
+<a name="line867">867: </a>  <font color="#4169E1">if</font> (mat_ctx-&gt;l2g_p) {
+<a name="line868">868: </a>    <a href="../../../../../docs/manualpages/Vec/VecScatterBegin.html#VecScatterBegin">VecScatterBegin</a>(mat_ctx-&gt;l2g_p,x,mat_ctx-&gt;vP,<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_REVERSE.html#SCATTER_REVERSE">SCATTER_REVERSE</a>);
+<a name="line869">869: </a>    <a href="../../../../../docs/manualpages/Vec/VecScatterEnd.html#VecScatterEnd">VecScatterEnd</a>(mat_ctx-&gt;l2g_p,x,mat_ctx-&gt;vP,<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_REVERSE.html#SCATTER_REVERSE">SCATTER_REVERSE</a>);
+<a name="line870">870: </a>    <font color="#4169E1">if</font> (pcbddc-&gt;switch_static) {
+<a name="line871">871: </a>      <font color="#4169E1">if</font> (trans) {
+<a name="line872">872: </a>        <a href="../../../../../docs/manualpages/Mat/MatMultTranspose.html#MatMultTranspose">MatMultTranspose</a>(mat_ctx-&gt;B_BI,mat_ctx-&gt;vP,pcis-&gt;vec1_D);
+<a name="line873">873: </a>      } <font color="#4169E1">else</font> {
+<a name="line874">874: </a>        <a href="../../../../../docs/manualpages/Mat/MatMult.html#MatMult">MatMult</a>(mat_ctx-&gt;Bt_BI,mat_ctx-&gt;vP,pcis-&gt;vec1_D);
+<a name="line875">875: </a>      }
+<a name="line876">876: </a>    }
+<a name="line877">877: </a>    <font color="#4169E1">if</font> (trans) {
+<a name="line878">878: </a>      <a href="../../../../../docs/manualpages/Mat/MatMultTransposeAdd.html#MatMultTransposeAdd">MatMultTransposeAdd</a>(mat_ctx-&gt;B_BB,mat_ctx-&gt;vP,pcis-&gt;vec1_B,pcis-&gt;vec1_B);
+<a name="line879">879: </a>    } <font color="#4169E1">else</font> {
+<a name="line880">880: </a>      <a href="../../../../../docs/manualpages/Mat/MatMultAdd.html#MatMultAdd">MatMultAdd</a>(mat_ctx-&gt;Bt_BB,mat_ctx-&gt;vP,pcis-&gt;vec1_B,pcis-&gt;vec1_B);
+<a name="line881">881: </a>    }
+<a name="line882">882: </a>  } <font color="#4169E1">else</font> {
+<a name="line883">883: </a>    <font color="#4169E1">if</font> (pcbddc-&gt;switch_static) {
+<a name="line884">884: </a>      <a href="../../../../../docs/manualpages/Vec/VecSet.html#VecSet">VecSet</a>(pcis-&gt;vec1_D,0.0);
+<a name="line885">885: </a>    }
+<a name="line886">886: </a>  }
+<a name="line887">887: </a>  <font color="#B22222">/* Application of \widetilde{S}^-1 */</font>
+<a name="line888">888: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMemzero.html#PetscMemzero">PetscMemzero</a>(pcbddc-&gt;benign_p0,pcbddc-&gt;benign_n*<font color="#4169E1">sizeof</font>(<a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>));
+<a name="line889">889: </a>  PCBDDCApplyInterfacePreconditioner(mat_ctx-&gt;pc,trans);
+<a name="line890">890: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMemzero.html#PetscMemzero">PetscMemzero</a>(pcbddc-&gt;benign_p0,pcbddc-&gt;benign_n*<font color="#4169E1">sizeof</font>(<a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>));
+<a name="line891">891: </a>  <a href="../../../../../docs/manualpages/Vec/VecSet.html#VecSet">VecSet</a>(y,0.0);
+<a name="line892">892: </a>  <font color="#B22222">/* Application of B_delta */</font>
+<a name="line893">893: </a>  <a href="../../../../../docs/manualpages/Mat/MatMult.html#MatMult">MatMult</a>(mat_ctx-&gt;B_delta,pcis-&gt;vec1_B,mat_ctx-&gt;lambda_local);
+<a name="line894">894: </a>  <font color="#B22222">/* Contribution from boundary pressures */</font>
+<a name="line895">895: </a>  <font color="#4169E1">if</font> (mat_ctx-&gt;C) {
+<a name="line896">896: </a>    const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> *lx;
+<a name="line897">897: </a>    <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>       *ly;
+
+<a name="line899">899: </a>    <font color="#B22222">/* pressures ordered first in x and y */</font>
+<a name="line900">900: </a>    <a href="../../../../../docs/manualpages/Vec/VecGetArrayRead.html#VecGetArrayRead">VecGetArrayRead</a>(x,&amp;lx);
+<a name="line901">901: </a>    <a href="../../../../../docs/manualpages/Vec/VecGetArray.html#VecGetArray">VecGetArray</a>(y,&amp;ly);
+<a name="line902">902: </a>    <a href="../../../../../docs/manualpages/Vec/VecPlaceArray.html#VecPlaceArray">VecPlaceArray</a>(mat_ctx-&gt;xPg,lx);
+<a name="line903">903: </a>    <a href="../../../../../docs/manualpages/Vec/VecPlaceArray.html#VecPlaceArray">VecPlaceArray</a>(mat_ctx-&gt;yPg,ly);
+<a name="line904">904: </a>    <font color="#4169E1">if</font> (trans) {
+<a name="line905">905: </a>      <a href="../../../../../docs/manualpages/Mat/MatMultTranspose.html#MatMultTranspose">MatMultTranspose</a>(mat_ctx-&gt;C,mat_ctx-&gt;xPg,mat_ctx-&gt;yPg);
+<a name="line906">906: </a>    } <font color="#4169E1">else</font> {
+<a name="line907">907: </a>      <a href="../../../../../docs/manualpages/Mat/MatMult.html#MatMult">MatMult</a>(mat_ctx-&gt;C,mat_ctx-&gt;xPg,mat_ctx-&gt;yPg);
+<a name="line908">908: </a>    }
+<a name="line909">909: </a>    <a href="../../../../../docs/manualpages/Vec/VecResetArray.html#VecResetArray">VecResetArray</a>(mat_ctx-&gt;xPg);
+<a name="line910">910: </a>    <a href="../../../../../docs/manualpages/Vec/VecResetArray.html#VecResetArray">VecResetArray</a>(mat_ctx-&gt;yPg);
+<a name="line911">911: </a>    <a href="../../../../../docs/manualpages/Vec/VecRestoreArrayRead.html#VecRestoreArrayRead">VecRestoreArrayRead</a>(x,&amp;lx);
+<a name="line912">912: </a>    <a href="../../../../../docs/manualpages/Vec/VecRestoreArray.html#VecRestoreArray">VecRestoreArray</a>(y,&amp;ly);
+<a name="line913">913: </a>  }
+<a name="line914">914: </a>  <font color="#B22222">/* Add contribution from saddle point */</font>
+<a name="line915">915: </a>  <font color="#4169E1">if</font> (mat_ctx-&gt;l2g_p) {
+<a name="line916">916: </a>    <font color="#4169E1">if</font> (trans) {
+<a name="line917">917: </a>      <a href="../../../../../docs/manualpages/Mat/MatMultTranspose.html#MatMultTranspose">MatMultTranspose</a>(mat_ctx-&gt;Bt_BB,pcis-&gt;vec1_B,mat_ctx-&gt;vP);
+<a name="line918">918: </a>    } <font color="#4169E1">else</font> {
+<a name="line919">919: </a>      <a href="../../../../../docs/manualpages/Mat/MatMult.html#MatMult">MatMult</a>(mat_ctx-&gt;B_BB,pcis-&gt;vec1_B,mat_ctx-&gt;vP);
+<a name="line920">920: </a>    }
+<a name="line921">921: </a>    <font color="#4169E1">if</font> (pcbddc-&gt;switch_static) {
+<a name="line922">922: </a>      <font color="#4169E1">if</font> (trans) {
+<a name="line923">923: </a>        <a href="../../../../../docs/manualpages/Mat/MatMultTransposeAdd.html#MatMultTransposeAdd">MatMultTransposeAdd</a>(mat_ctx-&gt;Bt_BI,pcis-&gt;vec1_D,mat_ctx-&gt;vP,mat_ctx-&gt;vP);
+<a name="line924">924: </a>      } <font color="#4169E1">else</font> {
+<a name="line925">925: </a>        <a href="../../../../../docs/manualpages/Mat/MatMultAdd.html#MatMultAdd">MatMultAdd</a>(mat_ctx-&gt;B_BI,pcis-&gt;vec1_D,mat_ctx-&gt;vP,mat_ctx-&gt;vP);
+<a name="line926">926: </a>      }
+<a name="line927">927: </a>    }
+<a name="line928">928: </a>    <a href="../../../../../docs/manualpages/Vec/VecScatterBegin.html#VecScatterBegin">VecScatterBegin</a>(mat_ctx-&gt;l2g_p,mat_ctx-&gt;vP,y,<a href="../../../../../docs/manualpages/Sys/ADD_VALUES.html#ADD_VALUES">ADD_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html#SCATTER_FORWARD">SCATTER_FORWARD</a>);
+<a name="line929">929: </a>    <a href="../../../../../docs/manualpages/Vec/VecScatterEnd.html#VecScatterEnd">VecScatterEnd</a>(mat_ctx-&gt;l2g_p,mat_ctx-&gt;vP,y,<a href="../../../../../docs/manualpages/Sys/ADD_VALUES.html#ADD_VALUES">ADD_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html#SCATTER_FORWARD">SCATTER_FORWARD</a>);
+<a name="line930">930: </a>  }
+<a name="line931">931: </a>  <a href="../../../../../docs/manualpages/Vec/VecScatterBegin.html#VecScatterBegin">VecScatterBegin</a>(mat_ctx-&gt;l2g_lambda,mat_ctx-&gt;lambda_local,y,<a href="../../../../../docs/manualpages/Sys/ADD_VALUES.html#ADD_VALUES">ADD_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html#SCATTER_FORWARD">SCATTER_FORWARD</a>);
+<a name="line932">932: </a>  <a href="../../../../../docs/manualpages/Vec/VecScatterEnd.html#VecScatterEnd">VecScatterEnd</a>(mat_ctx-&gt;l2g_lambda,mat_ctx-&gt;lambda_local,y,<a href="../../../../../docs/manualpages/Sys/ADD_VALUES.html#ADD_VALUES">ADD_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html#SCATTER_FORWARD">SCATTER_FORWARD</a>);
+<a name="line933">933: </a>  <font color="#4169E1">return</font>(0);
+<a name="line934">934: </a>}
+
+<a name="line936">936: </a><strong><font color="#4169E1"><a name="FETIDPMatMult"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> FETIDPMatMult(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> fetimat, <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> x, <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> y)</font></strong>
+<a name="line937">937: </a>{
+
+<a name="line941">941: </a>  FETIDPMatMult_Kernel(fetimat,x,y,<a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>);
+<a name="line942">942: </a>  <font color="#4169E1">return</font>(0);
+<a name="line943">943: </a>}
+
+<a name="line945">945: </a><strong><font color="#4169E1"><a name="FETIDPMatMultTranspose"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> FETIDPMatMultTranspose(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> fetimat, <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> x, <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> y)</font></strong>
+<a name="line946">946: </a>{
+
+<a name="line950">950: </a>  FETIDPMatMult_Kernel(fetimat,x,y,<a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>);
+<a name="line951">951: </a>  <font color="#4169E1">return</font>(0);
+<a name="line952">952: </a>}
+
+<a name="line954">954: </a><strong><font color="#4169E1"><a name="FETIDPPCApply_Kernel"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> FETIDPPCApply_Kernel(<a href="../../../../../docs/manualpages/PC/PC.html#PC">PC</a> fetipc, <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> x, <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> y, <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> trans)</font></strong>
+<a name="line955">955: </a>{
+<a name="line956">956: </a>  FETIDPPC_ctx   pc_ctx;
+<a name="line957">957: </a>  PC_IS          *pcis;
+
+<a name="line961">961: </a>  <a href="../../../../../docs/manualpages/PC/PCShellGetContext.html#PCShellGetContext">PCShellGetContext</a>(fetipc,(void**)&amp;pc_ctx);
+<a name="line962">962: </a>  pcis = (PC_IS*)pc_ctx-&gt;pc-&gt;data;
+<a name="line963">963: </a>  <font color="#B22222">/* Application of B_Ddelta^T */</font>
+<a name="line964">964: </a>  <a href="../../../../../docs/manualpages/Vec/VecScatterBegin.html#VecScatterBegin">VecScatterBegin</a>(pc_ctx-&gt;l2g_lambda,x,pc_ctx-&gt;lambda_local,<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_REVERSE.html#SCATTER_REVERSE">SCATTER_REVERSE</a>);
+<a name="line965">965: </a>  <a href="../../../../../docs/manualpages/Vec/VecScatterEnd.html#VecScatterEnd">VecScatterEnd</a>(pc_ctx-&gt;l2g_lambda,x,pc_ctx-&gt;lambda_local,<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_REVERSE.html#SCATTER_REVERSE">SCATTER_REVERSE</a>);
+<a name="line966">966: </a>  <a href="../../../../../docs/manualpages/Vec/VecSet.html#VecSet">VecSet</a>(pcis-&gt;vec2_B,0.0);
+<a name="line967">967: </a>  <a href="../../../../../docs/manualpages/Mat/MatMultTranspose.html#MatMultTranspose">MatMultTranspose</a>(pc_ctx-&gt;B_Ddelta,pc_ctx-&gt;lambda_local,pcis-&gt;vec2_B);
+<a name="line968">968: </a>  <font color="#B22222">/* Application of local Schur complement */</font>
+<a name="line969">969: </a>  <font color="#4169E1">if</font> (trans) {
+<a name="line970">970: </a>    <a href="../../../../../docs/manualpages/Mat/MatMultTranspose.html#MatMultTranspose">MatMultTranspose</a>(pc_ctx-&gt;S_j,pcis-&gt;vec2_B,pcis-&gt;vec1_B);
+<a name="line971">971: </a>  } <font color="#4169E1">else</font> {
+<a name="line972">972: </a>    <a href="../../../../../docs/manualpages/Mat/MatMult.html#MatMult">MatMult</a>(pc_ctx-&gt;S_j,pcis-&gt;vec2_B,pcis-&gt;vec1_B);
+<a name="line973">973: </a>  }
+<a name="line974">974: </a>  <font color="#B22222">/* Application of B_Ddelta */</font>
+<a name="line975">975: </a>  <a href="../../../../../docs/manualpages/Mat/MatMult.html#MatMult">MatMult</a>(pc_ctx-&gt;B_Ddelta,pcis-&gt;vec1_B,pc_ctx-&gt;lambda_local);
+<a name="line976">976: </a>  <a href="../../../../../docs/manualpages/Vec/VecSet.html#VecSet">VecSet</a>(y,0.0);
+<a name="line977">977: </a>  <a href="../../../../../docs/manualpages/Vec/VecScatterBegin.html#VecScatterBegin">VecScatterBegin</a>(pc_ctx-&gt;l2g_lambda,pc_ctx-&gt;lambda_local,y,<a href="../../../../../docs/manualpages/Sys/ADD_VALUES.html#ADD_VALUES">ADD_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html#SCATTER_FORWARD">SCATTER_FORWARD</a>);
+<a name="line978">978: </a>  <a href="../../../../../docs/manualpages/Vec/VecScatterEnd.html#VecScatterEnd">VecScatterEnd</a>(pc_ctx-&gt;l2g_lambda,pc_ctx-&gt;lambda_local,y,<a href="../../../../../docs/manualpages/Sys/ADD_VALUES.html#ADD_VALUES">ADD_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html#SCATTER_FORWARD">SCATTER_FORWARD</a>);
+<a name="line979">979: </a>  <font color="#4169E1">return</font>(0);
+<a name="line980">980: </a>}
+
+<a name="line982">982: </a><strong><font color="#4169E1"><a name="FETIDPPCApply"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> FETIDPPCApply(<a href="../../../../../docs/manualpages/PC/PC.html#PC">PC</a> pc, <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> x, <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> y)</font></strong>
+<a name="line983">983: </a>{
+
+<a name="line987">987: </a>  FETIDPPCApply_Kernel(pc,x,y,<a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>);
+<a name="line988">988: </a>  <font color="#4169E1">return</font>(0);
+<a name="line989">989: </a>}
+
+<a name="line991">991: </a><strong><font color="#4169E1"><a name="FETIDPPCApplyTranspose"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> FETIDPPCApplyTranspose(<a href="../../../../../docs/manualpages/PC/PC.html#PC">PC</a> pc, <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> x, <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> y)</font></strong>
+<a name="line992">992: </a>{
+
+<a name="line996">996: </a>  FETIDPPCApply_Kernel(pc,x,y,<a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>);
+<a name="line997">997: </a>  <font color="#4169E1">return</font>(0);
+<a name="line998">998: </a>}
+
+<a name="line1000">1000: </a><strong><font color="#4169E1"><a name="FETIDPPCView"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> FETIDPPCView(<a href="../../../../../docs/manualpages/PC/PC.html#PC">PC</a> pc, <a href="../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer)</font></strong>
+<a name="line1001">1001: </a>{
+<a name="line1002">1002: </a>  FETIDPPC_ctx      pc_ctx;
+<a name="line1003">1003: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>         iascii;
+<a name="line1004">1004: </a>  <a href="../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a>       sviewer;
+<a name="line1005">1005: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+
+<a name="line1008">1008: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<a href="../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html#PETSCVIEWERASCII">PETSCVIEWERASCII</a>,&amp;iascii);
+<a name="line1009">1009: </a>  <font color="#4169E1">if</font> (iascii) {
+<a name="line1010">1010: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> rank;
+<a name="line1011">1011: </a>    <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>   isschur,isshell;
+
+<a name="line1013">1013: </a>    <a href="../../../../../docs/manualpages/PC/PCShellGetContext.html#PCShellGetContext">PCShellGetContext</a>(pc,(void**)&amp;pc_ctx);
+<a name="line1014">1014: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)pc),&amp;rank);
+<a name="line1015">1015: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)pc_ctx-&gt;S_j,MATSCHURCOMPLEMENT,&amp;isschur);
+<a name="line1016">1016: </a>    <font color="#4169E1">if</font> (isschur) {
+<a name="line1017">1017: </a>      <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"  FETI-DP multipliers Dirichlet preconditioner (just from rank 0)\n"</font>);
+<a name="line1018">1018: </a>    } <font color="#4169E1">else</font> {
+<a name="line1019">1019: </a>      <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"  FETI-DP multipliers Lumped preconditioner (just from rank 0)\n"</font>);
+<a name="line1020">1020: </a>    }
+<a name="line1021">1021: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerGetSubViewer.html#PetscViewerGetSubViewer">PetscViewerGetSubViewer</a>(viewer,<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)pc_ctx-&gt;S_j),&amp;sviewer);
+<a name="line1022">1022: </a>    <font color="#4169E1">if</font> (!rank) {
+<a name="line1023">1023: </a>      <a href="../../../../../docs/manualpages/Viewer/PetscViewerPushFormat.html#PetscViewerPushFormat">PetscViewerPushFormat</a>(sviewer,<a href="../../../../../docs/manualpages/Viewer/PetscViewerFormat.html#PetscViewerFormat">PETSC_VIEWER_ASCII_INFO</a>);
+<a name="line1024">1024: </a>      <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIAddTab.html#PetscViewerASCIIAddTab">PetscViewerASCIIAddTab</a>(sviewer,2);
+<a name="line1025">1025: </a>      <a href="../../../../../docs/manualpages/Mat/MatView.html#MatView">MatView</a>(pc_ctx-&gt;S_j,sviewer);
+<a name="line1026">1026: </a>      <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIISubtractTab.html#PetscViewerASCIISubtractTab">PetscViewerASCIISubtractTab</a>(sviewer,2);
+<a name="line1027">1027: </a>      <a href="../../../../../docs/manualpages/Viewer/PetscViewerPopFormat.html#PetscViewerPopFormat">PetscViewerPopFormat</a>(sviewer);
+<a name="line1028">1028: </a>    }
+<a name="line1029">1029: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)pc_ctx-&gt;B_Ddelta,<a href="../../../../../docs/manualpages/Mat/MATSHELL.html#MATSHELL">MATSHELL</a>,&amp;isshell);
+<a name="line1030">1030: </a>    <font color="#4169E1">if</font> (isshell) {
+<a name="line1031">1031: </a>      BDdelta_DN ctx;
+<a name="line1032">1032: </a>      <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"  FETI-DP BDdelta: DB^t * (B D^-1 B^t)^-1 for deluxe scaling (just from rank 0)\n"</font>);
+<a name="line1033">1033: </a>      <a href="../../../../../docs/manualpages/Mat/MatShellGetContext.html#MatShellGetContext">MatShellGetContext</a>(pc_ctx-&gt;B_Ddelta,&amp;ctx);
+<a name="line1034">1034: </a>      <font color="#4169E1">if</font> (!rank) {
+<a name="line1035">1035: </a>        <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIAddTab.html#PetscViewerASCIIAddTab">PetscViewerASCIIAddTab</a>(sviewer,2);
+<a name="line1036">1036: </a>        <a href="../../../../../docs/manualpages/KSP/KSPView.html#KSPView">KSPView</a>(ctx-&gt;kBD,sviewer);
+<a name="line1037">1037: </a>        <a href="../../../../../docs/manualpages/Viewer/PetscViewerPushFormat.html#PetscViewerPushFormat">PetscViewerPushFormat</a>(sviewer,<a href="../../../../../docs/manualpages/Viewer/PetscViewerFormat.html#PetscViewerFormat">PETSC_VIEWER_ASCII_INFO</a>);
+<a name="line1038">1038: </a>        <a href="../../../../../docs/manualpages/Mat/MatView.html#MatView">MatView</a>(ctx-&gt;BD,sviewer);
+<a name="line1039">1039: </a>        <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIISubtractTab.html#PetscViewerASCIISubtractTab">PetscViewerASCIISubtractTab</a>(sviewer,2);
+<a name="line1040">1040: </a>        <a href="../../../../../docs/manualpages/Viewer/PetscViewerPopFormat.html#PetscViewerPopFormat">PetscViewerPopFormat</a>(sviewer);
+<a name="line1041">1041: </a>      }
+<a name="line1042">1042: </a>    }
+<a name="line1043">1043: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerRestoreSubViewer.html#PetscViewerRestoreSubViewer">PetscViewerRestoreSubViewer</a>(viewer,<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)pc_ctx-&gt;S_j),&amp;sviewer);
+<a name="line1044">1044: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerFlush.html#PetscViewerFlush">PetscViewerFlush</a>(viewer);
+<a name="line1045">1045: </a>  }
+<a name="line1046">1046: </a>  <font color="#4169E1">return</font>(0);
+<a name="line1047">1047: </a>}
+</pre>
+</body>
+
+</html>

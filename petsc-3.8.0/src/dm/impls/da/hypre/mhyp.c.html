@@ -1,0 +1,806 @@
+<center><a href="mhyp.c">Actual source code: mhyp.c</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/dm/impls/da/hypre/mhyp.c.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:39:52+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/dm/impls/da/hypre/mhyp.c.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+
+<a name="line2">  2: </a><font color="#B22222">/*</font>
+<a name="line3">  3: </a><font color="#B22222">    Creates hypre ijmatrix from PETSc matrix</font>
+<a name="line4">  4: </a><font color="#B22222">*/</font>
+<a name="line5">  5: </a> #include <A href="../../../../../include/petscsys.h.html">&lt;petscsys.h&gt;</A>
+<a name="line6">  6: </a> #include <A href="../../../../../include/petsc/private/matimpl.h.html">&lt;petsc/private/matimpl.h&gt;</A>
+<a name="line7">  7: </a> #include <A href="../../../../../include/petscdmda.h.html">&lt;petscdmda.h&gt;</A>
+<a name="line8">  8: </a> #include <A href="../../../../../include/../src/dm/impls/da/hypre/mhyp.h.html">&lt;../src/dm/impls/da/hypre/mhyp.h&gt;</A>
+
+<a name="line10"> 10: </a><font color="#B22222">/* -----------------------------------------------------------------------------------------------------------------*/</font>
+
+<a name="line12"> 12: </a><font color="#B22222">/*MC</font>
+<a name="line13"> 13: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/DMDA/MATHYPRESTRUCT.html#MATHYPRESTRUCT">MATHYPRESTRUCT</a> - <a href="../../../../../docs/manualpages/DMDA/MATHYPRESTRUCT.html#MATHYPRESTRUCT">MATHYPRESTRUCT</a> = "hyprestruct" - A matrix type to be used for parallel sparse matrices</font>
+<a name="line14"> 14: </a><font color="#B22222">          based on the hypre HYPRE_StructMatrix.</font>
+
+<a name="line16"> 16: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line18"> 18: </a><font color="#B22222">   Notes: Unlike the more general support for blocks in hypre this allows only one block per process and requires the block</font>
+<a name="line19"> 19: </a><font color="#B22222">          be defined by a <a href="../../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a>.</font>
+
+<a name="line21"> 21: </a><font color="#B22222">          The matrix needs a <a href="../../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a> associated with it by either a call to <a href="../../../../../docs/manualpages/DMDA/MatSetupDM.html#MatSetupDM">MatSetupDM</a>() or if the matrix is obtained from <a href="../../../../../docs/manualpages/DM/DMCreateMatrix.html#DMCreateMatrix">DMCreateMatrix</a>()</font>
+
+<a name="line23"> 23: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/Mat/MatCreate.html#MatCreate">MatCreate</a>(), <a href="../../../../../docs/manualpages/PC/PCPFMG.html#PCPFMG">PCPFMG</a>, <a href="../../../../../docs/manualpages/DMDA/MatSetupDM.html#MatSetupDM">MatSetupDM</a>(), <a href="../../../../../docs/manualpages/DM/DMCreateMatrix.html#DMCreateMatrix">DMCreateMatrix</a>()</font>
+<a name="line24"> 24: </a><font color="#B22222">M*/</font>
+
+
+<a name="line27"> 27: </a><strong><font color="#4169E1"><a name="MatSetValuesLocal_HYPREStruct_3d"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  MatSetValuesLocal_HYPREStruct_3d(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> mat,<a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> nrow,const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> irow[],<a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> ncol,const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> icol[],const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> y[],<a href="../../../../../docs/manualpages/Sys/InsertMode.html#InsertMode">InsertMode</a> addv)</font></strong>
+<a name="line28"> 28: </a>{
+<a name="line29"> 29: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+<a name="line30"> 30: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          i,j,stencil,index[3],row,entries[7];
+<a name="line31"> 31: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> *values = y;
+<a name="line32"> 32: </a>  Mat_HYPREStruct   *ex     = (Mat_HYPREStruct*) mat-&gt;data;
+
+<a name="line35"> 35: </a>  <font color="#4169E1">if</font> (<a href="../../../../../docs/manualpages/Sys/PetscUnlikely.html#PetscUnlikely">PetscUnlikely</a>(ncol &gt;= 7)) <a href="../../../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_OUTOFRANGE,<font color="#666666">"ncol %D &gt;= 7 too large"</font>,ncol);
+<a name="line36"> 36: </a>  <font color="#4169E1">for</font> (i=0; i&lt;nrow; i++) {
+<a name="line37"> 37: </a>    <font color="#4169E1">for</font> (j=0; j&lt;ncol; j++) {
+<a name="line38"> 38: </a>      stencil = icol[j] - irow[i];
+<a name="line39"> 39: </a>      <font color="#4169E1">if</font> (!stencil) {
+<a name="line40"> 40: </a>        entries[j] = 3;
+<a name="line41"> 41: </a>      } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (stencil == -1) {
+<a name="line42"> 42: </a>        entries[j] = 2;
+<a name="line43"> 43: </a>      } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (stencil == 1) {
+<a name="line44"> 44: </a>        entries[j] = 4;
+<a name="line45"> 45: </a>      } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (stencil == -ex-&gt;gnx) {
+<a name="line46"> 46: </a>        entries[j] = 1;
+<a name="line47"> 47: </a>      } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (stencil == ex-&gt;gnx) {
+<a name="line48"> 48: </a>        entries[j] = 5;
+<a name="line49"> 49: </a>      } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (stencil == -ex-&gt;gnxgny) {
+<a name="line50"> 50: </a>        entries[j] = 0;
+<a name="line51"> 51: </a>      } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (stencil == ex-&gt;gnxgny) {
+<a name="line52"> 52: </a>        entries[j] = 6;
+<a name="line53"> 53: </a>      } <font color="#4169E1">else</font> <a href="../../../../../docs/manualpages/Sys/SETERRQ3.html#SETERRQ3">SETERRQ3</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_WRONG,<font color="#666666">"Local row %D local column %D have bad stencil %D"</font>,irow[i],icol[j],stencil);
+<a name="line54"> 54: </a>    }
+<a name="line55"> 55: </a>    row      = ex-&gt;gindices[irow[i]] - ex-&gt;rstart;
+<a name="line56"> 56: </a>    index[0] = ex-&gt;xs + (row % ex-&gt;nx);
+<a name="line57"> 57: </a>    index[1] = ex-&gt;ys + ((row/ex-&gt;nx) % ex-&gt;ny);
+<a name="line58"> 58: </a>    index[2] = ex-&gt;zs + (row/(ex-&gt;nxny));
+<a name="line59"> 59: </a>    <font color="#4169E1">if</font> (addv == <a href="../../../../../docs/manualpages/Sys/ADD_VALUES.html#ADD_VALUES">ADD_VALUES</a>) {
+<a name="line60"> 60: </a>      PetscStackCallStandard(HYPRE_StructMatrixAddToValues,(ex-&gt;hmat,(HYPRE_Int *)index,ncol,(HYPRE_Int *)entries,(<a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>*)values));
+<a name="line61"> 61: </a>    } <font color="#4169E1">else</font> {
+<a name="line62"> 62: </a>      PetscStackCallStandard(HYPRE_StructMatrixSetValues,(ex-&gt;hmat,(HYPRE_Int *)index,ncol,(HYPRE_Int *)entries,(<a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>*)values));
+<a name="line63"> 63: </a>    }
+<a name="line64"> 64: </a>    values += ncol;
+<a name="line65"> 65: </a>  }
+<a name="line66"> 66: </a>  <font color="#4169E1">return</font>(0);
+<a name="line67"> 67: </a>}
+
+<a name="line69"> 69: </a><strong><font color="#4169E1"><a name="MatZeroRowsLocal_HYPREStruct_3d"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  MatZeroRowsLocal_HYPREStruct_3d(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> mat,<a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> nrow,const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> irow[],<a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> d,<a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> x,<a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> b)</font></strong>
+<a name="line70"> 70: </a>{
+<a name="line71"> 71: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  ierr;
+<a name="line72"> 72: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>        i,index[3],row,entries[7] = {0,1,2,3,4,5,6};
+<a name="line73"> 73: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>     values[7];
+<a name="line74"> 74: </a>  Mat_HYPREStruct *ex = (Mat_HYPREStruct*) mat-&gt;data;
+
+<a name="line77"> 77: </a>  <font color="#4169E1">if</font> (x &amp;&amp; b) <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)mat),PETSC_ERR_SUP,<font color="#666666">"No support"</font>);
+<a name="line78"> 78: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMemzero.html#PetscMemzero">PetscMemzero</a>(values,7*<font color="#4169E1">sizeof</font>(<a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>));
+<a name="line79"> 79: </a>  values[3] = d;
+<a name="line80"> 80: </a>  <font color="#4169E1">for</font> (i=0; i&lt;nrow; i++) {
+<a name="line81"> 81: </a>    row      = ex-&gt;gindices[irow[i]] - ex-&gt;rstart;
+<a name="line82"> 82: </a>    index[0] = ex-&gt;xs + (row % ex-&gt;nx);
+<a name="line83"> 83: </a>    index[1] = ex-&gt;ys + ((row/ex-&gt;nx) % ex-&gt;ny);
+<a name="line84"> 84: </a>    index[2] = ex-&gt;zs + (row/(ex-&gt;nxny));
+<a name="line85"> 85: </a>    PetscStackCallStandard(HYPRE_StructMatrixSetValues,(ex-&gt;hmat,(HYPRE_Int *)index,7,(HYPRE_Int *)entries,values));
+<a name="line86"> 86: </a>  }
+<a name="line87"> 87: </a>  PetscStackCallStandard(HYPRE_StructMatrixAssemble,(ex-&gt;hmat));
+<a name="line88"> 88: </a>  <font color="#4169E1">return</font>(0);
+<a name="line89"> 89: </a>}
+
+<a name="line91"> 91: </a><strong><font color="#4169E1"><a name="MatZeroEntries_HYPREStruct_3d"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatZeroEntries_HYPREStruct_3d(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> mat)</font></strong>
+<a name="line92"> 92: </a>{
+<a name="line93"> 93: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  ierr;
+<a name="line94"> 94: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>        indices[7] = {0,1,2,3,4,5,6};
+<a name="line95"> 95: </a>  Mat_HYPREStruct *ex        = (Mat_HYPREStruct*) mat-&gt;data;
+
+<a name="line98"> 98: </a>  <font color="#B22222">/* hypre has no public interface to do this */</font>
+<a name="line99"> 99: </a>  PetscStackCallStandard(hypre_StructMatrixClearBoxValues,(ex-&gt;hmat,&amp;ex-&gt;hbox,7,(HYPRE_Int *)indices,0,1));
+<a name="line100">100: </a>  PetscStackCallStandard(HYPRE_StructMatrixAssemble,(ex-&gt;hmat));
+<a name="line101">101: </a>  <font color="#4169E1">return</font>(0);
+<a name="line102">102: </a>}
+
+<a name="line104">104: </a><strong><font color="#4169E1"><a name="MatSetupDM_HYPREStruct"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  MatSetupDM_HYPREStruct(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> mat,<a href="../../../../../docs/manualpages/DM/DM.html#DM">DM</a> da)</font></strong>
+<a name="line105">105: </a>{
+<a name="line106">106: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>         ierr;
+<a name="line107">107: </a>  Mat_HYPREStruct        *ex = (Mat_HYPREStruct*) mat-&gt;data;
+<a name="line108">108: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>               dim,dof,sw[3],nx,ny,nz,ilower[3],iupper[3],ssize,i;
+<a name="line109">109: </a>  <a href="../../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DMBoundaryType</a>         px,py,pz;
+<a name="line110">110: </a>  <a href="../../../../../docs/manualpages/DMDA/DMDAStencilType.html#DMDAStencilType">DMDAStencilType</a>        st;
+<a name="line111">111: </a>  <a href="../../../../../docs/manualpages/IS/ISLocalToGlobalMapping.html#ISLocalToGlobalMapping">ISLocalToGlobalMapping</a> ltog;
+
+<a name="line114">114: </a>  ex-&gt;da = da;
+<a name="line115">115: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html#PetscObjectReference">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da);
+
+<a name="line117">117: </a>  <a href="../../../../../docs/manualpages/DMDA/DMDAGetInfo.html#DMDAGetInfo">DMDAGetInfo</a>(ex-&gt;da,&amp;dim,0,0,0,0,0,0,&amp;dof,&amp;sw[0],&amp;px,&amp;py,&amp;pz,&amp;st);
+<a name="line118">118: </a>  <a href="../../../../../docs/manualpages/DMDA/DMDAGetCorners.html#DMDAGetCorners">DMDAGetCorners</a>(ex-&gt;da,&amp;ilower[0],&amp;ilower[1],&amp;ilower[2],&amp;iupper[0],&amp;iupper[1],&amp;iupper[2]);
+<a name="line119">119: </a>  iupper[0] += ilower[0] - 1;
+<a name="line120">120: </a>  iupper[1] += ilower[1] - 1;
+<a name="line121">121: </a>  iupper[2] += ilower[2] - 1;
+
+<a name="line123">123: </a>  <font color="#B22222">/* the hypre_Box is used to zero out the matrix entries in MatZeroValues() */</font>
+<a name="line124">124: </a>  ex-&gt;hbox.imin[0] = ilower[0];
+<a name="line125">125: </a>  ex-&gt;hbox.imin[1] = ilower[1];
+<a name="line126">126: </a>  ex-&gt;hbox.imin[2] = ilower[2];
+<a name="line127">127: </a>  ex-&gt;hbox.imax[0] = iupper[0];
+<a name="line128">128: </a>  ex-&gt;hbox.imax[1] = iupper[1];
+<a name="line129">129: </a>  ex-&gt;hbox.imax[2] = iupper[2];
+
+<a name="line131">131: </a>  <font color="#B22222">/* create the hypre grid object and set its information */</font>
+<a name="line132">132: </a>  <font color="#4169E1">if</font> (dof &gt; 1) <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),PETSC_ERR_SUP,<font color="#666666">"Currently only support for scalar problems"</font>);
+<a name="line133">133: </a>  <font color="#4169E1">if</font> (px || py || pz) <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),PETSC_ERR_SUP,<font color="#666666">"Ask us to add periodic support by calling HYPRE_StructGridSetPeriodic()"</font>);
+<a name="line134">134: </a>  PetscStackCallStandard(HYPRE_StructGridCreate,(ex-&gt;hcomm,dim,&amp;ex-&gt;hgrid));
+<a name="line135">135: </a>  PetscStackCallStandard(HYPRE_StructGridSetExtents,(ex-&gt;hgrid,(HYPRE_Int *)ilower,(HYPRE_Int *)iupper));
+<a name="line136">136: </a>  PetscStackCallStandard(HYPRE_StructGridAssemble,(ex-&gt;hgrid));
+
+<a name="line138">138: </a>  sw[1] = sw[0];
+<a name="line139">139: </a>  sw[2] = sw[1];
+<a name="line140">140: </a>  PetscStackCallStandard(HYPRE_StructGridSetNumGhost,(ex-&gt;hgrid,(HYPRE_Int *)sw));
+
+<a name="line142">142: </a>  <font color="#B22222">/* create the hypre stencil object and set its information */</font>
+<a name="line143">143: </a>  <font color="#4169E1">if</font> (sw[0] &gt; 1) <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),PETSC_ERR_SUP,<font color="#666666">"Ask us to add support for wider stencils"</font>);
+<a name="line144">144: </a>  <font color="#4169E1">if</font> (st == <a href="../../../../../docs/manualpages/DMDA/DMDAStencilType.html#DMDAStencilType">DMDA_STENCIL_BOX</a>) <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),PETSC_ERR_SUP,<font color="#666666">"Ask us to add support for box stencils"</font>);
+<a name="line145">145: </a>  <font color="#4169E1">if</font> (dim == 1) {
+<a name="line146">146: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> offsets[3][1] = {{-1},{0},{1}};
+<a name="line147">147: </a>    ssize = 3;
+<a name="line148">148: </a>    PetscStackCallStandard(HYPRE_StructStencilCreate,(dim,ssize,&amp;ex-&gt;hstencil));
+<a name="line149">149: </a>    <font color="#4169E1">for</font> (i=0; i&lt;ssize; i++) {
+<a name="line150">150: </a>      PetscStackCallStandard(HYPRE_StructStencilSetElement,(ex-&gt;hstencil,i,(HYPRE_Int *)offsets[i]));
+<a name="line151">151: </a>    }
+<a name="line152">152: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 2) {
+<a name="line153">153: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> offsets[5][2] = {{0,-1},{-1,0},{0,0},{1,0},{0,1}};
+<a name="line154">154: </a>    ssize = 5;
+<a name="line155">155: </a>    PetscStackCallStandard(HYPRE_StructStencilCreate,(dim,ssize,&amp;ex-&gt;hstencil));
+<a name="line156">156: </a>    <font color="#4169E1">for</font> (i=0; i&lt;ssize; i++) {
+<a name="line157">157: </a>      PetscStackCallStandard(HYPRE_StructStencilSetElement,(ex-&gt;hstencil,i,(HYPRE_Int *)offsets[i]));
+<a name="line158">158: </a>    }
+<a name="line159">159: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 3) {
+<a name="line160">160: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> offsets[7][3] = {{0,0,-1},{0,-1,0},{-1,0,0},{0,0,0},{1,0,0},{0,1,0},{0,0,1}};
+<a name="line161">161: </a>    ssize = 7;
+<a name="line162">162: </a>    PetscStackCallStandard(HYPRE_StructStencilCreate,(dim,ssize,&amp;ex-&gt;hstencil));
+<a name="line163">163: </a>    <font color="#4169E1">for</font> (i=0; i&lt;ssize; i++) {
+<a name="line164">164: </a>      PetscStackCallStandard(HYPRE_StructStencilSetElement,(ex-&gt;hstencil,i,(HYPRE_Int *)offsets[i]));
+<a name="line165">165: </a>    }
+<a name="line166">166: </a>  }
+
+<a name="line168">168: </a>  <font color="#B22222">/* create the HYPRE vector for rhs and solution */</font>
+<a name="line169">169: </a>  PetscStackCallStandard(HYPRE_StructVectorCreate,(ex-&gt;hcomm,ex-&gt;hgrid,&amp;ex-&gt;hb));
+<a name="line170">170: </a>  PetscStackCallStandard(HYPRE_StructVectorCreate,(ex-&gt;hcomm,ex-&gt;hgrid,&amp;ex-&gt;hx));
+<a name="line171">171: </a>  PetscStackCallStandard(HYPRE_StructVectorInitialize,(ex-&gt;hb));
+<a name="line172">172: </a>  PetscStackCallStandard(HYPRE_StructVectorInitialize,(ex-&gt;hx));
+<a name="line173">173: </a>  PetscStackCallStandard(HYPRE_StructVectorAssemble,(ex-&gt;hb));
+<a name="line174">174: </a>  PetscStackCallStandard(HYPRE_StructVectorAssemble,(ex-&gt;hx));
+
+<a name="line176">176: </a>  <font color="#B22222">/* create the hypre matrix object and set its information */</font>
+<a name="line177">177: </a>  PetscStackCallStandard(HYPRE_StructMatrixCreate,(ex-&gt;hcomm,ex-&gt;hgrid,ex-&gt;hstencil,&amp;ex-&gt;hmat));
+<a name="line178">178: </a>  PetscStackCallStandard(HYPRE_StructGridDestroy,(ex-&gt;hgrid));
+<a name="line179">179: </a>  PetscStackCallStandard(HYPRE_StructStencilDestroy,(ex-&gt;hstencil));
+<a name="line180">180: </a>  <font color="#4169E1">if</font> (ex-&gt;needsinitialization) {
+<a name="line181">181: </a>    PetscStackCallStandard(HYPRE_StructMatrixInitialize,(ex-&gt;hmat));
+<a name="line182">182: </a>    ex-&gt;needsinitialization = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+<a name="line183">183: </a>  }
+
+<a name="line185">185: </a>  <font color="#B22222">/* set the global and local sizes of the matrix */</font>
+<a name="line186">186: </a>  <a href="../../../../../docs/manualpages/DMDA/DMDAGetCorners.html#DMDAGetCorners">DMDAGetCorners</a>(da,0,0,0,&amp;nx,&amp;ny,&amp;nz);
+<a name="line187">187: </a>  <a href="../../../../../docs/manualpages/Mat/MatSetSizes.html#MatSetSizes">MatSetSizes</a>(mat,dof*nx*ny*nz,dof*nx*ny*nz,<a href="../../../../../docs/manualpages/Sys/PETSC_DECIDE.html#PETSC_DECIDE">PETSC_DECIDE</a>,<a href="../../../../../docs/manualpages/Sys/PETSC_DECIDE.html#PETSC_DECIDE">PETSC_DECIDE</a>);
+<a name="line188">188: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutSetBlockSize.html#PetscLayoutSetBlockSize">PetscLayoutSetBlockSize</a>(mat-&gt;rmap,1);
+<a name="line189">189: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutSetBlockSize.html#PetscLayoutSetBlockSize">PetscLayoutSetBlockSize</a>(mat-&gt;cmap,1);
+<a name="line190">190: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutSetUp.html#PetscLayoutSetUp">PetscLayoutSetUp</a>(mat-&gt;rmap);
+<a name="line191">191: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutSetUp.html#PetscLayoutSetUp">PetscLayoutSetUp</a>(mat-&gt;cmap);
+
+<a name="line193">193: </a>  <font color="#4169E1">if</font> (dim == 3) {
+<a name="line194">194: </a>    mat-&gt;ops-&gt;setvalueslocal = MatSetValuesLocal_HYPREStruct_3d;
+<a name="line195">195: </a>    mat-&gt;ops-&gt;zerorowslocal  = MatZeroRowsLocal_HYPREStruct_3d;
+<a name="line196">196: </a>    mat-&gt;ops-&gt;zeroentries    = MatZeroEntries_HYPREStruct_3d;
+
+<a name="line198">198: </a>    MatZeroEntries_HYPREStruct_3d(mat);
+<a name="line199">199: </a>  } <font color="#4169E1">else</font> <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),PETSC_ERR_SUP,<font color="#666666">"Only support for 3d <a href="../../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a> currently"</font>);
+
+<a name="line201">201: </a>  <font color="#B22222">/* get values that will be used repeatedly in <a href="../../../../../docs/manualpages/Mat/MatSetValuesLocal.html#MatSetValuesLocal">MatSetValuesLocal</a>() and <a href="../../../../../docs/manualpages/Mat/MatZeroRowsLocal.html#MatZeroRowsLocal">MatZeroRowsLocal</a>() repeatedly */</font>
+<a name="line202">202: </a>  <a href="../../../../../docs/manualpages/Mat/MatGetOwnershipRange.html#MatGetOwnershipRange">MatGetOwnershipRange</a>(mat,&amp;ex-&gt;rstart,NULL);
+<a name="line203">203: </a>  <a href="../../../../../docs/manualpages/DM/DMGetLocalToGlobalMapping.html#DMGetLocalToGlobalMapping">DMGetLocalToGlobalMapping</a>(ex-&gt;da,&amp;ltog);
+<a name="line204">204: </a>  <a href="../../../../../docs/manualpages/IS/ISLocalToGlobalMappingGetIndices.html#ISLocalToGlobalMappingGetIndices">ISLocalToGlobalMappingGetIndices</a>(ltog, (const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> **) &amp;ex-&gt;gindices);
+<a name="line205">205: </a>  <a href="../../../../../docs/manualpages/DMDA/DMDAGetGhostCorners.html#DMDAGetGhostCorners">DMDAGetGhostCorners</a>(ex-&gt;da,0,0,0,&amp;ex-&gt;gnx,&amp;ex-&gt;gnxgny,0);
+<a name="line206">206: </a>  ex-&gt;gnxgny *= ex-&gt;gnx;
+<a name="line207">207: </a>  <a href="../../../../../docs/manualpages/DMDA/DMDAGetCorners.html#DMDAGetCorners">DMDAGetCorners</a>(ex-&gt;da,&amp;ex-&gt;xs,&amp;ex-&gt;ys,&amp;ex-&gt;zs,&amp;ex-&gt;nx,&amp;ex-&gt;ny,0);
+<a name="line208">208: </a>  ex-&gt;nxny    = ex-&gt;nx*ex-&gt;ny;
+<a name="line209">209: </a>  <font color="#4169E1">return</font>(0);
+<a name="line210">210: </a>}
+
+<a name="line212">212: </a><strong><font color="#4169E1"><a name="MatMult_HYPREStruct"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatMult_HYPREStruct(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> A,<a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> x,<a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> y)</font></strong>
+<a name="line213">213: </a>{
+<a name="line214">214: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+<a name="line215">215: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> *xx;
+<a name="line216">216: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>       *yy;
+<a name="line217">217: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          ilower[3],iupper[3];
+<a name="line218">218: </a>  Mat_HYPREStruct   *mx = (Mat_HYPREStruct*)(A-&gt;data);
+
+<a name="line221">221: </a>  <a href="../../../../../docs/manualpages/DMDA/DMDAGetCorners.html#DMDAGetCorners">DMDAGetCorners</a>(mx-&gt;da,&amp;ilower[0],&amp;ilower[1],&amp;ilower[2],&amp;iupper[0],&amp;iupper[1],&amp;iupper[2]);
+
+<a name="line223">223: </a>  iupper[0] += ilower[0] - 1;
+<a name="line224">224: </a>  iupper[1] += ilower[1] - 1;
+<a name="line225">225: </a>  iupper[2] += ilower[2] - 1;
+
+<a name="line227">227: </a>  <font color="#B22222">/* copy x values over to hypre */</font>
+<a name="line228">228: </a>  PetscStackCallStandard(HYPRE_StructVectorSetConstantValues,(mx-&gt;hb,0.0));
+<a name="line229">229: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetArrayRead.html#VecGetArrayRead">VecGetArrayRead</a>(x,&amp;xx);
+<a name="line230">230: </a>  PetscStackCallStandard(HYPRE_StructVectorSetBoxValues,(mx-&gt;hb,(HYPRE_Int *)ilower,(HYPRE_Int *)iupper,(<a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>*)xx));
+<a name="line231">231: </a>  <a href="../../../../../docs/manualpages/Vec/VecRestoreArrayRead.html#VecRestoreArrayRead">VecRestoreArrayRead</a>(x,&amp;xx);
+<a name="line232">232: </a>  PetscStackCallStandard(HYPRE_StructVectorAssemble,(mx-&gt;hb));
+<a name="line233">233: </a>  PetscStackCallStandard(HYPRE_StructMatrixMatvec,(1.0,mx-&gt;hmat,mx-&gt;hb,0.0,mx-&gt;hx));
+
+<a name="line235">235: </a>  <font color="#B22222">/* copy solution values back to PETSc */</font>
+<a name="line236">236: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetArray.html#VecGetArray">VecGetArray</a>(y,&amp;yy);
+<a name="line237">237: </a>  PetscStackCallStandard(HYPRE_StructVectorGetBoxValues,(mx-&gt;hx,(HYPRE_Int *)ilower,(HYPRE_Int *)iupper,yy));
+<a name="line238">238: </a>  <a href="../../../../../docs/manualpages/Vec/VecRestoreArray.html#VecRestoreArray">VecRestoreArray</a>(y,&amp;yy);
+<a name="line239">239: </a>  <font color="#4169E1">return</font>(0);
+<a name="line240">240: </a>}
+
+<a name="line242">242: </a><strong><font color="#4169E1"><a name="MatAssemblyEnd_HYPREStruct"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatAssemblyEnd_HYPREStruct(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> mat,<a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MatAssemblyType</a> mode)</font></strong>
+<a name="line243">243: </a>{
+<a name="line244">244: </a>  Mat_HYPREStruct *ex = (Mat_HYPREStruct*) mat-&gt;data;
+<a name="line245">245: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  ierr;
+
+<a name="line248">248: </a>  PetscStackCallStandard(HYPRE_StructMatrixAssemble,(ex-&gt;hmat));
+<a name="line249">249: </a>  <font color="#B22222">/* PetscStackCallStandard(HYPRE_StructMatrixPrint,("dummy",ex-&gt;hmat,0)); */</font>
+<a name="line250">250: </a>  <font color="#4169E1">return</font>(0);
+<a name="line251">251: </a>}
+
+<a name="line253">253: </a><strong><font color="#4169E1"><a name="MatZeroEntries_HYPREStruct"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatZeroEntries_HYPREStruct(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> mat)</font></strong>
+<a name="line254">254: </a>{
+<a name="line256">256: </a>  <font color="#B22222">/* before the <a href="../../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a> is set to the matrix the zero doesn't need to do anything */</font>
+<a name="line257">257: </a>  <font color="#4169E1">return</font>(0);
+<a name="line258">258: </a>}
+
+<a name="line260">260: </a><strong><font color="#4169E1"><a name="MatDestroy_HYPREStruct"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatDestroy_HYPREStruct(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> mat)</font></strong>
+<a name="line261">261: </a>{
+<a name="line262">262: </a>  Mat_HYPREStruct *ex = (Mat_HYPREStruct*) mat-&gt;data;
+<a name="line263">263: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  ierr;
+
+<a name="line266">266: </a>  PetscStackCallStandard(HYPRE_StructMatrixDestroy,(ex-&gt;hmat));
+<a name="line267">267: </a>  PetscStackCallStandard(HYPRE_StructVectorDestroy,(ex-&gt;hx));
+<a name="line268">268: </a>  PetscStackCallStandard(HYPRE_StructVectorDestroy,(ex-&gt;hb));
+<a name="line269">269: </a>  <font color="#4169E1">return</font>(0);
+<a name="line270">270: </a>}
+
+<a name="line272">272: </a><strong><font color="#4169E1"><a name="MatCreate_HYPREStruct"></a>PETSC_EXTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatCreate_HYPREStruct(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> B)</font></strong>
+<a name="line273">273: </a>{
+<a name="line274">274: </a>  Mat_HYPREStruct *ex;
+<a name="line275">275: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  ierr;
+
+<a name="line278">278: </a>  <a href="../../../../../docs/manualpages/Sys/PetscNewLog.html#PetscNewLog">PetscNewLog</a>(B,&amp;ex);
+<a name="line279">279: </a>  B-&gt;data      = (void*)ex;
+<a name="line280">280: </a>  B-&gt;rmap-&gt;bs  = 1;
+<a name="line281">281: </a>  B-&gt;assembled = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+
+<a name="line283">283: </a>  B-&gt;insertmode = <a href="../../../../../docs/manualpages/Sys/InsertMode.html#InsertMode">NOT_SET_VALUES</a>;
+
+<a name="line285">285: </a>  B-&gt;ops-&gt;assemblyend = MatAssemblyEnd_HYPREStruct;
+<a name="line286">286: </a>  B-&gt;ops-&gt;mult        = MatMult_HYPREStruct;
+<a name="line287">287: </a>  B-&gt;ops-&gt;zeroentries = MatZeroEntries_HYPREStruct;
+<a name="line288">288: </a>  B-&gt;ops-&gt;destroy     = MatDestroy_HYPREStruct;
+
+<a name="line290">290: </a>  ex-&gt;needsinitialization = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+
+<a name="line292">292: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_dup.html#MPI_Comm_dup">MPI_Comm_dup</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)B),&amp;(ex-&gt;hcomm));
+<a name="line293">293: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html#PetscObjectComposeFunction">PetscObjectComposeFunction</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)B,<font color="#666666">"MatSetupDM_C"</font>,MatSetupDM_HYPREStruct);
+<a name="line294">294: </a>  PetscObjectChangeTypeName((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)B,<a href="../../../../../docs/manualpages/DMDA/MATHYPRESTRUCT.html#MATHYPRESTRUCT">MATHYPRESTRUCT</a>);
+<a name="line295">295: </a>  <font color="#4169E1">return</font>(0);
+<a name="line296">296: </a>}
+
+<a name="line298">298: </a><font color="#B22222">/*MC</font>
+<a name="line299">299: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/DMDA/MATHYPRESSTRUCT.html#MATHYPRESSTRUCT">MATHYPRESSTRUCT</a> - <a href="../../../../../docs/manualpages/DMDA/MATHYPRESSTRUCT.html#MATHYPRESSTRUCT">MATHYPRESSTRUCT</a> = "hypresstruct" - A matrix type to be used for parallel sparse matrices</font>
+<a name="line300">300: </a><font color="#B22222">          based on the hypre HYPRE_SStructMatrix.</font>
+
+
+<a name="line303">303: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line305">305: </a><font color="#B22222">   Notes: Unlike hypre's general semi-struct object consisting of a collection of structured-grid objects and unstructured</font>
+<a name="line306">306: </a><font color="#B22222">          grid objects, we restrict the semi-struct objects to consist of only structured-grid components.</font>
+
+<a name="line308">308: </a><font color="#B22222">          Unlike the more general support for parts and blocks in hypre this allows only one part, and one block per process and requires the block</font>
+<a name="line309">309: </a><font color="#B22222">          be defined by a <a href="../../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a>.</font>
+
+<a name="line311">311: </a><font color="#B22222">          The matrix needs a <a href="../../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a> associated with it by either a call to <a href="../../../../../docs/manualpages/DMDA/MatSetupDM.html#MatSetupDM">MatSetupDM</a>() or if the matrix is obtained from <a href="../../../../../docs/manualpages/DM/DMCreateMatrix.html#DMCreateMatrix">DMCreateMatrix</a>()</font>
+
+<a name="line313">313: </a><font color="#B22222">M*/</font>
+
+<a name="line315">315: </a><strong><font color="#4169E1"><a name="MatSetValuesLocal_HYPRESStruct_3d"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  MatSetValuesLocal_HYPRESStruct_3d(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> mat,<a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> nrow,const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> irow[],<a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> ncol,const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> icol[],const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> y[],<a href="../../../../../docs/manualpages/Sys/InsertMode.html#InsertMode">InsertMode</a> addv)</font></strong>
+<a name="line316">316: </a>{
+<a name="line317">317: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+<a name="line318">318: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          i,j,stencil,index[3];
+<a name="line319">319: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> *values = y;
+<a name="line320">320: </a>  Mat_HYPRESStruct  *ex     = (Mat_HYPRESStruct*) mat-&gt;data;
+
+<a name="line322">322: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          part = 0;          <font color="#B22222">/* Petsc sstruct interface only allows 1 part */</font>
+<a name="line323">323: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          ordering;
+<a name="line324">324: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          grid_rank, to_grid_rank;
+<a name="line325">325: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          var_type, to_var_type;
+<a name="line326">326: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          to_var_entry = 0;
+<a name="line327">327: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          nvars= ex-&gt;nvars;
+<a name="line328">328: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          row,*entries;
+
+<a name="line331">331: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(7*nvars,&amp;entries);
+<a name="line332">332: </a>  ordering = ex-&gt;dofs_order;  <font color="#B22222">/* ordering= 0   nodal ordering</font>
+<a name="line333">333: </a><font color="#B22222">                                           1   variable ordering */</font>
+<a name="line334">334: </a>  <font color="#B22222">/* stencil entries are orderer by variables: var0_stencil0, var0_stencil1, ..., var0_stencil6, var1_stencil0, var1_stencil1, ...  */</font>
+
+<a name="line336">336: </a>  <font color="#4169E1">if</font> (!ordering) {
+<a name="line337">337: </a>    <font color="#4169E1">for</font> (i=0; i&lt;nrow; i++) {
+<a name="line338">338: </a>      grid_rank= irow[i]/nvars;
+<a name="line339">339: </a>      var_type = (irow[i] % nvars);
+
+<a name="line341">341: </a>      <font color="#4169E1">for</font> (j=0; j&lt;ncol; j++) {
+<a name="line342">342: </a>        to_grid_rank= icol[j]/nvars;
+<a name="line343">343: </a>        to_var_type = (icol[j] % nvars);
+
+<a name="line345">345: </a>        to_var_entry= to_var_entry*7;
+<a name="line346">346: </a>        entries[j]  = to_var_entry;
+
+<a name="line348">348: </a>        stencil = to_grid_rank-grid_rank;
+<a name="line349">349: </a>        <font color="#4169E1">if</font> (!stencil) {
+<a name="line350">350: </a>          entries[j] += 3;
+<a name="line351">351: </a>        } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (stencil == -1) {
+<a name="line352">352: </a>          entries[j] += 2;
+<a name="line353">353: </a>        } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (stencil == 1) {
+<a name="line354">354: </a>          entries[j] += 4;
+<a name="line355">355: </a>        } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (stencil == -ex-&gt;gnx) {
+<a name="line356">356: </a>          entries[j] += 1;
+<a name="line357">357: </a>        } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (stencil == ex-&gt;gnx) {
+<a name="line358">358: </a>          entries[j] += 5;
+<a name="line359">359: </a>        } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (stencil == -ex-&gt;gnxgny) {
+<a name="line360">360: </a>          entries[j] += 0;
+<a name="line361">361: </a>        } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (stencil == ex-&gt;gnxgny) {
+<a name="line362">362: </a>          entries[j] += 6;
+<a name="line363">363: </a>        } <font color="#4169E1">else</font> <a href="../../../../../docs/manualpages/Sys/SETERRQ3.html#SETERRQ3">SETERRQ3</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_WRONG,<font color="#666666">"Local row %D local column %D have bad stencil %D"</font>,irow[i],icol[j],stencil);
+<a name="line364">364: </a>      }
+
+<a name="line366">366: </a>      row      = ex-&gt;gindices[grid_rank] - ex-&gt;rstart;
+<a name="line367">367: </a>      index[0] = ex-&gt;xs + (row % ex-&gt;nx);
+<a name="line368">368: </a>      index[1] = ex-&gt;ys + ((row/ex-&gt;nx) % ex-&gt;ny);
+<a name="line369">369: </a>      index[2] = ex-&gt;zs + (row/(ex-&gt;nxny));
+
+<a name="line371">371: </a>      <font color="#4169E1">if</font> (addv == <a href="../../../../../docs/manualpages/Sys/ADD_VALUES.html#ADD_VALUES">ADD_VALUES</a>) {
+<a name="line372">372: </a>        PetscStackCallStandard(HYPRE_SStructMatrixAddToValues,(ex-&gt;ss_mat,part,(HYPRE_Int *)index,var_type,ncol,(HYPRE_Int *)entries,(<a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>*)values));
+<a name="line373">373: </a>      } <font color="#4169E1">else</font> {
+<a name="line374">374: </a>        PetscStackCallStandard(HYPRE_SStructMatrixSetValues,(ex-&gt;ss_mat,part,(HYPRE_Int *)index,var_type,ncol,(HYPRE_Int *)entries,(<a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>*)values));
+<a name="line375">375: </a>      }
+<a name="line376">376: </a>      values += ncol;
+<a name="line377">377: </a>    }
+<a name="line378">378: </a>  } <font color="#4169E1">else</font> {
+<a name="line379">379: </a>    <font color="#4169E1">for</font> (i=0; i&lt;nrow; i++) {
+<a name="line380">380: </a>      var_type = irow[i]/(ex-&gt;gnxgnygnz);
+<a name="line381">381: </a>      grid_rank= irow[i] - var_type*(ex-&gt;gnxgnygnz);
+
+<a name="line383">383: </a>      <font color="#4169E1">for</font> (j=0; j&lt;ncol; j++) {
+<a name="line384">384: </a>        to_var_type = icol[j]/(ex-&gt;gnxgnygnz);
+<a name="line385">385: </a>        to_grid_rank= icol[j] - to_var_type*(ex-&gt;gnxgnygnz);
+
+<a name="line387">387: </a>        to_var_entry= to_var_entry*7;
+<a name="line388">388: </a>        entries[j]  = to_var_entry;
+
+<a name="line390">390: </a>        stencil = to_grid_rank-grid_rank;
+<a name="line391">391: </a>        <font color="#4169E1">if</font> (!stencil) {
+<a name="line392">392: </a>          entries[j] += 3;
+<a name="line393">393: </a>        } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (stencil == -1) {
+<a name="line394">394: </a>          entries[j] += 2;
+<a name="line395">395: </a>        } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (stencil == 1) {
+<a name="line396">396: </a>          entries[j] += 4;
+<a name="line397">397: </a>        } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (stencil == -ex-&gt;gnx) {
+<a name="line398">398: </a>          entries[j] += 1;
+<a name="line399">399: </a>        } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (stencil == ex-&gt;gnx) {
+<a name="line400">400: </a>          entries[j] += 5;
+<a name="line401">401: </a>        } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (stencil == -ex-&gt;gnxgny) {
+<a name="line402">402: </a>          entries[j] += 0;
+<a name="line403">403: </a>        } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (stencil == ex-&gt;gnxgny) {
+<a name="line404">404: </a>          entries[j] += 6;
+<a name="line405">405: </a>        } <font color="#4169E1">else</font> <a href="../../../../../docs/manualpages/Sys/SETERRQ3.html#SETERRQ3">SETERRQ3</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_WRONG,<font color="#666666">"Local row %D local column %D have bad stencil %D"</font>,irow[i],icol[j],stencil);
+<a name="line406">406: </a>      }
+
+<a name="line408">408: </a>      row      = ex-&gt;gindices[grid_rank] - ex-&gt;rstart;
+<a name="line409">409: </a>      index[0] = ex-&gt;xs + (row % ex-&gt;nx);
+<a name="line410">410: </a>      index[1] = ex-&gt;ys + ((row/ex-&gt;nx) % ex-&gt;ny);
+<a name="line411">411: </a>      index[2] = ex-&gt;zs + (row/(ex-&gt;nxny));
+
+<a name="line413">413: </a>      <font color="#4169E1">if</font> (addv == <a href="../../../../../docs/manualpages/Sys/ADD_VALUES.html#ADD_VALUES">ADD_VALUES</a>) {
+<a name="line414">414: </a>        PetscStackCallStandard(HYPRE_SStructMatrixAddToValues,(ex-&gt;ss_mat,part,(HYPRE_Int *)index,var_type,ncol,(HYPRE_Int *)entries,(<a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>*)values));
+<a name="line415">415: </a>      } <font color="#4169E1">else</font> {
+<a name="line416">416: </a>        PetscStackCallStandard(HYPRE_SStructMatrixSetValues,(ex-&gt;ss_mat,part,(HYPRE_Int *)index,var_type,ncol,(HYPRE_Int *)entries,(<a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>*)values));
+<a name="line417">417: </a>      }
+<a name="line418">418: </a>      values += ncol;
+<a name="line419">419: </a>    }
+<a name="line420">420: </a>  }
+<a name="line421">421: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(entries);
+<a name="line422">422: </a>  <font color="#4169E1">return</font>(0);
+<a name="line423">423: </a>}
+
+<a name="line425">425: </a><strong><font color="#4169E1"><a name="MatZeroRowsLocal_HYPRESStruct_3d"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  MatZeroRowsLocal_HYPRESStruct_3d(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> mat,<a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> nrow,const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> irow[],<a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> d,<a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> x,<a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> b)</font></strong>
+<a name="line426">426: </a>{
+<a name="line427">427: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr;
+<a name="line428">428: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>         i,index[3];
+<a name="line429">429: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>      **values;
+<a name="line430">430: </a>  Mat_HYPRESStruct *ex = (Mat_HYPRESStruct*) mat-&gt;data;
+
+<a name="line432">432: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>         part     = 0;      <font color="#B22222">/* Petsc sstruct interface only allows 1 part */</font>
+<a name="line433">433: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>         ordering = ex-&gt;dofs_order;
+<a name="line434">434: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>         grid_rank;
+<a name="line435">435: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>         var_type;
+<a name="line436">436: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>         nvars= ex-&gt;nvars;
+<a name="line437">437: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>         row,*entries;
+
+<a name="line440">440: </a>  <font color="#4169E1">if</font> (x &amp;&amp; b) <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)mat),PETSC_ERR_SUP,<font color="#666666">"No support"</font>);
+<a name="line441">441: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(7*nvars,&amp;entries);
+
+<a name="line443">443: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(nvars,&amp;values);
+<a name="line444">444: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(7*nvars*nvars,&amp;values[0]);
+<a name="line445">445: </a>  <font color="#4169E1">for</font> (i=1; i&lt;nvars; i++) {
+<a name="line446">446: </a>    values[i] = values[i-1] + nvars*7;
+<a name="line447">447: </a>  }
+
+<a name="line449">449: </a>  <font color="#4169E1">for</font> (i=0; i&lt; nvars; i++) {
+<a name="line450">450: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMemzero.html#PetscMemzero">PetscMemzero</a>(values[i],nvars*7*<font color="#4169E1">sizeof</font>(<a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>));
+<a name="line451">451: </a>    *(values[i]+3) = d;
+<a name="line452">452: </a>  }
+
+<a name="line454">454: </a>  <font color="#4169E1">for</font> (i= 0; i&lt; nvars*7; i++) entries[i] = i;
+
+<a name="line456">456: </a>  <font color="#4169E1">if</font> (!ordering) {
+<a name="line457">457: </a>    <font color="#4169E1">for</font> (i=0; i&lt;nrow; i++) {
+<a name="line458">458: </a>      grid_rank = irow[i] / nvars;
+<a name="line459">459: </a>      var_type  =(irow[i] % nvars);
+
+<a name="line461">461: </a>      row      = ex-&gt;gindices[grid_rank] - ex-&gt;rstart;
+<a name="line462">462: </a>      index[0] = ex-&gt;xs + (row % ex-&gt;nx);
+<a name="line463">463: </a>      index[1] = ex-&gt;ys + ((row/ex-&gt;nx) % ex-&gt;ny);
+<a name="line464">464: </a>      index[2] = ex-&gt;zs + (row/(ex-&gt;nxny));
+<a name="line465">465: </a>      PetscStackCallStandard(HYPRE_SStructMatrixSetValues,(ex-&gt;ss_mat,part,(HYPRE_Int *)index,var_type,7*nvars,(HYPRE_Int *)entries,values[var_type]));
+<a name="line466">466: </a>    }
+<a name="line467">467: </a>  } <font color="#4169E1">else</font> {
+<a name="line468">468: </a>    <font color="#4169E1">for</font> (i=0; i&lt;nrow; i++) {
+<a name="line469">469: </a>      var_type = irow[i]/(ex-&gt;gnxgnygnz);
+<a name="line470">470: </a>      grid_rank= irow[i] - var_type*(ex-&gt;gnxgnygnz);
+
+<a name="line472">472: </a>      row      = ex-&gt;gindices[grid_rank] - ex-&gt;rstart;
+<a name="line473">473: </a>      index[0] = ex-&gt;xs + (row % ex-&gt;nx);
+<a name="line474">474: </a>      index[1] = ex-&gt;ys + ((row/ex-&gt;nx) % ex-&gt;ny);
+<a name="line475">475: </a>      index[2] = ex-&gt;zs + (row/(ex-&gt;nxny));
+<a name="line476">476: </a>      PetscStackCallStandard(HYPRE_SStructMatrixSetValues,(ex-&gt;ss_mat,part,(HYPRE_Int *)index,var_type,7*nvars,(HYPRE_Int *)entries,values[var_type]));
+<a name="line477">477: </a>    }
+<a name="line478">478: </a>  }
+<a name="line479">479: </a>  PetscStackCallStandard(HYPRE_SStructMatrixAssemble,(ex-&gt;ss_mat));
+<a name="line480">480: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(values[0]);
+<a name="line481">481: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(values);
+<a name="line482">482: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(entries);
+<a name="line483">483: </a>  <font color="#4169E1">return</font>(0);
+<a name="line484">484: </a>}
+
+<a name="line486">486: </a><strong><font color="#4169E1"><a name="MatZeroEntries_HYPRESStruct_3d"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatZeroEntries_HYPRESStruct_3d(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> mat)</font></strong>
+<a name="line487">487: </a>{
+<a name="line488">488: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr;
+<a name="line489">489: </a>  Mat_HYPRESStruct *ex  = (Mat_HYPRESStruct*) mat-&gt;data;
+<a name="line490">490: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>         nvars= ex-&gt;nvars;
+<a name="line491">491: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>         size;
+<a name="line492">492: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>         part= 0;   <font color="#B22222">/* only one part */</font>
+
+<a name="line495">495: </a>  size = ((ex-&gt;hbox.imax[0])-(ex-&gt;hbox.imin[0])+1)*((ex-&gt;hbox.imax[1])-(ex-&gt;hbox.imin[1])+1)*((ex-&gt;hbox.imax[2])-(ex-&gt;hbox.imin[2])+1);
+<a name="line496">496: </a>  {
+<a name="line497">497: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>    i,*entries,iupper[3],ilower[3];
+<a name="line498">498: </a>    <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> *values;
+
+
+<a name="line501">501: </a>    <font color="#4169E1">for</font> (i= 0; i&lt; 3; i++) {
+<a name="line502">502: </a>      ilower[i]= ex-&gt;hbox.imin[i];
+<a name="line503">503: </a>      iupper[i]= ex-&gt;hbox.imax[i];
+<a name="line504">504: </a>    }
+
+<a name="line506">506: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMalloc2.html#PetscMalloc2">PetscMalloc2</a>(nvars*7,&amp;entries,nvars*7*size,&amp;values);
+<a name="line507">507: </a>    <font color="#4169E1">for</font> (i= 0; i&lt; nvars*7; i++) entries[i]= i;
+<a name="line508">508: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMemzero.html#PetscMemzero">PetscMemzero</a>(values,nvars*7*size*<font color="#4169E1">sizeof</font>(<a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>));
+
+<a name="line510">510: </a>    <font color="#4169E1">for</font> (i= 0; i&lt; nvars; i++) {
+<a name="line511">511: </a>      PetscStackCallStandard(HYPRE_SStructMatrixSetBoxValues,(ex-&gt;ss_mat,part,(HYPRE_Int *)ilower,(HYPRE_Int *)iupper,i,nvars*7,(HYPRE_Int *)entries,values));
+<a name="line512">512: </a>    }
+<a name="line513">513: </a>    <a href="../../../../../docs/manualpages/Sys/PetscFree2.html#PetscFree2">PetscFree2</a>(entries,values);
+<a name="line514">514: </a>  }
+<a name="line515">515: </a>  PetscStackCallStandard(HYPRE_SStructMatrixAssemble,(ex-&gt;ss_mat));
+<a name="line516">516: </a>  <font color="#4169E1">return</font>(0);
+<a name="line517">517: </a>}
+
+
+<a name="line520">520: </a><strong><font color="#4169E1"><a name="MatSetupDM_HYPRESStruct"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  MatSetupDM_HYPRESStruct(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> mat,<a href="../../../../../docs/manualpages/DM/DM.html#DM">DM</a> da)</font></strong>
+<a name="line521">521: </a>{
+<a name="line522">522: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>         ierr;
+<a name="line523">523: </a>  Mat_HYPRESStruct       *ex = (Mat_HYPRESStruct*) mat-&gt;data;
+<a name="line524">524: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>               dim,dof,sw[3],nx,ny,nz;
+<a name="line525">525: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>               ilower[3],iupper[3],ssize,i;
+<a name="line526">526: </a>  <a href="../../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DMBoundaryType</a>         px,py,pz;
+<a name="line527">527: </a>  <a href="../../../../../docs/manualpages/DMDA/DMDAStencilType.html#DMDAStencilType">DMDAStencilType</a>        st;
+<a name="line528">528: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>               nparts= 1;  <font color="#B22222">/* assuming only one part */</font>
+<a name="line529">529: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>               part  = 0;
+<a name="line530">530: </a>  <a href="../../../../../docs/manualpages/IS/ISLocalToGlobalMapping.html#ISLocalToGlobalMapping">ISLocalToGlobalMapping</a> ltog;
+
+<a name="line533">533: </a>  ex-&gt;da = da;
+<a name="line534">534: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html#PetscObjectReference">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da);
+
+<a name="line536">536: </a>  <a href="../../../../../docs/manualpages/DMDA/DMDAGetInfo.html#DMDAGetInfo">DMDAGetInfo</a>(ex-&gt;da,&amp;dim,0,0,0,0,0,0,&amp;dof,&amp;sw[0],&amp;px,&amp;py,&amp;pz,&amp;st);
+<a name="line537">537: </a>  <a href="../../../../../docs/manualpages/DMDA/DMDAGetCorners.html#DMDAGetCorners">DMDAGetCorners</a>(ex-&gt;da,&amp;ilower[0],&amp;ilower[1],&amp;ilower[2],&amp;iupper[0],&amp;iupper[1],&amp;iupper[2]);
+<a name="line538">538: </a>  iupper[0] += ilower[0] - 1;
+<a name="line539">539: </a>  iupper[1] += ilower[1] - 1;
+<a name="line540">540: </a>  iupper[2] += ilower[2] - 1;
+<a name="line541">541: </a>  <font color="#B22222">/* the hypre_Box is used to zero out the matrix entries in MatZeroValues() */</font>
+<a name="line542">542: </a>  ex-&gt;hbox.imin[0] = ilower[0];
+<a name="line543">543: </a>  ex-&gt;hbox.imin[1] = ilower[1];
+<a name="line544">544: </a>  ex-&gt;hbox.imin[2] = ilower[2];
+<a name="line545">545: </a>  ex-&gt;hbox.imax[0] = iupper[0];
+<a name="line546">546: </a>  ex-&gt;hbox.imax[1] = iupper[1];
+<a name="line547">547: </a>  ex-&gt;hbox.imax[2] = iupper[2];
+
+<a name="line549">549: </a>  ex-&gt;dofs_order = 0;
+
+<a name="line551">551: </a>  <font color="#B22222">/* assuming that the same number of dofs on each gridpoint. Also assume all cell-centred based */</font>
+<a name="line552">552: </a>  ex-&gt;nvars= dof;
+
+<a name="line554">554: </a>  <font color="#B22222">/* create the hypre grid object and set its information */</font>
+<a name="line555">555: </a>  <font color="#4169E1">if</font> (px || py || pz) <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),PETSC_ERR_SUP,<font color="#666666">"Ask us to add periodic support by calling HYPRE_SStructGridSetPeriodic()"</font>);
+<a name="line556">556: </a>  PetscStackCallStandard(HYPRE_SStructGridCreate,(ex-&gt;hcomm,dim,nparts,&amp;ex-&gt;ss_grid));
+<a name="line557">557: </a>  PetscStackCallStandard(HYPRE_SStructGridSetExtents,(ex-&gt;ss_grid,part,ex-&gt;hbox.imin,ex-&gt;hbox.imax));
+<a name="line558">558: </a>  {
+<a name="line559">559: </a>    HYPRE_SStructVariable *vartypes;
+<a name="line560">560: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(ex-&gt;nvars,&amp;vartypes);
+<a name="line561">561: </a>    <font color="#4169E1">for</font> (i= 0; i&lt; ex-&gt;nvars; i++) vartypes[i]= HYPRE_SSTRUCT_VARIABLE_CELL;
+<a name="line562">562: </a>    PetscStackCallStandard(HYPRE_SStructGridSetVariables,(ex-&gt;ss_grid, part, ex-&gt;nvars,vartypes));
+<a name="line563">563: </a>    <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(vartypes);
+<a name="line564">564: </a>  }
+<a name="line565">565: </a>  PetscStackCallStandard(HYPRE_SStructGridAssemble,(ex-&gt;ss_grid));
+
+<a name="line567">567: </a>  sw[1] = sw[0];
+<a name="line568">568: </a>  sw[2] = sw[1];
+<a name="line569">569: </a>  <font color="#B22222">/* PetscStackCallStandard(HYPRE_SStructGridSetNumGhost,(ex-&gt;ss_grid,sw)); */</font>
+
+<a name="line571">571: </a>  <font color="#B22222">/* create the hypre stencil object and set its information */</font>
+<a name="line572">572: </a>  <font color="#4169E1">if</font> (sw[0] &gt; 1) <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),PETSC_ERR_SUP,<font color="#666666">"Ask us to add support for wider stencils"</font>);
+<a name="line573">573: </a>  <font color="#4169E1">if</font> (st == <a href="../../../../../docs/manualpages/DMDA/DMDAStencilType.html#DMDAStencilType">DMDA_STENCIL_BOX</a>) <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),PETSC_ERR_SUP,<font color="#666666">"Ask us to add support for box stencils"</font>);
+
+<a name="line575">575: </a>  <font color="#4169E1">if</font> (dim == 1) {
+<a name="line576">576: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> offsets[3][1] = {{-1},{0},{1}};
+<a name="line577">577: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> j, cnt;
+
+<a name="line579">579: </a>    ssize = 3*(ex-&gt;nvars);
+<a name="line580">580: </a>    PetscStackCallStandard(HYPRE_SStructStencilCreate,(dim,ssize,&amp;ex-&gt;ss_stencil));
+<a name="line581">581: </a>    cnt= 0;
+<a name="line582">582: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; (ex-&gt;nvars); i++) {
+<a name="line583">583: </a>      <font color="#4169E1">for</font> (j = 0; j &lt; 3; j++) {
+<a name="line584">584: </a>        PetscStackCallStandard(HYPRE_SStructStencilSetEntry,(ex-&gt;ss_stencil, cnt, (HYPRE_Int *)offsets[j], i));
+<a name="line585">585: </a>        cnt++;
+<a name="line586">586: </a>      }
+<a name="line587">587: </a>    }
+<a name="line588">588: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 2) {
+<a name="line589">589: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> offsets[5][2] = {{0,-1},{-1,0},{0,0},{1,0},{0,1}};
+<a name="line590">590: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> j, cnt;
+
+<a name="line592">592: </a>    ssize = 5*(ex-&gt;nvars);
+<a name="line593">593: </a>    PetscStackCallStandard(HYPRE_SStructStencilCreate,(dim,ssize,&amp;ex-&gt;ss_stencil));
+<a name="line594">594: </a>    cnt= 0;
+<a name="line595">595: </a>    <font color="#4169E1">for</font> (i= 0; i&lt; (ex-&gt;nvars); i++) {
+<a name="line596">596: </a>      <font color="#4169E1">for</font> (j= 0; j&lt; 5; j++) {
+<a name="line597">597: </a>        PetscStackCallStandard(HYPRE_SStructStencilSetEntry,(ex-&gt;ss_stencil, cnt, (HYPRE_Int *)offsets[j], i));
+<a name="line598">598: </a>        cnt++;
+<a name="line599">599: </a>      }
+<a name="line600">600: </a>    }
+<a name="line601">601: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 3) {
+<a name="line602">602: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> offsets[7][3] = {{0,0,-1},{0,-1,0},{-1,0,0},{0,0,0},{1,0,0},{0,1,0},{0,0,1}};
+<a name="line603">603: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> j, cnt;
+
+<a name="line605">605: </a>    ssize = 7*(ex-&gt;nvars);
+<a name="line606">606: </a>    PetscStackCallStandard(HYPRE_SStructStencilCreate,(dim,ssize,&amp;ex-&gt;ss_stencil));
+<a name="line607">607: </a>    cnt= 0;
+<a name="line608">608: </a>    <font color="#4169E1">for</font> (i= 0; i&lt; (ex-&gt;nvars); i++) {
+<a name="line609">609: </a>      <font color="#4169E1">for</font> (j= 0; j&lt; 7; j++) {
+<a name="line610">610: </a>        PetscStackCallStandard(HYPRE_SStructStencilSetEntry,(ex-&gt;ss_stencil, cnt, (HYPRE_Int *)offsets[j], i));
+<a name="line611">611: </a>        cnt++;
+<a name="line612">612: </a>      }
+<a name="line613">613: </a>    }
+<a name="line614">614: </a>  }
+
+<a name="line616">616: </a>  <font color="#B22222">/* create the HYPRE graph */</font>
+<a name="line617">617: </a>  PetscStackCallStandard(HYPRE_SStructGraphCreate,(ex-&gt;hcomm, ex-&gt;ss_grid, &amp;(ex-&gt;ss_graph)));
+
+<a name="line619">619: </a>  <font color="#B22222">/* set the stencil graph. Note that each variable has the same graph. This means that each</font>
+<a name="line620">620: </a><font color="#B22222">     variable couples to all the other variable and with the same stencil pattern. */</font>
+<a name="line621">621: </a>  <font color="#4169E1">for</font> (i= 0; i&lt; (ex-&gt;nvars); i++) {
+<a name="line622">622: </a>    PetscStackCallStandard(HYPRE_SStructGraphSetStencil,(ex-&gt;ss_graph,part,i,ex-&gt;ss_stencil));
+<a name="line623">623: </a>  }
+<a name="line624">624: </a>  PetscStackCallStandard(HYPRE_SStructGraphAssemble,(ex-&gt;ss_graph));
+
+<a name="line626">626: </a>  <font color="#B22222">/* create the HYPRE sstruct vectors for rhs and solution */</font>
+<a name="line627">627: </a>  PetscStackCallStandard(HYPRE_SStructVectorCreate,(ex-&gt;hcomm,ex-&gt;ss_grid,&amp;ex-&gt;ss_b));
+<a name="line628">628: </a>  PetscStackCallStandard(HYPRE_SStructVectorCreate,(ex-&gt;hcomm,ex-&gt;ss_grid,&amp;ex-&gt;ss_x));
+<a name="line629">629: </a>  PetscStackCallStandard(HYPRE_SStructVectorInitialize,(ex-&gt;ss_b));
+<a name="line630">630: </a>  PetscStackCallStandard(HYPRE_SStructVectorInitialize,(ex-&gt;ss_x));
+<a name="line631">631: </a>  PetscStackCallStandard(HYPRE_SStructVectorAssemble,(ex-&gt;ss_b));
+<a name="line632">632: </a>  PetscStackCallStandard(HYPRE_SStructVectorAssemble,(ex-&gt;ss_x));
+
+<a name="line634">634: </a>  <font color="#B22222">/* create the hypre matrix object and set its information */</font>
+<a name="line635">635: </a>  PetscStackCallStandard(HYPRE_SStructMatrixCreate,(ex-&gt;hcomm,ex-&gt;ss_graph,&amp;ex-&gt;ss_mat));
+<a name="line636">636: </a>  PetscStackCallStandard(HYPRE_SStructGridDestroy,(ex-&gt;ss_grid));
+<a name="line637">637: </a>  PetscStackCallStandard(HYPRE_SStructStencilDestroy,(ex-&gt;ss_stencil));
+<a name="line638">638: </a>  <font color="#4169E1">if</font> (ex-&gt;needsinitialization) {
+<a name="line639">639: </a>    PetscStackCallStandard(HYPRE_SStructMatrixInitialize,(ex-&gt;ss_mat));
+<a name="line640">640: </a>    ex-&gt;needsinitialization = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+<a name="line641">641: </a>  }
+
+<a name="line643">643: </a>  <font color="#B22222">/* set the global and local sizes of the matrix */</font>
+<a name="line644">644: </a>  <a href="../../../../../docs/manualpages/DMDA/DMDAGetCorners.html#DMDAGetCorners">DMDAGetCorners</a>(da,0,0,0,&amp;nx,&amp;ny,&amp;nz);
+<a name="line645">645: </a>  <a href="../../../../../docs/manualpages/Mat/MatSetSizes.html#MatSetSizes">MatSetSizes</a>(mat,dof*nx*ny*nz,dof*nx*ny*nz,<a href="../../../../../docs/manualpages/Sys/PETSC_DECIDE.html#PETSC_DECIDE">PETSC_DECIDE</a>,<a href="../../../../../docs/manualpages/Sys/PETSC_DECIDE.html#PETSC_DECIDE">PETSC_DECIDE</a>);
+<a name="line646">646: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutSetBlockSize.html#PetscLayoutSetBlockSize">PetscLayoutSetBlockSize</a>(mat-&gt;rmap,1);
+<a name="line647">647: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutSetBlockSize.html#PetscLayoutSetBlockSize">PetscLayoutSetBlockSize</a>(mat-&gt;cmap,1);
+<a name="line648">648: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutSetUp.html#PetscLayoutSetUp">PetscLayoutSetUp</a>(mat-&gt;rmap);
+<a name="line649">649: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutSetUp.html#PetscLayoutSetUp">PetscLayoutSetUp</a>(mat-&gt;cmap);
+
+<a name="line651">651: </a>  <font color="#4169E1">if</font> (dim == 3) {
+<a name="line652">652: </a>    mat-&gt;ops-&gt;setvalueslocal = MatSetValuesLocal_HYPRESStruct_3d;
+<a name="line653">653: </a>    mat-&gt;ops-&gt;zerorowslocal  = MatZeroRowsLocal_HYPRESStruct_3d;
+<a name="line654">654: </a>    mat-&gt;ops-&gt;zeroentries    = MatZeroEntries_HYPRESStruct_3d;
+
+<a name="line656">656: </a>    MatZeroEntries_HYPRESStruct_3d(mat);
+<a name="line657">657: </a>  } <font color="#4169E1">else</font> <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)da),PETSC_ERR_SUP,<font color="#666666">"Only support for 3d <a href="../../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a> currently"</font>);
+
+<a name="line659">659: </a>  <font color="#B22222">/* get values that will be used repeatedly in <a href="../../../../../docs/manualpages/Mat/MatSetValuesLocal.html#MatSetValuesLocal">MatSetValuesLocal</a>() and <a href="../../../../../docs/manualpages/Mat/MatZeroRowsLocal.html#MatZeroRowsLocal">MatZeroRowsLocal</a>() repeatedly */</font>
+<a name="line660">660: </a>  <a href="../../../../../docs/manualpages/Mat/MatGetOwnershipRange.html#MatGetOwnershipRange">MatGetOwnershipRange</a>(mat,&amp;ex-&gt;rstart,NULL);
+<a name="line661">661: </a>  <a href="../../../../../docs/manualpages/DM/DMGetLocalToGlobalMapping.html#DMGetLocalToGlobalMapping">DMGetLocalToGlobalMapping</a>(ex-&gt;da,&amp;ltog);
+<a name="line662">662: </a>  <a href="../../../../../docs/manualpages/IS/ISLocalToGlobalMappingGetIndices.html#ISLocalToGlobalMappingGetIndices">ISLocalToGlobalMappingGetIndices</a>(ltog, (const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> **) &amp;ex-&gt;gindices);
+<a name="line663">663: </a>  <a href="../../../../../docs/manualpages/DMDA/DMDAGetGhostCorners.html#DMDAGetGhostCorners">DMDAGetGhostCorners</a>(ex-&gt;da,0,0,0,&amp;ex-&gt;gnx,&amp;ex-&gt;gnxgny,&amp;ex-&gt;gnxgnygnz);
+
+<a name="line665">665: </a>  ex-&gt;gnxgny    *= ex-&gt;gnx;
+<a name="line666">666: </a>  ex-&gt;gnxgnygnz *= ex-&gt;gnxgny;
+
+<a name="line668">668: </a>  <a href="../../../../../docs/manualpages/DMDA/DMDAGetCorners.html#DMDAGetCorners">DMDAGetCorners</a>(ex-&gt;da,&amp;ex-&gt;xs,&amp;ex-&gt;ys,&amp;ex-&gt;zs,&amp;ex-&gt;nx,&amp;ex-&gt;ny,&amp;ex-&gt;nz);
+
+<a name="line670">670: </a>  ex-&gt;nxny   = ex-&gt;nx*ex-&gt;ny;
+<a name="line671">671: </a>  ex-&gt;nxnynz = ex-&gt;nz*ex-&gt;nxny;
+<a name="line672">672: </a>  <font color="#4169E1">return</font>(0);
+<a name="line673">673: </a>}
+
+<a name="line675">675: </a><strong><font color="#4169E1"><a name="MatMult_HYPRESStruct"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatMult_HYPRESStruct(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> A,<a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> x,<a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> y)</font></strong>
+<a name="line676">676: </a>{
+<a name="line677">677: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+<a name="line678">678: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> *xx;
+<a name="line679">679: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>       *yy;
+<a name="line680">680: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          ilower[3],iupper[3];
+<a name="line681">681: </a>  Mat_HYPRESStruct  *mx     = (Mat_HYPRESStruct*)(A-&gt;data);
+<a name="line682">682: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          ordering= mx-&gt;dofs_order;
+<a name="line683">683: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          nvars   = mx-&gt;nvars;
+<a name="line684">684: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          part    = 0;
+<a name="line685">685: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          size;
+<a name="line686">686: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          i;
+
+<a name="line689">689: </a>  <a href="../../../../../docs/manualpages/DMDA/DMDAGetCorners.html#DMDAGetCorners">DMDAGetCorners</a>(mx-&gt;da,&amp;ilower[0],&amp;ilower[1],&amp;ilower[2],&amp;iupper[0],&amp;iupper[1],&amp;iupper[2]);
+<a name="line690">690: </a>  iupper[0] += ilower[0] - 1;
+<a name="line691">691: </a>  iupper[1] += ilower[1] - 1;
+<a name="line692">692: </a>  iupper[2] += ilower[2] - 1;
+
+<a name="line694">694: </a>  size= 1;
+<a name="line695">695: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; 3; i++) size *= (iupper[i]-ilower[i]+1);
+
+<a name="line697">697: </a>  <font color="#B22222">/* copy x values over to hypre for variable ordering */</font>
+<a name="line698">698: </a>  <font color="#4169E1">if</font> (ordering) {
+<a name="line699">699: </a>    PetscStackCallStandard(HYPRE_SStructVectorSetConstantValues,(mx-&gt;ss_b,0.0));
+<a name="line700">700: </a>    <a href="../../../../../docs/manualpages/Vec/VecGetArrayRead.html#VecGetArrayRead">VecGetArrayRead</a>(x,&amp;xx);
+<a name="line701">701: </a>    <font color="#4169E1">for</font> (i= 0; i&lt; nvars; i++) {
+<a name="line702">702: </a>      PetscStackCallStandard(HYPRE_SStructVectorSetBoxValues,(mx-&gt;ss_b,part,(HYPRE_Int *)ilower,(HYPRE_Int *)iupper,i,(<a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>*)xx+(size*i)));
+<a name="line703">703: </a>    }
+<a name="line704">704: </a>    <a href="../../../../../docs/manualpages/Vec/VecRestoreArrayRead.html#VecRestoreArrayRead">VecRestoreArrayRead</a>(x,&amp;xx);
+<a name="line705">705: </a>    PetscStackCallStandard(HYPRE_SStructVectorAssemble,(mx-&gt;ss_b));
+<a name="line706">706: </a>    PetscStackCallStandard(HYPRE_SStructMatrixMatvec,(1.0,mx-&gt;ss_mat,mx-&gt;ss_b,0.0,mx-&gt;ss_x));
+
+<a name="line708">708: </a>    <font color="#B22222">/* copy solution values back to PETSc */</font>
+<a name="line709">709: </a>    <a href="../../../../../docs/manualpages/Vec/VecGetArray.html#VecGetArray">VecGetArray</a>(y,&amp;yy);
+<a name="line710">710: </a>    <font color="#4169E1">for</font> (i= 0; i&lt; nvars; i++) {
+<a name="line711">711: </a>      PetscStackCallStandard(HYPRE_SStructVectorGetBoxValues,(mx-&gt;ss_x,part,(HYPRE_Int *)ilower,(HYPRE_Int *)iupper,i,yy+(size*i)));
+<a name="line712">712: </a>    }
+<a name="line713">713: </a>    <a href="../../../../../docs/manualpages/Vec/VecRestoreArray.html#VecRestoreArray">VecRestoreArray</a>(y,&amp;yy);
+<a name="line714">714: </a>  } <font color="#4169E1">else</font> {      <font color="#B22222">/* nodal ordering must be mapped to variable ordering for sys_pfmg */</font>
+<a name="line715">715: </a>    <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> *z;
+<a name="line716">716: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>    j, k;
+
+<a name="line718">718: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(nvars*size,&amp;z);
+<a name="line719">719: </a>    PetscStackCallStandard(HYPRE_SStructVectorSetConstantValues,(mx-&gt;ss_b,0.0));
+<a name="line720">720: </a>    <a href="../../../../../docs/manualpages/Vec/VecGetArrayRead.html#VecGetArrayRead">VecGetArrayRead</a>(x,&amp;xx);
+
+<a name="line722">722: </a>    <font color="#B22222">/* transform nodal to hypre's variable ordering for sys_pfmg */</font>
+<a name="line723">723: </a>    <font color="#4169E1">for</font> (i= 0; i&lt; size; i++) {
+<a name="line724">724: </a>      k= i*nvars;
+<a name="line725">725: </a>      <font color="#4169E1">for</font> (j= 0; j&lt; nvars; j++) z[j*size+i]= xx[k+j];
+<a name="line726">726: </a>    }
+<a name="line727">727: </a>    <font color="#4169E1">for</font> (i= 0; i&lt; nvars; i++) {
+<a name="line728">728: </a>      PetscStackCallStandard(HYPRE_SStructVectorSetBoxValues,(mx-&gt;ss_b,part,(HYPRE_Int *)ilower,(HYPRE_Int *)iupper,i,z+(size*i)));
+<a name="line729">729: </a>    }
+<a name="line730">730: </a>    <a href="../../../../../docs/manualpages/Vec/VecRestoreArrayRead.html#VecRestoreArrayRead">VecRestoreArrayRead</a>(x,&amp;xx);
+<a name="line731">731: </a>    PetscStackCallStandard(HYPRE_SStructVectorAssemble,(mx-&gt;ss_b));
+<a name="line732">732: </a>    PetscStackCallStandard(HYPRE_SStructMatrixMatvec,(1.0,mx-&gt;ss_mat,mx-&gt;ss_b,0.0,mx-&gt;ss_x));
+
+<a name="line734">734: </a>    <font color="#B22222">/* copy solution values back to PETSc */</font>
+<a name="line735">735: </a>    <a href="../../../../../docs/manualpages/Vec/VecGetArray.html#VecGetArray">VecGetArray</a>(y,&amp;yy);
+<a name="line736">736: </a>    <font color="#4169E1">for</font> (i= 0; i&lt; nvars; i++) {
+<a name="line737">737: </a>      PetscStackCallStandard(HYPRE_SStructVectorGetBoxValues,(mx-&gt;ss_x,part,(HYPRE_Int *)ilower,(HYPRE_Int *)iupper,i,z+(size*i)));
+<a name="line738">738: </a>    }
+<a name="line739">739: </a>    <font color="#B22222">/* transform hypre's variable ordering for sys_pfmg to nodal ordering */</font>
+<a name="line740">740: </a>    <font color="#4169E1">for</font> (i= 0; i&lt; size; i++) {
+<a name="line741">741: </a>      k= i*nvars;
+<a name="line742">742: </a>      <font color="#4169E1">for</font> (j= 0; j&lt; nvars; j++) yy[k+j]= z[j*size+i];
+<a name="line743">743: </a>    }
+<a name="line744">744: </a>    <a href="../../../../../docs/manualpages/Vec/VecRestoreArray.html#VecRestoreArray">VecRestoreArray</a>(y,&amp;yy);
+<a name="line745">745: </a>    <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(z);
+<a name="line746">746: </a>  }
+<a name="line747">747: </a>  <font color="#4169E1">return</font>(0);
+<a name="line748">748: </a>}
+
+<a name="line750">750: </a><strong><font color="#4169E1"><a name="MatAssemblyEnd_HYPRESStruct"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatAssemblyEnd_HYPRESStruct(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> mat,<a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MatAssemblyType</a> mode)</font></strong>
+<a name="line751">751: </a>{
+<a name="line752">752: </a>  Mat_HYPRESStruct *ex = (Mat_HYPRESStruct*) mat-&gt;data;
+<a name="line753">753: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr;
+
+<a name="line756">756: </a>  PetscStackCallStandard(HYPRE_SStructMatrixAssemble,(ex-&gt;ss_mat));
+<a name="line757">757: </a>  <font color="#4169E1">return</font>(0);
+<a name="line758">758: </a>}
+
+<a name="line760">760: </a><strong><font color="#4169E1"><a name="MatZeroEntries_HYPRESStruct"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatZeroEntries_HYPRESStruct(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> mat)</font></strong>
+<a name="line761">761: </a>{
+<a name="line763">763: </a>  <font color="#B22222">/* before the <a href="../../../../../docs/manualpages/DMDA/DMDA.html#DMDA">DMDA</a> is set to the matrix the zero doesn't need to do anything */</font>
+<a name="line764">764: </a>  <font color="#4169E1">return</font>(0);
+<a name="line765">765: </a>}
+
+<a name="line767">767: </a><strong><font color="#4169E1"><a name="MatDestroy_HYPRESStruct"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatDestroy_HYPRESStruct(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> mat)</font></strong>
+<a name="line768">768: </a>{
+<a name="line769">769: </a>  Mat_HYPRESStruct *ex = (Mat_HYPRESStruct*) mat-&gt;data;
+<a name="line770">770: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr;
+
+<a name="line773">773: </a>  PetscStackCallStandard(HYPRE_SStructGraphDestroy,(ex-&gt;ss_graph));
+<a name="line774">774: </a>  PetscStackCallStandard(HYPRE_SStructMatrixDestroy,(ex-&gt;ss_mat));
+<a name="line775">775: </a>  PetscStackCallStandard(HYPRE_SStructVectorDestroy,(ex-&gt;ss_x));
+<a name="line776">776: </a>  PetscStackCallStandard(HYPRE_SStructVectorDestroy,(ex-&gt;ss_b));
+<a name="line777">777: </a>  <font color="#4169E1">return</font>(0);
+<a name="line778">778: </a>}
+
+<a name="line780">780: </a><strong><font color="#4169E1"><a name="MatCreate_HYPRESStruct"></a>PETSC_EXTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatCreate_HYPRESStruct(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> B)</font></strong>
+<a name="line781">781: </a>{
+<a name="line782">782: </a>  Mat_HYPRESStruct *ex;
+<a name="line783">783: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr;
+
+<a name="line786">786: </a>  <a href="../../../../../docs/manualpages/Sys/PetscNewLog.html#PetscNewLog">PetscNewLog</a>(B,&amp;ex);
+<a name="line787">787: </a>  B-&gt;data      = (void*)ex;
+<a name="line788">788: </a>  B-&gt;rmap-&gt;bs  = 1;
+<a name="line789">789: </a>  B-&gt;assembled = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+
+<a name="line791">791: </a>  B-&gt;insertmode = <a href="../../../../../docs/manualpages/Sys/InsertMode.html#InsertMode">NOT_SET_VALUES</a>;
+
+<a name="line793">793: </a>  B-&gt;ops-&gt;assemblyend = MatAssemblyEnd_HYPRESStruct;
+<a name="line794">794: </a>  B-&gt;ops-&gt;mult        = MatMult_HYPRESStruct;
+<a name="line795">795: </a>  B-&gt;ops-&gt;zeroentries = MatZeroEntries_HYPRESStruct;
+<a name="line796">796: </a>  B-&gt;ops-&gt;destroy     = MatDestroy_HYPRESStruct;
+
+<a name="line798">798: </a>  ex-&gt;needsinitialization = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+
+<a name="line800">800: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_dup.html#MPI_Comm_dup">MPI_Comm_dup</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)B),&amp;(ex-&gt;hcomm));
+<a name="line801">801: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html#PetscObjectComposeFunction">PetscObjectComposeFunction</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)B,<font color="#666666">"MatSetupDM_C"</font>,MatSetupDM_HYPRESStruct);
+<a name="line802">802: </a>  PetscObjectChangeTypeName((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)B,<a href="../../../../../docs/manualpages/DMDA/MATHYPRESSTRUCT.html#MATHYPRESSTRUCT">MATHYPRESSTRUCT</a>);
+<a name="line803">803: </a>  <font color="#4169E1">return</font>(0);
+<a name="line804">804: </a>}
+
+
+
+</pre>
+</body>
+
+</html>

@@ -1,0 +1,20 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+       Alternating Anderson Richardson (AAR) Linear Solver 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+Starting time: Wed Aug 16 02:27:20 2017
+ 
+solver_tol  : 1e-06 
+beta_aar    : 0.60 
+m_aar       : 9 
+p_aar       : 8 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+nprocx=4, nprocy=4, nprocz=4. 
+ 
+Time spent in initialization = 0.0064 seconds. 
+ 
+AAR preconditioned with Jacobi (AAJ).
+AAR converged!:  Iterations = 184, Relative Residual = 9.94993e-07, Time = 0.0882 sec
+ 
+Total wall time   = 0.0968 seconds. 
+Ending time: Wed Aug 16 02:27:20 2017
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 

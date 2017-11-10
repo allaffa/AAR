@@ -1,0 +1,408 @@
+<center><a href="dmredundant.c">Actual source code: dmredundant.c</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/dm/impls/redundant/dmredundant.c.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:40:12+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/dm/impls/redundant/dmredundant.c.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+<a name="line1">  1: </a> #include <A href="../../../../include/petsc/private/dmimpl.h.html">&lt;petsc/private/dmimpl.h&gt;</A>
+<a name="line2">  2: </a> #include <A href="../../../../include/petscdmredundant.h.html">&lt;petscdmredundant.h&gt;</A>
+
+<a name="line4">  4: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font>  {
+<a name="line5">  5: </a>  <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> rank;                <font color="#B22222">/* owner */</font>
+<a name="line6">  6: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>    N;                   <font color="#B22222">/* total number of dofs */</font>
+<a name="line7">  7: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>    n;                   <font color="#B22222">/* owned number of dofs, n=N on owner, n=0 on non-owners */</font>
+<a name="line8">  8: </a>} DM_Redundant;
+
+<a name="line10"> 10: </a><strong><font color="#4169E1"><a name="DMCreateMatrix_Redundant"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMCreateMatrix_Redundant(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> *J)</font></strong>
+<a name="line11"> 11: </a>{
+<a name="line12"> 12: </a>  DM_Redundant           *red = (DM_Redundant*)dm-&gt;data;
+<a name="line13"> 13: </a>  <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>         ierr;
+<a name="line14"> 14: </a>  <a href="../../../../docs/manualpages/IS/ISLocalToGlobalMapping.html#ISLocalToGlobalMapping">ISLocalToGlobalMapping</a> ltog;
+<a name="line15"> 15: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>               i,rstart,rend,*cols;
+<a name="line16"> 16: </a>  <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>            *vals;
+
+<a name="line19"> 19: </a>  <a href="../../../../docs/manualpages/Mat/MatCreate.html#MatCreate">MatCreate</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),J);
+<a name="line20"> 20: </a>  <a href="../../../../docs/manualpages/Mat/MatSetSizes.html#MatSetSizes">MatSetSizes</a>(*J,red-&gt;n,red-&gt;n,red-&gt;N,red-&gt;N);
+<a name="line21"> 21: </a>  <a href="../../../../docs/manualpages/Mat/MatSetType.html#MatSetType">MatSetType</a>(*J,dm-&gt;mattype);
+<a name="line22"> 22: </a>  <a href="../../../../docs/manualpages/Mat/MatSeqAIJSetPreallocation.html#MatSeqAIJSetPreallocation">MatSeqAIJSetPreallocation</a>(*J,red-&gt;n,NULL);
+<a name="line23"> 23: </a>  <a href="../../../../docs/manualpages/Mat/MatSeqBAIJSetPreallocation.html#MatSeqBAIJSetPreallocation">MatSeqBAIJSetPreallocation</a>(*J,1,red-&gt;n,NULL);
+<a name="line24"> 24: </a>  <a href="../../../../docs/manualpages/Mat/MatMPIAIJSetPreallocation.html#MatMPIAIJSetPreallocation">MatMPIAIJSetPreallocation</a>(*J,red-&gt;n,NULL,red-&gt;N-red-&gt;n,NULL);
+<a name="line25"> 25: </a>  <a href="../../../../docs/manualpages/Mat/MatMPIBAIJSetPreallocation.html#MatMPIBAIJSetPreallocation">MatMPIBAIJSetPreallocation</a>(*J,1,red-&gt;n,NULL,red-&gt;N-red-&gt;n,NULL);
+
+<a name="line27"> 27: </a>  <a href="../../../../docs/manualpages/DM/DMGetLocalToGlobalMapping.html#DMGetLocalToGlobalMapping">DMGetLocalToGlobalMapping</a>(dm,&amp;ltog);
+<a name="line28"> 28: </a>  <a href="../../../../docs/manualpages/Mat/MatSetLocalToGlobalMapping.html#MatSetLocalToGlobalMapping">MatSetLocalToGlobalMapping</a>(*J,ltog,ltog);
+
+<a name="line30"> 30: </a>  <a href="../../../../docs/manualpages/Sys/PetscMalloc2.html#PetscMalloc2">PetscMalloc2</a>(red-&gt;N,&amp;cols,red-&gt;N,&amp;vals);
+<a name="line31"> 31: </a>  <font color="#4169E1">for</font> (i=0; i&lt;red-&gt;N; i++) {
+<a name="line32"> 32: </a>    cols[i] = i;
+<a name="line33"> 33: </a>    vals[i] = 0.0;
+<a name="line34"> 34: </a>  }
+<a name="line35"> 35: </a>  <a href="../../../../docs/manualpages/Mat/MatGetOwnershipRange.html#MatGetOwnershipRange">MatGetOwnershipRange</a>(*J,&amp;rstart,&amp;rend);
+<a name="line36"> 36: </a>  <font color="#4169E1">for</font> (i=rstart; i&lt;rend; i++) {
+<a name="line37"> 37: </a>    <a href="../../../../docs/manualpages/Mat/MatSetValues.html#MatSetValues">MatSetValues</a>(*J,1,&amp;i,red-&gt;N,cols,vals,<a href="../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>);
+<a name="line38"> 38: </a>  }
+<a name="line39"> 39: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree2.html#PetscFree2">PetscFree2</a>(cols,vals);
+<a name="line40"> 40: </a>  <a href="../../../../docs/manualpages/Mat/MatAssemblyBegin.html#MatAssemblyBegin">MatAssemblyBegin</a>(*J,<a href="../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+<a name="line41"> 41: </a>  <a href="../../../../docs/manualpages/Mat/MatAssemblyEnd.html#MatAssemblyEnd">MatAssemblyEnd</a>(*J,<a href="../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+<a name="line42"> 42: </a>  <font color="#4169E1">return</font>(0);
+<a name="line43"> 43: </a>}
+
+<a name="line45"> 45: </a><strong><font color="#4169E1"><a name="DMDestroy_Redundant"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMDestroy_Redundant(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm)</font></strong>
+<a name="line46"> 46: </a>{
+
+<a name="line50"> 50: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html#PetscObjectComposeFunction">PetscObjectComposeFunction</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm,<font color="#666666">"DMRedundantSetSize_C"</font>,NULL);
+<a name="line51"> 51: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html#PetscObjectComposeFunction">PetscObjectComposeFunction</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm,<font color="#666666">"DMRedundantGetSize_C"</font>,NULL);
+<a name="line52"> 52: </a>  <font color="#B22222">/* This was originally freed in <a href="../../../../docs/manualpages/DM/DMDestroy.html#DMDestroy">DMDestroy</a>(), but that prevents reference counting of backend objects */</font>
+<a name="line53"> 53: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(dm-&gt;data);
+<a name="line54"> 54: </a>  <font color="#4169E1">return</font>(0);
+<a name="line55"> 55: </a>}
+
+<a name="line57"> 57: </a><strong><font color="#4169E1"><a name="DMCreateGlobalVector_Redundant"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMCreateGlobalVector_Redundant(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> *gvec)</font></strong>
+<a name="line58"> 58: </a>{
+<a name="line59"> 59: </a>  <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>         ierr;
+<a name="line60"> 60: </a>  DM_Redundant           *red = (DM_Redundant*)dm-&gt;data;
+<a name="line61"> 61: </a>  <a href="../../../../docs/manualpages/IS/ISLocalToGlobalMapping.html#ISLocalToGlobalMapping">ISLocalToGlobalMapping</a> ltog;
+
+<a name="line66"> 66: </a>  *gvec = 0;
+<a name="line67"> 67: </a>  <a href="../../../../docs/manualpages/Vec/VecCreate.html#VecCreate">VecCreate</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),gvec);
+<a name="line68"> 68: </a>  <a href="../../../../docs/manualpages/Vec/VecSetSizes.html#VecSetSizes">VecSetSizes</a>(*gvec,red-&gt;n,red-&gt;N);
+<a name="line69"> 69: </a>  <a href="../../../../docs/manualpages/Vec/VecSetType.html#VecSetType">VecSetType</a>(*gvec,dm-&gt;vectype);
+<a name="line70"> 70: </a>  <a href="../../../../docs/manualpages/DM/DMGetLocalToGlobalMapping.html#DMGetLocalToGlobalMapping">DMGetLocalToGlobalMapping</a>(dm,&amp;ltog);
+<a name="line71"> 71: </a>  <a href="../../../../docs/manualpages/Vec/VecSetLocalToGlobalMapping.html#VecSetLocalToGlobalMapping">VecSetLocalToGlobalMapping</a>(*gvec,ltog);
+<a name="line72"> 72: </a>  <a href="../../../../docs/manualpages/DM/VecSetDM.html#VecSetDM">VecSetDM</a>(*gvec,dm);
+<a name="line73"> 73: </a>  <font color="#4169E1">return</font>(0);
+<a name="line74"> 74: </a>}
+
+<a name="line76"> 76: </a><strong><font color="#4169E1"><a name="DMCreateLocalVector_Redundant"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMCreateLocalVector_Redundant(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> *lvec)</font></strong>
+<a name="line77"> 77: </a>{
+<a name="line79"> 79: </a>  DM_Redundant   *red = (DM_Redundant*)dm-&gt;data;
+
+<a name="line84"> 84: </a>  *lvec = 0;
+<a name="line85"> 85: </a>  <a href="../../../../docs/manualpages/Vec/VecCreate.html#VecCreate">VecCreate</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,lvec);
+<a name="line86"> 86: </a>  <a href="../../../../docs/manualpages/Vec/VecSetSizes.html#VecSetSizes">VecSetSizes</a>(*lvec,red-&gt;N,red-&gt;N);
+<a name="line87"> 87: </a>  <a href="../../../../docs/manualpages/Vec/VecSetType.html#VecSetType">VecSetType</a>(*lvec,dm-&gt;vectype);
+<a name="line88"> 88: </a>  <a href="../../../../docs/manualpages/DM/VecSetDM.html#VecSetDM">VecSetDM</a>(*lvec,dm);
+<a name="line89"> 89: </a>  <font color="#4169E1">return</font>(0);
+<a name="line90"> 90: </a>}
+
+<a name="line92"> 92: </a><strong><font color="#4169E1"><a name="DMLocalToGlobalBegin_Redundant"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMLocalToGlobalBegin_Redundant(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> l,<a href="../../../../docs/manualpages/Sys/InsertMode.html#InsertMode">InsertMode</a> imode,<a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> g)</font></strong>
+<a name="line93"> 93: </a>{
+<a name="line94"> 94: </a>  <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+<a name="line95"> 95: </a>  DM_Redundant      *red = (DM_Redundant*)dm-&gt;data;
+<a name="line96"> 96: </a>  const <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> *lv;
+<a name="line97"> 97: </a>  <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>       *gv;
+<a name="line98"> 98: </a>  <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>       rank;
+
+<a name="line101">101: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),&amp;rank);
+<a name="line102">102: </a>  <a href="../../../../docs/manualpages/Vec/VecGetArrayRead.html#VecGetArrayRead">VecGetArrayRead</a>(l,&amp;lv);
+<a name="line103">103: </a>  <a href="../../../../docs/manualpages/Vec/VecGetArray.html#VecGetArray">VecGetArray</a>(g,&amp;gv);
+<a name="line104">104: </a>  <font color="#4169E1">switch</font> (imode) {
+<a name="line105">105: </a>  <font color="#4169E1">case</font> <a href="../../../../docs/manualpages/Sys/ADD_VALUES.html#ADD_VALUES">ADD_VALUES</a>:
+<a name="line106">106: </a>  <font color="#4169E1">case</font> <a href="../../../../docs/manualpages/Sys/MAX_VALUES.html#MAX_VALUES">MAX_VALUES</a>:
+<a name="line107">107: </a>  {
+<a name="line108">108: </a>    void        *source;
+<a name="line109">109: </a>    <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> *buffer;
+<a name="line110">110: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>    i;
+<a name="line111">111: </a>    <font color="#4169E1">if</font> (rank == red-&gt;rank) {
+<a name="line112">112: </a><font color="#A020F0">#if defined(PETSC_HAVE_MPI_IN_PLACE)</font>
+<a name="line113">113: </a>      buffer = gv;
+<a name="line114">114: </a>      source = MPI_IN_PLACE;
+<a name="line115">115: </a><font color="#A020F0">#else</font>
+<a name="line116">116: </a>      <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(red-&gt;N,&amp;buffer);
+<a name="line117">117: </a>      source = buffer;
+<a name="line118">118: </a><font color="#A020F0">#endif</font>
+<a name="line119">119: </a>      <font color="#4169E1">if</font> (imode == <a href="../../../../docs/manualpages/Sys/ADD_VALUES.html#ADD_VALUES">ADD_VALUES</a>) <font color="#4169E1">for</font> (i=0; i&lt;red-&gt;N; i++) buffer[i] = gv[i] + lv[i];
+<a name="line120">120: </a><font color="#A020F0">#if !defined(PETSC_USE_COMPLEX)</font>
+<a name="line121">121: </a>      <font color="#4169E1">if</font> (imode == <a href="../../../../docs/manualpages/Sys/MAX_VALUES.html#MAX_VALUES">MAX_VALUES</a>) <font color="#4169E1">for</font> (i=0; i&lt;red-&gt;N; i++) buffer[i] = <a href="../../../../docs/manualpages/Sys/PetscMax.html#PetscMax">PetscMax</a>(gv[i],lv[i]);
+<a name="line122">122: </a><font color="#A020F0">#endif</font>
+<a name="line123">123: </a>    } <font color="#4169E1">else</font> source = (void*)lv;
+<a name="line124">124: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Reduce.html#MPI_Reduce">MPI_Reduce</a>(source,gv,red-&gt;N,<a href="../../../../docs/manualpages/Sys/MPIU_SCALAR.html#MPIU_SCALAR">MPIU_SCALAR</a>,(imode == <a href="../../../../docs/manualpages/Sys/ADD_VALUES.html#ADD_VALUES">ADD_VALUES</a>) ? MPIU_SUM : MPIU_MAX,red-&gt;rank,<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm));
+<a name="line125">125: </a><font color="#A020F0">#if !defined(PETSC_HAVE_MPI_IN_PLACE)</font>
+<a name="line126">126: </a>    <font color="#4169E1">if</font> (rank == red-&gt;rank) {<a href="../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(buffer);}
+<a name="line127">127: </a><font color="#A020F0">#endif</font>
+<a name="line128">128: </a>  } <font color="#4169E1">break</font>;
+<a name="line129">129: </a>  <font color="#4169E1">case</font> <a href="../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>:
+<a name="line130">130: </a>    <a href="../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(gv,lv,red-&gt;n*<font color="#4169E1">sizeof</font>(<a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>));
+<a name="line131">131: </a>    <font color="#4169E1">break</font>;
+<a name="line132">132: </a><strong><font color="#FF0000">  default:</font></strong> <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_SUP,<font color="#666666">"<a href="../../../../docs/manualpages/Sys/InsertMode.html#InsertMode">InsertMode</a> not supported"</font>);
+<a name="line133">133: </a>  }
+<a name="line134">134: </a>  <a href="../../../../docs/manualpages/Vec/VecRestoreArrayRead.html#VecRestoreArrayRead">VecRestoreArrayRead</a>(l,&amp;lv);
+<a name="line135">135: </a>  <a href="../../../../docs/manualpages/Vec/VecRestoreArray.html#VecRestoreArray">VecRestoreArray</a>(g,&amp;gv);
+<a name="line136">136: </a>  <font color="#4169E1">return</font>(0);
+<a name="line137">137: </a>}
+
+<a name="line139">139: </a><strong><font color="#4169E1"><a name="DMLocalToGlobalEnd_Redundant"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMLocalToGlobalEnd_Redundant(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> l,<a href="../../../../docs/manualpages/Sys/InsertMode.html#InsertMode">InsertMode</a> imode,<a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> g)</font></strong>
+<a name="line140">140: </a>{
+<a name="line142">142: </a>  <font color="#4169E1">return</font>(0);
+<a name="line143">143: </a>}
+
+<a name="line145">145: </a><strong><font color="#4169E1"><a name="DMGlobalToLocalBegin_Redundant"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMGlobalToLocalBegin_Redundant(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> g,<a href="../../../../docs/manualpages/Sys/InsertMode.html#InsertMode">InsertMode</a> imode,<a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> l)</font></strong>
+<a name="line146">146: </a>{
+<a name="line147">147: </a>  <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+<a name="line148">148: </a>  DM_Redundant      *red = (DM_Redundant*)dm-&gt;data;
+<a name="line149">149: </a>  const <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> *gv;
+<a name="line150">150: </a>  <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>       *lv;
+
+<a name="line153">153: </a>  <a href="../../../../docs/manualpages/Vec/VecGetArrayRead.html#VecGetArrayRead">VecGetArrayRead</a>(g,&amp;gv);
+<a name="line154">154: </a>  <a href="../../../../docs/manualpages/Vec/VecGetArray.html#VecGetArray">VecGetArray</a>(l,&amp;lv);
+<a name="line155">155: </a>  <font color="#4169E1">switch</font> (imode) {
+<a name="line156">156: </a>  <font color="#4169E1">case</font> <a href="../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>:
+<a name="line157">157: </a>    <font color="#4169E1">if</font> (red-&gt;n) {<a href="../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(lv,gv,red-&gt;n*<font color="#4169E1">sizeof</font>(<a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>));}
+<a name="line158">158: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Bcast.html#MPI_Bcast">MPI_Bcast</a>(lv,red-&gt;N,<a href="../../../../docs/manualpages/Sys/MPIU_SCALAR.html#MPIU_SCALAR">MPIU_SCALAR</a>,red-&gt;rank,<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm));
+<a name="line159">159: </a>    <font color="#4169E1">break</font>;
+<a name="line160">160: </a><strong><font color="#FF0000">  default:</font></strong> <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_SUP,<font color="#666666">"<a href="../../../../docs/manualpages/Sys/InsertMode.html#InsertMode">InsertMode</a> not supported"</font>);
+<a name="line161">161: </a>  }
+<a name="line162">162: </a>  <a href="../../../../docs/manualpages/Vec/VecRestoreArrayRead.html#VecRestoreArrayRead">VecRestoreArrayRead</a>(g,&amp;gv);
+<a name="line163">163: </a>  <a href="../../../../docs/manualpages/Vec/VecRestoreArray.html#VecRestoreArray">VecRestoreArray</a>(l,&amp;lv);
+<a name="line164">164: </a>  <font color="#4169E1">return</font>(0);
+<a name="line165">165: </a>}
+
+<a name="line167">167: </a><strong><font color="#4169E1"><a name="DMGlobalToLocalEnd_Redundant"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMGlobalToLocalEnd_Redundant(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> g,<a href="../../../../docs/manualpages/Sys/InsertMode.html#InsertMode">InsertMode</a> imode,<a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> l)</font></strong>
+<a name="line168">168: </a>{
+<a name="line170">170: </a>  <font color="#4169E1">return</font>(0);
+<a name="line171">171: </a>}
+
+<a name="line173">173: </a><strong><font color="#4169E1"><a name="DMSetUp_Redundant"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMSetUp_Redundant(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm)</font></strong>
+<a name="line174">174: </a>{
+<a name="line176">176: </a>  DM_Redundant   *red = (DM_Redundant*)dm-&gt;data;
+<a name="line177">177: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       i,*globals;
+
+<a name="line180">180: </a>  <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(red-&gt;N,&amp;globals);
+<a name="line181">181: </a>  <font color="#4169E1">for</font> (i=0; i&lt;red-&gt;N; i++) globals[i] = i;
+<a name="line182">182: </a>  <a href="../../../../docs/manualpages/IS/ISLocalToGlobalMappingCreate.html#ISLocalToGlobalMappingCreate">ISLocalToGlobalMappingCreate</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,1,red-&gt;N,globals,<a href="../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_OWN_POINTER</a>,&amp;dm-&gt;ltogmap);
+<a name="line183">183: </a>  <font color="#4169E1">return</font>(0);
+<a name="line184">184: </a>}
+
+<a name="line186">186: </a><strong><font color="#4169E1"><a name="DMView_Redundant"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMView_Redundant(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer)</font></strong>
+<a name="line187">187: </a>{
+<a name="line189">189: </a>  DM_Redundant   *red = (DM_Redundant*)dm-&gt;data;
+<a name="line190">190: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>      iascii;
+
+<a name="line193">193: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<a href="../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html#PETSCVIEWERASCII">PETSCVIEWERASCII</a>,&amp;iascii);
+<a name="line194">194: </a>  <font color="#4169E1">if</font> (iascii) {
+<a name="line195">195: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"redundant: rank=%D N=%D\n"</font>,red-&gt;rank,red-&gt;N);
+<a name="line196">196: </a>  }
+<a name="line197">197: </a>  <font color="#4169E1">return</font>(0);
+<a name="line198">198: </a>}
+
+<a name="line200">200: </a><strong><font color="#4169E1"><a name="DMCreateColoring_Redundant"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMCreateColoring_Redundant(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../../docs/manualpages/IS/ISColoringType.html#ISColoringType">ISColoringType</a> ctype,<a href="../../../../docs/manualpages/IS/ISColoring.html#ISColoring">ISColoring</a> *coloring)</font></strong>
+<a name="line201">201: </a>{
+<a name="line202">202: </a>  DM_Redundant    *red = (DM_Redundant*)dm-&gt;data;
+<a name="line203">203: </a>  <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  ierr;
+<a name="line204">204: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>        i,nloc;
+<a name="line205">205: </a>  ISColoringValue *colors;
+
+<a name="line208">208: </a>  <font color="#4169E1">switch</font> (ctype) {
+<a name="line209">209: </a>  <font color="#4169E1">case</font> <a href="../../../../docs/manualpages/IS/ISColoringType.html#ISColoringType">IS_COLORING_GLOBAL</a>:
+<a name="line210">210: </a>    nloc = red-&gt;n;
+<a name="line211">211: </a>    <font color="#4169E1">break</font>;
+<a name="line212">212: </a>  <font color="#4169E1">case</font> <a href="../../../../docs/manualpages/IS/ISColoringType.html#ISColoringType">IS_COLORING_LOCAL</a>:
+<a name="line213">213: </a>    nloc = red-&gt;N;
+<a name="line214">214: </a>    <font color="#4169E1">break</font>;
+<a name="line215">215: </a><strong><font color="#FF0000">  default:</font></strong> <a href="../../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_ARG_WRONG,<font color="#666666">"Unknown <a href="../../../../docs/manualpages/IS/ISColoringType.html#ISColoringType">ISColoringType</a> %d"</font>,(int)ctype);
+<a name="line216">216: </a>  }
+<a name="line217">217: </a>  <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(nloc,&amp;colors);
+<a name="line218">218: </a>  <font color="#4169E1">for</font> (i=0; i&lt;nloc; i++) colors[i] = i;
+<a name="line219">219: </a>  <a href="../../../../docs/manualpages/IS/ISColoringCreate.html#ISColoringCreate">ISColoringCreate</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),red-&gt;N,nloc,colors,<a href="../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_OWN_POINTER</a>,coloring);
+<a name="line220">220: </a>  ISColoringSetType(*coloring,ctype);
+<a name="line221">221: </a>  <font color="#4169E1">return</font>(0);
+<a name="line222">222: </a>}
+
+<a name="line224">224: </a><strong><font color="#4169E1"><a name="DMRefine_Redundant"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMRefine_Redundant(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dmc,<a href="../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a> comm,<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> *dmf)</font></strong>
+<a name="line225">225: </a>{
+<a name="line227">227: </a>  <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>    flag;
+<a name="line228">228: </a>  DM_Redundant   *redc = (DM_Redundant*)dmc-&gt;data;
+
+<a name="line231">231: </a>  <font color="#4169E1">if</font> (comm == MPI_COMM_NULL) {
+<a name="line232">232: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectGetComm.html#PetscObjectGetComm">PetscObjectGetComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dmc,&amp;comm);
+<a name="line233">233: </a>  }
+<a name="line234">234: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_compare.html#MPI_Comm_compare">MPI_Comm_compare</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dmc),comm,&amp;flag);
+<a name="line235">235: </a>  <font color="#4169E1">if</font> (flag != MPI_CONGRUENT &amp;&amp; flag != MPI_IDENT) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dmc),PETSC_ERR_SUP,<font color="#666666">"cannot change communicators"</font>);
+<a name="line236">236: </a>  <a href="../../../../docs/manualpages/DM/DMRedundantCreate.html#DMRedundantCreate">DMRedundantCreate</a>(comm,redc-&gt;rank,redc-&gt;N,dmf);
+<a name="line237">237: </a>  <font color="#4169E1">return</font>(0);
+<a name="line238">238: </a>}
+
+<a name="line240">240: </a><strong><font color="#4169E1"><a name="DMCoarsen_Redundant"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMCoarsen_Redundant(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dmf,<a href="../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a> comm,<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> *dmc)</font></strong>
+<a name="line241">241: </a>{
+<a name="line243">243: </a>  <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>    flag;
+<a name="line244">244: </a>  DM_Redundant   *redf = (DM_Redundant*)dmf-&gt;data;
+
+<a name="line247">247: </a>  <font color="#4169E1">if</font> (comm == MPI_COMM_NULL) {
+<a name="line248">248: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectGetComm.html#PetscObjectGetComm">PetscObjectGetComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dmf,&amp;comm);
+<a name="line249">249: </a>  }
+<a name="line250">250: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_compare.html#MPI_Comm_compare">MPI_Comm_compare</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dmf),comm,&amp;flag);
+<a name="line251">251: </a>  <font color="#4169E1">if</font> (flag != MPI_CONGRUENT &amp;&amp; flag != MPI_IDENT) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dmf),PETSC_ERR_SUP,<font color="#666666">"cannot change communicators"</font>);
+<a name="line252">252: </a>  <a href="../../../../docs/manualpages/DM/DMRedundantCreate.html#DMRedundantCreate">DMRedundantCreate</a>(comm,redf-&gt;rank,redf-&gt;N,dmc);
+<a name="line253">253: </a>  <font color="#4169E1">return</font>(0);
+<a name="line254">254: </a>}
+
+<a name="line256">256: </a><strong><font color="#4169E1"><a name="DMCreateInterpolation_Redundant"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMCreateInterpolation_Redundant(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dmc,<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dmf,<a href="../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> *P,<a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> *scale)</font></strong>
+<a name="line257">257: </a>{
+<a name="line259">259: </a>  DM_Redundant   *redc = (DM_Redundant*)dmc-&gt;data;
+<a name="line260">260: </a>  DM_Redundant   *redf = (DM_Redundant*)dmf-&gt;data;
+<a name="line261">261: </a>  <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>    flag;
+<a name="line262">262: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       i,rstart,rend;
+
+<a name="line265">265: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_compare.html#MPI_Comm_compare">MPI_Comm_compare</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dmc),<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dmf),&amp;flag);
+<a name="line266">266: </a>  <font color="#4169E1">if</font> (flag != MPI_CONGRUENT &amp;&amp; flag != MPI_IDENT) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dmf),PETSC_ERR_SUP,<font color="#666666">"cannot change communicators"</font>);
+<a name="line267">267: </a>  <font color="#4169E1">if</font> (redc-&gt;rank != redf-&gt;rank) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dmf),PETSC_ERR_ARG_INCOMP,<font color="#666666">"Owning rank does not match"</font>);
+<a name="line268">268: </a>  <font color="#4169E1">if</font> (redc-&gt;N != redf-&gt;N) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dmf),PETSC_ERR_ARG_INCOMP,<font color="#666666">"Global size does not match"</font>);
+<a name="line269">269: </a>  <a href="../../../../docs/manualpages/Mat/MatCreate.html#MatCreate">MatCreate</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dmc),P);
+<a name="line270">270: </a>  <a href="../../../../docs/manualpages/Mat/MatSetSizes.html#MatSetSizes">MatSetSizes</a>(*P,redc-&gt;n,redc-&gt;n,redc-&gt;N,redc-&gt;N);
+<a name="line271">271: </a>  <a href="../../../../docs/manualpages/Mat/MatSetType.html#MatSetType">MatSetType</a>(*P,<a href="../../../../docs/manualpages/Mat/MATAIJ.html#MATAIJ">MATAIJ</a>);
+<a name="line272">272: </a>  <a href="../../../../docs/manualpages/Mat/MatSeqAIJSetPreallocation.html#MatSeqAIJSetPreallocation">MatSeqAIJSetPreallocation</a>(*P,1,0);
+<a name="line273">273: </a>  <a href="../../../../docs/manualpages/Mat/MatMPIAIJSetPreallocation.html#MatMPIAIJSetPreallocation">MatMPIAIJSetPreallocation</a>(*P,1,0,0,0);
+<a name="line274">274: </a>  <a href="../../../../docs/manualpages/Mat/MatGetOwnershipRange.html#MatGetOwnershipRange">MatGetOwnershipRange</a>(*P,&amp;rstart,&amp;rend);
+<a name="line275">275: </a>  <font color="#4169E1">for</font> (i=rstart; i&lt;rend; i++) {<a href="../../../../docs/manualpages/Mat/MatSetValue.html#MatSetValue">MatSetValue</a>(*P,i,i,1.0,<a href="../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>);}
+<a name="line276">276: </a>  <a href="../../../../docs/manualpages/Mat/MatAssemblyBegin.html#MatAssemblyBegin">MatAssemblyBegin</a>(*P,<a href="../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+<a name="line277">277: </a>  <a href="../../../../docs/manualpages/Mat/MatAssemblyEnd.html#MatAssemblyEnd">MatAssemblyEnd</a>(*P,<a href="../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+<a name="line278">278: </a>  <font color="#4169E1">if</font> (scale) {<a href="../../../../docs/manualpages/DMDA/DMCreateInterpolationScale.html#DMCreateInterpolationScale">DMCreateInterpolationScale</a>(dmc,dmf,*P,scale);}
+<a name="line279">279: </a>  <font color="#4169E1">return</font>(0);
+<a name="line280">280: </a>}
+
+<a name="line282">282: </a><font color="#B22222">/*@</font>
+<a name="line283">283: </a><font color="#B22222">    <a href="../../../../docs/manualpages/DM/DMRedundantSetSize.html#DMRedundantSetSize">DMRedundantSetSize</a> - Sets the size of a densely coupled redundant object</font>
+
+<a name="line285">285: </a><font color="#B22222">    Collective on <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a></font>
+
+<a name="line287">287: </a><font color="#B22222">    Input Parameter:</font>
+<a name="line288">288: </a><font color="#B22222">+   dm - redundant <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a></font>
+<a name="line289">289: </a><font color="#B22222">.   rank - rank of process to own redundant degrees of freedom</font>
+<a name="line290">290: </a><font color="#B22222">-   N - total number of redundant degrees of freedom</font>
+
+<a name="line292">292: </a><font color="#B22222">    Level: advanced</font>
+
+<a name="line294">294: </a><font color="#B22222">.seealso <a href="../../../../docs/manualpages/DM/DMDestroy.html#DMDestroy">DMDestroy</a>(), <a href="../../../../docs/manualpages/DM/DMCreateGlobalVector.html#DMCreateGlobalVector">DMCreateGlobalVector</a>(), <a href="../../../../docs/manualpages/DM/DMRedundantCreate.html#DMRedundantCreate">DMRedundantCreate</a>(), <a href="../../../../docs/manualpages/DM/DMRedundantGetSize.html#DMRedundantGetSize">DMRedundantGetSize</a>()</font>
+<a name="line295">295: </a><font color="#B22222">@*/</font>
+<a name="line296">296: </a><strong><font color="#4169E1"><a name="DMRedundantSetSize"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DM/DMRedundantSetSize.html#DMRedundantSetSize">DMRedundantSetSize</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> rank,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> N)</font></strong>
+<a name="line297">297: </a>{
+
+<a name="line305">305: </a>  PetscTryMethod(dm,<font color="#666666">"DMRedundantSetSize_C"</font>,(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a>,<a href="../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>),(dm,rank,N));
+<a name="line306">306: </a>  <font color="#4169E1">return</font>(0);
+<a name="line307">307: </a>}
+
+<a name="line309">309: </a><font color="#B22222">/*@</font>
+<a name="line310">310: </a><font color="#B22222">    <a href="../../../../docs/manualpages/DM/DMRedundantGetSize.html#DMRedundantGetSize">DMRedundantGetSize</a> - Gets the size of a densely coupled redundant object</font>
+
+<a name="line312">312: </a><font color="#B22222">    Not Collective</font>
+
+<a name="line314">314: </a><font color="#B22222">    Input Parameter:</font>
+<a name="line315">315: </a><font color="#B22222">+   dm - redundant <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a></font>
+
+<a name="line317">317: </a><font color="#B22222">    Output Parameters:</font>
+<a name="line318">318: </a><font color="#B22222">+   rank - rank of process to own redundant degrees of freedom (or NULL)</font>
+<a name="line319">319: </a><font color="#B22222">-   N - total number of redundant degrees of freedom (or NULL)</font>
+
+<a name="line321">321: </a><font color="#B22222">    Level: advanced</font>
+
+<a name="line323">323: </a><font color="#B22222">.seealso <a href="../../../../docs/manualpages/DM/DMDestroy.html#DMDestroy">DMDestroy</a>(), <a href="../../../../docs/manualpages/DM/DMCreateGlobalVector.html#DMCreateGlobalVector">DMCreateGlobalVector</a>(), <a href="../../../../docs/manualpages/DM/DMRedundantCreate.html#DMRedundantCreate">DMRedundantCreate</a>(), <a href="../../../../docs/manualpages/DM/DMRedundantSetSize.html#DMRedundantSetSize">DMRedundantSetSize</a>()</font>
+<a name="line324">324: </a><font color="#B22222">@*/</font>
+<a name="line325">325: </a><strong><font color="#4169E1"><a name="DMRedundantGetSize"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DM/DMRedundantGetSize.html#DMRedundantGetSize">DMRedundantGetSize</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> *rank,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *N)</font></strong>
+<a name="line326">326: </a>{
+
+<a name="line332">332: </a>  PetscUseMethod(dm,<font color="#666666">"DMRedundantGetSize_C"</font>,(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a>,<a href="../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>*,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>*),(dm,rank,N));
+<a name="line333">333: </a>  <font color="#4169E1">return</font>(0);
+<a name="line334">334: </a>}
+
+<a name="line336">336: </a><strong><font color="#4169E1"><a name="DMRedundantSetSize_Redundant"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMRedundantSetSize_Redundant(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> rank,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> N)</font></strong>
+<a name="line337">337: </a>{
+<a name="line338">338: </a>  DM_Redundant   *red = (DM_Redundant*)dm-&gt;data;
+<a name="line340">340: </a>  <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>    myrank;
+
+<a name="line343">343: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),&amp;myrank);
+<a name="line344">344: </a>  red-&gt;rank = rank;
+<a name="line345">345: </a>  red-&gt;N    = N;
+<a name="line346">346: </a>  red-&gt;n    = (myrank == rank) ? N : 0;
+<a name="line347">347: </a>  <font color="#4169E1">return</font>(0);
+<a name="line348">348: </a>}
+
+<a name="line350">350: </a><strong><font color="#4169E1"><a name="DMRedundantGetSize_Redundant"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMRedundantGetSize_Redundant(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *rank,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *N)</font></strong>
+<a name="line351">351: </a>{
+<a name="line352">352: </a>  DM_Redundant *red = (DM_Redundant*)dm-&gt;data;
+
+<a name="line355">355: </a>  <font color="#4169E1">if</font> (rank) *rank = red-&gt;rank;
+<a name="line356">356: </a>  <font color="#4169E1">if</font> (N)    *N = red-&gt;N;
+<a name="line357">357: </a>  <font color="#4169E1">return</font>(0);
+<a name="line358">358: </a>}
+
+<a name="line360">360: </a><font color="#B22222">/*MC</font>
+<a name="line361">361: </a><font color="#B22222">   <a href="../../../../docs/manualpages/DM/DMREDUNDANT.html#DMREDUNDANT">DMREDUNDANT</a> = "redundant" - A <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> object that is used to manage data for a small set of dense globally coupled variables.</font>
+<a name="line362">362: </a><font color="#B22222">         In the global representation of the vector the variables are all stored on a single MPI process (all the other MPI processes have</font>
+<a name="line363">363: </a><font color="#B22222">         no variables) in the local representation all the variables are stored on ALL the MPI processes (because they are all needed for each</font>
+<a name="line364">364: </a><font color="#B22222">         processes local computations).</font>
+
+<a name="line366">366: </a><font color="#B22222">         This <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> is generally used inside a <a href="../../../../docs/manualpages/DM/DMCOMPOSITE.html#DMCOMPOSITE">DMCOMPOSITE</a> object. For example, it may be used to store continuation parameters for a bifurcation problem.</font>
+
+
+<a name="line369">369: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line371">371: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DM/DMType.html#DMType">DMType</a>, <a href="../../../../docs/manualpages/DM/DMCOMPOSITE.html#DMCOMPOSITE">DMCOMPOSITE</a>,  <a href="../../../../docs/manualpages/DM/DMCreate.html#DMCreate">DMCreate</a>(), <a href="../../../../docs/manualpages/DM/DMRedundantSetSize.html#DMRedundantSetSize">DMRedundantSetSize</a>(), <a href="../../../../docs/manualpages/DM/DMRedundantGetSize.html#DMRedundantGetSize">DMRedundantGetSize</a>()</font>
+<a name="line372">372: </a><font color="#B22222">M*/</font>
+
+<a name="line374">374: </a><strong><font color="#4169E1"><a name="DMCreate_Redundant"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMCreate_Redundant(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm)</font></strong>
+<a name="line375">375: </a>{
+<a name="line377">377: </a>  DM_Redundant   *red;
+
+<a name="line380">380: </a>  <a href="../../../../docs/manualpages/Sys/PetscNewLog.html#PetscNewLog">PetscNewLog</a>(dm,&amp;red);
+<a name="line381">381: </a>  dm-&gt;data = red;
+
+<a name="line383">383: </a>  PetscObjectChangeTypeName((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm,<a href="../../../../docs/manualpages/DM/DMREDUNDANT.html#DMREDUNDANT">DMREDUNDANT</a>);
+
+<a name="line385">385: </a>  dm-&gt;ops-&gt;setup              = DMSetUp_Redundant;
+<a name="line386">386: </a>  dm-&gt;ops-&gt;view               = DMView_Redundant;
+<a name="line387">387: </a>  dm-&gt;ops-&gt;createglobalvector = DMCreateGlobalVector_Redundant;
+<a name="line388">388: </a>  dm-&gt;ops-&gt;createlocalvector  = DMCreateLocalVector_Redundant;
+<a name="line389">389: </a>  dm-&gt;ops-&gt;creatematrix       = DMCreateMatrix_Redundant;
+<a name="line390">390: </a>  dm-&gt;ops-&gt;destroy            = DMDestroy_Redundant;
+<a name="line391">391: </a>  dm-&gt;ops-&gt;globaltolocalbegin = DMGlobalToLocalBegin_Redundant;
+<a name="line392">392: </a>  dm-&gt;ops-&gt;globaltolocalend   = DMGlobalToLocalEnd_Redundant;
+<a name="line393">393: </a>  dm-&gt;ops-&gt;localtoglobalbegin = DMLocalToGlobalBegin_Redundant;
+<a name="line394">394: </a>  dm-&gt;ops-&gt;localtoglobalend   = DMLocalToGlobalEnd_Redundant;
+<a name="line395">395: </a>  dm-&gt;ops-&gt;refine             = DMRefine_Redundant;
+<a name="line396">396: </a>  dm-&gt;ops-&gt;coarsen            = DMCoarsen_Redundant;
+<a name="line397">397: </a>  dm-&gt;ops-&gt;createinterpolation= DMCreateInterpolation_Redundant;
+<a name="line398">398: </a>  dm-&gt;ops-&gt;getcoloring        = DMCreateColoring_Redundant;
+
+<a name="line400">400: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html#PetscObjectComposeFunction">PetscObjectComposeFunction</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm,<font color="#666666">"DMRedundantSetSize_C"</font>,DMRedundantSetSize_Redundant);
+<a name="line401">401: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html#PetscObjectComposeFunction">PetscObjectComposeFunction</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm,<font color="#666666">"DMRedundantGetSize_C"</font>,DMRedundantGetSize_Redundant);
+<a name="line402">402: </a>  <font color="#4169E1">return</font>(0);
+<a name="line403">403: </a>}
+
+<a name="line405">405: </a><font color="#B22222">/*@C</font>
+<a name="line406">406: </a><font color="#B22222">    <a href="../../../../docs/manualpages/DM/DMRedundantCreate.html#DMRedundantCreate">DMRedundantCreate</a> - Creates a <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> object, used to manage data for dense globally coupled variables</font>
+
+<a name="line408">408: </a><font color="#B22222">    Collective on <a href="../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a></font>
+
+<a name="line410">410: </a><font color="#B22222">    Input Parameter:</font>
+<a name="line411">411: </a><font color="#B22222">+   comm - the processors that will share the global vector</font>
+<a name="line412">412: </a><font color="#B22222">.   rank - rank to own the redundant values</font>
+<a name="line413">413: </a><font color="#B22222">-   N - total number of degrees of freedom</font>
+
+<a name="line415">415: </a><font color="#B22222">    Output Parameters:</font>
+<a name="line416">416: </a><font color="#B22222">.   dm - the redundant <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a></font>
+
+<a name="line418">418: </a><font color="#B22222">    Level: advanced</font>
+
+<a name="line420">420: </a><font color="#B22222">.seealso <a href="../../../../docs/manualpages/DM/DMDestroy.html#DMDestroy">DMDestroy</a>(), <a href="../../../../docs/manualpages/DM/DMCreateGlobalVector.html#DMCreateGlobalVector">DMCreateGlobalVector</a>(), <a href="../../../../docs/manualpages/DM/DMCreateMatrix.html#DMCreateMatrix">DMCreateMatrix</a>(), <a href="../../../../docs/manualpages/DM/DMCompositeAddDM.html#DMCompositeAddDM">DMCompositeAddDM</a>(), <a href="../../../../docs/manualpages/DM/DMREDUNDANT.html#DMREDUNDANT">DMREDUNDANT</a>, <a href="../../../../docs/manualpages/DM/DMSetType.html#DMSetType">DMSetType</a>(), <a href="../../../../docs/manualpages/DM/DMRedundantSetSize.html#DMRedundantSetSize">DMRedundantSetSize</a>(), <a href="../../../../docs/manualpages/DM/DMRedundantGetSize.html#DMRedundantGetSize">DMRedundantGetSize</a>()</font>
+
+<a name="line422">422: </a><font color="#B22222">@*/</font>
+<a name="line423">423: </a><strong><font color="#4169E1"><a name="DMRedundantCreate"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DM/DMRedundantCreate.html#DMRedundantCreate">DMRedundantCreate</a>(<a href="../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a> comm,<a href="../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> rank,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> N,<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> *dm)</font></strong>
+<a name="line424">424: </a>{
+
+<a name="line429">429: </a>  <a href="../../../../docs/manualpages/DM/DMCreate.html#DMCreate">DMCreate</a>(comm,dm);
+<a name="line430">430: </a>  <a href="../../../../docs/manualpages/DM/DMSetType.html#DMSetType">DMSetType</a>(*dm,<a href="../../../../docs/manualpages/DM/DMREDUNDANT.html#DMREDUNDANT">DMREDUNDANT</a>);
+<a name="line431">431: </a>  <a href="../../../../docs/manualpages/DM/DMRedundantSetSize.html#DMRedundantSetSize">DMRedundantSetSize</a>(*dm,rank,N);
+<a name="line432">432: </a>  <a href="../../../../docs/manualpages/DM/DMSetUp.html#DMSetUp">DMSetUp</a>(*dm);
+<a name="line433">433: </a>  <font color="#4169E1">return</font>(0);
+<a name="line434">434: </a>}
+</pre>
+</body>
+
+</html>

@@ -1,0 +1,679 @@
+      subroutine PetscSpaceSetFromOptions(a,z)
+      use petscdmdef
+       PetscSpace a ! PetscSpace
+       integer z
+       end subroutine
+      subroutine PetscSpaceDestroy(a,z)
+      use petscdmdef
+       PetscSpace a ! PetscSpace
+       integer z
+       end subroutine
+      subroutine PetscSpaceCreate(a,b,z)
+      use petscdmdef
+       integer a ! MPI_Comm
+       PetscSpace b ! PetscSpace
+       integer z
+       end subroutine
+      subroutine PetscSpaceGetDimension(a,b,z)
+      use petscdmdef
+       PetscSpace a ! PetscSpace
+       PetscInt b ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscSpaceGetOrder(a,b,z)
+      use petscdmdef
+       PetscSpace a ! PetscSpace
+       PetscInt b ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscSpaceSetOrder(a,b,z)
+      use petscdmdef
+       PetscSpace a ! PetscSpace
+       PetscInt b ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscSpaceGetNumComponents(a,b,z)
+      use petscdmdef
+       PetscSpace a ! PetscSpace
+       PetscInt b ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscSpaceSetNumComponents(a,b,z)
+      use petscdmdef
+       PetscSpace a ! PetscSpace
+       PetscInt b ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscSpaceGetHeightSubspace(a,b,c,z)
+      use petscdmdef
+       PetscSpace a ! PetscSpace
+       PetscInt b ! PetscInt
+       PetscSpace c ! PetscSpace
+       integer z
+       end subroutine
+      subroutine PetscSpacePolynomialSetTensor(a,b,z)
+      use petscdmdef
+       PetscSpace a ! PetscSpace
+       PetscBool b ! PetscBool
+       integer z
+       end subroutine
+      subroutine PetscSpacePolynomialGetTensor(a,b,z)
+      use petscdmdef
+       PetscSpace a ! PetscSpace
+       PetscBool b ! PetscBool
+       integer z
+       end subroutine
+      subroutine PetscSpacePointSetPoints(a,b,z)
+      use petscdmdef
+       PetscSpace a ! PetscSpace
+       PetscQuadrature b ! PetscQuadrature
+       integer z
+       end subroutine
+      subroutine PetscSpacePointGetPoints(a,b,z)
+      use petscdmdef
+       PetscSpace a ! PetscSpace
+       PetscQuadrature b ! PetscQuadrature
+       integer z
+       end subroutine
+      subroutine PetscDualSpaceView(a,b,z)
+      use petscdmdef
+       PetscDualSpace a ! PetscDualSpace
+       PetscViewer b ! PetscViewer
+       integer z
+       end subroutine
+      subroutine PetscDualSpaceSetFromOptions(a,z)
+      use petscdmdef
+       PetscDualSpace a ! PetscDualSpace
+       integer z
+       end subroutine
+      subroutine PetscDualSpaceSetUp(a,z)
+      use petscdmdef
+       PetscDualSpace a ! PetscDualSpace
+       integer z
+       end subroutine
+      subroutine PetscDualSpaceDestroy(a,z)
+      use petscdmdef
+       PetscDualSpace a ! PetscDualSpace
+       integer z
+       end subroutine
+      subroutine PetscDualSpaceCreate(a,b,z)
+      use petscdmdef
+       integer a ! MPI_Comm
+       PetscDualSpace b ! PetscDualSpace
+       integer z
+       end subroutine
+      subroutine PetscDualSpaceDuplicate(a,b,z)
+      use petscdmdef
+       PetscDualSpace a ! PetscDualSpace
+       PetscDualSpace b ! PetscDualSpace
+       integer z
+       end subroutine
+      subroutine PetscDualSpaceGetDM(a,b,z)
+      use petscdmdef
+       PetscDualSpace a ! PetscDualSpace
+       DM b ! DM
+       integer z
+       end subroutine
+      subroutine PetscDualSpaceSetDM(a,b,z)
+      use petscdmdef
+       PetscDualSpace a ! PetscDualSpace
+       DM b ! DM
+       integer z
+       end subroutine
+      subroutine PetscDualSpaceGetOrder(a,b,z)
+      use petscdmdef
+       PetscDualSpace a ! PetscDualSpace
+       PetscInt b ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscDualSpaceSetOrder(a,b,z)
+      use petscdmdef
+       PetscDualSpace a ! PetscDualSpace
+       PetscInt b ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscDualSpaceGetNumComponents(a,b,z)
+      use petscdmdef
+       PetscDualSpace a ! PetscDualSpace
+       PetscInt b ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscDualSpaceSetNumComponents(a,b,z)
+      use petscdmdef
+       PetscDualSpace a ! PetscDualSpace
+       PetscInt b ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscDualSpaceLagrangeGetTensor(a,b,z)
+      use petscdmdef
+       PetscDualSpace a ! PetscDualSpace
+       PetscBool b ! PetscBool
+       integer z
+       end subroutine
+      subroutine PetscDualSpaceLagrangeSetTensor(a,b,z)
+      use petscdmdef
+       PetscDualSpace a ! PetscDualSpace
+       PetscBool b ! PetscBool
+       integer z
+       end subroutine
+      subroutine PetscDualSpaceGetFunctional(a,b,c,z)
+      use petscdmdef
+       PetscDualSpace a ! PetscDualSpace
+       PetscInt b ! PetscInt
+       PetscQuadrature c ! PetscQuadrature
+       integer z
+       end subroutine
+      subroutine PetscDualSpaceGetDimension(a,b,z)
+      use petscdmdef
+       PetscDualSpace a ! PetscDualSpace
+       PetscInt b ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscDualSpaceCreateReferenceCell(a,b,c,d,z)
+      use petscdmdef
+       PetscDualSpace a ! PetscDualSpace
+       PetscInt b ! PetscInt
+       PetscBool c ! PetscBool
+       DM d ! DM
+       integer z
+       end subroutine
+      subroutine PetscDualSpaceGetHeightSubspace(a,b,c,z)
+      use petscdmdef
+       PetscDualSpace a ! PetscDualSpace
+       PetscInt b ! PetscInt
+       PetscDualSpace c ! PetscDualSpace
+       integer z
+       end subroutine
+      subroutine PetscDualSpaceLagrangeGetContinuity(a,b,z)
+      use petscdmdef
+       PetscDualSpace a ! PetscDualSpace
+       PetscBool b ! PetscBool
+       integer z
+       end subroutine
+      subroutine PetscDualSpaceLagrangeSetContinuity(a,b,z)
+      use petscdmdef
+       PetscDualSpace a ! PetscDualSpace
+       PetscBool b ! PetscBool
+       integer z
+       end subroutine
+      subroutine PetscDualSpaceSimpleSetDimension(a,b,z)
+      use petscdmdef
+       PetscDualSpace a ! PetscDualSpace
+       PetscInt b ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscDualSpaceSimpleSetFunctional(a,b,c,z)
+      use petscdmdef
+       PetscDualSpace a ! PetscDualSpace
+       PetscInt b ! PetscInt
+       PetscQuadrature c ! PetscQuadrature
+       integer z
+       end subroutine
+      subroutine PetscFESetFromOptions(a,z)
+      use petscdmdef
+       PetscFE a ! PetscFE
+       integer z
+       end subroutine
+      subroutine PetscFEDestroy(a,z)
+      use petscdmdef
+       PetscFE a ! PetscFE
+       integer z
+       end subroutine
+      subroutine PetscFECreate(a,b,z)
+      use petscdmdef
+       integer a ! MPI_Comm
+       PetscFE b ! PetscFE
+       integer z
+       end subroutine
+      subroutine PetscFEGetSpatialDimension(a,b,z)
+      use petscdmdef
+       PetscFE a ! PetscFE
+       PetscInt b ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscFESetNumComponents(a,b,z)
+      use petscdmdef
+       PetscFE a ! PetscFE
+       PetscInt b ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscFEGetNumComponents(a,b,z)
+      use petscdmdef
+       PetscFE a ! PetscFE
+       PetscInt b ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscFESetTileSizes(a,b,c,d,e,z)
+      use petscdmdef
+       PetscFE a ! PetscFE
+       PetscInt b ! PetscInt
+       PetscInt c ! PetscInt
+       PetscInt d ! PetscInt
+       PetscInt e ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscFEGetTileSizes(a,b,c,d,e,z)
+      use petscdmdef
+       PetscFE a ! PetscFE
+       PetscInt b ! PetscInt
+       PetscInt c ! PetscInt
+       PetscInt d ! PetscInt
+       PetscInt e ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscFEGetBasisSpace(a,b,z)
+      use petscdmdef
+       PetscFE a ! PetscFE
+       PetscSpace b ! PetscSpace
+       integer z
+       end subroutine
+      subroutine PetscFESetBasisSpace(a,b,z)
+      use petscdmdef
+       PetscFE a ! PetscFE
+       PetscSpace b ! PetscSpace
+       integer z
+       end subroutine
+      subroutine PetscFEGetDualSpace(a,b,z)
+      use petscdmdef
+       PetscFE a ! PetscFE
+       PetscDualSpace b ! PetscDualSpace
+       integer z
+       end subroutine
+      subroutine PetscFESetDualSpace(a,b,z)
+      use petscdmdef
+       PetscFE a ! PetscFE
+       PetscDualSpace b ! PetscDualSpace
+       integer z
+       end subroutine
+      subroutine PetscFEGetQuadrature(a,b,z)
+      use petscdmdef
+       PetscFE a ! PetscFE
+       PetscQuadrature b ! PetscQuadrature
+       integer z
+       end subroutine
+      subroutine PetscFESetQuadrature(a,b,z)
+      use petscdmdef
+       PetscFE a ! PetscFE
+       PetscQuadrature b ! PetscQuadrature
+       integer z
+       end subroutine
+      subroutine PetscFEGetFaceQuadrature(a,b,z)
+      use petscdmdef
+       PetscFE a ! PetscFE
+       PetscQuadrature b ! PetscQuadrature
+       integer z
+       end subroutine
+      subroutine PetscFESetFaceQuadrature(a,b,z)
+      use petscdmdef
+       PetscFE a ! PetscFE
+       PetscQuadrature b ! PetscQuadrature
+       integer z
+       end subroutine
+      subroutine PetscFEGetDimension(a,b,z)
+      use petscdmdef
+       PetscFE a ! PetscFE
+       PetscInt b ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscFERefine(a,b,z)
+      use petscdmdef
+       PetscFE a ! PetscFE
+       PetscFE b ! PetscFE
+       integer z
+       end subroutine
+      subroutine PetscDSSetFromOptions(a,z)
+      use petscdmdef
+       PetscDS a ! PetscDS
+       integer z
+       end subroutine
+      subroutine PetscDSDestroy(a,z)
+      use petscdmdef
+       PetscDS a ! PetscDS
+       integer z
+       end subroutine
+      subroutine PetscDSCreate(a,b,z)
+      use petscdmdef
+       integer a ! MPI_Comm
+       PetscDS b ! PetscDS
+       integer z
+       end subroutine
+      subroutine PetscDSGetNumFields(a,b,z)
+      use petscdmdef
+       PetscDS a ! PetscDS
+       PetscInt b ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscDSGetSpatialDimension(a,b,z)
+      use petscdmdef
+       PetscDS a ! PetscDS
+       PetscInt b ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscDSGetTotalDimension(a,b,z)
+      use petscdmdef
+       PetscDS a ! PetscDS
+       PetscInt b ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscDSGetTotalComponents(a,b,z)
+      use petscdmdef
+       PetscDS a ! PetscDS
+       PetscInt b ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscDSGetDiscretization(a,b,c,z)
+      use petscdmdef
+       PetscDS a ! PetscDS
+       PetscInt b ! PetscInt
+       PetscObject c ! PetscObject
+       integer z
+       end subroutine
+      subroutine PetscDSSetDiscretization(a,b,c,z)
+      use petscdmdef
+       PetscDS a ! PetscDS
+       PetscInt b ! PetscInt
+       PetscObject c ! PetscObject
+       integer z
+       end subroutine
+      subroutine PetscDSAddDiscretization(a,b,z)
+      use petscdmdef
+       PetscDS a ! PetscDS
+       PetscObject b ! PetscObject
+       integer z
+       end subroutine
+      subroutine PetscDSGetImplicit(a,b,c,z)
+      use petscdmdef
+       PetscDS a ! PetscDS
+       PetscInt b ! PetscInt
+       PetscBool c ! PetscBool
+       integer z
+       end subroutine
+      subroutine PetscDSSetImplicit(a,b,c,z)
+      use petscdmdef
+       PetscDS a ! PetscDS
+       PetscInt b ! PetscInt
+       PetscBool c ! PetscBool
+       integer z
+       end subroutine
+      subroutine PetscDSGetAdjacency(a,b,c,d,z)
+      use petscdmdef
+       PetscDS a ! PetscDS
+       PetscInt b ! PetscInt
+       PetscBool c ! PetscBool
+       PetscBool d ! PetscBool
+       integer z
+       end subroutine
+      subroutine PetscDSSetAdjacency(a,b,c,d,z)
+      use petscdmdef
+       PetscDS a ! PetscDS
+       PetscInt b ! PetscInt
+       PetscBool c ! PetscBool
+       PetscBool d ! PetscBool
+       integer z
+       end subroutine
+      subroutine PetscDSGetFieldIndex(a,b,c,z)
+      use petscdmdef
+       PetscDS a ! PetscDS
+       PetscObject b ! PetscObject
+       PetscInt c ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscDSGetFieldSize(a,b,c,z)
+      use petscdmdef
+       PetscDS a ! PetscDS
+       PetscInt b ! PetscInt
+       PetscInt c ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscDSGetFieldOffset(a,b,c,z)
+      use petscdmdef
+       PetscDS a ! PetscDS
+       PetscInt b ! PetscInt
+       PetscInt c ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscDSGetDimensions(a,b,z)
+      use petscdmdef
+       PetscDS a ! PetscDS
+       PetscInt b (*) ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscDSGetComponents(a,b,z)
+      use petscdmdef
+       PetscDS a ! PetscDS
+       PetscInt b (*) ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscDSGetComponentOffset(a,b,c,z)
+      use petscdmdef
+       PetscDS a ! PetscDS
+       PetscInt b ! PetscInt
+       PetscInt c ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscDSGetComponentOffsets(a,b,z)
+      use petscdmdef
+       PetscDS a ! PetscDS
+       PetscInt b (*) ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscDSGetComponentDerivativeOffsets(a,b,z)
+      use petscdmdef
+       PetscDS a ! PetscDS
+       PetscInt b (*) ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscDSGetNumBoundary(a,b,z)
+      use petscdmdef
+       PetscDS a ! PetscDS
+       PetscInt b ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscDSCopyEquations(a,b,z)
+      use petscdmdef
+       PetscDS a ! PetscDS
+       PetscDS b ! PetscDS
+       integer z
+       end subroutine
+      subroutine PetscQuadratureCreate(a,b,z)
+      use petscdmdef
+       integer a ! MPI_Comm
+       PetscQuadrature b ! PetscQuadrature
+       integer z
+       end subroutine
+      subroutine PetscQuadratureDuplicate(a,b,z)
+      use petscdmdef
+       PetscQuadrature a ! PetscQuadrature
+       PetscQuadrature b ! PetscQuadrature
+       integer z
+       end subroutine
+      subroutine PetscQuadratureDestroy(a,z)
+      use petscdmdef
+       PetscQuadrature a ! PetscQuadrature
+       integer z
+       end subroutine
+      subroutine PetscQuadratureGetOrder(a,b,z)
+      use petscdmdef
+       PetscQuadrature a ! PetscQuadrature
+       PetscInt b ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscQuadratureSetOrder(a,b,z)
+      use petscdmdef
+       PetscQuadrature a ! PetscQuadrature
+       PetscInt b ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscQuadratureGetNumComponents(a,b,z)
+      use petscdmdef
+       PetscQuadrature a ! PetscQuadrature
+       PetscInt b ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscQuadratureSetNumComponents(a,b,z)
+      use petscdmdef
+       PetscQuadrature a ! PetscQuadrature
+       PetscInt b ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscDTLegendreEval(a,b,c,d,e,f,g,z)
+      use petscdmdef
+       PetscInt a ! PetscInt
+       PetscReal b ! PetscReal
+       PetscInt c ! PetscInt
+       PetscInt d ! PetscInt
+       PetscReal e ! PetscReal
+       PetscReal f ! PetscReal
+       PetscReal g ! PetscReal
+       integer z
+       end subroutine
+      subroutine PetscDTGaussQuadrature(a,b,c,d,e,z)
+      use petscdmdef
+       PetscInt a ! PetscInt
+       PetscReal b ! PetscReal
+       PetscReal c ! PetscReal
+       PetscReal d ! PetscReal
+       PetscReal e ! PetscReal
+       integer z
+       end subroutine
+      subroutine PetscDTGaussTensorQuadrature(a,b,c,d,e,f,z)
+      use petscdmdef
+       PetscInt a ! PetscInt
+       PetscInt b ! PetscInt
+       PetscInt c ! PetscInt
+       PetscReal d ! PetscReal
+       PetscReal e ! PetscReal
+       PetscQuadrature f ! PetscQuadrature
+       integer z
+       end subroutine
+      subroutine PetscDTReconstructPoly(a,b,c,d,e,f,z)
+      use petscdmdef
+       PetscInt a ! PetscInt
+       PetscInt b ! PetscInt
+       PetscReal c ! PetscReal
+       PetscInt d ! PetscInt
+       PetscReal e ! PetscReal
+       PetscReal f ! PetscReal
+       integer z
+       end subroutine
+      subroutine PetscLimiterSetFromOptions(a,z)
+      use petscdmdef
+       PetscLimiter a ! PetscLimiter
+       integer z
+       end subroutine
+      subroutine PetscLimiterDestroy(a,z)
+      use petscdmdef
+       PetscLimiter a ! PetscLimiter
+       integer z
+       end subroutine
+      subroutine PetscLimiterCreate(a,b,z)
+      use petscdmdef
+       integer a ! MPI_Comm
+       PetscLimiter b ! PetscLimiter
+       integer z
+       end subroutine
+      subroutine PetscFVSetFromOptions(a,z)
+      use petscdmdef
+       PetscFV a ! PetscFV
+       integer z
+       end subroutine
+      subroutine PetscFVSetUp(a,z)
+      use petscdmdef
+       PetscFV a ! PetscFV
+       integer z
+       end subroutine
+      subroutine PetscFVDestroy(a,z)
+      use petscdmdef
+       PetscFV a ! PetscFV
+       integer z
+       end subroutine
+      subroutine PetscFVCreate(a,b,z)
+      use petscdmdef
+       integer a ! MPI_Comm
+       PetscFV b ! PetscFV
+       integer z
+       end subroutine
+      subroutine PetscFVSetLimiter(a,b,z)
+      use petscdmdef
+       PetscFV a ! PetscFV
+       PetscLimiter b ! PetscLimiter
+       integer z
+       end subroutine
+      subroutine PetscFVGetLimiter(a,b,z)
+      use petscdmdef
+       PetscFV a ! PetscFV
+       PetscLimiter b ! PetscLimiter
+       integer z
+       end subroutine
+      subroutine PetscFVSetNumComponents(a,b,z)
+      use petscdmdef
+       PetscFV a ! PetscFV
+       PetscInt b ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscFVGetNumComponents(a,b,z)
+      use petscdmdef
+       PetscFV a ! PetscFV
+       PetscInt b ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscFVSetSpatialDimension(a,b,z)
+      use petscdmdef
+       PetscFV a ! PetscFV
+       PetscInt b ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscFVGetSpatialDimension(a,b,z)
+      use petscdmdef
+       PetscFV a ! PetscFV
+       PetscInt b ! PetscInt
+       integer z
+       end subroutine
+      subroutine PetscFVSetComputeGradients(a,b,z)
+      use petscdmdef
+       PetscFV a ! PetscFV
+       PetscBool b ! PetscBool
+       integer z
+       end subroutine
+      subroutine PetscFVGetComputeGradients(a,b,z)
+      use petscdmdef
+       PetscFV a ! PetscFV
+       PetscBool b ! PetscBool
+       integer z
+       end subroutine
+      subroutine PetscFVSetQuadrature(a,b,z)
+      use petscdmdef
+       PetscFV a ! PetscFV
+       PetscQuadrature b ! PetscQuadrature
+       integer z
+       end subroutine
+      subroutine PetscFVGetQuadrature(a,b,z)
+      use petscdmdef
+       PetscFV a ! PetscFV
+       PetscQuadrature b ! PetscQuadrature
+       integer z
+       end subroutine
+      subroutine PetscFVGetDualSpace(a,b,z)
+      use petscdmdef
+       PetscFV a ! PetscFV
+       PetscDualSpace b ! PetscDualSpace
+       integer z
+       end subroutine
+      subroutine PetscFVSetDualSpace(a,b,z)
+      use petscdmdef
+       PetscFV a ! PetscFV
+       PetscDualSpace b ! PetscDualSpace
+       integer z
+       end subroutine
+      subroutine PetscFVRefine(a,b,z)
+      use petscdmdef
+       PetscFV a ! PetscFV
+       PetscFV b ! PetscFV
+       integer z
+       end subroutine
+      subroutine PetscFVLeastSquaresSetMaxFaces(a,b,z)
+      use petscdmdef
+       PetscFV a ! PetscFV
+       PetscInt b ! PetscInt
+       integer z
+       end subroutine

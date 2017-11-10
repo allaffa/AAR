@@ -1,0 +1,86 @@
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/ts/examples/tutorials/network/wash/makefile.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-27T00:19:31+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/ts/examples/tutorials/network/wash/makefile.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80"><strong><font color="#FF0000">ALL:</font></strong>WASH
+CFLAGS	         = 
+FFLAGS	         = 
+CPPFLAGS         = 
+FPPFLAGS         =
+EXAMPLESC        = pipes1.c pipeInterface.c pipeImpls.c
+LOCDIR           = src/ts/examples/tutorials/network/wash/
+
+OBJECTS_PIPE = pipeInterface.o pipeImpls.o
+
+include ${PETSC_DIR}/lib/petsc/conf/variables
+include ${PETSC_DIR}/lib/petsc/conf/rules
+
+<strong><font color="#FF0000">pipes1:</font></strong> pipes1.o $(OBJECTS_PIPE) chkopts
+	-${CLINKER} -o pipes1 pipes1.o $(OBJECTS_PIPE) ${PETSC_TS_LIB}
+	${RM} pipes1.o $(OBJECTS_PIPE)
+
+<font color="#A020F0">#--------------------------------------</font>
+<strong><font color="#FF0000">runpipes1:</font></strong>
+	-@${MPIEXEC} -n 1 ./pipes1 -ts_monitor -<font color="#4169E1">case</font> 1 -ts_max_steps 1 -nox &gt; pipes1.tmp 2&gt;&amp;1;\
+	   <font color="#4169E1">if</font> (${DIFF} output/pipes1_1.out pipes1.tmp) then true; \
+	   <font color="#4169E1">else</font> printf <font color="#666666">"${PWD}\nPossible problem with pipes1_1, diffs above\n=========================================\n"</font>; fi; \
+	   ${RM} -f pipes1.tmp
+<font color="#A020F0"># parallel runs with '--with-64-bit-indices' fails, likely caused by partitioner packages. </font>
+<strong><font color="#FF0000">runpipes1_2:</font></strong>
+	-@${MPIEXEC} -n 2 ./pipes1 -ts_monitor -<font color="#4169E1">case</font> 1 -ts_max_steps 1 -petscpartitioner_type simple -nox &gt; pipes1.tmp 2&gt;&amp;1;\
+	   <font color="#4169E1">if</font> (${DIFF} output/pipes1_1.out pipes1.tmp) then true; \
+	   <font color="#4169E1">else</font> printf <font color="#666666">"${PWD}\nPossible problem with pipes1_2, diffs above\n=========================================\n"</font>; fi; \
+	   ${RM} -f pipes1.tmp
+<strong><font color="#FF0000">runpipes1_3:</font></strong>
+	-@${MPIEXEC} -n 4 ./pipes1 -ts_monitor -<font color="#4169E1">case</font> 1 -ts_max_steps 1 -petscpartitioner_type simple -nox &gt; pipes1.tmp 2&gt;&amp;1;\
+	   <font color="#4169E1">if</font> (${DIFF} output/pipes1_1.out pipes1.tmp) then true; \
+	   <font color="#4169E1">else</font> printf <font color="#666666">"${PWD}\nPossible problem with pipes1_3, diffs above\n=========================================\n"</font>; fi; \
+	   ${RM} -f pipes1.tmp
+
+<strong><font color="#FF0000">runpipes1_4:</font></strong>
+	-@${MPIEXEC} -n 1 ./pipes1 -ts_monitor -<font color="#4169E1">case</font> 0 -ts_max_steps 1 -nox &gt; pipes1.tmp 2&gt;&amp;1;\
+	   <font color="#4169E1">if</font> (${DIFF} output/pipes1_4.out pipes1.tmp) then true; \
+	   <font color="#4169E1">else</font> printf <font color="#666666">"${PWD}\nPossible problem with pipes1_4, diffs above\n=========================================\n"</font>; fi; \
+	   ${RM} -f pipes1.tmp
+<strong><font color="#FF0000">runpipes1_5:</font></strong>
+	-@${MPIEXEC} -n 2 ./pipes1 -ts_monitor -<font color="#4169E1">case</font> 0 -ts_max_steps 1 -petscpartitioner_type simple -nox &gt; pipes1.tmp 2&gt;&amp;1;\
+	   <font color="#4169E1">if</font> (${DIFF} output/pipes1_4.out pipes1.tmp) then true; \
+	   <font color="#4169E1">else</font> printf <font color="#666666">"${PWD}\nPossible problem with pipes1_5, diffs above\n=========================================\n"</font>; fi; \
+	   ${RM} -f pipes1.tmp
+<strong><font color="#FF0000">runpipes1_6:</font></strong>
+	-@${MPIEXEC} -n 4 ./pipes1 -ts_monitor -<font color="#4169E1">case</font> 0 -ts_max_steps 1 -nox -petscpartitioner_type simple &gt; pipes1.tmp 2&gt;&amp;1;\
+	   <font color="#4169E1">if</font> (${DIFF} output/pipes1_4.out pipes1.tmp) then true; \
+	   <font color="#4169E1">else</font> printf <font color="#666666">"${PWD}\nPossible problem with pipes1_6, diffs above\n=========================================\n"</font>; fi; \
+	   ${RM} -f pipes1.tmp
+
+<strong><font color="#FF0000">runpipes1_7:</font></strong>
+	-@${MPIEXEC} -n 1 ./pipes1 -ts_monitor -<font color="#4169E1">case</font> 2 -ts_max_steps 1 -nox &gt; pipes1.tmp 2&gt;&amp;1;\
+	   <font color="#4169E1">if</font> (${DIFF} output/pipes1_7.out pipes1.tmp) then true; \
+	   <font color="#4169E1">else</font> printf <font color="#666666">"${PWD}\nPossible problem with pipes1_7, diffs above\n=========================================\n"</font>; fi; \
+	   ${RM} -f pipes1.tmp
+<strong><font color="#FF0000">runpipes1_8:</font></strong>
+	-@${MPIEXEC} -n 2 ./pipes1 -ts_monitor -<font color="#4169E1">case</font> 2 -ts_max_steps 1 -petscpartitioner_type simple -nox &gt; pipes1.tmp 2&gt;&amp;1;\
+	   <font color="#4169E1">if</font> (${DIFF} output/pipes1_7.out pipes1.tmp) then true; \
+	   <font color="#4169E1">else</font> printf <font color="#666666">"${PWD}\nPossible problem with pipes1_8, diffs above\n=========================================\n"</font>; fi; \
+	   ${RM} -f pipes1.tmp
+<strong><font color="#FF0000">runpipes1_9:</font></strong>
+	-@${MPIEXEC} -n 4 ./pipes1 -ts_monitor -<font color="#4169E1">case</font> 2 -ts_max_steps 1 -petscpartitioner_type simple -nox &gt; pipes1.tmp 2&gt;&amp;1;\
+	   <font color="#4169E1">if</font> (${DIFF} output/pipes1_7.out pipes1.tmp) then true; \
+	   <font color="#4169E1">else</font> printf <font color="#666666">"${PWD}\nPossible problem with pipes1_9, diffs above\n=========================================\n"</font>; fi; \
+	   ${RM} -f pipes1.tmp
+
+TESTEXAMPLES_C		       = pipes1.PETSc runpipes1 runpipes1_2 runpipes1_3 runpipes1_4  \
+                                 runpipes1_5 runpipes1_6 runpipes1_7 runpipes1_8 runpipes1_9 pipes1.rm
+
+include ${PETSC_DIR}/lib/petsc/conf/test
+</pre>
+</body>
+
+</html>

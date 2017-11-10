@@ -1,0 +1,710 @@
+<center><a href="plexinterpolate.c">Actual source code: plexinterpolate.c</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/dm/impls/plex/plexinterpolate.c.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:42:44+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/dm/impls/plex/plexinterpolate.c.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+<a name="line1">  1: </a> #include <A href="../../../../include/petsc/private/dmpleximpl.h.html">&lt;petsc/private/dmpleximpl.h&gt;</A>
+
+<a name="line3">  3: </a><font color="#B22222">/*</font>
+<a name="line4">  4: </a><font color="#B22222">  DMPlexGetFaces_Internal - Gets groups of vertices that correspond to faces for the given cell</font>
+<a name="line5">  5: </a><font color="#B22222">*/</font>
+<a name="line6">  6: </a><strong><font color="#4169E1"><a name="DMPlexGetFaces_Internal"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMPlexGetFaces_Internal(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> dim, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> p, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *numFaces, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *faceSize, const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *faces[])</font></strong>
+<a name="line7">  7: </a>{
+<a name="line8">  8: </a>  const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *cone = NULL;
+<a name="line9">  9: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>        maxConeSize, maxSupportSize, coneSize;
+<a name="line10"> 10: </a>  <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  ierr;
+
+<a name="line14"> 14: </a>  <a href="../../../../docs/manualpages/DMPLEX/DMPlexGetMaxSizes.html#DMPlexGetMaxSizes">DMPlexGetMaxSizes</a>(dm, &amp;maxConeSize, &amp;maxSupportSize);
+<a name="line15"> 15: </a>  <a href="../../../../docs/manualpages/DMPLEX/DMPlexGetConeSize.html#DMPlexGetConeSize">DMPlexGetConeSize</a>(dm, p, &amp;coneSize);
+<a name="line16"> 16: </a>  <a href="../../../../docs/manualpages/DMPLEX/DMPlexGetCone.html#DMPlexGetCone">DMPlexGetCone</a>(dm, p, &amp;cone);
+<a name="line17"> 17: </a>  DMPlexGetRawFaces_Internal(dm, dim, coneSize, cone, numFaces, faceSize, faces);
+<a name="line18"> 18: </a>  <font color="#4169E1">return</font>(0);
+<a name="line19"> 19: </a>}
+
+<a name="line21"> 21: </a><font color="#B22222">/*</font>
+<a name="line22"> 22: </a><font color="#B22222">  DMPlexRestoreFaces_Internal - Restores the array</font>
+<a name="line23"> 23: </a><font color="#B22222">*/</font>
+<a name="line24"> 24: </a><strong><font color="#4169E1"><a name="DMPlexRestoreFaces_Internal"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMPlexRestoreFaces_Internal(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> dim, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> p, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *numFaces, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *faceSize, const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *faces[])</font></strong>
+<a name="line25"> 25: </a>{
+<a name="line26"> 26: </a>  <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  ierr;
+
+<a name="line29"> 29: </a>  <a href="../../../../docs/manualpages/DM/DMRestoreWorkArray.html#DMRestoreWorkArray">DMRestoreWorkArray</a>(dm, 0, <a href="../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_INT</a>, (void *) faces);
+<a name="line30"> 30: </a>  <font color="#4169E1">return</font>(0);
+<a name="line31"> 31: </a>}
+
+<a name="line33"> 33: </a><font color="#B22222">/*</font>
+<a name="line34"> 34: </a><font color="#B22222">  DMPlexGetRawFaces_Internal - Gets groups of vertices that correspond to faces for the given cone</font>
+<a name="line35"> 35: </a><font color="#B22222">*/</font>
+<a name="line36"> 36: </a><strong><font color="#4169E1"><a name="DMPlexGetRawFaces_Internal"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMPlexGetRawFaces_Internal(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> dim, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> coneSize, const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> cone[], <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *numFaces, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *faceSize, const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *faces[])</font></strong>
+<a name="line37"> 37: </a>{
+<a name="line38"> 38: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       *facesTmp;
+<a name="line39"> 39: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>        maxConeSize, maxSupportSize;
+<a name="line40"> 40: </a>  <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  ierr;
+
+<a name="line44"> 44: </a>  <a href="../../../../docs/manualpages/DMPLEX/DMPlexGetMaxSizes.html#DMPlexGetMaxSizes">DMPlexGetMaxSizes</a>(dm, &amp;maxConeSize, &amp;maxSupportSize);
+<a name="line45"> 45: </a>  <font color="#4169E1">if</font> (faces) {<a href="../../../../docs/manualpages/DM/DMGetWorkArray.html#DMGetWorkArray">DMGetWorkArray</a>(dm, <a href="../../../../docs/manualpages/Sys/PetscSqr.html#PetscSqr">PetscSqr</a>(<a href="../../../../docs/manualpages/Sys/PetscMax.html#PetscMax">PetscMax</a>(maxConeSize, maxSupportSize)), <a href="../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_INT</a>, &amp;facesTmp);}
+<a name="line46"> 46: </a>  <font color="#4169E1">switch</font> (dim) {
+<a name="line47"> 47: </a>  <font color="#4169E1">case</font> 1:
+<a name="line48"> 48: </a>    <font color="#4169E1">switch</font> (coneSize) {
+<a name="line49"> 49: </a>    <font color="#4169E1">case</font> 2:
+<a name="line50"> 50: </a>      <font color="#4169E1">if</font> (faces) {
+<a name="line51"> 51: </a>        facesTmp[0] = cone[0]; facesTmp[1] = cone[1];
+<a name="line52"> 52: </a>        *faces = facesTmp;
+<a name="line53"> 53: </a>      }
+<a name="line54"> 54: </a>      <font color="#4169E1">if</font> (numFaces) *numFaces         = 2;
+<a name="line55"> 55: </a>      <font color="#4169E1">if</font> (faceSize) *faceSize         = 1;
+<a name="line56"> 56: </a>      <font color="#4169E1">break</font>;
+<a name="line57"> 57: </a><strong><font color="#FF0000">    default:</font></strong>
+<a name="line58"> 58: </a>      <a href="../../../../docs/manualpages/Sys/SETERRQ2.html#SETERRQ2">SETERRQ2</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_ARG_OUTOFRANGE, <font color="#666666">"Cone size %D not supported for dimension %D"</font>, coneSize, dim);
+<a name="line59"> 59: </a>    }
+<a name="line60"> 60: </a>    <font color="#4169E1">break</font>;
+<a name="line61"> 61: </a>  <font color="#4169E1">case</font> 2:
+<a name="line62"> 62: </a>    <font color="#4169E1">switch</font> (coneSize) {
+<a name="line63"> 63: </a>    <font color="#4169E1">case</font> 3:
+<a name="line64"> 64: </a>      <font color="#4169E1">if</font> (faces) {
+<a name="line65"> 65: </a>        facesTmp[0] = cone[0]; facesTmp[1] = cone[1];
+<a name="line66"> 66: </a>        facesTmp[2] = cone[1]; facesTmp[3] = cone[2];
+<a name="line67"> 67: </a>        facesTmp[4] = cone[2]; facesTmp[5] = cone[0];
+<a name="line68"> 68: </a>        *faces = facesTmp;
+<a name="line69"> 69: </a>      }
+<a name="line70"> 70: </a>      <font color="#4169E1">if</font> (numFaces) *numFaces         = 3;
+<a name="line71"> 71: </a>      <font color="#4169E1">if</font> (faceSize) *faceSize         = 2;
+<a name="line72"> 72: </a>      <font color="#4169E1">break</font>;
+<a name="line73"> 73: </a>    <font color="#4169E1">case</font> 4:
+<a name="line74"> 74: </a>      <font color="#B22222">/* Vertices follow right hand rule */</font>
+<a name="line75"> 75: </a>      <font color="#4169E1">if</font> (faces) {
+<a name="line76"> 76: </a>        facesTmp[0] = cone[0]; facesTmp[1] = cone[1];
+<a name="line77"> 77: </a>        facesTmp[2] = cone[1]; facesTmp[3] = cone[2];
+<a name="line78"> 78: </a>        facesTmp[4] = cone[2]; facesTmp[5] = cone[3];
+<a name="line79"> 79: </a>        facesTmp[6] = cone[3]; facesTmp[7] = cone[0];
+<a name="line80"> 80: </a>        *faces = facesTmp;
+<a name="line81"> 81: </a>      }
+<a name="line82"> 82: </a>      <font color="#4169E1">if</font> (numFaces) *numFaces         = 4;
+<a name="line83"> 83: </a>      <font color="#4169E1">if</font> (faceSize) *faceSize         = 2;
+<a name="line84"> 84: </a>      <font color="#4169E1">break</font>;
+<a name="line85"> 85: </a><strong><font color="#FF0000">    default:</font></strong>
+<a name="line86"> 86: </a>      <a href="../../../../docs/manualpages/Sys/SETERRQ2.html#SETERRQ2">SETERRQ2</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_ARG_OUTOFRANGE, <font color="#666666">"Cone size %D not supported for dimension %D"</font>, coneSize, dim);
+<a name="line87"> 87: </a>    }
+<a name="line88"> 88: </a>    <font color="#4169E1">break</font>;
+<a name="line89"> 89: </a>  <font color="#4169E1">case</font> 3:
+<a name="line90"> 90: </a>    <font color="#4169E1">switch</font> (coneSize) {
+<a name="line91"> 91: </a>    <font color="#4169E1">case</font> 3:
+<a name="line92"> 92: </a>      <font color="#4169E1">if</font> (faces) {
+<a name="line93"> 93: </a>        facesTmp[0] = cone[0]; facesTmp[1] = cone[1];
+<a name="line94"> 94: </a>        facesTmp[2] = cone[1]; facesTmp[3] = cone[2];
+<a name="line95"> 95: </a>        facesTmp[4] = cone[2]; facesTmp[5] = cone[0];
+<a name="line96"> 96: </a>        *faces = facesTmp;
+<a name="line97"> 97: </a>      }
+<a name="line98"> 98: </a>      <font color="#4169E1">if</font> (numFaces) *numFaces         = 3;
+<a name="line99"> 99: </a>      <font color="#4169E1">if</font> (faceSize) *faceSize         = 2;
+<a name="line100">100: </a>      <font color="#4169E1">break</font>;
+<a name="line101">101: </a>    <font color="#4169E1">case</font> 4:
+<a name="line102">102: </a>      <font color="#B22222">/* Vertices of first face follow right hand rule and normal points away from last vertex */</font>
+<a name="line103">103: </a>      <font color="#4169E1">if</font> (faces) {
+<a name="line104">104: </a>        facesTmp[0] = cone[0]; facesTmp[1]  = cone[1]; facesTmp[2]  = cone[2];
+<a name="line105">105: </a>        facesTmp[3] = cone[0]; facesTmp[4]  = cone[3]; facesTmp[5]  = cone[1];
+<a name="line106">106: </a>        facesTmp[6] = cone[0]; facesTmp[7]  = cone[2]; facesTmp[8]  = cone[3];
+<a name="line107">107: </a>        facesTmp[9] = cone[2]; facesTmp[10] = cone[1]; facesTmp[11] = cone[3];
+<a name="line108">108: </a>        *faces = facesTmp;
+<a name="line109">109: </a>      }
+<a name="line110">110: </a>      <font color="#4169E1">if</font> (numFaces) *numFaces         = 4;
+<a name="line111">111: </a>      <font color="#4169E1">if</font> (faceSize) *faceSize         = 3;
+<a name="line112">112: </a>      <font color="#4169E1">break</font>;
+<a name="line113">113: </a>    <font color="#4169E1">case</font> 8:
+<a name="line114">114: </a>      <font color="#4169E1">if</font> (faces) {
+<a name="line115">115: </a>        facesTmp[0]  = cone[0]; facesTmp[1]  = cone[1]; facesTmp[2]  = cone[2]; facesTmp[3]  = cone[3]; <font color="#B22222">/* Bottom */</font>
+<a name="line116">116: </a>        facesTmp[4]  = cone[4]; facesTmp[5]  = cone[5]; facesTmp[6]  = cone[6]; facesTmp[7]  = cone[7]; <font color="#B22222">/* Top */</font>
+<a name="line117">117: </a>        facesTmp[8]  = cone[0]; facesTmp[9]  = cone[3]; facesTmp[10] = cone[5]; facesTmp[11] = cone[4]; <font color="#B22222">/* Front */</font>
+<a name="line118">118: </a>        facesTmp[12] = cone[2]; facesTmp[13] = cone[1]; facesTmp[14] = cone[7]; facesTmp[15] = cone[6]; <font color="#B22222">/* Back */</font>
+<a name="line119">119: </a>        facesTmp[16] = cone[3]; facesTmp[17] = cone[2]; facesTmp[18] = cone[6]; facesTmp[19] = cone[5]; <font color="#B22222">/* Right */</font>
+<a name="line120">120: </a>        facesTmp[20] = cone[0]; facesTmp[21] = cone[4]; facesTmp[22] = cone[7]; facesTmp[23] = cone[1]; <font color="#B22222">/* Left */</font>
+<a name="line121">121: </a>        *faces = facesTmp;
+<a name="line122">122: </a>      }
+<a name="line123">123: </a>      <font color="#4169E1">if</font> (numFaces) *numFaces         = 6;
+<a name="line124">124: </a>      <font color="#4169E1">if</font> (faceSize) *faceSize         = 4;
+<a name="line125">125: </a>      <font color="#4169E1">break</font>;
+<a name="line126">126: </a><strong><font color="#FF0000">    default:</font></strong>
+<a name="line127">127: </a>      <a href="../../../../docs/manualpages/Sys/SETERRQ2.html#SETERRQ2">SETERRQ2</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_ARG_OUTOFRANGE, <font color="#666666">"Cone size %D not supported for dimension %D"</font>, coneSize, dim);
+<a name="line128">128: </a>    }
+<a name="line129">129: </a>    <font color="#4169E1">break</font>;
+<a name="line130">130: </a><strong><font color="#FF0000">  default:</font></strong>
+<a name="line131">131: </a>    <a href="../../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_ARG_OUTOFRANGE, <font color="#666666">"Dimension %D not supported"</font>, dim);
+<a name="line132">132: </a>  }
+<a name="line133">133: </a>  <font color="#4169E1">return</font>(0);
+<a name="line134">134: </a>}
+
+<a name="line136">136: </a><font color="#B22222">/* This interpolates faces for cells at some stratum */</font>
+<a name="line137">137: </a><strong><font color="#4169E1"><a name="DMPlexInterpolateFaces_Internal"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMPlexInterpolateFaces_Internal(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> cellDepth, <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> idm)</font></strong>
+<a name="line138">138: </a>{
+<a name="line139">139: </a>  <a href="../../../../docs/manualpages/DM/DMLabel.html#DMLabel">DMLabel</a>        subpointMap;
+<a name="line140">140: </a>  PetscHashIJKL  faceTable;
+<a name="line141">141: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>      *pStart, *pEnd;
+<a name="line142">142: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       cellDim, depth, faceDepth = cellDepth, numPoints = 0, faceSizeAll = 0, face, c, d;
+
+<a name="line146">146: </a>  <a href="../../../../docs/manualpages/DM/DMGetDimension.html#DMGetDimension">DMGetDimension</a>(dm, &amp;cellDim);
+<a name="line147">147: </a>  <font color="#B22222">/* HACK: I need a better way to determine face dimension, or an alternative to GetFaces() */</font>
+<a name="line148">148: </a>  <a href="../../../../docs/manualpages/DMPLEX/DMPlexGetSubpointMap.html#DMPlexGetSubpointMap">DMPlexGetSubpointMap</a>(dm, &amp;subpointMap);
+<a name="line149">149: </a>  <font color="#4169E1">if</font> (subpointMap) ++cellDim;
+<a name="line150">150: </a>  <a href="../../../../docs/manualpages/DMPLEX/DMPlexGetDepth.html#DMPlexGetDepth">DMPlexGetDepth</a>(dm, &amp;depth);
+<a name="line151">151: </a>  ++depth;
+<a name="line152">152: </a>  ++cellDepth;
+<a name="line153">153: </a>  cellDim -= depth - cellDepth;
+<a name="line154">154: </a>  <a href="../../../../docs/manualpages/Sys/PetscMalloc2.html#PetscMalloc2">PetscMalloc2</a>(depth+1,&amp;pStart,depth+1,&amp;pEnd);
+<a name="line155">155: </a>  <font color="#4169E1">for</font> (d = depth-1; d &gt;= faceDepth; --d) {
+<a name="line156">156: </a>    <a href="../../../../docs/manualpages/DMPLEX/DMPlexGetDepthStratum.html#DMPlexGetDepthStratum">DMPlexGetDepthStratum</a>(dm, d, &amp;pStart[d+1], &amp;pEnd[d+1]);
+<a name="line157">157: </a>  }
+<a name="line158">158: </a>  <a href="../../../../docs/manualpages/DMPLEX/DMPlexGetDepthStratum.html#DMPlexGetDepthStratum">DMPlexGetDepthStratum</a>(dm, -1, NULL, &amp;pStart[faceDepth]);
+<a name="line159">159: </a>  pEnd[faceDepth] = pStart[faceDepth];
+<a name="line160">160: </a>  <font color="#4169E1">for</font> (d = faceDepth-1; d &gt;= 0; --d) {
+<a name="line161">161: </a>    <a href="../../../../docs/manualpages/DMPLEX/DMPlexGetDepthStratum.html#DMPlexGetDepthStratum">DMPlexGetDepthStratum</a>(dm, d, &amp;pStart[d], &amp;pEnd[d]);
+<a name="line162">162: </a>  }
+<a name="line163">163: </a>  <font color="#4169E1">if</font> (pEnd[cellDepth] &gt; pStart[cellDepth]) {DMPlexGetFaces_Internal(dm, cellDim, pStart[cellDepth], NULL, &amp;faceSizeAll, NULL);}
+<a name="line164">164: </a>  <font color="#4169E1">if</font> (faceSizeAll &gt; 4) <a href="../../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>) dm), PETSC_ERR_ARG_WRONG, <font color="#666666">"Do not support interpolation of meshes with faces of %D vertices"</font>, faceSizeAll);
+<a name="line165">165: </a>  PetscHashIJKLCreate(&amp;faceTable);
+<a name="line166">166: </a>  <font color="#4169E1">for</font> (c = pStart[cellDepth], face = pStart[faceDepth]; c &lt; pEnd[cellDepth]; ++c) {
+<a name="line167">167: </a>    const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *cellFaces;
+<a name="line168">168: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>        numCellFaces, faceSize, cf;
+
+<a name="line170">170: </a>    DMPlexGetFaces_Internal(dm, cellDim, c, &amp;numCellFaces, &amp;faceSize, &amp;cellFaces);
+<a name="line171">171: </a>    <font color="#4169E1">if</font> (faceSize != faceSizeAll) <a href="../../../../docs/manualpages/Sys/SETERRQ3.html#SETERRQ3">SETERRQ3</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>, PETSC_ERR_PLIB, <font color="#666666">"Inconsistent face for cell %D of size %D != %D"</font>, c, faceSize, faceSizeAll);
+<a name="line172">172: </a>    <font color="#4169E1">for</font> (cf = 0; cf &lt; numCellFaces; ++cf) {
+<a name="line173">173: </a>      const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>   *cellFace = &amp;cellFaces[cf*faceSize];
+<a name="line174">174: </a>      PetscHashIJKLKey  key;
+<a name="line175">175: </a>      PetscHashIJKLIter missing, iter;
+
+<a name="line177">177: </a>      <font color="#4169E1">if</font> (faceSize == 2) {
+<a name="line178">178: </a>        key.i = <a href="../../../../docs/manualpages/Sys/PetscMin.html#PetscMin">PetscMin</a>(cellFace[0], cellFace[1]);
+<a name="line179">179: </a>        key.j = <a href="../../../../docs/manualpages/Sys/PetscMax.html#PetscMax">PetscMax</a>(cellFace[0], cellFace[1]);
+<a name="line180">180: </a>        key.k = 0;
+<a name="line181">181: </a>        key.l = 0;
+<a name="line182">182: </a>      } <font color="#4169E1">else</font> {
+<a name="line183">183: </a>        key.i = cellFace[0]; key.j = cellFace[1]; key.k = cellFace[2]; key.l = faceSize &gt; 3 ? cellFace[3] : 0;
+<a name="line184">184: </a>        <a href="../../../../docs/manualpages/Sys/PetscSortInt.html#PetscSortInt">PetscSortInt</a>(faceSize, (<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *) &amp;key);
+<a name="line185">185: </a>      }
+<a name="line186">186: </a>      PetscHashIJKLPut(faceTable, key, &amp;missing, &amp;iter);
+<a name="line187">187: </a>      <font color="#4169E1">if</font> (missing) {PetscHashIJKLSet(faceTable, iter, face++);}
+<a name="line188">188: </a>    }
+<a name="line189">189: </a>    DMPlexRestoreFaces_Internal(dm, cellDim, c, &amp;numCellFaces, &amp;faceSize, &amp;cellFaces);
+<a name="line190">190: </a>  }
+<a name="line191">191: </a>  pEnd[faceDepth] = face;
+<a name="line192">192: </a>  PetscHashIJKLDestroy(&amp;faceTable);
+<a name="line193">193: </a>  <font color="#B22222">/* Count new points */</font>
+<a name="line194">194: </a>  <font color="#4169E1">for</font> (d = 0; d &lt;= depth; ++d) {
+<a name="line195">195: </a>    numPoints += pEnd[d]-pStart[d];
+<a name="line196">196: </a>  }
+<a name="line197">197: </a>  <a href="../../../../docs/manualpages/DMPLEX/DMPlexSetChart.html#DMPlexSetChart">DMPlexSetChart</a>(idm, 0, numPoints);
+<a name="line198">198: </a>  <font color="#B22222">/* Set cone sizes */</font>
+<a name="line199">199: </a>  <font color="#4169E1">for</font> (d = 0; d &lt;= depth; ++d) {
+<a name="line200">200: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> coneSize, p;
+
+<a name="line202">202: </a>    <font color="#4169E1">if</font> (d == faceDepth) {
+<a name="line203">203: </a>      <font color="#4169E1">for</font> (p = pStart[d]; p &lt; pEnd[d]; ++p) {
+<a name="line204">204: </a>        <font color="#B22222">/* I see no way to do this if we admit faces of different shapes */</font>
+<a name="line205">205: </a>        <a href="../../../../docs/manualpages/DMPLEX/DMPlexSetConeSize.html#DMPlexSetConeSize">DMPlexSetConeSize</a>(idm, p, faceSizeAll);
+<a name="line206">206: </a>      }
+<a name="line207">207: </a>    } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (d == cellDepth) {
+<a name="line208">208: </a>      <font color="#4169E1">for</font> (p = pStart[d]; p &lt; pEnd[d]; ++p) {
+<a name="line209">209: </a>        <font color="#B22222">/* Number of cell faces may be different from number of cell vertices*/</font>
+<a name="line210">210: </a>        DMPlexGetFaces_Internal(dm, cellDim, p, &amp;coneSize, NULL, NULL);
+<a name="line211">211: </a>        <a href="../../../../docs/manualpages/DMPLEX/DMPlexSetConeSize.html#DMPlexSetConeSize">DMPlexSetConeSize</a>(idm, p, coneSize);
+<a name="line212">212: </a>      }
+<a name="line213">213: </a>    } <font color="#4169E1">else</font> {
+<a name="line214">214: </a>      <font color="#4169E1">for</font> (p = pStart[d]; p &lt; pEnd[d]; ++p) {
+<a name="line215">215: </a>        <a href="../../../../docs/manualpages/DMPLEX/DMPlexGetConeSize.html#DMPlexGetConeSize">DMPlexGetConeSize</a>(dm, p, &amp;coneSize);
+<a name="line216">216: </a>        <a href="../../../../docs/manualpages/DMPLEX/DMPlexSetConeSize.html#DMPlexSetConeSize">DMPlexSetConeSize</a>(idm, p, coneSize);
+<a name="line217">217: </a>      }
+<a name="line218">218: </a>    }
+<a name="line219">219: </a>  }
+<a name="line220">220: </a>  <a href="../../../../docs/manualpages/DM/DMSetUp.html#DMSetUp">DMSetUp</a>(idm);
+<a name="line221">221: </a>  <font color="#B22222">/* Get face cones from subsets of cell vertices */</font>
+<a name="line222">222: </a>  <font color="#4169E1">if</font> (faceSizeAll &gt; 4) <a href="../../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>) dm), PETSC_ERR_ARG_WRONG, <font color="#666666">"Do not support interpolation of meshes with faces of %D vertices"</font>, faceSizeAll);
+<a name="line223">223: </a>  PetscHashIJKLCreate(&amp;faceTable);
+<a name="line224">224: </a>  <font color="#4169E1">for</font> (d = depth; d &gt; cellDepth; --d) {
+<a name="line225">225: </a>    const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *cone;
+<a name="line226">226: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>        p;
+
+<a name="line228">228: </a>    <font color="#4169E1">for</font> (p = pStart[d]; p &lt; pEnd[d]; ++p) {
+<a name="line229">229: </a>      <a href="../../../../docs/manualpages/DMPLEX/DMPlexGetCone.html#DMPlexGetCone">DMPlexGetCone</a>(dm, p, &amp;cone);
+<a name="line230">230: </a>      <a href="../../../../docs/manualpages/DMPLEX/DMPlexSetCone.html#DMPlexSetCone">DMPlexSetCone</a>(idm, p, cone);
+<a name="line231">231: </a>      <a href="../../../../docs/manualpages/DMPLEX/DMPlexGetConeOrientation.html#DMPlexGetConeOrientation">DMPlexGetConeOrientation</a>(dm, p, &amp;cone);
+<a name="line232">232: </a>      <a href="../../../../docs/manualpages/DMPLEX/DMPlexSetConeOrientation.html#DMPlexSetConeOrientation">DMPlexSetConeOrientation</a>(idm, p, cone);
+<a name="line233">233: </a>    }
+<a name="line234">234: </a>  }
+<a name="line235">235: </a>  <font color="#4169E1">for</font> (c = pStart[cellDepth], face = pStart[faceDepth]; c &lt; pEnd[cellDepth]; ++c) {
+<a name="line236">236: </a>    const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *cellFaces;
+<a name="line237">237: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>        numCellFaces, faceSize, cf;
+
+<a name="line239">239: </a>    DMPlexGetFaces_Internal(dm, cellDim, c, &amp;numCellFaces, &amp;faceSize, &amp;cellFaces);
+<a name="line240">240: </a>    <font color="#4169E1">if</font> (faceSize != faceSizeAll) <a href="../../../../docs/manualpages/Sys/SETERRQ3.html#SETERRQ3">SETERRQ3</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>, PETSC_ERR_PLIB, <font color="#666666">"Inconsistent face for cell %D of size %D != %D"</font>, c, faceSize, faceSizeAll);
+<a name="line241">241: </a>    <font color="#4169E1">for</font> (cf = 0; cf &lt; numCellFaces; ++cf) {
+<a name="line242">242: </a>      const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>  *cellFace = &amp;cellFaces[cf*faceSize];
+<a name="line243">243: </a>      PetscHashIJKLKey key;
+<a name="line244">244: </a>      PetscHashIJKLIter missing, iter;
+
+<a name="line246">246: </a>      <font color="#4169E1">if</font> (faceSize == 2) {
+<a name="line247">247: </a>        key.i = <a href="../../../../docs/manualpages/Sys/PetscMin.html#PetscMin">PetscMin</a>(cellFace[0], cellFace[1]);
+<a name="line248">248: </a>        key.j = <a href="../../../../docs/manualpages/Sys/PetscMax.html#PetscMax">PetscMax</a>(cellFace[0], cellFace[1]);
+<a name="line249">249: </a>        key.k = 0;
+<a name="line250">250: </a>        key.l = 0;
+<a name="line251">251: </a>      } <font color="#4169E1">else</font> {
+<a name="line252">252: </a>        key.i = cellFace[0]; key.j = cellFace[1]; key.k = cellFace[2]; key.l = faceSize &gt; 3 ? cellFace[3] : 0;
+<a name="line253">253: </a>        <a href="../../../../docs/manualpages/Sys/PetscSortInt.html#PetscSortInt">PetscSortInt</a>(faceSize, (<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *) &amp;key);
+<a name="line254">254: </a>      }
+<a name="line255">255: </a>      PetscHashIJKLPut(faceTable, key, &amp;missing, &amp;iter);
+<a name="line256">256: </a>      <font color="#4169E1">if</font> (missing) {
+<a name="line257">257: </a>        <a href="../../../../docs/manualpages/DMPLEX/DMPlexSetCone.html#DMPlexSetCone">DMPlexSetCone</a>(idm, face, cellFace);
+<a name="line258">258: </a>        PetscHashIJKLSet(faceTable, iter, face);
+<a name="line259">259: </a>        <a href="../../../../docs/manualpages/DMPLEX/DMPlexInsertCone.html#DMPlexInsertCone">DMPlexInsertCone</a>(idm, c, cf, face++);
+<a name="line260">260: </a>      } <font color="#4169E1">else</font> {
+<a name="line261">261: </a>        const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *cone;
+<a name="line262">262: </a>        <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>        coneSize, ornt, i, j, f;
+
+<a name="line264">264: </a>        PetscHashIJKLGet(faceTable, iter, &amp;f);
+<a name="line265">265: </a>        <a href="../../../../docs/manualpages/DMPLEX/DMPlexInsertCone.html#DMPlexInsertCone">DMPlexInsertCone</a>(idm, c, cf, f);
+<a name="line266">266: </a>        <font color="#B22222">/* Orient face: Do not allow reverse orientation at the first vertex */</font>
+<a name="line267">267: </a>        <a href="../../../../docs/manualpages/DMPLEX/DMPlexGetConeSize.html#DMPlexGetConeSize">DMPlexGetConeSize</a>(idm, f, &amp;coneSize);
+<a name="line268">268: </a>        <a href="../../../../docs/manualpages/DMPLEX/DMPlexGetCone.html#DMPlexGetCone">DMPlexGetCone</a>(idm, f, &amp;cone);
+<a name="line269">269: </a>        <font color="#4169E1">if</font> (coneSize != faceSize) <a href="../../../../docs/manualpages/Sys/SETERRQ3.html#SETERRQ3">SETERRQ3</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>, PETSC_ERR_PLIB, <font color="#666666">"Invalid number of face vertices %D for face %D should be %D"</font>, coneSize, f, faceSize);
+<a name="line270">270: </a>        <font color="#B22222">/* - First find the initial vertex */</font>
+<a name="line271">271: </a>        <font color="#4169E1">for</font> (i = 0; i &lt; faceSize; ++i) <font color="#4169E1">if</font> (cellFace[0] == cone[i]) <font color="#4169E1">break</font>;
+<a name="line272">272: </a>        <font color="#B22222">/* - Try forward comparison */</font>
+<a name="line273">273: </a>        <font color="#4169E1">for</font> (j = 0; j &lt; faceSize; ++j) <font color="#4169E1">if</font> (cellFace[j] != cone[(i+j)%faceSize]) <font color="#4169E1">break</font>;
+<a name="line274">274: </a>        <font color="#4169E1">if</font> (j == faceSize) {
+<a name="line275">275: </a>          <font color="#4169E1">if</font> ((faceSize == 2) &amp;&amp; (i == 1)) ornt = -2;
+<a name="line276">276: </a>          <font color="#4169E1">else</font>                             ornt = i;
+<a name="line277">277: </a>        } <font color="#4169E1">else</font> {
+<a name="line278">278: </a>          <font color="#B22222">/* - Try backward comparison */</font>
+<a name="line279">279: </a>          <font color="#4169E1">for</font> (j = 0; j &lt; faceSize; ++j) <font color="#4169E1">if</font> (cellFace[j] != cone[(i+faceSize-j)%faceSize]) <font color="#4169E1">break</font>;
+<a name="line280">280: </a>          <font color="#4169E1">if</font> (j == faceSize) {
+<a name="line281">281: </a>            <font color="#4169E1">if</font> (i == 0) ornt = -faceSize;
+<a name="line282">282: </a>            <font color="#4169E1">else</font>        ornt = -i;
+<a name="line283">283: </a>          } <font color="#4169E1">else</font> <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>, PETSC_ERR_PLIB, <font color="#666666">"Could not determine face orientation"</font>);
+<a name="line284">284: </a>        }
+<a name="line285">285: </a>        <a href="../../../../docs/manualpages/DMPLEX/DMPlexInsertConeOrientation.html#DMPlexInsertConeOrientation">DMPlexInsertConeOrientation</a>(idm, c, cf, ornt);
+<a name="line286">286: </a>      }
+<a name="line287">287: </a>    }
+<a name="line288">288: </a>    DMPlexRestoreFaces_Internal(dm, cellDim, c, &amp;numCellFaces, &amp;faceSize, &amp;cellFaces);
+<a name="line289">289: </a>  }
+<a name="line290">290: </a>  <font color="#4169E1">if</font> (face != pEnd[faceDepth]) <a href="../../../../docs/manualpages/Sys/SETERRQ2.html#SETERRQ2">SETERRQ2</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>) dm), PETSC_ERR_PLIB, <font color="#666666">"Invalid number of faces %D should be %D"</font>, face-pStart[faceDepth], pEnd[faceDepth]-pStart[faceDepth]);
+<a name="line291">291: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree2.html#PetscFree2">PetscFree2</a>(pStart,pEnd);
+<a name="line292">292: </a>  PetscHashIJKLDestroy(&amp;faceTable);
+<a name="line293">293: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree2.html#PetscFree2">PetscFree2</a>(pStart,pEnd);
+<a name="line294">294: </a>  <a href="../../../../docs/manualpages/DMPLEX/DMPlexSymmetrize.html#DMPlexSymmetrize">DMPlexSymmetrize</a>(idm);
+<a name="line295">295: </a>  <a href="../../../../docs/manualpages/DMPLEX/DMPlexStratify.html#DMPlexStratify">DMPlexStratify</a>(idm);
+<a name="line296">296: </a>  <font color="#4169E1">return</font>(0);
+<a name="line297">297: </a>}
+
+<a name="line299">299: </a><font color="#B22222">/* This interpolates the PointSF in parallel following local interpolation */</font>
+<a name="line300">300: </a><strong><font color="#4169E1"><a name="DMPlexInterpolatePointSF"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMPlexInterpolatePointSF(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm, <a href="../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> pointSF, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> depth)</font></strong>
+<a name="line301">301: </a>{
+<a name="line302">302: </a>  <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>        size, rank;
+<a name="line303">303: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>           p, c, d, dof, offset;
+<a name="line304">304: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>           numLeaves, numRoots, candidatesSize, candidatesRemoteSize;
+<a name="line305">305: </a>  const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>    *localPoints;
+<a name="line306">306: </a>  const <a href="../../../../docs/manualpages/PetscSF/PetscSFNode.html#PetscSFNode">PetscSFNode</a> *remotePoints;
+<a name="line307">307: </a>  <a href="../../../../docs/manualpages/PetscSF/PetscSFNode.html#PetscSFNode">PetscSFNode</a>       *candidates, *candidatesRemote, *claims;
+<a name="line308">308: </a>  <a href="../../../../docs/manualpages/IS/PetscSection.html#PetscSection">PetscSection</a>       candidateSection, candidateSectionRemote, claimSection;
+<a name="line309">309: </a>  PetscHashI         leafhash;
+<a name="line310">310: </a>  PetscHashIJ        roothash;
+<a name="line311">311: </a>  PetscHashIJKey     key;
+<a name="line312">312: </a>  <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>     ierr;
+
+<a name="line315">315: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>) dm), &amp;size);
+<a name="line316">316: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>) dm), &amp;rank);
+<a name="line317">317: </a>  <a href="../../../../docs/manualpages/PetscSF/PetscSFGetGraph.html#PetscSFGetGraph">PetscSFGetGraph</a>(pointSF, &amp;numRoots, &amp;numLeaves, &amp;localPoints, &amp;remotePoints);
+<a name="line318">318: </a>  <font color="#4169E1">if</font> (size &lt; 2 || numRoots &lt; 0) <font color="#4169E1">return</font>(0);
+<a name="line319">319: </a>  <a href="../../../../docs/manualpages/Profiling/PetscLogEventBegin.html#PetscLogEventBegin">PetscLogEventBegin</a>(DMPLEX_InterpolateSF,dm,0,0,0);
+<a name="line320">320: </a>  <font color="#B22222">/* Build hashes of points in the SF for efficient lookup */</font>
+<a name="line321">321: </a>  PetscHashICreate(leafhash);
+<a name="line322">322: </a>  PetscHashIJCreate(&amp;roothash);
+<a name="line323">323: </a>  PetscHashIJSetMultivalued(roothash, <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>);
+<a name="line324">324: </a>  <font color="#4169E1">for</font> (p = 0; p &lt; numLeaves; ++p) {
+<a name="line325">325: </a>    PetscHashIAdd(leafhash, localPoints[p], p);
+<a name="line326">326: </a>    key.i = remotePoints[p].index; key.j = remotePoints[p].rank;
+<a name="line327">327: </a>    PetscHashIJAdd(roothash, key, p);
+<a name="line328">328: </a>  }
+<a name="line329">329: </a>  <font color="#B22222">/* Build a section / SFNode array of candidate points in the single-level adjacency of leaves,</font>
+<a name="line330">330: </a><font color="#B22222">     where each candidate is defined by the root entry for the other vertex that defines the edge. */</font>
+<a name="line331">331: </a>  <a href="../../../../docs/manualpages/IS/PetscSectionCreate.html#PetscSectionCreate">PetscSectionCreate</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>) dm), &amp;candidateSection);
+<a name="line332">332: </a>  <a href="../../../../docs/manualpages/IS/PetscSectionSetChart.html#PetscSectionSetChart">PetscSectionSetChart</a>(candidateSection, 0, numRoots);
+<a name="line333">333: </a>  {
+<a name="line334">334: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> leaf, root, idx, a, *adj = NULL;
+<a name="line335">335: </a>    <font color="#4169E1">for</font> (p = 0; p &lt; numLeaves; ++p) {
+<a name="line336">336: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> adjSize = <a href="../../../../docs/manualpages/Sys/PETSC_DETERMINE.html#PETSC_DETERMINE">PETSC_DETERMINE</a>;
+<a name="line337">337: </a>      DMPlexGetAdjacency_Internal(dm, localPoints[p], <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>, <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>, <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>, &amp;adjSize, &amp;adj);
+<a name="line338">338: </a>      <font color="#4169E1">for</font> (a = 0; a &lt; adjSize; ++a) {
+<a name="line339">339: </a>        PetscHashIMap(leafhash, adj[a], leaf);
+<a name="line340">340: </a>        <font color="#4169E1">if</font> (leaf &gt;= 0) {<a href="../../../../docs/manualpages/IS/PetscSectionAddDof.html#PetscSectionAddDof">PetscSectionAddDof</a>(candidateSection, localPoints[p], 1);}
+<a name="line341">341: </a>      }
+<a name="line342">342: </a>    }
+<a name="line343">343: </a>    <a href="../../../../docs/manualpages/IS/PetscSectionSetUp.html#PetscSectionSetUp">PetscSectionSetUp</a>(candidateSection);
+<a name="line344">344: </a>    <a href="../../../../docs/manualpages/IS/PetscSectionGetStorageSize.html#PetscSectionGetStorageSize">PetscSectionGetStorageSize</a>(candidateSection, &amp;candidatesSize);
+<a name="line345">345: </a>    <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(candidatesSize, &amp;candidates);
+<a name="line346">346: </a>    <font color="#4169E1">for</font> (p = 0; p &lt; numLeaves; ++p) {
+<a name="line347">347: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> adjSize = <a href="../../../../docs/manualpages/Sys/PETSC_DETERMINE.html#PETSC_DETERMINE">PETSC_DETERMINE</a>;
+<a name="line348">348: </a>      <a href="../../../../docs/manualpages/IS/PetscSectionGetOffset.html#PetscSectionGetOffset">PetscSectionGetOffset</a>(candidateSection, localPoints[p], &amp;offset);
+<a name="line349">349: </a>      DMPlexGetAdjacency_Internal(dm, localPoints[p], <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>, <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>, <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>, &amp;adjSize, &amp;adj);
+<a name="line350">350: </a>      <font color="#4169E1">for</font> (idx = 0, a = 0; a &lt; adjSize; ++a) {
+<a name="line351">351: </a>        PetscHashIMap(leafhash, adj[a], root);
+<a name="line352">352: </a>        <font color="#4169E1">if</font> (root &gt;= 0) candidates[offset+idx++] = remotePoints[root];
+<a name="line353">353: </a>      }
+<a name="line354">354: </a>    }
+<a name="line355">355: </a>    <a href="../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(adj);
+<a name="line356">356: </a>  }
+<a name="line357">357: </a>  <font color="#B22222">/* Gather candidate section / array pair into the root partition via inverse(multi(pointSF)). */</font>
+<a name="line358">358: </a>  {
+<a name="line359">359: </a>    <a href="../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a>   sfMulti, sfInverse, sfCandidates;
+<a name="line360">360: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *remoteOffsets;
+<a name="line361">361: </a>    <a href="../../../../docs/manualpages/PetscSF/PetscSFGetMultiSF.html#PetscSFGetMultiSF">PetscSFGetMultiSF</a>(pointSF, &amp;sfMulti);
+<a name="line362">362: </a>    <a href="../../../../docs/manualpages/PetscSF/PetscSFCreateInverseSF.html#PetscSFCreateInverseSF">PetscSFCreateInverseSF</a>(sfMulti, &amp;sfInverse);
+<a name="line363">363: </a>    <a href="../../../../docs/manualpages/IS/PetscSectionCreate.html#PetscSectionCreate">PetscSectionCreate</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>) dm), &amp;candidateSectionRemote);
+<a name="line364">364: </a>    <a href="../../../../docs/manualpages/IS/PetscSFDistributeSection.html#PetscSFDistributeSection">PetscSFDistributeSection</a>(sfInverse, candidateSection, &amp;remoteOffsets, candidateSectionRemote);
+<a name="line365">365: </a>    <a href="../../../../docs/manualpages/IS/PetscSFCreateSectionSF.html#PetscSFCreateSectionSF">PetscSFCreateSectionSF</a>(sfInverse, candidateSection, remoteOffsets, candidateSectionRemote, &amp;sfCandidates);
+<a name="line366">366: </a>    <a href="../../../../docs/manualpages/IS/PetscSectionGetStorageSize.html#PetscSectionGetStorageSize">PetscSectionGetStorageSize</a>(candidateSectionRemote, &amp;candidatesRemoteSize);
+<a name="line367">367: </a>    <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(candidatesRemoteSize, &amp;candidatesRemote);
+<a name="line368">368: </a>    <a href="../../../../docs/manualpages/PetscSF/PetscSFBcastBegin.html#PetscSFBcastBegin">PetscSFBcastBegin</a>(sfCandidates, MPIU_2INT, candidates, candidatesRemote);
+<a name="line369">369: </a>    <a href="../../../../docs/manualpages/PetscSF/PetscSFBcastEnd.html#PetscSFBcastEnd">PetscSFBcastEnd</a>(sfCandidates, MPIU_2INT, candidates, candidatesRemote);
+<a name="line370">370: </a>    <a href="../../../../docs/manualpages/PetscSF/PetscSFDestroy.html#PetscSFDestroy">PetscSFDestroy</a>(&amp;sfInverse);
+<a name="line371">371: </a>    <a href="../../../../docs/manualpages/PetscSF/PetscSFDestroy.html#PetscSFDestroy">PetscSFDestroy</a>(&amp;sfCandidates);
+<a name="line372">372: </a>    <a href="../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(remoteOffsets);
+<a name="line373">373: </a>  }
+<a name="line374">374: </a>  <font color="#B22222">/* Walk local roots and check for each remote candidate whether we know all required points,</font>
+<a name="line375">375: </a><font color="#B22222">     either from owning it or having a root entry in the point SF. If we do we place a claim</font>
+<a name="line376">376: </a><font color="#B22222">     by replacing the vertex number with our edge ID. */</font>
+<a name="line377">377: </a>  {
+<a name="line378">378: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>        idx, root, joinSize, vertices[2];
+<a name="line379">379: </a>    const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *rootdegree, *join = NULL;
+<a name="line380">380: </a>    <a href="../../../../docs/manualpages/PetscSF/PetscSFComputeDegreeBegin.html#PetscSFComputeDegreeBegin">PetscSFComputeDegreeBegin</a>(pointSF, &amp;rootdegree);
+<a name="line381">381: </a>    <a href="../../../../docs/manualpages/PetscSF/PetscSFComputeDegreeEnd.html#PetscSFComputeDegreeEnd">PetscSFComputeDegreeEnd</a>(pointSF, &amp;rootdegree);
+<a name="line382">382: </a>    <font color="#B22222">/* Loop remote edge connections and put in a claim if both vertices are known */</font>
+<a name="line383">383: </a>    <font color="#4169E1">for</font> (idx = 0, p = 0; p &lt; numRoots; ++p) {
+<a name="line384">384: </a>      <font color="#4169E1">for</font> (d = 0; d &lt; rootdegree[p]; ++d) {
+<a name="line385">385: </a>        <a href="../../../../docs/manualpages/IS/PetscSectionGetDof.html#PetscSectionGetDof">PetscSectionGetDof</a>(candidateSectionRemote, idx, &amp;dof);
+<a name="line386">386: </a>        <a href="../../../../docs/manualpages/IS/PetscSectionGetOffset.html#PetscSectionGetOffset">PetscSectionGetOffset</a>(candidateSectionRemote, idx, &amp;offset);
+<a name="line387">387: </a>        <font color="#4169E1">for</font> (c = 0; c &lt; dof; ++c) {
+<a name="line388">388: </a>          <font color="#B22222">/* We own both vertices, so we claim the edge by replacing vertex with edge */</font>
+<a name="line389">389: </a>          <font color="#4169E1">if</font> (candidatesRemote[offset+c].rank == rank) {
+<a name="line390">390: </a>            vertices[0] = p; vertices[1] = candidatesRemote[offset+c].index;
+<a name="line391">391: </a>            <a href="../../../../docs/manualpages/DMPLEX/DMPlexGetJoin.html#DMPlexGetJoin">DMPlexGetJoin</a>(dm, 2, vertices, &amp;joinSize, &amp;join);
+<a name="line392">392: </a>            <font color="#4169E1">if</font> (joinSize == 1) candidatesRemote[offset+c].index = join[0];
+<a name="line393">393: </a>            <a href="../../../../docs/manualpages/DMPLEX/DMPlexRestoreJoin.html#DMPlexRestoreJoin">DMPlexRestoreJoin</a>(dm, 2, vertices, &amp;joinSize, &amp;join);
+<a name="line394">394: </a>            <font color="#4169E1">continue</font>;
+<a name="line395">395: </a>          }
+<a name="line396">396: </a>          <font color="#B22222">/* If we own one vertex and share a root with the other, we claim it */</font>
+<a name="line397">397: </a>          key.i = candidatesRemote[offset+c].index; key.j = candidatesRemote[offset+c].rank;
+<a name="line398">398: </a>          PetscHashIJGet(roothash, key, &amp;root);
+<a name="line399">399: </a>          <font color="#4169E1">if</font> (root &gt;= 0) {
+<a name="line400">400: </a>            vertices[0] = p; vertices[1] = localPoints[root];
+<a name="line401">401: </a>            <a href="../../../../docs/manualpages/DMPLEX/DMPlexGetJoin.html#DMPlexGetJoin">DMPlexGetJoin</a>(dm, 2, vertices, &amp;joinSize, &amp;join);
+<a name="line402">402: </a>            <font color="#4169E1">if</font> (joinSize == 1) {
+<a name="line403">403: </a>              candidatesRemote[offset+c].index = join[0];
+<a name="line404">404: </a>              candidatesRemote[offset+c].rank = rank;
+<a name="line405">405: </a>            }
+<a name="line406">406: </a>            <a href="../../../../docs/manualpages/DMPLEX/DMPlexRestoreJoin.html#DMPlexRestoreJoin">DMPlexRestoreJoin</a>(dm, 2, vertices, &amp;joinSize, &amp;join);
+<a name="line407">407: </a>          }
+<a name="line408">408: </a>        }
+<a name="line409">409: </a>        idx++;
+<a name="line410">410: </a>      }
+<a name="line411">411: </a>    }
+<a name="line412">412: </a>  }
+<a name="line413">413: </a>  <font color="#B22222">/* Push claims back to receiver via the MultiSF and derive new pointSF mapping on receiver */</font>
+<a name="line414">414: </a>  {
+<a name="line415">415: </a>    <a href="../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a>         sfMulti, sfClaims, sfPointNew;
+<a name="line416">416: </a>    PetscHashI      claimshash;
+<a name="line417">417: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>        size, pStart, pEnd, root, joinSize, numLocalNew;
+<a name="line418">418: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       *remoteOffsets, *localPointsNew, vertices[2];
+<a name="line419">419: </a>    const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *join = NULL;
+<a name="line420">420: </a>    <a href="../../../../docs/manualpages/PetscSF/PetscSFNode.html#PetscSFNode">PetscSFNode</a>    *remotePointsNew;
+<a name="line421">421: </a>    <a href="../../../../docs/manualpages/PetscSF/PetscSFGetMultiSF.html#PetscSFGetMultiSF">PetscSFGetMultiSF</a>(pointSF, &amp;sfMulti);
+<a name="line422">422: </a>    <a href="../../../../docs/manualpages/IS/PetscSectionCreate.html#PetscSectionCreate">PetscSectionCreate</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>) dm), &amp;claimSection);
+<a name="line423">423: </a>    <a href="../../../../docs/manualpages/IS/PetscSFDistributeSection.html#PetscSFDistributeSection">PetscSFDistributeSection</a>(sfMulti, candidateSectionRemote, &amp;remoteOffsets, claimSection);
+<a name="line424">424: </a>    <a href="../../../../docs/manualpages/IS/PetscSFCreateSectionSF.html#PetscSFCreateSectionSF">PetscSFCreateSectionSF</a>(sfMulti, candidateSectionRemote, remoteOffsets, claimSection, &amp;sfClaims);
+<a name="line425">425: </a>    <a href="../../../../docs/manualpages/IS/PetscSectionGetStorageSize.html#PetscSectionGetStorageSize">PetscSectionGetStorageSize</a>(claimSection, &amp;size);
+<a name="line426">426: </a>    <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(size, &amp;claims);
+<a name="line427">427: </a>    <a href="../../../../docs/manualpages/PetscSF/PetscSFBcastBegin.html#PetscSFBcastBegin">PetscSFBcastBegin</a>(sfClaims, MPIU_2INT, candidatesRemote, claims);
+<a name="line428">428: </a>    <a href="../../../../docs/manualpages/PetscSF/PetscSFBcastEnd.html#PetscSFBcastEnd">PetscSFBcastEnd</a>(sfClaims, MPIU_2INT, candidatesRemote, claims);
+<a name="line429">429: </a>    <a href="../../../../docs/manualpages/PetscSF/PetscSFDestroy.html#PetscSFDestroy">PetscSFDestroy</a>(&amp;sfClaims);
+<a name="line430">430: </a>    <a href="../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(remoteOffsets);
+<a name="line431">431: </a>    <font color="#B22222">/* Walk the original section of local supports and add an SF entry for each updated item */</font>
+<a name="line432">432: </a>    PetscHashICreate(claimshash);
+<a name="line433">433: </a>    <font color="#4169E1">for</font> (p = 0; p &lt; numRoots; ++p) {
+<a name="line434">434: </a>      <a href="../../../../docs/manualpages/IS/PetscSectionGetDof.html#PetscSectionGetDof">PetscSectionGetDof</a>(candidateSection, p, &amp;dof);
+<a name="line435">435: </a>      <a href="../../../../docs/manualpages/IS/PetscSectionGetOffset.html#PetscSectionGetOffset">PetscSectionGetOffset</a>(candidateSection, p, &amp;offset);
+<a name="line436">436: </a>      <font color="#4169E1">for</font> (d = 0; d &lt; dof; ++d) {
+<a name="line437">437: </a>        <font color="#4169E1">if</font> (candidates[offset+d].index != claims[offset+d].index) {
+<a name="line438">438: </a>          key.i = candidates[offset+d].index; key.j = candidates[offset+d].rank;
+<a name="line439">439: </a>          PetscHashIJGet(roothash, key, &amp;root);
+<a name="line440">440: </a>          <font color="#4169E1">if</font> (root &gt;= 0) {
+<a name="line441">441: </a>            vertices[0] = p; vertices[1] = localPoints[root];
+<a name="line442">442: </a>            <a href="../../../../docs/manualpages/DMPLEX/DMPlexGetJoin.html#DMPlexGetJoin">DMPlexGetJoin</a>(dm, 2, vertices, &amp;joinSize, &amp;join);
+<a name="line443">443: </a>            <font color="#4169E1">if</font> (joinSize == 1) PetscHashIAdd(claimshash, join[0], offset+d);
+<a name="line444">444: </a>            <a href="../../../../docs/manualpages/DMPLEX/DMPlexRestoreJoin.html#DMPlexRestoreJoin">DMPlexRestoreJoin</a>(dm, 2, vertices, &amp;joinSize, &amp;join);
+<a name="line445">445: </a>          }
+<a name="line446">446: </a>        }
+<a name="line447">447: </a>      }
+<a name="line448">448: </a>    }
+<a name="line449">449: </a>    <font color="#B22222">/* Create new pointSF from hashed claims */</font>
+<a name="line450">450: </a>    PetscHashISize(claimshash, numLocalNew);
+<a name="line451">451: </a>    <a href="../../../../docs/manualpages/DMPLEX/DMPlexGetChart.html#DMPlexGetChart">DMPlexGetChart</a>(dm, &amp;pStart, &amp;pEnd);
+<a name="line452">452: </a>    <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(numLeaves + numLocalNew, &amp;localPointsNew);
+<a name="line453">453: </a>    <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(numLeaves + numLocalNew, &amp;remotePointsNew);
+<a name="line454">454: </a>    <font color="#4169E1">for</font> (p = 0; p &lt; numLeaves; ++p) {
+<a name="line455">455: </a>      localPointsNew[p] = localPoints[p];
+<a name="line456">456: </a>      remotePointsNew[p].index = remotePoints[p].index;
+<a name="line457">457: </a>      remotePointsNew[p].rank = remotePoints[p].rank;
+<a name="line458">458: </a>    }
+<a name="line459">459: </a>    p = numLeaves;
+<a name="line460">460: </a>    PetscHashIGetKeys(claimshash, &amp;p, localPointsNew);
+<a name="line461">461: </a>    <a href="../../../../docs/manualpages/Sys/PetscSortInt.html#PetscSortInt">PetscSortInt</a>(numLocalNew,&amp;localPointsNew[numLeaves]);
+<a name="line462">462: </a>    <font color="#4169E1">for</font> (p = numLeaves; p &lt; numLeaves + numLocalNew; ++p) {
+<a name="line463">463: </a>      PetscHashIMap(claimshash, localPointsNew[p], offset);
+<a name="line464">464: </a>      remotePointsNew[p] = claims[offset];
+<a name="line465">465: </a>    }
+<a name="line466">466: </a>    <a href="../../../../docs/manualpages/PetscSF/PetscSFCreate.html#PetscSFCreate">PetscSFCreate</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>) dm), &amp;sfPointNew);
+<a name="line467">467: </a>    <a href="../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html#PetscSFSetGraph">PetscSFSetGraph</a>(sfPointNew, pEnd-pStart, numLeaves+numLocalNew, localPointsNew, <a href="../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_OWN_POINTER</a>, remotePointsNew, <a href="../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_OWN_POINTER</a>);
+<a name="line468">468: </a>    <a href="../../../../docs/manualpages/DM/DMSetPointSF.html#DMSetPointSF">DMSetPointSF</a>(dm, sfPointNew);
+<a name="line469">469: </a>    <a href="../../../../docs/manualpages/PetscSF/PetscSFDestroy.html#PetscSFDestroy">PetscSFDestroy</a>(&amp;sfPointNew);
+<a name="line470">470: </a>    PetscHashIDestroy(claimshash);
+<a name="line471">471: </a>  }
+<a name="line472">472: </a>  PetscHashIDestroy(leafhash);
+<a name="line473">473: </a>  PetscHashIJDestroy(&amp;roothash);
+<a name="line474">474: </a>  <a href="../../../../docs/manualpages/IS/PetscSectionDestroy.html#PetscSectionDestroy">PetscSectionDestroy</a>(&amp;candidateSection);
+<a name="line475">475: </a>  <a href="../../../../docs/manualpages/IS/PetscSectionDestroy.html#PetscSectionDestroy">PetscSectionDestroy</a>(&amp;candidateSectionRemote);
+<a name="line476">476: </a>  <a href="../../../../docs/manualpages/IS/PetscSectionDestroy.html#PetscSectionDestroy">PetscSectionDestroy</a>(&amp;claimSection);
+<a name="line477">477: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(candidates);
+<a name="line478">478: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(candidatesRemote);
+<a name="line479">479: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(claims);
+<a name="line480">480: </a>  <a href="../../../../docs/manualpages/Profiling/PetscLogEventEnd.html#PetscLogEventEnd">PetscLogEventEnd</a>(DMPLEX_InterpolateSF,dm,0,0,0);
+<a name="line481">481: </a>  <font color="#4169E1">return</font>(0);
+<a name="line482">482: </a>}
+
+<a name="line484">484: </a><font color="#B22222">/*@C</font>
+<a name="line485">485: </a><font color="#B22222">  <a href="../../../../docs/manualpages/DMPLEX/DMPlexInterpolate.html#DMPlexInterpolate">DMPlexInterpolate</a> - Take in a cell-vertex mesh and return one with all intermediate faces, edges, etc.</font>
+
+<a name="line487">487: </a><font color="#B22222">  Collective on <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a></font>
+
+<a name="line489">489: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line490">490: </a><font color="#B22222">+ dm - The DMPlex object with only cells and vertices</font>
+<a name="line491">491: </a><font color="#B22222">- dmInt - If NULL a new <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> is created, otherwise the interpolated <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> is put into the given <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a></font>
+
+<a name="line493">493: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line494">494: </a><font color="#B22222">. dmInt - The complete DMPlex object</font>
+
+<a name="line496">496: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line498">498: </a><font color="#B22222">.keywords: mesh</font>
+<a name="line499">499: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMPLEX/DMPlexUninterpolate.html#DMPlexUninterpolate">DMPlexUninterpolate</a>(), <a href="../../../../docs/manualpages/DMPLEX/DMPlexCreateFromCellList.html#DMPlexCreateFromCellList">DMPlexCreateFromCellList</a>()</font>
+<a name="line500">500: </a><font color="#B22222">@*/</font>
+<a name="line501">501: </a><strong><font color="#4169E1"><a name="DMPlexInterpolate"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMPLEX/DMPlexInterpolate.html#DMPlexInterpolate">DMPlexInterpolate</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm, <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> *dmInt)</font></strong>
+<a name="line502">502: </a>{
+<a name="line503">503: </a>  <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a>             idm, odm = dm;
+<a name="line504">504: </a>  <a href="../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a>        sfPoint;
+<a name="line505">505: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       depth, dim, d;
+
+<a name="line509">509: </a>  <a href="../../../../docs/manualpages/Profiling/PetscLogEventBegin.html#PetscLogEventBegin">PetscLogEventBegin</a>(DMPLEX_Interpolate,dm,0,0,0);
+<a name="line510">510: </a>  <a href="../../../../docs/manualpages/DMPLEX/DMPlexGetDepth.html#DMPlexGetDepth">DMPlexGetDepth</a>(dm, &amp;depth);
+<a name="line511">511: </a>  <a href="../../../../docs/manualpages/DM/DMGetDimension.html#DMGetDimension">DMGetDimension</a>(dm, &amp;dim);
+<a name="line512">512: </a>  <font color="#4169E1">if</font> (dim &lt;= 1) {
+<a name="line513">513: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectReference.html#PetscObjectReference">PetscObjectReference</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>) dm);
+<a name="line514">514: </a>    idm  = dm;
+<a name="line515">515: </a>  }
+<a name="line516">516: </a>  <font color="#4169E1">for</font> (d = 1; d &lt; dim; ++d) {
+<a name="line517">517: </a>    <font color="#B22222">/* Create interpolated mesh */</font>
+<a name="line518">518: </a>    <font color="#4169E1">if</font> ((d == dim-1) &amp;&amp; *dmInt) {idm  = *dmInt;}
+<a name="line519">519: </a>    <font color="#4169E1">else</font>                        {<a href="../../../../docs/manualpages/DM/DMCreate.html#DMCreate">DMCreate</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), &amp;idm);}
+<a name="line520">520: </a>    <a href="../../../../docs/manualpages/DM/DMSetType.html#DMSetType">DMSetType</a>(idm, <a href="../../../../docs/manualpages/DMPLEX/DMPLEX.html#DMPLEX">DMPLEX</a>);
+<a name="line521">521: </a>    <a href="../../../../docs/manualpages/DM/DMSetDimension.html#DMSetDimension">DMSetDimension</a>(idm, dim);
+<a name="line522">522: </a>    <font color="#4169E1">if</font> (depth &gt; 0) {
+<a name="line523">523: </a>      DMPlexInterpolateFaces_Internal(odm, 1, idm);
+<a name="line524">524: </a>      <a href="../../../../docs/manualpages/DM/DMGetPointSF.html#DMGetPointSF">DMGetPointSF</a>(odm, &amp;sfPoint);
+<a name="line525">525: </a>      DMPlexInterpolatePointSF(idm, sfPoint, depth);
+<a name="line526">526: </a>    }
+<a name="line527">527: </a>    <font color="#4169E1">if</font> (odm != dm) {<a href="../../../../docs/manualpages/DM/DMDestroy.html#DMDestroy">DMDestroy</a>(&amp;odm);}
+<a name="line528">528: </a>    odm  = idm;
+<a name="line529">529: </a>  }
+<a name="line530">530: </a>  *dmInt = idm;
+<a name="line531">531: </a>  <a href="../../../../docs/manualpages/Profiling/PetscLogEventEnd.html#PetscLogEventEnd">PetscLogEventEnd</a>(DMPLEX_Interpolate,dm,0,0,0);
+<a name="line532">532: </a>  <font color="#4169E1">return</font>(0);
+<a name="line533">533: </a>}
+
+<a name="line535">535: </a><font color="#B22222">/*@</font>
+<a name="line536">536: </a><font color="#B22222">  <a href="../../../../docs/manualpages/DMPLEX/DMPlexCopyCoordinates.html#DMPlexCopyCoordinates">DMPlexCopyCoordinates</a> - Copy coordinates from one mesh to another with the same vertices</font>
+
+<a name="line538">538: </a><font color="#B22222">  Collective on <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a></font>
+
+<a name="line540">540: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line541">541: </a><font color="#B22222">. dmA - The DMPlex object with initial coordinates</font>
+
+<a name="line543">543: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line544">544: </a><font color="#B22222">. dmB - The DMPlex object with copied coordinates</font>
+
+<a name="line546">546: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line548">548: </a><font color="#B22222">  Note: This is typically used when adding pieces other than vertices to a mesh</font>
+
+<a name="line550">550: </a><font color="#B22222">.keywords: mesh</font>
+<a name="line551">551: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DM/DMCopyLabels.html#DMCopyLabels">DMCopyLabels</a>(), <a href="../../../../docs/manualpages/DM/DMGetCoordinates.html#DMGetCoordinates">DMGetCoordinates</a>(), <a href="../../../../docs/manualpages/DM/DMGetCoordinatesLocal.html#DMGetCoordinatesLocal">DMGetCoordinatesLocal</a>(), <a href="../../../../docs/manualpages/DM/DMGetCoordinateDM.html#DMGetCoordinateDM">DMGetCoordinateDM</a>(), <a href="../../../../docs/manualpages/DM/DMGetCoordinateSection.html#DMGetCoordinateSection">DMGetCoordinateSection</a>()</font>
+<a name="line552">552: </a><font color="#B22222">@*/</font>
+<a name="line553">553: </a><strong><font color="#4169E1"><a name="DMPlexCopyCoordinates"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMPLEX/DMPlexCopyCoordinates.html#DMPlexCopyCoordinates">DMPlexCopyCoordinates</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dmA, <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dmB)</font></strong>
+<a name="line554">554: </a>{
+<a name="line555">555: </a>  <a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>            coordinatesA, coordinatesB;
+<a name="line556">556: </a>  <a href="../../../../docs/manualpages/IS/PetscSection.html#PetscSection">PetscSection</a>   coordSectionA, coordSectionB;
+<a name="line557">557: </a>  <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>   *coordsA, *coordsB;
+<a name="line558">558: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       spaceDim, vStartA, vStartB, vEndA, vEndB, coordSizeB, v, d;
+
+<a name="line562">562: </a>  <font color="#4169E1">if</font> (dmA == dmB) <font color="#4169E1">return</font>(0);
+<a name="line563">563: </a>  <a href="../../../../docs/manualpages/DMPLEX/DMPlexGetDepthStratum.html#DMPlexGetDepthStratum">DMPlexGetDepthStratum</a>(dmA, 0, &amp;vStartA, &amp;vEndA);
+<a name="line564">564: </a>  <a href="../../../../docs/manualpages/DMPLEX/DMPlexGetDepthStratum.html#DMPlexGetDepthStratum">DMPlexGetDepthStratum</a>(dmB, 0, &amp;vStartB, &amp;vEndB);
+<a name="line565">565: </a>  <font color="#4169E1">if</font> ((vEndA-vStartA) != (vEndB-vStartB)) <a href="../../../../docs/manualpages/Sys/SETERRQ2.html#SETERRQ2">SETERRQ2</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>, PETSC_ERR_ARG_SIZ, <font color="#666666">"The number of vertices in first <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> %d != %d in the second <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a>"</font>, vEndA-vStartA, vEndB-vStartB);
+<a name="line566">566: </a>  <a href="../../../../docs/manualpages/DM/DMGetCoordinateSection.html#DMGetCoordinateSection">DMGetCoordinateSection</a>(dmA, &amp;coordSectionA);
+<a name="line567">567: </a>  <a href="../../../../docs/manualpages/DM/DMGetCoordinateSection.html#DMGetCoordinateSection">DMGetCoordinateSection</a>(dmB, &amp;coordSectionB);
+<a name="line568">568: </a>  <font color="#4169E1">if</font> (coordSectionA == coordSectionB) <font color="#4169E1">return</font>(0);
+<a name="line569">569: </a>  <font color="#4169E1">if</font> (!coordSectionB) {
+<a name="line570">570: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> dim;
+
+<a name="line572">572: </a>    <a href="../../../../docs/manualpages/IS/PetscSectionCreate.html#PetscSectionCreate">PetscSectionCreate</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>) coordSectionA), &amp;coordSectionB);
+<a name="line573">573: </a>    <a href="../../../../docs/manualpages/DM/DMGetCoordinateDim.html#DMGetCoordinateDim">DMGetCoordinateDim</a>(dmA, &amp;dim);
+<a name="line574">574: </a>    <a href="../../../../docs/manualpages/DM/DMSetCoordinateSection.html#DMSetCoordinateSection">DMSetCoordinateSection</a>(dmB, dim, coordSectionB);
+<a name="line575">575: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectDereference.html#PetscObjectDereference">PetscObjectDereference</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>) coordSectionB);
+<a name="line576">576: </a>  }
+<a name="line577">577: </a>  <a href="../../../../docs/manualpages/IS/PetscSectionSetNumFields.html#PetscSectionSetNumFields">PetscSectionSetNumFields</a>(coordSectionB, 1);
+<a name="line578">578: </a>  <a href="../../../../docs/manualpages/IS/PetscSectionGetFieldComponents.html#PetscSectionGetFieldComponents">PetscSectionGetFieldComponents</a>(coordSectionA, 0, &amp;spaceDim);
+<a name="line579">579: </a>  <a href="../../../../docs/manualpages/IS/PetscSectionSetFieldComponents.html#PetscSectionSetFieldComponents">PetscSectionSetFieldComponents</a>(coordSectionB, 0, spaceDim);
+<a name="line580">580: </a>  <a href="../../../../docs/manualpages/IS/PetscSectionSetChart.html#PetscSectionSetChart">PetscSectionSetChart</a>(coordSectionB, vStartB, vEndB);
+<a name="line581">581: </a>  <font color="#4169E1">for</font> (v = vStartB; v &lt; vEndB; ++v) {
+<a name="line582">582: </a>    <a href="../../../../docs/manualpages/IS/PetscSectionSetDof.html#PetscSectionSetDof">PetscSectionSetDof</a>(coordSectionB, v, spaceDim);
+<a name="line583">583: </a>    <a href="../../../../docs/manualpages/IS/PetscSectionSetFieldDof.html#PetscSectionSetFieldDof">PetscSectionSetFieldDof</a>(coordSectionB, v, 0, spaceDim);
+<a name="line584">584: </a>  }
+<a name="line585">585: </a>  <a href="../../../../docs/manualpages/IS/PetscSectionSetUp.html#PetscSectionSetUp">PetscSectionSetUp</a>(coordSectionB);
+<a name="line586">586: </a>  <a href="../../../../docs/manualpages/IS/PetscSectionGetStorageSize.html#PetscSectionGetStorageSize">PetscSectionGetStorageSize</a>(coordSectionB, &amp;coordSizeB);
+<a name="line587">587: </a>  <a href="../../../../docs/manualpages/DM/DMGetCoordinatesLocal.html#DMGetCoordinatesLocal">DMGetCoordinatesLocal</a>(dmA, &amp;coordinatesA);
+<a name="line588">588: </a>  <a href="../../../../docs/manualpages/Vec/VecCreate.html#VecCreate">VecCreate</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>, &amp;coordinatesB);
+<a name="line589">589: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectSetName.html#PetscObjectSetName">PetscObjectSetName</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>) coordinatesB, <font color="#666666">"coordinates"</font>);
+<a name="line590">590: </a>  <a href="../../../../docs/manualpages/Vec/VecSetSizes.html#VecSetSizes">VecSetSizes</a>(coordinatesB, coordSizeB, <a href="../../../../docs/manualpages/Sys/PETSC_DETERMINE.html#PETSC_DETERMINE">PETSC_DETERMINE</a>);
+<a name="line591">591: </a>  <a href="../../../../docs/manualpages/Vec/VecSetType.html#VecSetType">VecSetType</a>(coordinatesB,<a href="../../../../docs/manualpages/Vec/VECSTANDARD.html#VECSTANDARD">VECSTANDARD</a>);
+<a name="line592">592: </a>  <a href="../../../../docs/manualpages/Vec/VecGetArray.html#VecGetArray">VecGetArray</a>(coordinatesA, &amp;coordsA);
+<a name="line593">593: </a>  <a href="../../../../docs/manualpages/Vec/VecGetArray.html#VecGetArray">VecGetArray</a>(coordinatesB, &amp;coordsB);
+<a name="line594">594: </a>  <font color="#4169E1">for</font> (v = 0; v &lt; vEndB-vStartB; ++v) {
+<a name="line595">595: </a>    <font color="#4169E1">for</font> (d = 0; d &lt; spaceDim; ++d) {
+<a name="line596">596: </a>      coordsB[v*spaceDim+d] = coordsA[v*spaceDim+d];
+<a name="line597">597: </a>    }
+<a name="line598">598: </a>  }
+<a name="line599">599: </a>  <a href="../../../../docs/manualpages/Vec/VecRestoreArray.html#VecRestoreArray">VecRestoreArray</a>(coordinatesA, &amp;coordsA);
+<a name="line600">600: </a>  <a href="../../../../docs/manualpages/Vec/VecRestoreArray.html#VecRestoreArray">VecRestoreArray</a>(coordinatesB, &amp;coordsB);
+<a name="line601">601: </a>  <a href="../../../../docs/manualpages/DM/DMSetCoordinatesLocal.html#DMSetCoordinatesLocal">DMSetCoordinatesLocal</a>(dmB, coordinatesB);
+<a name="line602">602: </a>  <a href="../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;coordinatesB);
+<a name="line603">603: </a>  <font color="#4169E1">return</font>(0);
+<a name="line604">604: </a>}
+
+<a name="line606">606: </a><font color="#B22222">/*@</font>
+<a name="line607">607: </a><font color="#B22222">  <a href="../../../../docs/manualpages/DMPLEX/DMPlexUninterpolate.html#DMPlexUninterpolate">DMPlexUninterpolate</a> - Take in a mesh with all intermediate faces, edges, etc. and return a cell-vertex mesh</font>
+
+<a name="line609">609: </a><font color="#B22222">  Collective on <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a></font>
+
+<a name="line611">611: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line612">612: </a><font color="#B22222">. dm - The complete DMPlex object</font>
+
+<a name="line614">614: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line615">615: </a><font color="#B22222">. dmUnint - The DMPlex object with only cells and vertices</font>
+
+<a name="line617">617: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line619">619: </a><font color="#B22222">.keywords: mesh</font>
+<a name="line620">620: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMPLEX/DMPlexInterpolate.html#DMPlexInterpolate">DMPlexInterpolate</a>(), <a href="../../../../docs/manualpages/DMPLEX/DMPlexCreateFromCellList.html#DMPlexCreateFromCellList">DMPlexCreateFromCellList</a>()</font>
+<a name="line621">621: </a><font color="#B22222">@*/</font>
+<a name="line622">622: </a><strong><font color="#4169E1"><a name="DMPlexUninterpolate"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMPLEX/DMPlexUninterpolate.html#DMPlexUninterpolate">DMPlexUninterpolate</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm, <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> *dmUnint)</font></strong>
+<a name="line623">623: </a>{
+<a name="line624">624: </a>  <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a>             udm;
+<a name="line625">625: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       dim, vStart, vEnd, cStart, cEnd, c, maxConeSize = 0, *cone;
+
+<a name="line629">629: </a>  <a href="../../../../docs/manualpages/DM/DMGetDimension.html#DMGetDimension">DMGetDimension</a>(dm, &amp;dim);
+<a name="line630">630: </a>  <font color="#4169E1">if</font> (dim &lt;= 1) {
+<a name="line631">631: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectReference.html#PetscObjectReference">PetscObjectReference</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>) dm);
+<a name="line632">632: </a>    *dmUnint = dm;
+<a name="line633">633: </a>    <font color="#4169E1">return</font>(0);
+<a name="line634">634: </a>  }
+<a name="line635">635: </a>  <a href="../../../../docs/manualpages/DMPLEX/DMPlexGetDepthStratum.html#DMPlexGetDepthStratum">DMPlexGetDepthStratum</a>(dm, 0, &amp;vStart, &amp;vEnd);
+<a name="line636">636: </a>  <a href="../../../../docs/manualpages/DMPLEX/DMPlexGetHeightStratum.html#DMPlexGetHeightStratum">DMPlexGetHeightStratum</a>(dm, 0, &amp;cStart, &amp;cEnd);
+<a name="line637">637: </a>  <a href="../../../../docs/manualpages/DM/DMCreate.html#DMCreate">DMCreate</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>) dm), &amp;udm);
+<a name="line638">638: </a>  <a href="../../../../docs/manualpages/DM/DMSetType.html#DMSetType">DMSetType</a>(udm, <a href="../../../../docs/manualpages/DMPLEX/DMPLEX.html#DMPLEX">DMPLEX</a>);
+<a name="line639">639: </a>  <a href="../../../../docs/manualpages/DM/DMSetDimension.html#DMSetDimension">DMSetDimension</a>(udm, dim);
+<a name="line640">640: </a>  <a href="../../../../docs/manualpages/DMPLEX/DMPlexSetChart.html#DMPlexSetChart">DMPlexSetChart</a>(udm, cStart, vEnd);
+<a name="line641">641: </a>  <font color="#4169E1">for</font> (c = cStart; c &lt; cEnd; ++c) {
+<a name="line642">642: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *closure = NULL, closureSize, cl, coneSize = 0;
+
+<a name="line644">644: </a>    <a href="../../../../docs/manualpages/DMPLEX/DMPlexGetTransitiveClosure.html#DMPlexGetTransitiveClosure">DMPlexGetTransitiveClosure</a>(dm, c, <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>, &amp;closureSize, &amp;closure);
+<a name="line645">645: </a>    <font color="#4169E1">for</font> (cl = 0; cl &lt; closureSize*2; cl += 2) {
+<a name="line646">646: </a>      const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> p = closure[cl];
+
+<a name="line648">648: </a>      <font color="#4169E1">if</font> ((p &gt;= vStart) &amp;&amp; (p &lt; vEnd)) ++coneSize;
+<a name="line649">649: </a>    }
+<a name="line650">650: </a>    <a href="../../../../docs/manualpages/DMPLEX/DMPlexRestoreTransitiveClosure.html#DMPlexRestoreTransitiveClosure">DMPlexRestoreTransitiveClosure</a>(dm, c, <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>, &amp;closureSize, &amp;closure);
+<a name="line651">651: </a>    <a href="../../../../docs/manualpages/DMPLEX/DMPlexSetConeSize.html#DMPlexSetConeSize">DMPlexSetConeSize</a>(udm, c, coneSize);
+<a name="line652">652: </a>    maxConeSize = <a href="../../../../docs/manualpages/Sys/PetscMax.html#PetscMax">PetscMax</a>(maxConeSize, coneSize);
+<a name="line653">653: </a>  }
+<a name="line654">654: </a>  <a href="../../../../docs/manualpages/DM/DMSetUp.html#DMSetUp">DMSetUp</a>(udm);
+<a name="line655">655: </a>  <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(maxConeSize, &amp;cone);
+<a name="line656">656: </a>  <font color="#4169E1">for</font> (c = cStart; c &lt; cEnd; ++c) {
+<a name="line657">657: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *closure = NULL, closureSize, cl, coneSize = 0;
+
+<a name="line659">659: </a>    <a href="../../../../docs/manualpages/DMPLEX/DMPlexGetTransitiveClosure.html#DMPlexGetTransitiveClosure">DMPlexGetTransitiveClosure</a>(dm, c, <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>, &amp;closureSize, &amp;closure);
+<a name="line660">660: </a>    <font color="#4169E1">for</font> (cl = 0; cl &lt; closureSize*2; cl += 2) {
+<a name="line661">661: </a>      const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> p = closure[cl];
+
+<a name="line663">663: </a>      <font color="#4169E1">if</font> ((p &gt;= vStart) &amp;&amp; (p &lt; vEnd)) cone[coneSize++] = p;
+<a name="line664">664: </a>    }
+<a name="line665">665: </a>    <a href="../../../../docs/manualpages/DMPLEX/DMPlexRestoreTransitiveClosure.html#DMPlexRestoreTransitiveClosure">DMPlexRestoreTransitiveClosure</a>(dm, c, <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>, &amp;closureSize, &amp;closure);
+<a name="line666">666: </a>    <a href="../../../../docs/manualpages/DMPLEX/DMPlexSetCone.html#DMPlexSetCone">DMPlexSetCone</a>(udm, c, cone);
+<a name="line667">667: </a>  }
+<a name="line668">668: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(cone);
+<a name="line669">669: </a>  <a href="../../../../docs/manualpages/DMPLEX/DMPlexSymmetrize.html#DMPlexSymmetrize">DMPlexSymmetrize</a>(udm);
+<a name="line670">670: </a>  <a href="../../../../docs/manualpages/DMPLEX/DMPlexStratify.html#DMPlexStratify">DMPlexStratify</a>(udm);
+<a name="line671">671: </a>  <font color="#B22222">/* Reduce SF */</font>
+<a name="line672">672: </a>  {
+<a name="line673">673: </a>    <a href="../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a>            sfPoint, sfPointUn;
+<a name="line674">674: </a>    const <a href="../../../../docs/manualpages/PetscSF/PetscSFNode.html#PetscSFNode">PetscSFNode</a> *remotePoints;
+<a name="line675">675: </a>    const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>    *localPoints;
+<a name="line676">676: </a>    <a href="../../../../docs/manualpages/PetscSF/PetscSFNode.html#PetscSFNode">PetscSFNode</a>       *remotePointsUn;
+<a name="line677">677: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          *localPointsUn;
+<a name="line678">678: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>           vEnd, numRoots, numLeaves, l;
+<a name="line679">679: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>           numLeavesUn = 0, n = 0;
+<a name="line680">680: </a>    <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>     ierr;
+
+<a name="line682">682: </a>    <font color="#B22222">/* Get original SF information */</font>
+<a name="line683">683: </a>    <a href="../../../../docs/manualpages/DM/DMGetPointSF.html#DMGetPointSF">DMGetPointSF</a>(dm, &amp;sfPoint);
+<a name="line684">684: </a>    <a href="../../../../docs/manualpages/DM/DMGetPointSF.html#DMGetPointSF">DMGetPointSF</a>(udm, &amp;sfPointUn);
+<a name="line685">685: </a>    <a href="../../../../docs/manualpages/DMPLEX/DMPlexGetDepthStratum.html#DMPlexGetDepthStratum">DMPlexGetDepthStratum</a>(dm, 0, NULL, &amp;vEnd);
+<a name="line686">686: </a>    <a href="../../../../docs/manualpages/PetscSF/PetscSFGetGraph.html#PetscSFGetGraph">PetscSFGetGraph</a>(sfPoint, &amp;numRoots, &amp;numLeaves, &amp;localPoints, &amp;remotePoints);
+<a name="line687">687: </a>    <font color="#B22222">/* Allocate space for cells and vertices */</font>
+<a name="line688">688: </a>    <font color="#4169E1">for</font> (l = 0; l &lt; numLeaves; ++l) <font color="#4169E1">if</font> (localPoints[l] &lt; vEnd) numLeavesUn++;
+<a name="line689">689: </a>    <font color="#B22222">/* Fill in leaves */</font>
+<a name="line690">690: </a>    <font color="#4169E1">if</font> (vEnd &gt;= 0) {
+<a name="line691">691: </a>      <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(numLeavesUn, &amp;remotePointsUn);
+<a name="line692">692: </a>      <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(numLeavesUn, &amp;localPointsUn);
+<a name="line693">693: </a>      <font color="#4169E1">for</font> (l = 0; l &lt; numLeaves; l++) {
+<a name="line694">694: </a>        <font color="#4169E1">if</font> (localPoints[l] &lt; vEnd) {
+<a name="line695">695: </a>          localPointsUn[n]        = localPoints[l];
+<a name="line696">696: </a>          remotePointsUn[n].rank  = remotePoints[l].rank;
+<a name="line697">697: </a>          remotePointsUn[n].index = remotePoints[l].index;
+<a name="line698">698: </a>          ++n;
+<a name="line699">699: </a>        }
+<a name="line700">700: </a>      }
+<a name="line701">701: </a>      <font color="#4169E1">if</font> (n != numLeavesUn) <a href="../../../../docs/manualpages/Sys/SETERRQ2.html#SETERRQ2">SETERRQ2</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>, PETSC_ERR_PLIB, <font color="#666666">"Inconsistent number of leaves %d != %d"</font>, n, numLeavesUn);
+<a name="line702">702: </a>      <a href="../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html#PetscSFSetGraph">PetscSFSetGraph</a>(sfPointUn, vEnd, numLeavesUn, localPointsUn, <a href="../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_OWN_POINTER</a>, remotePointsUn, <a href="../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_OWN_POINTER</a>);
+<a name="line703">703: </a>    }
+<a name="line704">704: </a>  }
+<a name="line705">705: </a>  *dmUnint = udm;
+<a name="line706">706: </a>  <font color="#4169E1">return</font>(0);
+<a name="line707">707: </a>}
+</pre>
+</body>
+
+</html>

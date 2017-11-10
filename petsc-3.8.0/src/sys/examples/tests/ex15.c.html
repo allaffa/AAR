@@ -1,0 +1,36 @@
+<center><a href="ex15.c">Actual source code: ex15.c</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/sys/examples/tests/ex15.c.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:10:34+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/sys/examples/tests/ex15.c.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+
+<a name="line2">  2: </a>static char help[] = <font color="#666666">"Demonstrates <a href="../../../../docs/manualpages/Sys/PetscPopUpSelect.html#PetscPopUpSelect">PetscPopUpSelect</a>()\n"</font>;
+
+<a name="line4">  4: </a> #include <A href="../../../../include/petscsys.h.html">&lt;petscsys.h&gt;</A>
+
+
+<a name="line7">  7: </a><strong><font color="#4169E1"><a name="main"></a>int main(int argc,char **argv)</font></strong>
+<a name="line8">  8: </a>{
+<a name="line9">  9: </a>  int        ierr,choice;
+<a name="line10"> 10: </a>  const char *choices[] = {<font color="#666666">"Say hello"</font>,<font color="#666666">"Say goodbye"</font>};
+
+<a name="line12"> 12: </a>  <a href="../../../../docs/manualpages/Sys/PetscInitialize.html#PetscInitialize">PetscInitialize</a>(&amp;argc,&amp;argv,(char*)0,help);<font color="#4169E1">if</font> (ierr) <font color="#4169E1">return</font> ierr;
+<a name="line13"> 13: </a>  <a href="../../../../docs/manualpages/Sys/PetscPopUpSelect.html#PetscPopUpSelect">PetscPopUpSelect</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,NULL,<font color="#666666">"Select one of "</font>,2,choices,&amp;choice);
+<a name="line14"> 14: </a>  <a href="../../../../docs/manualpages/Sys/PetscSynchronizedPrintf.html#PetscSynchronizedPrintf">PetscSynchronizedPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<font color="#666666">"You selected %s\n"</font>,choices[choice]);
+<a name="line15"> 15: </a>  <a href="../../../../docs/manualpages/Sys/PetscSynchronizedFlush.html#PetscSynchronizedFlush">PetscSynchronizedFlush</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,PETSC_STDOUT);
+<a name="line16"> 16: </a>  <a href="../../../../docs/manualpages/Sys/PetscFinalize.html#PetscFinalize">PetscFinalize</a>();
+<a name="line17"> 17: </a>  <font color="#4169E1">return</font> ierr;
+<a name="line18"> 18: </a>}
+
+</pre>
+</body>
+
+</html>

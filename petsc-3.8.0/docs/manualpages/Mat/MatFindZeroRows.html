@@ -1,0 +1,34 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML3.2 EN">
+<HTML>
+<HEAD> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/Mat/MatFindZeroRows.html" />
+<META NAME="GENERATOR" CONTENT="DOCTEXT">
+<TITLE>MatFindZeroRows</TITLE>
+</HEAD>
+<BODY BGCOLOR="FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 docs/manualpages/Mat/MatFindZeroRows.html "><small>Report Typos and Errors</small></a></div>
+<A NAME="MatFindZeroRows"><H1>MatFindZeroRows</H1></A>
+Locate all rows that are completely zero in the matrix 
+<H3><FONT COLOR="#CC3333">Synopsis</FONT></H3>
+<PRE>
+#include "petscmat.h" 
+<A HREF="../Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</A> <A HREF="../Mat/MatFindZeroRows.html#MatFindZeroRows">MatFindZeroRows</A>(<A HREF="../Mat/Mat.html#Mat">Mat</A> mat,<A HREF="../IS/IS.html#IS">IS</A> *zerorows)
+</PRE>
+<H3><FONT COLOR="#CC3333">Input Parameter</FONT></H3>
+<DT><B>A  </B> -the matrix
+<br>
+<P>
+<H3><FONT COLOR="#CC3333">Output Parameter</FONT></H3>
+<DT><B>zerorows </B> -the rows that are completely zero
+<br>
+<P>
+Notes: zerorows is set to NULL if no rows are zero.
+<P>
+
+<P>
+<P><B><P><B><FONT COLOR="#CC3333">Level:</FONT></B>intermediate
+<BR><FONT COLOR="#CC3333">Location:</FONT></B><A HREF="../../../src/mat/interface/matrix.c.html#MatFindZeroRows">src/mat/interface/matrix.c</A>
+<BR><A HREF="./index.html">Index of all Mat routines</A>
+<BR><A HREF="../../index.html">Table of Contents for all manual pages</A>
+<BR><A HREF="../singleindex.html">Index of all manual pages</A>
+</BODY></HTML>

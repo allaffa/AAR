@@ -1,0 +1,45 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML3.2 EN">
+<HTML>
+<HEAD> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/DM/DMMoabFEMComputeBasis.html" />
+<META NAME="GENERATOR" CONTENT="DOCTEXT">
+<TITLE>DMMoabFEMComputeBasis</TITLE>
+</HEAD>
+<BODY BGCOLOR="FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 docs/manualpages/DM/DMMoabFEMComputeBasis.html "><small>Report Typos and Errors</small></a></div>
+<A NAME="DMMoabFEMComputeBasis"><H1>DMMoabFEMComputeBasis</H1></A>
+Evaluate bases and derivatives at quadrature points for a linear EDGE/QUAD/TRI/HEX/TET element. 
+<H3><FONT COLOR="#CC3333">Synopsis</FONT></H3>
+<PRE>
+#include "petscdt.h" 
+#include "petscdmmoab.h"   
+<A HREF="../Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</A> <A HREF="../DM/DMMoabFEMComputeBasis.html#DMMoabFEMComputeBasis">DMMoabFEMComputeBasis</A> ( const <A HREF="../Sys/PetscInt.html#PetscInt">PetscInt</A> dim, const <A HREF="../Sys/PetscInt.html#PetscInt">PetscInt</A> nverts, const <A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A> *coordinates, const <A HREF="../DM/PetscQuadrature.html#PetscQuadrature">PetscQuadrature</A> quadrature, 
+                                       <A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A> *phypts, <A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A> *jacobian_quadrature_weight_product, 
+                                       <A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A> *fe_basis, <A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A> **fe_basis_derivatives)
+</PRE>
+The routine takes the coordinates of the vertices of an element and computes basis functions associated with
+each quadrature point provided, and their derivatives with respect to X, Y and Z as appropriate.
+<P>
+<H3><FONT COLOR="#CC3333">Input Parameter</FONT></H3>
+<P>
+<DT><B><A HREF="../Sys/PetscInt.html#PetscInt">PetscInt</A>  nverts,           the number of element vertices</B> -.  <A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A> coords[3*nverts], the physical coordinates of the vertices (in canonical numbering)
+<br>
+<DT><B><A HREF="../Sys/PetscInt.html#PetscInt">PetscInt</A>  npts,             the number of evaluation points (quadrature points)</B> -.  <A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A> quad[3*npts],     the evaluation points (quadrature points) in the reference space
+<br>
+<P>
+<H3><FONT COLOR="#CC3333">Output Parameter</FONT></H3>
+<DT><B><A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A> phypts[3*npts],   the evaluation points (quadrature points) transformed to the physical space</B> -.  <A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A> jxw[npts],        the jacobian determinant * quadrature weight necessary for assembling discrete contributions
+<br>
+<DT><B><A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A> fe_basis[npts],        the bases values evaluated at the specified quadrature points</B> -.  <A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A> fe_basis_derivatives[dim][npts],  the derivative of the bases wrt (X,Y,Z)-directions (depending on the dimension) evaluated at the specified quadrature points
+<br>
+<P>
+
+<P>
+<H3><FONT COLOR="#CC3333">Keywords</FONT></H3>
+ DMMoab, FEM, 3-D
+<BR><P><B><P><B><FONT COLOR="#CC3333">Level:</FONT></B>advanced
+<BR><FONT COLOR="#CC3333">Location:</FONT></B><A HREF="../../../src/dm/impls/moab/dmmbfem.cxx#DMMoabFEMComputeBasis">src/dm/impls/moab/dmmbfem.cxx</A>
+<BR><A HREF="./index.html">Index of all DM routines</A>
+<BR><A HREF="../../index.html">Table of Contents for all manual pages</A>
+<BR><A HREF="../singleindex.html">Index of all manual pages</A>
+</BODY></HTML>

@@ -1,0 +1,466 @@
+<center><a href="matnull.c">Actual source code: matnull.c</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/mat/interface/matnull.c.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:20:16+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/mat/interface/matnull.c.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+
+<a name="line2">  2: </a><font color="#B22222">/*</font>
+<a name="line3">  3: </a><font color="#B22222">    Routines to project vectors out of null spaces.</font>
+<a name="line4">  4: </a><font color="#B22222">*/</font>
+
+<a name="line6">  6: </a> #include <A href="../../../include/petsc/private/matimpl.h.html">&lt;petsc/private/matimpl.h&gt;</A>
+
+<a name="line8">  8: </a><a href="../../../docs/manualpages/Sys/PetscClassId.html#PetscClassId">PetscClassId</a> MAT_NULLSPACE_CLASSID;
+
+<a name="line10"> 10: </a><font color="#B22222">/*@C</font>
+<a name="line11"> 11: </a><font color="#B22222">   <a href="../../../docs/manualpages/Mat/MatNullSpaceSetFunction.html#MatNullSpaceSetFunction">MatNullSpaceSetFunction</a> - set a function that removes a null space from a vector</font>
+<a name="line12"> 12: </a><font color="#B22222">   out of null spaces.</font>
+
+<a name="line14"> 14: </a><font color="#B22222">   Logically Collective on <a href="../../../docs/manualpages/Mat/MatNullSpace.html#MatNullSpace">MatNullSpace</a></font>
+
+<a name="line16"> 16: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line17"> 17: </a><font color="#B22222">+  sp - the null space object</font>
+<a name="line18"> 18: </a><font color="#B22222">.  rem - the function that removes the null space</font>
+<a name="line19"> 19: </a><font color="#B22222">-  ctx - context for the remove function</font>
+
+<a name="line21"> 21: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line23"> 23: </a><font color="#B22222">.keywords: <a href="../../../docs/manualpages/PC/PC.html#PC">PC</a>, null space, create</font>
+
+<a name="line25"> 25: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/Mat/MatNullSpaceDestroy.html#MatNullSpaceDestroy">MatNullSpaceDestroy</a>(), <a href="../../../docs/manualpages/Mat/MatNullSpaceRemove.html#MatNullSpaceRemove">MatNullSpaceRemove</a>(), <a href="../../../docs/manualpages/Mat/MatSetNullSpace.html#MatSetNullSpace">MatSetNullSpace</a>(), <a href="../../../docs/manualpages/Mat/MatNullSpace.html#MatNullSpace">MatNullSpace</a>, <a href="../../../docs/manualpages/Mat/MatNullSpaceCreate.html#MatNullSpaceCreate">MatNullSpaceCreate</a>()</font>
+<a name="line26"> 26: </a><font color="#B22222">@*/</font>
+<a name="line27"> 27: </a><strong><font color="#4169E1"><a name="MatNullSpaceSetFunction"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../docs/manualpages/Mat/MatNullSpaceSetFunction.html#MatNullSpaceSetFunction">MatNullSpaceSetFunction</a>(<a href="../../../docs/manualpages/Mat/MatNullSpace.html#MatNullSpace">MatNullSpace</a> sp, <a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> (*rem)(<a href="../../../docs/manualpages/Mat/MatNullSpace.html#MatNullSpace">MatNullSpace</a>,<a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>,void*),void *ctx)</font></strong>
+<a name="line28"> 28: </a>{
+<a name="line31"> 31: </a>  sp-&gt;remove = rem;
+<a name="line32"> 32: </a>  sp-&gt;rmctx  = ctx;
+<a name="line33"> 33: </a>  <font color="#4169E1">return</font>(0);
+<a name="line34"> 34: </a>}
+
+<a name="line36"> 36: </a><font color="#B22222">/*@C</font>
+<a name="line37"> 37: </a><font color="#B22222">   <a href="../../../docs/manualpages/Mat/MatNullSpaceGetVecs.html#MatNullSpaceGetVecs">MatNullSpaceGetVecs</a> - get vectors defining the null space</font>
+
+<a name="line39"> 39: </a><font color="#B22222">   Not Collective</font>
+
+<a name="line41"> 41: </a><font color="#B22222">   Input Arguments:</font>
+<a name="line42"> 42: </a><font color="#B22222">.  sp - null space object</font>
+
+<a name="line44"> 44: </a><font color="#B22222">   Output Arguments:</font>
+<a name="line45"> 45: </a><font color="#B22222">+  has_cnst - <a href="../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a> if the null space contains the constant vector, otherwise <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a></font>
+<a name="line46"> 46: </a><font color="#B22222">.  n - number of vectors (excluding constant vector) in null space</font>
+<a name="line47"> 47: </a><font color="#B22222">-  vecs - orthonormal vectors that span the null space (excluding the constant vector)</font>
+
+<a name="line49"> 49: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line51"> 51: </a><font color="#B22222">   Notes:</font>
+<a name="line52"> 52: </a><font color="#B22222">      These vectors and the array are owned by the <a href="../../../docs/manualpages/Mat/MatNullSpace.html#MatNullSpace">MatNullSpace</a> and should not be destroyed or freeded by the caller</font>
+
+<a name="line54"> 54: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/Mat/MatNullSpaceCreate.html#MatNullSpaceCreate">MatNullSpaceCreate</a>(), <a href="../../../docs/manualpages/Mat/MatGetNullSpace.html#MatGetNullSpace">MatGetNullSpace</a>(), <a href="../../../docs/manualpages/Mat/MatGetNearNullSpace.html#MatGetNearNullSpace">MatGetNearNullSpace</a>()</font>
+<a name="line55"> 55: </a><font color="#B22222">@*/</font>
+<a name="line56"> 56: </a><strong><font color="#4169E1"><a name="MatNullSpaceGetVecs"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../docs/manualpages/Mat/MatNullSpaceGetVecs.html#MatNullSpaceGetVecs">MatNullSpaceGetVecs</a>(<a href="../../../docs/manualpages/Mat/MatNullSpace.html#MatNullSpace">MatNullSpace</a> sp,<a href="../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> *has_const,<a href="../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *n,const <a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> **vecs)</font></strong>
+<a name="line57"> 57: </a>{
+
+<a name="line61"> 61: </a>  <font color="#4169E1">if</font> (has_const) *has_const = sp-&gt;has_cnst;
+<a name="line62"> 62: </a>  <font color="#4169E1">if</font> (n) *n = sp-&gt;n;
+<a name="line63"> 63: </a>  <font color="#4169E1">if</font> (vecs) *vecs = sp-&gt;vecs;
+<a name="line64"> 64: </a>  <font color="#4169E1">return</font>(0);
+<a name="line65"> 65: </a>}
+
+<a name="line67"> 67: </a><font color="#B22222">/*@</font>
+<a name="line68"> 68: </a><font color="#B22222">   <a href="../../../docs/manualpages/Mat/MatNullSpaceCreateRigidBody.html#MatNullSpaceCreateRigidBody">MatNullSpaceCreateRigidBody</a> - create rigid body modes from coordinates</font>
+
+<a name="line70"> 70: </a><font color="#B22222">   Collective on <a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a></font>
+
+<a name="line72"> 72: </a><font color="#B22222">   Input Argument:</font>
+<a name="line73"> 73: </a><font color="#B22222">.  coords - block of coordinates of each node, must have block size set</font>
+
+<a name="line75"> 75: </a><font color="#B22222">   Output Argument:</font>
+<a name="line76"> 76: </a><font color="#B22222">.  sp - the null space</font>
+
+<a name="line78"> 78: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line80"> 80: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/Mat/MatNullSpaceCreate.html#MatNullSpaceCreate">MatNullSpaceCreate</a>()</font>
+<a name="line81"> 81: </a><font color="#B22222">@*/</font>
+<a name="line82"> 82: </a><strong><font color="#4169E1"><a name="MatNullSpaceCreateRigidBody"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../docs/manualpages/Mat/MatNullSpaceCreateRigidBody.html#MatNullSpaceCreateRigidBody">MatNullSpaceCreateRigidBody</a>(<a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> coords,<a href="../../../docs/manualpages/Mat/MatNullSpace.html#MatNullSpace">MatNullSpace</a> *sp)</font></strong>
+<a name="line83"> 83: </a>{
+<a name="line84"> 84: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+<a name="line85"> 85: </a>  const <a href="../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> *x;
+<a name="line86"> 86: </a>  <a href="../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>       *v[6],dots[5];
+<a name="line87"> 87: </a>  <a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>               vec[6];
+<a name="line88"> 88: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          n,N,dim,nmodes,i,j;
+<a name="line89"> 89: </a>  <a href="../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>         sN;
+
+<a name="line92"> 92: </a>  <a href="../../../docs/manualpages/Vec/VecGetBlockSize.html#VecGetBlockSize">VecGetBlockSize</a>(coords,&amp;dim);
+<a name="line93"> 93: </a>  <a href="../../../docs/manualpages/Vec/VecGetLocalSize.html#VecGetLocalSize">VecGetLocalSize</a>(coords,&amp;n);
+<a name="line94"> 94: </a>  <a href="../../../docs/manualpages/Vec/VecGetSize.html#VecGetSize">VecGetSize</a>(coords,&amp;N);
+<a name="line95"> 95: </a>  n   /= dim;
+<a name="line96"> 96: </a>  N   /= dim;
+<a name="line97"> 97: </a>  sN = 1./PetscSqrtReal((<a href="../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>)N);
+<a name="line98"> 98: </a>  <font color="#4169E1">switch</font> (dim) {
+<a name="line99"> 99: </a>  <font color="#4169E1">case</font> 1:
+<a name="line100">100: </a>    <a href="../../../docs/manualpages/Mat/MatNullSpaceCreate.html#MatNullSpaceCreate">MatNullSpaceCreate</a>(<a href="../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)coords),<a href="../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>,0,NULL,sp);
+<a name="line101">101: </a>    <font color="#4169E1">break</font>;
+<a name="line102">102: </a>  <font color="#4169E1">case</font> 2:
+<a name="line103">103: </a>  <font color="#4169E1">case</font> 3:
+<a name="line104">104: </a>    nmodes = (dim == 2) ? 3 : 6;
+<a name="line105">105: </a>    <a href="../../../docs/manualpages/Vec/VecCreate.html#VecCreate">VecCreate</a>(<a href="../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)coords),&amp;vec[0]);
+<a name="line106">106: </a>    <a href="../../../docs/manualpages/Vec/VecSetSizes.html#VecSetSizes">VecSetSizes</a>(vec[0],dim*n,dim*N);
+<a name="line107">107: </a>    <a href="../../../docs/manualpages/Vec/VecSetBlockSize.html#VecSetBlockSize">VecSetBlockSize</a>(vec[0],dim);
+<a name="line108">108: </a>    <a href="../../../docs/manualpages/Vec/VecSetUp.html#VecSetUp">VecSetUp</a>(vec[0]);
+<a name="line109">109: </a>    <font color="#4169E1">for</font> (i=1; i&lt;nmodes; i++) {<a href="../../../docs/manualpages/Vec/VecDuplicate.html#VecDuplicate">VecDuplicate</a>(vec[0],&amp;vec[i]);}
+<a name="line110">110: </a>    <font color="#4169E1">for</font> (i=0; i&lt;nmodes; i++) {<a href="../../../docs/manualpages/Vec/VecGetArray.html#VecGetArray">VecGetArray</a>(vec[i],&amp;v[i]);}
+<a name="line111">111: </a>    <a href="../../../docs/manualpages/Vec/VecGetArrayRead.html#VecGetArrayRead">VecGetArrayRead</a>(coords,&amp;x);
+<a name="line112">112: </a>    <font color="#4169E1">for</font> (i=0; i&lt;n; i++) {
+<a name="line113">113: </a>      <font color="#4169E1">if</font> (dim == 2) {
+<a name="line114">114: </a>        v[0][i*2+0] = sN;
+<a name="line115">115: </a>        v[0][i*2+1] = 0.;
+<a name="line116">116: </a>        v[1][i*2+0] = 0.;
+<a name="line117">117: </a>        v[1][i*2+1] = sN;
+<a name="line118">118: </a>        <font color="#B22222">/* Rotations */</font>
+<a name="line119">119: </a>        v[2][i*2+0] = -x[i*2+1];
+<a name="line120">120: </a>        v[2][i*2+1] = x[i*2+0];
+<a name="line121">121: </a>      } <font color="#4169E1">else</font> {
+<a name="line122">122: </a>        v[0][i*3+0] = sN;
+<a name="line123">123: </a>        v[0][i*3+1] = 0.;
+<a name="line124">124: </a>        v[0][i*3+2] = 0.;
+<a name="line125">125: </a>        v[1][i*3+0] = 0.;
+<a name="line126">126: </a>        v[1][i*3+1] = sN;
+<a name="line127">127: </a>        v[1][i*3+2] = 0.;
+<a name="line128">128: </a>        v[2][i*3+0] = 0.;
+<a name="line129">129: </a>        v[2][i*3+1] = 0.;
+<a name="line130">130: </a>        v[2][i*3+2] = sN;
+
+<a name="line132">132: </a>        v[3][i*3+0] = x[i*3+1];
+<a name="line133">133: </a>        v[3][i*3+1] = -x[i*3+0];
+<a name="line134">134: </a>        v[3][i*3+2] = 0.;
+<a name="line135">135: </a>        v[4][i*3+0] = 0.;
+<a name="line136">136: </a>        v[4][i*3+1] = -x[i*3+2];
+<a name="line137">137: </a>        v[4][i*3+2] = x[i*3+1];
+<a name="line138">138: </a>        v[5][i*3+0] = x[i*3+2];
+<a name="line139">139: </a>        v[5][i*3+1] = 0.;
+<a name="line140">140: </a>        v[5][i*3+2] = -x[i*3+0];
+<a name="line141">141: </a>      }
+<a name="line142">142: </a>    }
+<a name="line143">143: </a>    <font color="#4169E1">for</font> (i=0; i&lt;nmodes; i++) {<a href="../../../docs/manualpages/Vec/VecRestoreArray.html#VecRestoreArray">VecRestoreArray</a>(vec[i],&amp;v[i]);}
+<a name="line144">144: </a>    <a href="../../../docs/manualpages/Vec/VecRestoreArrayRead.html#VecRestoreArrayRead">VecRestoreArrayRead</a>(coords,&amp;x);
+<a name="line145">145: </a>    <font color="#4169E1">for</font> (i=dim; i&lt;nmodes; i++) {
+<a name="line146">146: </a>      <font color="#B22222">/* Orthonormalize vec[i] against vec[0:i-1] */</font>
+<a name="line147">147: </a>      <a href="../../../docs/manualpages/Vec/VecMDot.html#VecMDot">VecMDot</a>(vec[i],i,vec,dots);
+<a name="line148">148: </a>      <font color="#4169E1">for</font> (j=0; j&lt;i; j++) dots[j] *= -1.;
+<a name="line149">149: </a>      <a href="../../../docs/manualpages/Vec/VecMAXPY.html#VecMAXPY">VecMAXPY</a>(vec[i],i,dots,vec);
+<a name="line150">150: </a>      <a href="../../../docs/manualpages/Vec/VecNormalize.html#VecNormalize">VecNormalize</a>(vec[i],NULL);
+<a name="line151">151: </a>    }
+<a name="line152">152: </a>    <a href="../../../docs/manualpages/Mat/MatNullSpaceCreate.html#MatNullSpaceCreate">MatNullSpaceCreate</a>(<a href="../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)coords),<a href="../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>,nmodes,vec,sp);
+<a name="line153">153: </a>    <font color="#4169E1">for</font> (i=0; i&lt;nmodes; i++) {<a href="../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;vec[i]);}
+<a name="line154">154: </a>  }
+<a name="line155">155: </a>  <font color="#4169E1">return</font>(0);
+<a name="line156">156: </a>}
+
+<a name="line158">158: </a><font color="#B22222">/*@C</font>
+<a name="line159">159: </a><font color="#B22222">   <a href="../../../docs/manualpages/Mat/MatNullSpaceView.html#MatNullSpaceView">MatNullSpaceView</a> - Visualizes a null space object.</font>
+
+<a name="line161">161: </a><font color="#B22222">   Collective on <a href="../../../docs/manualpages/Mat/MatNullSpace.html#MatNullSpace">MatNullSpace</a></font>
+
+<a name="line163">163: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line164">164: </a><font color="#B22222">+  matnull - the null space</font>
+<a name="line165">165: </a><font color="#B22222">-  viewer - visualization context</font>
+
+<a name="line167">167: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line169">169: </a><font color="#B22222">   Fortran Note:</font>
+<a name="line170">170: </a><font color="#B22222">   This routine is not supported in Fortran.</font>
+
+<a name="line172">172: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/Mat/MatNullSpaceCreate.html#MatNullSpaceCreate">MatNullSpaceCreate</a>(), <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html#PetscViewerASCIIOpen">PetscViewerASCIIOpen</a>()</font>
+<a name="line173">173: </a><font color="#B22222">@*/</font>
+<a name="line174">174: </a><strong><font color="#4169E1"><a name="MatNullSpaceView"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../docs/manualpages/Mat/MatNullSpaceView.html#MatNullSpaceView">MatNullSpaceView</a>(<a href="../../../docs/manualpages/Mat/MatNullSpace.html#MatNullSpace">MatNullSpace</a> sp,<a href="../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer)</font></strong>
+<a name="line175">175: </a>{
+<a name="line177">177: </a>  <a href="../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>      iascii;
+
+<a name="line181">181: </a>  <font color="#4169E1">if</font> (!viewer) {
+<a name="line182">182: </a>    <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIGetStdout.html#PetscViewerASCIIGetStdout">PetscViewerASCIIGetStdout</a>(<a href="../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sp),&amp;viewer);
+<a name="line183">183: </a>  }
+
+<a name="line187">187: </a>  <a href="../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<a href="../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html#PETSCVIEWERASCII">PETSCVIEWERASCII</a>,&amp;iascii);
+<a name="line188">188: </a>  <font color="#4169E1">if</font> (iascii) {
+<a name="line189">189: </a>    <a href="../../../docs/manualpages/Viewer/PetscViewerFormat.html#PetscViewerFormat">PetscViewerFormat</a> format;
+<a name="line190">190: </a>    <a href="../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          i;
+<a name="line191">191: </a>    PetscViewerGetFormat(viewer,&amp;format);
+<a name="line192">192: </a>    PetscObjectPrintClassNamePrefixType((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sp,viewer);
+<a name="line193">193: </a>    <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIPushTab.html#PetscViewerASCIIPushTab">PetscViewerASCIIPushTab</a>(viewer);
+<a name="line194">194: </a>    <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"Contains %D vector%s%s\n"</font>,sp-&gt;n,sp-&gt;n==1 ? <font color="#666666">""</font> : <font color="#666666">"s"</font>,sp-&gt;has_cnst ? <font color="#666666">" and the constant"</font> : <font color="#666666">""</font>);
+<a name="line195">195: </a>    <font color="#4169E1">if</font> (sp-&gt;remove) {<a href="../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"Has user-provided removal function\n"</font>);}
+<a name="line196">196: </a>    <font color="#4169E1">if</font> (!(format == <a href="../../../docs/manualpages/Viewer/PetscViewerFormat.html#PetscViewerFormat">PETSC_VIEWER_ASCII_INFO</a> || format == <a href="../../../docs/manualpages/Viewer/PetscViewerFormat.html#PetscViewerFormat">PETSC_VIEWER_ASCII_INFO_DETAIL</a>)) {
+<a name="line197">197: </a>      <font color="#4169E1">for</font> (i=0; i&lt;sp-&gt;n; i++) {
+<a name="line198">198: </a>        <a href="../../../docs/manualpages/Vec/VecView.html#VecView">VecView</a>(sp-&gt;vecs[i],viewer);
+<a name="line199">199: </a>      }
+<a name="line200">200: </a>    }
+<a name="line201">201: </a>    <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIPopTab.html#PetscViewerASCIIPopTab">PetscViewerASCIIPopTab</a>(viewer);
+<a name="line202">202: </a>  }
+<a name="line203">203: </a>  <font color="#4169E1">return</font>(0);
+<a name="line204">204: </a>}
+
+<a name="line206">206: </a><font color="#B22222">/*@C</font>
+<a name="line207">207: </a><font color="#B22222">   <a href="../../../docs/manualpages/Mat/MatNullSpaceCreate.html#MatNullSpaceCreate">MatNullSpaceCreate</a> - Creates a data structure used to project vectors</font>
+<a name="line208">208: </a><font color="#B22222">   out of null spaces.</font>
+
+<a name="line210">210: </a><font color="#B22222">   Collective on <a href="../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a></font>
+
+<a name="line212">212: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line213">213: </a><font color="#B22222">+  comm - the MPI communicator associated with the object</font>
+<a name="line214">214: </a><font color="#B22222">.  has_cnst - <a href="../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a> if the null space contains the constant vector; otherwise <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a></font>
+<a name="line215">215: </a><font color="#B22222">.  n - number of vectors (excluding constant vector) in null space</font>
+<a name="line216">216: </a><font color="#B22222">-  vecs - the vectors that span the null space (excluding the constant vector);</font>
+<a name="line217">217: </a><font color="#B22222">          these vectors must be orthonormal. These vectors are NOT copied, so do not change them</font>
+<a name="line218">218: </a><font color="#B22222">          after this call. You should free the array that you pass in and destroy the vectors (this will reduce the reference count</font>
+<a name="line219">219: </a><font color="#B22222">          for them by one).</font>
+
+<a name="line221">221: </a><font color="#B22222">   Output Parameter:</font>
+<a name="line222">222: </a><font color="#B22222">.  SP - the null space context</font>
+
+<a name="line224">224: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line226">226: </a><font color="#B22222">   Notes: See <a href="../../../docs/manualpages/Mat/MatNullSpaceSetFunction.html#MatNullSpaceSetFunction">MatNullSpaceSetFunction</a>() as an alternative way of providing the null space information instead of setting vecs.</font>
+
+<a name="line228">228: </a><font color="#B22222">      If has_cnst is <a href="../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a> you do not need to pass a constant vector in as a fourth argument to this routine, nor do you</font>
+<a name="line229">229: </a><font color="#B22222">       need to pass in a function that eliminates the constant function into <a href="../../../docs/manualpages/Mat/MatNullSpaceSetFunction.html#MatNullSpaceSetFunction">MatNullSpaceSetFunction</a>().</font>
+
+<a name="line231">231: </a><font color="#B22222">  Users manual sections:</font>
+<a name="line232">232: </a><font color="#B22222">.   <a href="../../../docs/manualpages/../manual.pdf#section.4.19">Section 4.19 Solving Singular Systems</a></font>
+
+<a name="line234">234: </a><font color="#B22222">.keywords: <a href="../../../docs/manualpages/PC/PC.html#PC">PC</a>, null space, create</font>
+
+<a name="line236">236: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/Mat/MatNullSpaceDestroy.html#MatNullSpaceDestroy">MatNullSpaceDestroy</a>(), <a href="../../../docs/manualpages/Mat/MatNullSpaceRemove.html#MatNullSpaceRemove">MatNullSpaceRemove</a>(), <a href="../../../docs/manualpages/Mat/MatSetNullSpace.html#MatSetNullSpace">MatSetNullSpace</a>(), <a href="../../../docs/manualpages/Mat/MatNullSpace.html#MatNullSpace">MatNullSpace</a>, <a href="../../../docs/manualpages/Mat/MatNullSpaceSetFunction.html#MatNullSpaceSetFunction">MatNullSpaceSetFunction</a>()</font>
+<a name="line237">237: </a><font color="#B22222">@*/</font>
+<a name="line238">238: </a><strong><font color="#4169E1"><a name="MatNullSpaceCreate"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../docs/manualpages/Mat/MatNullSpaceCreate.html#MatNullSpaceCreate">MatNullSpaceCreate</a>(<a href="../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a> comm,<a href="../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> has_cnst,<a href="../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> n,const <a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> vecs[],<a href="../../../docs/manualpages/Mat/MatNullSpace.html#MatNullSpace">MatNullSpace</a> *SP)</font></strong>
+<a name="line239">239: </a>{
+<a name="line240">240: </a>  <a href="../../../docs/manualpages/Mat/MatNullSpace.html#MatNullSpace">MatNullSpace</a>   sp;
+<a name="line242">242: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       i;
+
+<a name="line245">245: </a>  <font color="#4169E1">if</font> (n &lt; 0) <a href="../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_OUTOFRANGE,<font color="#666666">"Number of vectors (given %D) cannot be negative"</font>,n);
+<a name="line249">249: </a>  <font color="#4169E1">if</font> (n) {
+<a name="line250">250: </a>    <font color="#4169E1">for</font> (i=0; i&lt;n; i++) {
+<a name="line251">251: </a>      <font color="#B22222">/* prevent the user from changes values in the vector */</font>
+<a name="line252">252: </a>      <a href="../../../docs/manualpages/Vec/VecLockPush.html#VecLockPush">VecLockPush</a>(vecs[i]);
+<a name="line253">253: </a>    }
+<a name="line254">254: </a>  }
+<a name="line255">255: </a><font color="#A020F0">#if defined(PETSC_USE_DEBUG)</font>
+<a name="line256">256: </a>  <font color="#4169E1">if</font> (n) {
+<a name="line257">257: </a>    <a href="../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> *dots;
+<a name="line258">258: </a>    <font color="#4169E1">for</font> (i=0; i&lt;n; i++) {
+<a name="line259">259: </a>      <a href="../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> norm;
+<a name="line260">260: </a>      <a href="../../../docs/manualpages/Vec/VecNorm.html#VecNorm">VecNorm</a>(vecs[i],<a href="../../../docs/manualpages/Vec/NORM_2.html#NORM_2">NORM_2</a>,&amp;norm);
+<a name="line261">261: </a>      <font color="#4169E1">if</font> (<a href="../../../docs/manualpages/Sys/PetscAbsReal.html#PetscAbsReal">PetscAbsReal</a>(norm - 1.0) &gt; PETSC_SQRT_MACHINE_EPSILON) <a href="../../../docs/manualpages/Sys/SETERRQ2.html#SETERRQ2">SETERRQ2</a>(<a href="../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)vecs[i]),PETSC_ERR_ARG_WRONG,<font color="#666666">"Vector %D must have 2-norm of 1.0, it is %g"</font>,i,(double)norm);
+<a name="line262">262: </a>    }
+<a name="line263">263: </a>    <font color="#4169E1">if</font> (has_cnst) {
+<a name="line264">264: </a>      <font color="#4169E1">for</font> (i=0; i&lt;n; i++) {
+<a name="line265">265: </a>        <a href="../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> sum;
+<a name="line266">266: </a>        <a href="../../../docs/manualpages/Vec/VecSum.html#VecSum">VecSum</a>(vecs[i],&amp;sum);
+<a name="line267">267: </a>        <font color="#4169E1">if</font> (PetscAbsScalar(sum) &gt; PETSC_SQRT_MACHINE_EPSILON) <a href="../../../docs/manualpages/Sys/SETERRQ2.html#SETERRQ2">SETERRQ2</a>(<a href="../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)vecs[i]),PETSC_ERR_ARG_WRONG,<font color="#666666">"Vector %D must be orthogonal to constant vector, inner product is %g"</font>,i,(double)PetscAbsScalar(sum));
+<a name="line268">268: </a>      }
+<a name="line269">269: </a>    }
+<a name="line270">270: </a>    <a href="../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(n-1,&amp;dots);
+<a name="line271">271: </a>    <font color="#4169E1">for</font> (i=0; i&lt;n-1; i++) {
+<a name="line272">272: </a>      <a href="../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> j;
+<a name="line273">273: </a>      <a href="../../../docs/manualpages/Vec/VecMDot.html#VecMDot">VecMDot</a>(vecs[i],n-i-1,vecs+i+1,dots);
+<a name="line274">274: </a>      <font color="#4169E1">for</font> (j=0;j&lt;n-i-1;j++) {
+<a name="line275">275: </a>        <font color="#4169E1">if</font> (PetscAbsScalar(dots[j]) &gt; PETSC_SQRT_MACHINE_EPSILON) <a href="../../../docs/manualpages/Sys/SETERRQ3.html#SETERRQ3">SETERRQ3</a>(<a href="../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)vecs[i]),PETSC_ERR_ARG_WRONG,<font color="#666666">"Vector %D must be orthogonal to vector %D, inner product is %g"</font>,i,i+j+1,(double)PetscAbsScalar(dots[j]));
+<a name="line276">276: </a>      }
+<a name="line277">277: </a>    }
+<a name="line278">278: </a>    <a href="../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(dots);
+<a name="line279">279: </a>  }
+<a name="line280">280: </a><font color="#A020F0">#endif</font>
+
+<a name="line282">282: </a>  *SP = NULL;
+<a name="line283">283: </a>  <a href="../../../docs/manualpages/Mat/MatInitializePackage.html#MatInitializePackage">MatInitializePackage</a>();
+
+<a name="line285">285: </a>  <a href="../../../docs/manualpages/Sys/PetscHeaderCreate.html#PetscHeaderCreate">PetscHeaderCreate</a>(sp,MAT_NULLSPACE_CLASSID,<font color="#666666">"<a href="../../../docs/manualpages/Mat/MatNullSpace.html#MatNullSpace">MatNullSpace</a>"</font>,<font color="#666666">"Null space"</font>,<font color="#666666">"<a href="../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>"</font>,comm,<a href="../../../docs/manualpages/Mat/MatNullSpaceDestroy.html#MatNullSpaceDestroy">MatNullSpaceDestroy</a>,<a href="../../../docs/manualpages/Mat/MatNullSpaceView.html#MatNullSpaceView">MatNullSpaceView</a>);
+
+<a name="line287">287: </a>  sp-&gt;has_cnst = has_cnst;
+<a name="line288">288: </a>  sp-&gt;n        = n;
+<a name="line289">289: </a>  sp-&gt;vecs     = 0;
+<a name="line290">290: </a>  sp-&gt;alpha    = 0;
+<a name="line291">291: </a>  sp-&gt;remove   = 0;
+<a name="line292">292: </a>  sp-&gt;rmctx    = 0;
+
+<a name="line294">294: </a>  <font color="#4169E1">if</font> (n) {
+<a name="line295">295: </a>    <a href="../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(n,&amp;sp-&gt;vecs);
+<a name="line296">296: </a>    <a href="../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(n,&amp;sp-&gt;alpha);
+<a name="line297">297: </a>    <a href="../../../docs/manualpages/Profiling/PetscLogObjectMemory.html#PetscLogObjectMemory">PetscLogObjectMemory</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sp,n*(<font color="#4169E1">sizeof</font>(<a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>)+<font color="#4169E1">sizeof</font>(<a href="../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>)));
+<a name="line298">298: </a>    <font color="#4169E1">for</font> (i=0; i&lt;n; i++) {
+<a name="line299">299: </a>      <a href="../../../docs/manualpages/Sys/PetscObjectReference.html#PetscObjectReference">PetscObjectReference</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)vecs[i]);
+<a name="line300">300: </a>      sp-&gt;vecs[i] = vecs[i];
+<a name="line301">301: </a>    }
+<a name="line302">302: </a>  }
+
+<a name="line304">304: </a>  *SP = sp;
+<a name="line305">305: </a>  <font color="#4169E1">return</font>(0);
+<a name="line306">306: </a>}
+
+<a name="line308">308: </a><font color="#B22222">/*@</font>
+<a name="line309">309: </a><font color="#B22222">   <a href="../../../docs/manualpages/Mat/MatNullSpaceDestroy.html#MatNullSpaceDestroy">MatNullSpaceDestroy</a> - Destroys a data structure used to project vectors</font>
+<a name="line310">310: </a><font color="#B22222">   out of null spaces.</font>
+
+<a name="line312">312: </a><font color="#B22222">   Collective on <a href="../../../docs/manualpages/Mat/MatNullSpace.html#MatNullSpace">MatNullSpace</a></font>
+
+<a name="line314">314: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line315">315: </a><font color="#B22222">.  sp - the null space context to be destroyed</font>
+
+<a name="line317">317: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line319">319: </a><font color="#B22222">.keywords: <a href="../../../docs/manualpages/PC/PC.html#PC">PC</a>, null space, destroy</font>
+
+<a name="line321">321: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/Mat/MatNullSpaceCreate.html#MatNullSpaceCreate">MatNullSpaceCreate</a>(), <a href="../../../docs/manualpages/Mat/MatNullSpaceRemove.html#MatNullSpaceRemove">MatNullSpaceRemove</a>(), <a href="../../../docs/manualpages/Mat/MatNullSpaceSetFunction.html#MatNullSpaceSetFunction">MatNullSpaceSetFunction</a>()</font>
+<a name="line322">322: </a><font color="#B22222">@*/</font>
+<a name="line323">323: </a><strong><font color="#4169E1"><a name="MatNullSpaceDestroy"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../docs/manualpages/Mat/MatNullSpaceDestroy.html#MatNullSpaceDestroy">MatNullSpaceDestroy</a>(<a href="../../../docs/manualpages/Mat/MatNullSpace.html#MatNullSpace">MatNullSpace</a> *sp)</font></strong>
+<a name="line324">324: </a>{
+<a name="line326">326: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       i;
+
+<a name="line329">329: </a>  <font color="#4169E1">if</font> (!*sp) <font color="#4169E1">return</font>(0);
+<a name="line331">331: </a>  <font color="#4169E1">if</font> (--((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)(*sp))-&gt;refct &gt; 0) {*sp = 0; <font color="#4169E1">return</font>(0);}
+
+<a name="line333">333: </a>  <font color="#4169E1">for</font> (i=0; i &lt; (*sp)-&gt;n; i++) {
+<a name="line334">334: </a>    <a href="../../../docs/manualpages/Vec/VecLockPop.html#VecLockPop">VecLockPop</a>((*sp)-&gt;vecs[i]);
+<a name="line335">335: </a>  }
+
+<a name="line337">337: </a>  <a href="../../../docs/manualpages/Vec/VecDestroyVecs.html#VecDestroyVecs">VecDestroyVecs</a>((*sp)-&gt;n,&amp;(*sp)-&gt;vecs);
+<a name="line338">338: </a>  <a href="../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>((*sp)-&gt;alpha);
+<a name="line339">339: </a>  <a href="../../../docs/manualpages/Sys/PetscHeaderDestroy.html#PetscHeaderDestroy">PetscHeaderDestroy</a>(sp);
+<a name="line340">340: </a>  <font color="#4169E1">return</font>(0);
+<a name="line341">341: </a>}
+
+<a name="line343">343: </a><font color="#B22222">/*@C</font>
+<a name="line344">344: </a><font color="#B22222">   <a href="../../../docs/manualpages/Mat/MatNullSpaceRemove.html#MatNullSpaceRemove">MatNullSpaceRemove</a> - Removes all the components of a null space from a vector.</font>
+
+<a name="line346">346: </a><font color="#B22222">   Collective on <a href="../../../docs/manualpages/Mat/MatNullSpace.html#MatNullSpace">MatNullSpace</a></font>
+
+<a name="line348">348: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line349">349: </a><font color="#B22222">+  sp - the null space context</font>
+<a name="line350">350: </a><font color="#B22222">-  vec - the vector from which the null space is to be removed</font>
+
+<a name="line352">352: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line354">354: </a><font color="#B22222">.keywords: <a href="../../../docs/manualpages/PC/PC.html#PC">PC</a>, null space, remove</font>
+
+<a name="line356">356: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/Mat/MatNullSpaceCreate.html#MatNullSpaceCreate">MatNullSpaceCreate</a>(), <a href="../../../docs/manualpages/Mat/MatNullSpaceDestroy.html#MatNullSpaceDestroy">MatNullSpaceDestroy</a>(), <a href="../../../docs/manualpages/Mat/MatNullSpaceSetFunction.html#MatNullSpaceSetFunction">MatNullSpaceSetFunction</a>()</font>
+<a name="line357">357: </a><font color="#B22222">@*/</font>
+<a name="line358">358: </a><strong><font color="#4169E1"><a name="MatNullSpaceRemove"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../docs/manualpages/Mat/MatNullSpaceRemove.html#MatNullSpaceRemove">MatNullSpaceRemove</a>(<a href="../../../docs/manualpages/Mat/MatNullSpace.html#MatNullSpace">MatNullSpace</a> sp,<a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> vec)</font></strong>
+<a name="line359">359: </a>{
+<a name="line360">360: </a>  <a href="../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>    sum;
+<a name="line361">361: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       i,N;
+
+
+<a name="line368">368: </a>  <font color="#4169E1">if</font> (sp-&gt;has_cnst) {
+<a name="line369">369: </a>    <a href="../../../docs/manualpages/Vec/VecGetSize.html#VecGetSize">VecGetSize</a>(vec,&amp;N);
+<a name="line370">370: </a>    <font color="#4169E1">if</font> (N &gt; 0) {
+<a name="line371">371: </a>      <a href="../../../docs/manualpages/Vec/VecSum.html#VecSum">VecSum</a>(vec,&amp;sum);
+<a name="line372">372: </a>      sum  = sum/((<a href="../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>)(-1.0*N));
+<a name="line373">373: </a>      <a href="../../../docs/manualpages/Vec/VecShift.html#VecShift">VecShift</a>(vec,sum);
+<a name="line374">374: </a>    }
+<a name="line375">375: </a>  }
+
+<a name="line377">377: </a>  <font color="#4169E1">if</font> (sp-&gt;n) {
+<a name="line378">378: </a>    <a href="../../../docs/manualpages/Vec/VecMDot.html#VecMDot">VecMDot</a>(vec,sp-&gt;n,sp-&gt;vecs,sp-&gt;alpha);
+<a name="line379">379: </a>    <font color="#4169E1">for</font> (i=0; i&lt;sp-&gt;n; i++) sp-&gt;alpha[i] = -sp-&gt;alpha[i];
+<a name="line380">380: </a>    <a href="../../../docs/manualpages/Vec/VecMAXPY.html#VecMAXPY">VecMAXPY</a>(vec,sp-&gt;n,sp-&gt;alpha,sp-&gt;vecs);
+<a name="line381">381: </a>  }
+
+<a name="line383">383: </a>  <font color="#4169E1">if</font> (sp-&gt;remove) {
+<a name="line384">384: </a>    (*sp-&gt;remove)(sp,vec,sp-&gt;rmctx);
+<a name="line385">385: </a>  }
+<a name="line386">386: </a>  <font color="#4169E1">return</font>(0);
+<a name="line387">387: </a>}
+
+<a name="line389">389: </a><font color="#B22222">/*@</font>
+<a name="line390">390: </a><font color="#B22222">   <a href="../../../docs/manualpages/Mat/MatNullSpaceTest.html#MatNullSpaceTest">MatNullSpaceTest</a>  - Tests if the claimed null space is really a</font>
+<a name="line391">391: </a><font color="#B22222">     null space of a matrix</font>
+
+<a name="line393">393: </a><font color="#B22222">   Collective on <a href="../../../docs/manualpages/Mat/MatNullSpace.html#MatNullSpace">MatNullSpace</a></font>
+
+<a name="line395">395: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line396">396: </a><font color="#B22222">+  sp - the null space context</font>
+<a name="line397">397: </a><font color="#B22222">-  mat - the matrix</font>
+
+<a name="line399">399: </a><font color="#B22222">   Output Parameters:</font>
+<a name="line400">400: </a><font color="#B22222">.  isNull - <a href="../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a> if the nullspace is valid for this matrix</font>
+
+<a name="line402">402: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line404">404: </a><font color="#B22222">.keywords: <a href="../../../docs/manualpages/PC/PC.html#PC">PC</a>, null space, remove</font>
+
+<a name="line406">406: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/Mat/MatNullSpaceCreate.html#MatNullSpaceCreate">MatNullSpaceCreate</a>(), <a href="../../../docs/manualpages/Mat/MatNullSpaceDestroy.html#MatNullSpaceDestroy">MatNullSpaceDestroy</a>(), <a href="../../../docs/manualpages/Mat/MatNullSpaceSetFunction.html#MatNullSpaceSetFunction">MatNullSpaceSetFunction</a>()</font>
+<a name="line407">407: </a><font color="#B22222">@*/</font>
+<a name="line408">408: </a><strong><font color="#4169E1"><a name="MatNullSpaceTest"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../docs/manualpages/Mat/MatNullSpaceTest.html#MatNullSpaceTest">MatNullSpaceTest</a>(<a href="../../../docs/manualpages/Mat/MatNullSpace.html#MatNullSpace">MatNullSpace</a> sp,<a href="../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> mat,<a href="../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>  *isNull)</font></strong>
+<a name="line409">409: </a>{
+<a name="line410">410: </a>  <a href="../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>    sum;
+<a name="line411">411: </a>  <a href="../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>      nrm,tol = 10. * PETSC_SQRT_MACHINE_EPSILON;
+<a name="line412">412: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       j,n,N;
+<a name="line414">414: </a>  <a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>            l,r;
+<a name="line415">415: </a>  <a href="../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>      flg1 = <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>,flg2 = <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>,consistent = <a href="../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+<a name="line416">416: </a>  <a href="../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a>    viewer;
+
+<a name="line421">421: </a>  n    = sp-&gt;n;
+<a name="line422">422: </a>  <a href="../../../docs/manualpages/Sys/PetscOptionsGetBool.html#PetscOptionsGetBool">PetscOptionsGetBool</a>(((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sp)-&gt;options,NULL,<font color="#666666">"-mat_null_space_test_view"</font>,&amp;flg1,NULL);
+<a name="line423">423: </a>  <a href="../../../docs/manualpages/Sys/PetscOptionsGetBool.html#PetscOptionsGetBool">PetscOptionsGetBool</a>(((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sp)-&gt;options,NULL,<font color="#666666">"-mat_null_space_test_view_draw"</font>,&amp;flg2,NULL);
+
+<a name="line425">425: </a>  <font color="#4169E1">if</font> (n) {
+<a name="line426">426: </a>    <a href="../../../docs/manualpages/Vec/VecDuplicate.html#VecDuplicate">VecDuplicate</a>(sp-&gt;vecs[0],&amp;l);
+<a name="line427">427: </a>  } <font color="#4169E1">else</font> {
+<a name="line428">428: </a>    <a href="../../../docs/manualpages/Mat/MatCreateVecs.html#MatCreateVecs">MatCreateVecs</a>(mat,&amp;l,NULL);
+<a name="line429">429: </a>  }
+
+<a name="line431">431: </a>  <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIGetStdout.html#PetscViewerASCIIGetStdout">PetscViewerASCIIGetStdout</a>(<a href="../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sp),&amp;viewer);
+<a name="line432">432: </a>  <font color="#4169E1">if</font> (sp-&gt;has_cnst) {
+<a name="line433">433: </a>    <a href="../../../docs/manualpages/Vec/VecDuplicate.html#VecDuplicate">VecDuplicate</a>(l,&amp;r);
+<a name="line434">434: </a>    <a href="../../../docs/manualpages/Vec/VecGetSize.html#VecGetSize">VecGetSize</a>(l,&amp;N);
+<a name="line435">435: </a>    sum  = 1.0/N;
+<a name="line436">436: </a>    <a href="../../../docs/manualpages/Vec/VecSet.html#VecSet">VecSet</a>(l,sum);
+<a name="line437">437: </a>    <a href="../../../docs/manualpages/Mat/MatMult.html#MatMult">MatMult</a>(mat,l,r);
+<a name="line438">438: </a>    <a href="../../../docs/manualpages/Vec/VecNorm.html#VecNorm">VecNorm</a>(r,<a href="../../../docs/manualpages/Vec/NORM_2.html#NORM_2">NORM_2</a>,&amp;nrm);
+<a name="line439">439: </a>    <font color="#4169E1">if</font> (nrm &gt;= tol) consistent = <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+<a name="line440">440: </a>    <font color="#4169E1">if</font> (flg1) {
+<a name="line441">441: </a>      <font color="#4169E1">if</font> (consistent) {
+<a name="line442">442: </a>        <a href="../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sp),<font color="#666666">"Constants are likely null vector"</font>);
+<a name="line443">443: </a>      } <font color="#4169E1">else</font> {
+<a name="line444">444: </a>        <a href="../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sp),<font color="#666666">"Constants are unlikely null vector "</font>);
+<a name="line445">445: </a>      }
+<a name="line446">446: </a>      <a href="../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sp),<font color="#666666">"|| A * 1/N || = %g\n"</font>,(double)nrm);
+<a name="line447">447: </a>    }
+<a name="line448">448: </a>    <font color="#4169E1">if</font> (!consistent &amp;&amp; flg1) {<a href="../../../docs/manualpages/Vec/VecView.html#VecView">VecView</a>(r,viewer);}
+<a name="line449">449: </a>    <font color="#4169E1">if</font> (!consistent &amp;&amp; flg2) {<a href="../../../docs/manualpages/Vec/VecView.html#VecView">VecView</a>(r,viewer);}
+<a name="line450">450: </a>    <a href="../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;r);
+<a name="line451">451: </a>  }
+
+<a name="line453">453: </a>  <font color="#4169E1">for</font> (j=0; j&lt;n; j++) {
+<a name="line454">454: </a>    (*mat-&gt;ops-&gt;mult)(mat,sp-&gt;vecs[j],l);
+<a name="line455">455: </a>    <a href="../../../docs/manualpages/Vec/VecNorm.html#VecNorm">VecNorm</a>(l,<a href="../../../docs/manualpages/Vec/NORM_2.html#NORM_2">NORM_2</a>,&amp;nrm);
+<a name="line456">456: </a>    <font color="#4169E1">if</font> (nrm &gt;= tol) consistent = <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+<a name="line457">457: </a>    <font color="#4169E1">if</font> (flg1) {
+<a name="line458">458: </a>      <font color="#4169E1">if</font> (consistent) {
+<a name="line459">459: </a>        <a href="../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sp),<font color="#666666">"Null vector %D is likely null vector"</font>,j);
+<a name="line460">460: </a>      } <font color="#4169E1">else</font> {
+<a name="line461">461: </a>        <a href="../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sp),<font color="#666666">"Null vector %D unlikely null vector "</font>,j);
+<a name="line462">462: </a>        consistent = <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+<a name="line463">463: </a>      }
+<a name="line464">464: </a>      <a href="../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sp),<font color="#666666">"|| A * v[%D] || = %g\n"</font>,j,(double)nrm);
+<a name="line465">465: </a>    }
+<a name="line466">466: </a>    <font color="#4169E1">if</font> (!consistent &amp;&amp; flg1) {<a href="../../../docs/manualpages/Vec/VecView.html#VecView">VecView</a>(l,viewer);}
+<a name="line467">467: </a>    <font color="#4169E1">if</font> (!consistent &amp;&amp; flg2) {<a href="../../../docs/manualpages/Vec/VecView.html#VecView">VecView</a>(l,viewer);}
+<a name="line468">468: </a>  }
+
+<a name="line470">470: </a>  <font color="#4169E1">if</font> (sp-&gt;remove) <a href="../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)mat),PETSC_ERR_SUP,<font color="#666666">"Cannot test a null space provided as a function with <a href="../../../docs/manualpages/Mat/MatNullSpaceSetFunction.html#MatNullSpaceSetFunction">MatNullSpaceSetFunction</a>()"</font>);
+<a name="line471">471: </a>  <a href="../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;l);
+<a name="line472">472: </a>  <font color="#4169E1">if</font> (isNull) *isNull = consistent;
+<a name="line473">473: </a>  <font color="#4169E1">return</font>(0);
+<a name="line474">474: </a>}
+
+</pre>
+</body>
+
+</html>

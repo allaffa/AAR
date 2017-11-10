@@ -1,0 +1,166 @@
+<center><a href="pams.c">Actual source code: pams.c</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/sys/ams/pams.c.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:11:07+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/sys/ams/pams.c.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+
+<a name="line2">  2: </a> #include <A href="../../../include/petsc/private/petscimpl.h.html">&lt;petsc/private/petscimpl.h&gt;</A>
+<a name="line3">  3: </a> #include <A href="../../../include/petscviewersaws.h.html">&lt;petscviewersaws.h&gt;</A>
+<a name="line4">  4: </a> #include <A href="../../../include/petscsys.h.html">&lt;petscsys.h&gt;</A>
+
+<a name="line6">  6: </a><font color="#B22222">/*@C</font>
+<a name="line7">  7: </a><font color="#B22222">   <a href="../../../docs/manualpages/Sys/PetscObjectSAWsTakeAccess.html#PetscObjectSAWsTakeAccess">PetscObjectSAWsTakeAccess</a> - Take access of the data fields that have been published to SAWs so they may be changed locally</font>
+
+<a name="line9">  9: </a><font color="#B22222">   Collective on <a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a></font>
+
+<a name="line11"> 11: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line12"> 12: </a><font color="#B22222">.  obj - the Petsc variable</font>
+<a name="line13"> 13: </a><font color="#B22222">         Thus must be cast with a (<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>), for example,</font>
+<a name="line14"> 14: </a><font color="#B22222">         <a href="../../../docs/manualpages/Sys/PetscObjectSetName.html#PetscObjectSetName">PetscObjectSetName</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)mat,name);</font>
+
+<a name="line16"> 16: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line18"> 18: </a><font color="#B22222">   Concepts: publishing object</font>
+
+<a name="line20"> 20: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/Sys/PetscObjectSetName.html#PetscObjectSetName">PetscObjectSetName</a>(), PetscObjectSAWsViewOff(), <a href="../../../docs/manualpages/Sys/PetscObjectSAWsGrantAccess.html#PetscObjectSAWsGrantAccess">PetscObjectSAWsGrantAccess</a>()</font>
+
+<a name="line22"> 22: </a><font color="#B22222">@*/</font>
+<a name="line23"> 23: </a><strong><font color="#4169E1"><a name="PetscObjectSAWsTakeAccess"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../docs/manualpages/Sys/PetscObjectSAWsTakeAccess.html#PetscObjectSAWsTakeAccess">PetscObjectSAWsTakeAccess</a>(<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a> obj)</font></strong>
+<a name="line24"> 24: </a>{
+<a name="line25"> 25: </a>  <font color="#4169E1">if</font> (obj-&gt;amsmem) {
+<a name="line26"> 26: </a>    <font color="#B22222">/* cannot wrap with PetscPushStack() because that also deals with the locks */</font>
+<a name="line27"> 27: </a>    SAWs_Lock();
+<a name="line28"> 28: </a>  }
+<a name="line29"> 29: </a>  <font color="#4169E1">return</font> 0;
+<a name="line30"> 30: </a>}
+
+<a name="line32"> 32: </a><font color="#B22222">/*@C</font>
+<a name="line33"> 33: </a><font color="#B22222">   <a href="../../../docs/manualpages/Sys/PetscObjectSAWsGrantAccess.html#PetscObjectSAWsGrantAccess">PetscObjectSAWsGrantAccess</a> - Grants access of the data fields that have been published to SAWs to change</font>
+
+<a name="line35"> 35: </a><font color="#B22222">   Collective on <a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a></font>
+
+<a name="line37"> 37: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line38"> 38: </a><font color="#B22222">.  obj - the Petsc variable</font>
+<a name="line39"> 39: </a><font color="#B22222">         Thus must be cast with a (<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>), for example,</font>
+<a name="line40"> 40: </a><font color="#B22222">         <a href="../../../docs/manualpages/Sys/PetscObjectSetName.html#PetscObjectSetName">PetscObjectSetName</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)mat,name);</font>
+
+<a name="line42"> 42: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line44"> 44: </a><font color="#B22222">   Concepts: publishing object</font>
+
+<a name="line46"> 46: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/Sys/PetscObjectSetName.html#PetscObjectSetName">PetscObjectSetName</a>(), PetscObjectSAWsViewOff(), <a href="../../../docs/manualpages/Sys/PetscObjectSAWsTakeAccess.html#PetscObjectSAWsTakeAccess">PetscObjectSAWsTakeAccess</a>()</font>
+
+<a name="line48"> 48: </a><font color="#B22222">@*/</font>
+<a name="line49"> 49: </a><strong><font color="#4169E1"><a name="PetscObjectSAWsGrantAccess"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../docs/manualpages/Sys/PetscObjectSAWsGrantAccess.html#PetscObjectSAWsGrantAccess">PetscObjectSAWsGrantAccess</a>(<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a> obj)</font></strong>
+<a name="line50"> 50: </a>{
+<a name="line51"> 51: </a>  <font color="#4169E1">if</font> (obj-&gt;amsmem) {
+<a name="line52"> 52: </a>    <font color="#B22222">/* cannot wrap with PetscPushStack() because that also deals with the locks */</font>
+<a name="line53"> 53: </a>    SAWs_Unlock();
+<a name="line54"> 54: </a>  }
+<a name="line55"> 55: </a>  <font color="#4169E1">return</font> 0;
+<a name="line56"> 56: </a>}
+
+<a name="line58"> 58: </a><font color="#B22222">/*@C</font>
+<a name="line59"> 59: </a><font color="#B22222">   <a href="../../../docs/manualpages/Sys/PetscSAWsBlock.html#PetscSAWsBlock">PetscSAWsBlock</a> - Blocks on SAWs until a client (person using the web browser) unblocks</font>
+
+<a name="line61"> 61: </a><font color="#B22222">   Not Collective</font>
+
+<a name="line63"> 63: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line65"> 65: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/Sys/PetscObjectSetName.html#PetscObjectSetName">PetscObjectSetName</a>(), PetscObjectSAWsViewOff(), <a href="../../../docs/manualpages/Sys/PetscObjectSAWsSetBlock.html#PetscObjectSAWsSetBlock">PetscObjectSAWsSetBlock</a>(), <a href="../../../docs/manualpages/Sys/PetscObjectSAWsBlock.html#PetscObjectSAWsBlock">PetscObjectSAWsBlock</a>()</font>
+
+<a name="line67"> 67: </a><font color="#B22222">@*/</font>
+<a name="line68"> 68: </a><strong><font color="#4169E1"><a name="PetscSAWsBlock"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../docs/manualpages/Sys/PetscSAWsBlock.html#PetscSAWsBlock">PetscSAWsBlock</a>(void)</font></strong>
+<a name="line69"> 69: </a>{
+<a name="line70"> 70: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>     ierr;
+<a name="line71"> 71: </a>  volatile <a href="../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> block = <a href="../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+
+<a name="line74"> 74: </a>  PetscStackCallSAWs(SAWs_Register,(<font color="#666666">"__Block"</font>,(<a href="../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>*)&amp;block,1,SAWs_WRITE,SAWs_BOOLEAN));
+<a name="line75"> 75: </a>  SAWs_Lock();
+<a name="line76"> 76: </a>  <font color="#4169E1">while</font> (block) {
+<a name="line77"> 77: </a>    SAWs_Unlock();
+<a name="line78"> 78: </a>    <a href="../../../docs/manualpages/Profiling/PetscInfo.html#PetscInfo">PetscInfo</a>(NULL,<font color="#666666">"Blocking on SAWs\n"</font>);
+<a name="line79"> 79: </a>    <a href="../../../docs/manualpages/Sys/PetscSleep.html#PetscSleep">PetscSleep</a>(.3);
+<a name="line80"> 80: </a>    SAWs_Lock();
+<a name="line81"> 81: </a>  }
+<a name="line82"> 82: </a>  SAWs_Unlock();
+<a name="line83"> 83: </a>  PetscStackCallSAWs(SAWs_Delete,(<font color="#666666">"__Block"</font>));
+<a name="line84"> 84: </a>  <a href="../../../docs/manualpages/Profiling/PetscInfo.html#PetscInfo">PetscInfo</a>(NULL,<font color="#666666">"Out of SAWs block\n"</font>);
+<a name="line85"> 85: </a>  <font color="#4169E1">return</font>(0);
+<a name="line86"> 86: </a>}
+
+<a name="line88"> 88: </a><font color="#B22222">/*@C</font>
+<a name="line89"> 89: </a><font color="#B22222">   <a href="../../../docs/manualpages/Sys/PetscObjectSAWsBlock.html#PetscObjectSAWsBlock">PetscObjectSAWsBlock</a> - Blocks the object if <a href="../../../docs/manualpages/Sys/PetscObjectSAWsSetBlock.html#PetscObjectSAWsSetBlock">PetscObjectSAWsSetBlock</a>() has been called</font>
+
+<a name="line91"> 91: </a><font color="#B22222">   Collective on <a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a></font>
+
+<a name="line93"> 93: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line94"> 94: </a><font color="#B22222">.  obj - the Petsc variable</font>
+<a name="line95"> 95: </a><font color="#B22222">         Thus must be cast with a (<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>), for example,</font>
+<a name="line96"> 96: </a><font color="#B22222">         <a href="../../../docs/manualpages/Sys/PetscObjectSetName.html#PetscObjectSetName">PetscObjectSetName</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)mat,name);</font>
+
+
+<a name="line99"> 99: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line101">101: </a><font color="#B22222">   Concepts: publishing object</font>
+
+<a name="line103">103: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/Sys/PetscObjectSetName.html#PetscObjectSetName">PetscObjectSetName</a>(), PetscObjectSAWsViewOff(), <a href="../../../docs/manualpages/Sys/PetscObjectSAWsSetBlock.html#PetscObjectSAWsSetBlock">PetscObjectSAWsSetBlock</a>()</font>
+
+<a name="line105">105: </a><font color="#B22222">@*/</font>
+<a name="line106">106: </a><strong><font color="#4169E1"><a name="PetscObjectSAWsBlock"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../docs/manualpages/Sys/PetscObjectSAWsBlock.html#PetscObjectSAWsBlock">PetscObjectSAWsBlock</a>(<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a> obj)</font></strong>
+<a name="line107">107: </a>{
+<a name="line108">108: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>     ierr;
+
+
+<a name="line113">113: </a>  <font color="#4169E1">if</font> (!obj-&gt;amspublishblock || !obj-&gt;amsmem) <font color="#4169E1">return</font>(0);
+<a name="line114">114: </a>  <a href="../../../docs/manualpages/Sys/PetscSAWsBlock.html#PetscSAWsBlock">PetscSAWsBlock</a>();
+<a name="line115">115: </a>  <font color="#4169E1">return</font>(0);
+<a name="line116">116: </a>}
+
+<a name="line118">118: </a><font color="#B22222">/*@C</font>
+<a name="line119">119: </a><font color="#B22222">   <a href="../../../docs/manualpages/Sys/PetscObjectSAWsSetBlock.html#PetscObjectSAWsSetBlock">PetscObjectSAWsSetBlock</a> - Sets whether an object will block at <a href="../../../docs/manualpages/Sys/PetscObjectSAWsBlock.html#PetscObjectSAWsBlock">PetscObjectSAWsBlock</a>()</font>
+
+<a name="line121">121: </a><font color="#B22222">   Collective on <a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a></font>
+
+<a name="line123">123: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line124">124: </a><font color="#B22222">+  obj - the Petsc variable</font>
+<a name="line125">125: </a><font color="#B22222">         Thus must be cast with a (<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>), for example,</font>
+<a name="line126">126: </a><font color="#B22222">         <a href="../../../docs/manualpages/Sys/PetscObjectSetName.html#PetscObjectSetName">PetscObjectSetName</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)mat,name);</font>
+<a name="line127">127: </a><font color="#B22222">-  flg - whether it should block</font>
+
+<a name="line129">129: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line131">131: </a><font color="#B22222">   Concepts: publishing object</font>
+
+<a name="line133">133: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/Sys/PetscObjectSetName.html#PetscObjectSetName">PetscObjectSetName</a>(), PetscObjectSAWsViewOff(), <a href="../../../docs/manualpages/Sys/PetscObjectSAWsBlock.html#PetscObjectSAWsBlock">PetscObjectSAWsBlock</a>()</font>
+
+<a name="line135">135: </a><font color="#B22222">@*/</font>
+<a name="line136">136: </a><strong><font color="#4169E1"><a name="PetscObjectSAWsSetBlock"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../docs/manualpages/Sys/PetscObjectSAWsSetBlock.html#PetscObjectSAWsSetBlock">PetscObjectSAWsSetBlock</a>(<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a> obj,<a href="../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> flg)</font></strong>
+<a name="line137">137: </a>{
+<a name="line140">140: </a>  obj-&gt;amspublishblock = flg;
+<a name="line141">141: </a>  <font color="#4169E1">return</font>(0);
+<a name="line142">142: </a>}
+
+<a name="line144">144: </a><strong><font color="#4169E1"><a name="PetscObjectSAWsViewOff"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscObjectSAWsViewOff(<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a> obj)</font></strong>
+<a name="line145">145: </a>{
+<a name="line146">146: </a>  char           dir[1024];
+
+<a name="line150">150: </a>  <font color="#4169E1">if</font> (obj-&gt;classid == PETSC_VIEWER_CLASSID) <font color="#4169E1">return</font>(0);
+<a name="line151">151: </a>  <font color="#4169E1">if</font> (!obj-&gt;amsmem) <font color="#4169E1">return</font>(0);
+<a name="line152">152: </a>  <a href="../../../docs/manualpages/Sys/PetscSNPrintf.html#PetscSNPrintf">PetscSNPrintf</a>(dir,1024,<font color="#666666">"/PETSc/Objects/%s"</font>,obj-&gt;name);
+<a name="line153">153: </a>  PetscStackCallSAWs(SAWs_Delete,(dir));
+<a name="line154">154: </a>  <font color="#4169E1">return</font>(0);
+<a name="line155">155: </a>}
+
+</pre>
+</body>
+
+</html>

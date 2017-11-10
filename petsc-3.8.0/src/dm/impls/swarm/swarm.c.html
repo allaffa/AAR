@@ -1,0 +1,1153 @@
+<center><a href="swarm.c">Actual source code: swarm.c</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/dm/impls/swarm/swarm.c.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:46:58+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/dm/impls/swarm/swarm.c.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+<a name="line1">  1: </a><strong><font color="#228B22">#define PETSCDM_DLL</font></strong>
+<a name="line2">  2: </a> #include <A href="../../../../include/petsc/private/dmswarmimpl.h.html">&lt;petsc/private/dmswarmimpl.h&gt;</A>
+<a name="line3">  3: </a> #include <A href="../../../../include/petscviewer.h.html">&lt;petscviewer.h&gt;</A>
+<a name="line4">  4: </a> #include <A href="../../../../include/petscdraw.h.html">&lt;petscdraw.h&gt;</A>
+<a name="line5">  5: </a><font color="#A020F0">#include </font><font color="#666666">"data_bucket.h"</font><font color="#A020F0"></font>
+
+<a name="line7">  7: </a><a href="../../../../docs/manualpages/Profiling/PetscLogEvent.html#PetscLogEvent">PetscLogEvent</a> DMSWARM_Migrate, DMSWARM_SetSizes, DMSWARM_AddPoints, DMSWARM_RemovePoints, DMSWARM_Sort;
+<a name="line8">  8: </a><a href="../../../../docs/manualpages/Profiling/PetscLogEvent.html#PetscLogEvent">PetscLogEvent</a> DMSWARM_DataExchangerTopologySetup, DMSWARM_DataExchangerBegin, DMSWARM_DataExchangerEnd;
+<a name="line9">  9: </a><a href="../../../../docs/manualpages/Profiling/PetscLogEvent.html#PetscLogEvent">PetscLogEvent</a> DMSWARM_DataExchangerSendCount, DMSWARM_DataExchangerPack;
+
+<a name="line11"> 11: </a>const char* DMSwarmTypeNames[] = { <font color="#666666">"basic"</font>, <font color="#666666">"pic"</font>, 0 };
+<a name="line12"> 12: </a>const char* DMSwarmMigrateTypeNames[] = { <font color="#666666">"basic"</font>, <font color="#666666">"dmcellnscatter"</font>, <font color="#666666">"dmcellexact"</font>, <font color="#666666">"user"</font>, 0 };
+<a name="line13"> 13: </a>const char* DMSwarmCollectTypeNames[] = { <font color="#666666">"basic"</font>, <font color="#666666">"boundingbox"</font>, <font color="#666666">"general"</font>, <font color="#666666">"user"</font>, 0 };
+<a name="line14"> 14: </a>const char* DMSwarmPICLayoutTypeNames[] = { <font color="#666666">"regular"</font>, <font color="#666666">"gauss"</font>, <font color="#666666">"subdivision"</font>, 0 };
+
+<a name="line16"> 16: </a>const char DMSwarmField_pid[] = <font color="#666666">"DMSwarm_pid"</font>;
+<a name="line17"> 17: </a>const char DMSwarmField_rank[] = <font color="#666666">"DMSwarm_rank"</font>;
+<a name="line18"> 18: </a>const char DMSwarmPICField_coor[] = <font color="#666666">"DMSwarmPIC_coor"</font>;
+<a name="line19"> 19: </a>const char DMSwarmPICField_cellid[] = <font color="#666666">"DMSwarm_cellid"</font>;
+
+<a name="line21"> 21: </a><font color="#B22222">/*@C</font>
+<a name="line22"> 22: </a><font color="#B22222">   <a href="../../../../docs/manualpages/DMSWARM/DMSwarmVectorDefineField.html#DMSwarmVectorDefineField">DMSwarmVectorDefineField</a> - Sets the field from which to define a <a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> object</font>
+<a name="line23"> 23: </a><font color="#B22222">                             when <a href="../../../../docs/manualpages/DM/DMCreateLocalVector.html#DMCreateLocalVector">DMCreateLocalVector</a>(), or <a href="../../../../docs/manualpages/DM/DMCreateGlobalVector.html#DMCreateGlobalVector">DMCreateGlobalVector</a>() is called</font>
+
+<a name="line25"> 25: </a><font color="#B22222">   Collective on <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a></font>
+
+<a name="line27"> 27: </a><font color="#B22222">   Input parameters:</font>
+<a name="line28"> 28: </a><font color="#B22222">+  dm - a DMSwarm</font>
+<a name="line29"> 29: </a><font color="#B22222">-  fieldname - the textual name given to a registered field</font>
+
+<a name="line31"> 31: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line33"> 33: </a><font color="#B22222">   Notes:</font>
+<a name="line34"> 34: </a><font color="#B22222">   The field with name fieldname must be defined as having a data type of <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>.</font>
+<a name="line35"> 35: </a><font color="#B22222">   This function must be called prior to calling <a href="../../../../docs/manualpages/DM/DMCreateLocalVector.html#DMCreateLocalVector">DMCreateLocalVector</a>(), <a href="../../../../docs/manualpages/DM/DMCreateGlobalVector.html#DMCreateGlobalVector">DMCreateGlobalVector</a>().</font>
+<a name="line36"> 36: </a><font color="#B22222">   Mutiple calls to <a href="../../../../docs/manualpages/DMSWARM/DMSwarmVectorDefineField.html#DMSwarmVectorDefineField">DMSwarmVectorDefineField</a>() are permitted.</font>
+
+<a name="line38"> 38: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterPetscDatatypeField.html#DMSwarmRegisterPetscDatatypeField">DMSwarmRegisterPetscDatatypeField</a>(), <a href="../../../../docs/manualpages/DM/DMCreateGlobalVector.html#DMCreateGlobalVector">DMCreateGlobalVector</a>(), <a href="../../../../docs/manualpages/DM/DMCreateLocalVector.html#DMCreateLocalVector">DMCreateLocalVector</a>()</font>
+<a name="line39"> 39: </a><font color="#B22222">@*/</font>
+<a name="line40"> 40: </a><strong><font color="#4169E1"><a name="DMSwarmVectorDefineField"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMSWARM/DMSwarmVectorDefineField.html#DMSwarmVectorDefineField">DMSwarmVectorDefineField</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,const char fieldname[])</font></strong>
+<a name="line41"> 41: </a>{
+<a name="line42"> 42: </a>  DM_Swarm *swarm = (DM_Swarm*)dm-&gt;data;
+<a name="line44"> 44: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> bs,n;
+<a name="line45"> 45: </a>  <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> *array;
+<a name="line46"> 46: </a>  <a href="../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PetscDataType</a> type;
+
+<a name="line49"> 49: </a>  <font color="#4169E1">if</font> (!swarm-&gt;issetup) { <a href="../../../../docs/manualpages/DM/DMSetUp.html#DMSetUp">DMSetUp</a>(dm); }
+<a name="line50"> 50: </a>  DataBucketGetSizes(swarm-&gt;db,&amp;n,NULL,NULL);
+<a name="line51"> 51: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetField.html#DMSwarmGetField">DMSwarmGetField</a>(dm,fieldname,&amp;bs,&amp;type,(void**)&amp;array);
+
+<a name="line53"> 53: </a>  <font color="#B22222">/* Check all fields are of type PETSC_REAL or PETSC_SCALAR */</font>
+<a name="line54"> 54: </a>  <font color="#4169E1">if</font> (type != PETSC_REAL) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_SUP,<font color="#666666">"Only valid for PETSC_REAL"</font>);
+<a name="line55"> 55: </a>  <a href="../../../../docs/manualpages/Sys/PetscSNPrintf.html#PetscSNPrintf">PetscSNPrintf</a>(swarm-&gt;vec_field_name,PETSC_MAX_PATH_LEN-1,<font color="#666666">"%s"</font>,fieldname);
+<a name="line56"> 56: </a>  swarm-&gt;vec_field_set = <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+<a name="line57"> 57: </a>  swarm-&gt;vec_field_bs = bs;
+<a name="line58"> 58: </a>  swarm-&gt;vec_field_nlocal = n;
+<a name="line59"> 59: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRestoreField.html#DMSwarmRestoreField">DMSwarmRestoreField</a>(dm,fieldname,&amp;bs,&amp;type,(void**)&amp;array);
+<a name="line60"> 60: </a>  <font color="#4169E1">return</font>(0);
+<a name="line61"> 61: </a>}
+
+<a name="line63"> 63: </a><font color="#B22222">/* requires DMSwarmDefineFieldVector has been called */</font>
+<a name="line64"> 64: </a><strong><font color="#4169E1"><a name="DMCreateGlobalVector_Swarm"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMCreateGlobalVector_Swarm(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> *vec)</font></strong>
+<a name="line65"> 65: </a>{
+<a name="line66"> 66: </a>  DM_Swarm *swarm = (DM_Swarm*)dm-&gt;data;
+<a name="line68"> 68: </a>  <a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> x;
+<a name="line69"> 69: </a>  char name[PETSC_MAX_PATH_LEN];
+
+<a name="line72"> 72: </a>  <font color="#4169E1">if</font> (!swarm-&gt;issetup) { <a href="../../../../docs/manualpages/DM/DMSetUp.html#DMSetUp">DMSetUp</a>(dm); }
+<a name="line73"> 73: </a>  <font color="#4169E1">if</font> (!swarm-&gt;vec_field_set) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_USER,<font color="#666666">"Must call <a href="../../../../docs/manualpages/DMSWARM/DMSwarmVectorDefineField.html#DMSwarmVectorDefineField">DMSwarmVectorDefineField</a> first"</font>);
+<a name="line74"> 74: </a>  <font color="#4169E1">if</font> (swarm-&gt;vec_field_nlocal != swarm-&gt;db-&gt;L) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_USER,<font color="#666666">"DMSwarm sizes have changed since last call to VectorDefineField first"</font>); <font color="#B22222">/* Stale data */</font>
+
+<a name="line76"> 76: </a>  <a href="../../../../docs/manualpages/Sys/PetscSNPrintf.html#PetscSNPrintf">PetscSNPrintf</a>(name,PETSC_MAX_PATH_LEN-1,<font color="#666666">"DMSwarmField_%s"</font>,swarm-&gt;vec_field_name);
+<a name="line77"> 77: </a>  <a href="../../../../docs/manualpages/Vec/VecCreate.html#VecCreate">VecCreate</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),&amp;x);
+<a name="line78"> 78: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectSetName.html#PetscObjectSetName">PetscObjectSetName</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)x,name);
+<a name="line79"> 79: </a>  <a href="../../../../docs/manualpages/Vec/VecSetSizes.html#VecSetSizes">VecSetSizes</a>(x,swarm-&gt;db-&gt;L*swarm-&gt;vec_field_bs,<a href="../../../../docs/manualpages/Sys/PETSC_DETERMINE.html#PETSC_DETERMINE">PETSC_DETERMINE</a>);
+<a name="line80"> 80: </a>  <a href="../../../../docs/manualpages/Vec/VecSetBlockSize.html#VecSetBlockSize">VecSetBlockSize</a>(x,swarm-&gt;vec_field_bs);
+<a name="line81"> 81: </a>  <a href="../../../../docs/manualpages/Vec/VecSetFromOptions.html#VecSetFromOptions">VecSetFromOptions</a>(x);
+<a name="line82"> 82: </a>  *vec = x;
+<a name="line83"> 83: </a>  <font color="#4169E1">return</font>(0);
+<a name="line84"> 84: </a>}
+
+<a name="line86"> 86: </a><font color="#B22222">/* requires DMSwarmDefineFieldVector has been called */</font>
+<a name="line87"> 87: </a><strong><font color="#4169E1"><a name="DMCreateLocalVector_Swarm"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMCreateLocalVector_Swarm(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> *vec)</font></strong>
+<a name="line88"> 88: </a>{
+<a name="line89"> 89: </a>  DM_Swarm *swarm = (DM_Swarm*)dm-&gt;data;
+<a name="line91"> 91: </a>  <a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> x;
+<a name="line92"> 92: </a>  char name[PETSC_MAX_PATH_LEN];
+
+<a name="line95"> 95: </a>  <font color="#4169E1">if</font> (!swarm-&gt;issetup) { <a href="../../../../docs/manualpages/DM/DMSetUp.html#DMSetUp">DMSetUp</a>(dm); }
+<a name="line96"> 96: </a>  <font color="#4169E1">if</font> (!swarm-&gt;vec_field_set) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_USER,<font color="#666666">"Must call <a href="../../../../docs/manualpages/DMSWARM/DMSwarmVectorDefineField.html#DMSwarmVectorDefineField">DMSwarmVectorDefineField</a> first"</font>);
+<a name="line97"> 97: </a>  <font color="#4169E1">if</font> (swarm-&gt;vec_field_nlocal != swarm-&gt;db-&gt;L) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_USER,<font color="#666666">"DMSwarm sizes have changed since last call to VectorDefineField first"</font>); <font color="#B22222">/* Stale data */</font>
+
+<a name="line99"> 99: </a>  <a href="../../../../docs/manualpages/Sys/PetscSNPrintf.html#PetscSNPrintf">PetscSNPrintf</a>(name,PETSC_MAX_PATH_LEN-1,<font color="#666666">"DMSwarmField_%s"</font>,swarm-&gt;vec_field_name);
+<a name="line100">100: </a>  <a href="../../../../docs/manualpages/Vec/VecCreate.html#VecCreate">VecCreate</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,&amp;x);
+<a name="line101">101: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectSetName.html#PetscObjectSetName">PetscObjectSetName</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)x,name);
+<a name="line102">102: </a>  <a href="../../../../docs/manualpages/Vec/VecSetSizes.html#VecSetSizes">VecSetSizes</a>(x,swarm-&gt;db-&gt;L*swarm-&gt;vec_field_bs,<a href="../../../../docs/manualpages/Sys/PETSC_DETERMINE.html#PETSC_DETERMINE">PETSC_DETERMINE</a>);
+<a name="line103">103: </a>  <a href="../../../../docs/manualpages/Vec/VecSetBlockSize.html#VecSetBlockSize">VecSetBlockSize</a>(x,swarm-&gt;vec_field_bs);
+<a name="line104">104: </a>  <a href="../../../../docs/manualpages/Vec/VecSetFromOptions.html#VecSetFromOptions">VecSetFromOptions</a>(x);
+<a name="line105">105: </a>  *vec = x;
+<a name="line106">106: </a>  <font color="#4169E1">return</font>(0);
+<a name="line107">107: </a>}
+
+<a name="line109">109: </a><strong><font color="#4169E1"><a name="DMSwarmDestroyVectorFromField_Private"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMSwarmDestroyVectorFromField_Private(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm, const char fieldname[], <a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> *vec)</font></strong>
+<a name="line110">110: </a>{
+<a name="line111">111: </a>  DM_Swarm      *swarm = (DM_Swarm *) dm-&gt;data;
+<a name="line112">112: </a>  DataField      gfield;
+<a name="line113">113: </a>  void         (*fptr)(void);
+<a name="line114">114: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       bs, nlocal;
+<a name="line115">115: </a>  char           name[PETSC_MAX_PATH_LEN];
+
+<a name="line119">119: </a>  <a href="../../../../docs/manualpages/Vec/VecGetLocalSize.html#VecGetLocalSize">VecGetLocalSize</a>(*vec, &amp;nlocal);
+<a name="line120">120: </a>  <a href="../../../../docs/manualpages/Vec/VecGetBlockSize.html#VecGetBlockSize">VecGetBlockSize</a>(*vec, &amp;bs);
+<a name="line121">121: </a>  <font color="#4169E1">if</font> (nlocal/bs != swarm-&gt;db-&gt;L) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_USER,<font color="#666666">"DMSwarm sizes have changed since vector was created - cannot ensure pointers are valid"</font>); <font color="#B22222">/* Stale data */</font>
+<a name="line122">122: </a>  DataBucketGetDataFieldByName(swarm-&gt;db, fieldname, &amp;gfield);
+<a name="line123">123: </a>  <font color="#B22222">/* check vector is an inplace array */</font>
+<a name="line124">124: </a>  <a href="../../../../docs/manualpages/Sys/PetscSNPrintf.html#PetscSNPrintf">PetscSNPrintf</a>(name, PETSC_MAX_PATH_LEN-1, <font color="#666666">"DMSwarm_VecFieldInPlace_%s"</font>, fieldname);
+<a name="line125">125: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectQueryFunction.html#PetscObjectQueryFunction">PetscObjectQueryFunction</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>) *vec, name, &amp;fptr);
+<a name="line126">126: </a>  <font color="#4169E1">if</font> (!fptr) <a href="../../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>) dm), PETSC_ERR_USER, <font color="#666666">"Vector being destroyed was not created from DMSwarm field(%s)"</font>, fieldname);
+<a name="line127">127: </a>  DataFieldRestoreAccess(gfield);
+<a name="line128">128: </a>  <a href="../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(vec);
+<a name="line129">129: </a>  <font color="#4169E1">return</font>(0);
+<a name="line130">130: </a>}
+
+<a name="line132">132: </a><strong><font color="#4169E1"><a name="DMSwarmCreateVectorFromField_Private"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMSwarmCreateVectorFromField_Private(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm, const char fieldname[], <a href="../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a> comm, <a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> *vec)</font></strong>
+<a name="line133">133: </a>{
+<a name="line134">134: </a>  DM_Swarm      *swarm = (DM_Swarm *) dm-&gt;data;
+<a name="line135">135: </a>  <a href="../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PetscDataType</a>  type;
+<a name="line136">136: </a>  <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>   *array;
+<a name="line137">137: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       bs, n;
+<a name="line138">138: </a>  char           name[PETSC_MAX_PATH_LEN];
+<a name="line139">139: </a>  <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>    commsize;
+
+<a name="line143">143: </a>  <font color="#4169E1">if</font> (!swarm-&gt;issetup) {<a href="../../../../docs/manualpages/DM/DMSetUp.html#DMSetUp">DMSetUp</a>(dm);}
+<a name="line144">144: </a>  DataBucketGetSizes(swarm-&gt;db, &amp;n, NULL, NULL);
+<a name="line145">145: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetField.html#DMSwarmGetField">DMSwarmGetField</a>(dm, fieldname, &amp;bs, &amp;type, (void **) &amp;array);
+<a name="line146">146: </a>  <font color="#4169E1">if</font> (type != PETSC_REAL) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>) dm), PETSC_ERR_SUP, <font color="#666666">"Only valid for PETSC_REAL"</font>);
+
+<a name="line148">148: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm, &amp;commsize);
+<a name="line149">149: </a>  <font color="#4169E1">if</font> (commsize == 1) {
+<a name="line150">150: </a>    <a href="../../../../docs/manualpages/Vec/VecCreateSeqWithArray.html#VecCreateSeqWithArray">VecCreateSeqWithArray</a>(comm, bs, n*bs, array, vec);
+<a name="line151">151: </a>  } <font color="#4169E1">else</font> {
+<a name="line152">152: </a>    <a href="../../../../docs/manualpages/Vec/VecCreateMPIWithArray.html#VecCreateMPIWithArray">VecCreateMPIWithArray</a>(comm, bs, n*bs, <a href="../../../../docs/manualpages/Sys/PETSC_DETERMINE.html#PETSC_DETERMINE">PETSC_DETERMINE</a>, array, vec);
+<a name="line153">153: </a>  }
+<a name="line154">154: </a>  <a href="../../../../docs/manualpages/Sys/PetscSNPrintf.html#PetscSNPrintf">PetscSNPrintf</a>(name, PETSC_MAX_PATH_LEN-1, <font color="#666666">"DMSwarmSharedField_%s"</font>, fieldname);
+<a name="line155">155: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectSetName.html#PetscObjectSetName">PetscObjectSetName</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>) *vec, name);
+
+<a name="line157">157: </a>  <font color="#B22222">/* Set guard */</font>
+<a name="line158">158: </a>  <a href="../../../../docs/manualpages/Sys/PetscSNPrintf.html#PetscSNPrintf">PetscSNPrintf</a>(name, PETSC_MAX_PATH_LEN-1, <font color="#666666">"DMSwarm_VecFieldInPlace_%s"</font>, fieldname);
+<a name="line159">159: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html#PetscObjectComposeFunction">PetscObjectComposeFunction</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>) *vec, name, DMSwarmDestroyVectorFromField_Private);
+<a name="line160">160: </a>  <font color="#4169E1">return</font>(0);
+<a name="line161">161: </a>}
+
+<a name="line163">163: </a><font color="#B22222">/*@C</font>
+<a name="line164">164: </a><font color="#B22222">   <a href="../../../../docs/manualpages/DMSWARM/DMSwarmCreateGlobalVectorFromField.html#DMSwarmCreateGlobalVectorFromField">DMSwarmCreateGlobalVectorFromField</a> - Creates a <a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> object sharing the array associated with a given field</font>
+
+<a name="line166">166: </a><font color="#B22222">   Collective on <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a></font>
+
+<a name="line168">168: </a><font color="#B22222">   Input parameters:</font>
+<a name="line169">169: </a><font color="#B22222">+  dm - a DMSwarm</font>
+<a name="line170">170: </a><font color="#B22222">-  fieldname - the textual name given to a registered field</font>
+
+<a name="line172">172: </a><font color="#B22222">   Output parameter:</font>
+<a name="line173">173: </a><font color="#B22222">.  vec - the vector</font>
+
+<a name="line175">175: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line177">177: </a><font color="#B22222">   Notes:</font>
+<a name="line178">178: </a><font color="#B22222">   The vector must be returned using a matching call to <a href="../../../../docs/manualpages/DMSWARM/DMSwarmDestroyGlobalVectorFromField.html#DMSwarmDestroyGlobalVectorFromField">DMSwarmDestroyGlobalVectorFromField</a>().</font>
+
+<a name="line180">180: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterPetscDatatypeField.html#DMSwarmRegisterPetscDatatypeField">DMSwarmRegisterPetscDatatypeField</a>(), <a href="../../../../docs/manualpages/DMSWARM/DMSwarmDestroyGlobalVectorFromField.html#DMSwarmDestroyGlobalVectorFromField">DMSwarmDestroyGlobalVectorFromField</a>()</font>
+<a name="line181">181: </a><font color="#B22222">@*/</font>
+<a name="line182">182: </a><strong><font color="#4169E1"><a name="DMSwarmCreateGlobalVectorFromField"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMSWARM/DMSwarmCreateGlobalVectorFromField.html#DMSwarmCreateGlobalVectorFromField">DMSwarmCreateGlobalVectorFromField</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,const char fieldname[],<a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> *vec)</font></strong>
+<a name="line183">183: </a>{
+<a name="line184">184: </a>  <a href="../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a>       comm = <a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>) dm);
+
+<a name="line188">188: </a>  DMSwarmCreateVectorFromField_Private(dm, fieldname, comm, vec);
+<a name="line189">189: </a>  <font color="#4169E1">return</font>(0);
+<a name="line190">190: </a>}
+
+<a name="line192">192: </a><font color="#B22222">/*@C</font>
+<a name="line193">193: </a><font color="#B22222">   <a href="../../../../docs/manualpages/DMSWARM/DMSwarmDestroyGlobalVectorFromField.html#DMSwarmDestroyGlobalVectorFromField">DMSwarmDestroyGlobalVectorFromField</a> - Destroys the <a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> object which share the array associated with a given field</font>
+
+<a name="line195">195: </a><font color="#B22222">   Collective on <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a></font>
+
+<a name="line197">197: </a><font color="#B22222">   Input parameters:</font>
+<a name="line198">198: </a><font color="#B22222">+  dm - a DMSwarm</font>
+<a name="line199">199: </a><font color="#B22222">-  fieldname - the textual name given to a registered field</font>
+
+<a name="line201">201: </a><font color="#B22222">   Output parameter:</font>
+<a name="line202">202: </a><font color="#B22222">.  vec - the vector</font>
+
+<a name="line204">204: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line206">206: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterPetscDatatypeField.html#DMSwarmRegisterPetscDatatypeField">DMSwarmRegisterPetscDatatypeField</a>(), <a href="../../../../docs/manualpages/DMSWARM/DMSwarmCreateGlobalVectorFromField.html#DMSwarmCreateGlobalVectorFromField">DMSwarmCreateGlobalVectorFromField</a>()</font>
+<a name="line207">207: </a><font color="#B22222">@*/</font>
+<a name="line208">208: </a><strong><font color="#4169E1"><a name="DMSwarmDestroyGlobalVectorFromField"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMSWARM/DMSwarmDestroyGlobalVectorFromField.html#DMSwarmDestroyGlobalVectorFromField">DMSwarmDestroyGlobalVectorFromField</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,const char fieldname[],<a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> *vec)</font></strong>
+<a name="line209">209: </a>{
+
+<a name="line213">213: </a>  DMSwarmDestroyVectorFromField_Private(dm, fieldname, vec);
+<a name="line214">214: </a>  <font color="#4169E1">return</font>(0);
+<a name="line215">215: </a>}
+
+<a name="line217">217: </a><font color="#B22222">/*@C</font>
+<a name="line218">218: </a><font color="#B22222">   <a href="../../../../docs/manualpages/DMSWARM/DMSwarmCreateLocalVectorFromField.html#DMSwarmCreateLocalVectorFromField">DMSwarmCreateLocalVectorFromField</a> - Creates a <a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> object sharing the array associated with a given field</font>
+
+<a name="line220">220: </a><font color="#B22222">   Collective on <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a></font>
+
+<a name="line222">222: </a><font color="#B22222">   Input parameters:</font>
+<a name="line223">223: </a><font color="#B22222">+  dm - a DMSwarm</font>
+<a name="line224">224: </a><font color="#B22222">-  fieldname - the textual name given to a registered field</font>
+
+<a name="line226">226: </a><font color="#B22222">   Output parameter:</font>
+<a name="line227">227: </a><font color="#B22222">.  vec - the vector</font>
+
+<a name="line229">229: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line231">231: </a><font color="#B22222">   Notes:</font>
+<a name="line232">232: </a><font color="#B22222">   The vector must be returned using a matching call to <a href="../../../../docs/manualpages/DMSWARM/DMSwarmDestroyLocalVectorFromField.html#DMSwarmDestroyLocalVectorFromField">DMSwarmDestroyLocalVectorFromField</a>().</font>
+
+<a name="line234">234: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterPetscDatatypeField.html#DMSwarmRegisterPetscDatatypeField">DMSwarmRegisterPetscDatatypeField</a>(), <a href="../../../../docs/manualpages/DMSWARM/DMSwarmDestroyLocalVectorFromField.html#DMSwarmDestroyLocalVectorFromField">DMSwarmDestroyLocalVectorFromField</a>()</font>
+<a name="line235">235: </a><font color="#B22222">@*/</font>
+<a name="line236">236: </a><strong><font color="#4169E1"><a name="DMSwarmCreateLocalVectorFromField"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMSWARM/DMSwarmCreateLocalVectorFromField.html#DMSwarmCreateLocalVectorFromField">DMSwarmCreateLocalVectorFromField</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,const char fieldname[],<a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> *vec)</font></strong>
+<a name="line237">237: </a>{
+<a name="line238">238: </a>  <a href="../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a>       comm = <a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>;
+
+<a name="line242">242: </a>  DMSwarmCreateVectorFromField_Private(dm, fieldname, comm, vec);
+<a name="line243">243: </a>  <font color="#4169E1">return</font>(0);
+<a name="line244">244: </a>}
+
+<a name="line246">246: </a><font color="#B22222">/*@C</font>
+<a name="line247">247: </a><font color="#B22222">   <a href="../../../../docs/manualpages/DMSWARM/DMSwarmDestroyLocalVectorFromField.html#DMSwarmDestroyLocalVectorFromField">DMSwarmDestroyLocalVectorFromField</a> - Destroys the <a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> object which share the array associated with a given field</font>
+
+<a name="line249">249: </a><font color="#B22222">   Collective on <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a></font>
+
+<a name="line251">251: </a><font color="#B22222">   Input parameters:</font>
+<a name="line252">252: </a><font color="#B22222">+  dm - a DMSwarm</font>
+<a name="line253">253: </a><font color="#B22222">-  fieldname - the textual name given to a registered field</font>
+
+<a name="line255">255: </a><font color="#B22222">   Output parameter:</font>
+<a name="line256">256: </a><font color="#B22222">.  vec - the vector</font>
+
+<a name="line258">258: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line260">260: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterPetscDatatypeField.html#DMSwarmRegisterPetscDatatypeField">DMSwarmRegisterPetscDatatypeField</a>(), <a href="../../../../docs/manualpages/DMSWARM/DMSwarmCreateLocalVectorFromField.html#DMSwarmCreateLocalVectorFromField">DMSwarmCreateLocalVectorFromField</a>()</font>
+<a name="line261">261: </a><font color="#B22222">@*/</font>
+<a name="line262">262: </a><strong><font color="#4169E1"><a name="DMSwarmDestroyLocalVectorFromField"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMSWARM/DMSwarmDestroyLocalVectorFromField.html#DMSwarmDestroyLocalVectorFromField">DMSwarmDestroyLocalVectorFromField</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,const char fieldname[],<a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> *vec)</font></strong>
+<a name="line263">263: </a>{
+
+<a name="line267">267: </a>  DMSwarmDestroyVectorFromField_Private(dm, fieldname, vec);
+<a name="line268">268: </a>  <font color="#4169E1">return</font>(0);
+<a name="line269">269: </a>}
+
+<a name="line271">271: </a><font color="#B22222">/*</font>
+<a name="line272">272: </a><font color="#B22222"><strong></font><font color="#4169E1"><a name="DMSwarmCreateGlobalVectorFromFields"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMSwarmCreateGlobalVectorFromFields(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> nf,const char *fieldnames[],<a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> *vec)</font></strong>
+<a name="line273">273: </a>{
+<a name="line274">274: </a>  return(0);
+<a name="line275">275: </a>}
+
+<a name="line277">277: </a><strong><font color="#4169E1"><a name="DMSwarmRestoreGlobalVectorFromFields"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMSwarmRestoreGlobalVectorFromFields(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> *vec)</font></strong>
+<a name="line278">278: </a>{
+<a name="line279">279: </a>  return(0);
+<a name="line280">280: </a>}
+<a name="line281">281: </a>*/
+
+<a name="line283">283: </a><font color="#B22222">/*@C</font>
+<a name="line284">284: </a><font color="#B22222">   <a href="../../../../docs/manualpages/DMSWARM/DMSwarmInitializeFieldRegister.html#DMSwarmInitializeFieldRegister">DMSwarmInitializeFieldRegister</a> - Initiates the registration of fields to a DMSwarm</font>
+
+<a name="line286">286: </a><font color="#B22222">   Collective on <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a></font>
+
+<a name="line288">288: </a><font color="#B22222">   Input parameter:</font>
+<a name="line289">289: </a><font color="#B22222">.  dm - a DMSwarm</font>
+
+<a name="line291">291: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line293">293: </a><font color="#B22222">   Notes:</font>
+<a name="line294">294: </a><font color="#B22222">   After all fields have been registered, you must call <a href="../../../../docs/manualpages/DMSWARM/DMSwarmFinalizeFieldRegister.html#DMSwarmFinalizeFieldRegister">DMSwarmFinalizeFieldRegister</a>().</font>
+
+<a name="line296">296: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMSWARM/DMSwarmFinalizeFieldRegister.html#DMSwarmFinalizeFieldRegister">DMSwarmFinalizeFieldRegister</a>(), <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterPetscDatatypeField.html#DMSwarmRegisterPetscDatatypeField">DMSwarmRegisterPetscDatatypeField</a>(),</font>
+<a name="line297">297: </a><font color="#B22222"> <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterUserStructField.html#DMSwarmRegisterUserStructField">DMSwarmRegisterUserStructField</a>(), <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterUserDatatypeField.html#DMSwarmRegisterUserDatatypeField">DMSwarmRegisterUserDatatypeField</a>()</font>
+<a name="line298">298: </a><font color="#B22222">@*/</font>
+<a name="line299">299: </a><strong><font color="#4169E1"><a name="DMSwarmInitializeFieldRegister"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMSWARM/DMSwarmInitializeFieldRegister.html#DMSwarmInitializeFieldRegister">DMSwarmInitializeFieldRegister</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm)</font></strong>
+<a name="line300">300: </a>{
+<a name="line301">301: </a>  DM_Swarm      *swarm = (DM_Swarm *) dm-&gt;data;
+
+<a name="line305">305: </a>  <font color="#4169E1">if</font> (!swarm-&gt;field_registration_initialized) {
+<a name="line306">306: </a>    swarm-&gt;field_registration_initialized = <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+<a name="line307">307: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterPetscDatatypeField.html#DMSwarmRegisterPetscDatatypeField">DMSwarmRegisterPetscDatatypeField</a>(dm,DMSwarmField_pid,1,<a href="../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_LONG</a>); <font color="#B22222">/* unique identifer */</font>
+<a name="line308">308: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterPetscDatatypeField.html#DMSwarmRegisterPetscDatatypeField">DMSwarmRegisterPetscDatatypeField</a>(dm,DMSwarmField_rank,1,<a href="../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_INT</a>); <font color="#B22222">/* used for communication */</font>
+<a name="line309">309: </a>  }
+<a name="line310">310: </a>  <font color="#4169E1">return</font>(0);
+<a name="line311">311: </a>}
+
+<a name="line313">313: </a><font color="#B22222">/*@C</font>
+<a name="line314">314: </a><font color="#B22222">   <a href="../../../../docs/manualpages/DMSWARM/DMSwarmFinalizeFieldRegister.html#DMSwarmFinalizeFieldRegister">DMSwarmFinalizeFieldRegister</a> - Finalizes the registration of fields to a DMSwarm</font>
+
+<a name="line316">316: </a><font color="#B22222">   Collective on <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a></font>
+
+<a name="line318">318: </a><font color="#B22222">   Input parameter:</font>
+<a name="line319">319: </a><font color="#B22222">.  dm - a DMSwarm</font>
+
+<a name="line321">321: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line323">323: </a><font color="#B22222">   Notes:</font>
+<a name="line324">324: </a><font color="#B22222">   After <a href="../../../../docs/manualpages/DMSWARM/DMSwarmFinalizeFieldRegister.html#DMSwarmFinalizeFieldRegister">DMSwarmFinalizeFieldRegister</a>() has been called, no new fields can be defined on the DMSwarm.</font>
+
+<a name="line326">326: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMSWARM/DMSwarmInitializeFieldRegister.html#DMSwarmInitializeFieldRegister">DMSwarmInitializeFieldRegister</a>(), <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterPetscDatatypeField.html#DMSwarmRegisterPetscDatatypeField">DMSwarmRegisterPetscDatatypeField</a>(),</font>
+<a name="line327">327: </a><font color="#B22222"> <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterUserStructField.html#DMSwarmRegisterUserStructField">DMSwarmRegisterUserStructField</a>(), <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterUserDatatypeField.html#DMSwarmRegisterUserDatatypeField">DMSwarmRegisterUserDatatypeField</a>()</font>
+<a name="line328">328: </a><font color="#B22222">@*/</font>
+<a name="line329">329: </a><strong><font color="#4169E1"><a name="DMSwarmFinalizeFieldRegister"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMSWARM/DMSwarmFinalizeFieldRegister.html#DMSwarmFinalizeFieldRegister">DMSwarmFinalizeFieldRegister</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm)</font></strong>
+<a name="line330">330: </a>{
+<a name="line331">331: </a>  DM_Swarm *swarm = (DM_Swarm*)dm-&gt;data;
+
+<a name="line335">335: </a>  <font color="#4169E1">if</font> (!swarm-&gt;field_registration_finalized) {
+<a name="line336">336: </a>    DataBucketFinalize(swarm-&gt;db);
+<a name="line337">337: </a>  }
+<a name="line338">338: </a>  swarm-&gt;field_registration_finalized = <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+<a name="line339">339: </a>  <font color="#4169E1">return</font>(0);
+<a name="line340">340: </a>}
+
+<a name="line342">342: </a><font color="#B22222">/*@C</font>
+<a name="line343">343: </a><font color="#B22222">   <a href="../../../../docs/manualpages/DMSWARM/DMSwarmSetLocalSizes.html#DMSwarmSetLocalSizes">DMSwarmSetLocalSizes</a> - Sets the length of all registered fields on the DMSwarm</font>
+
+<a name="line345">345: </a><font color="#B22222">   Not collective</font>
+
+<a name="line347">347: </a><font color="#B22222">   Input parameters:</font>
+<a name="line348">348: </a><font color="#B22222">+  dm - a DMSwarm</font>
+<a name="line349">349: </a><font color="#B22222">.  nlocal - the length of each registered field</font>
+<a name="line350">350: </a><font color="#B22222">-  buffer - the length of the buffer used to efficient dynamic re-sizing</font>
+
+<a name="line352">352: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line354">354: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetLocalSize.html#DMSwarmGetLocalSize">DMSwarmGetLocalSize</a>()</font>
+<a name="line355">355: </a><font color="#B22222">@*/</font>
+<a name="line356">356: </a><strong><font color="#4169E1"><a name="DMSwarmSetLocalSizes"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMSWARM/DMSwarmSetLocalSizes.html#DMSwarmSetLocalSizes">DMSwarmSetLocalSizes</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> nlocal,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> buffer)</font></strong>
+<a name="line357">357: </a>{
+<a name="line358">358: </a>  DM_Swarm *swarm = (DM_Swarm*)dm-&gt;data;
+
+<a name="line362">362: </a>  <a href="../../../../docs/manualpages/Profiling/PetscLogEventBegin.html#PetscLogEventBegin">PetscLogEventBegin</a>(DMSWARM_SetSizes,0,0,0,0);
+<a name="line363">363: </a>  DataBucketSetSizes(swarm-&gt;db,nlocal,buffer);
+<a name="line364">364: </a>  <a href="../../../../docs/manualpages/Profiling/PetscLogEventEnd.html#PetscLogEventEnd">PetscLogEventEnd</a>(DMSWARM_SetSizes,0,0,0,0);
+<a name="line365">365: </a>  <font color="#4169E1">return</font>(0);
+<a name="line366">366: </a>}
+
+<a name="line368">368: </a><font color="#B22222">/*@C</font>
+<a name="line369">369: </a><font color="#B22222">   <a href="../../../../docs/manualpages/DMSWARM/DMSwarmSetCellDM.html#DMSwarmSetCellDM">DMSwarmSetCellDM</a> - Attachs a <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> to a DMSwarm</font>
+
+<a name="line371">371: </a><font color="#B22222">   Collective on <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a></font>
+
+<a name="line373">373: </a><font color="#B22222">   Input parameters:</font>
+<a name="line374">374: </a><font color="#B22222">+  dm - a DMSwarm</font>
+<a name="line375">375: </a><font color="#B22222">-  dmcell - the <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> to attach to the DMSwarm</font>
+
+<a name="line377">377: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line379">379: </a><font color="#B22222">   Notes:</font>
+<a name="line380">380: </a><font color="#B22222">   The attached <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> (dmcell) will be queried for point location and</font>
+<a name="line381">381: </a><font color="#B22222">   neighbor MPI-rank information if <a href="../../../../docs/manualpages/DMSWARM/DMSwarmMigrate.html#DMSwarmMigrate">DMSwarmMigrate</a>() is called.</font>
+
+<a name="line383">383: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMSWARM/DMSwarmSetType.html#DMSwarmSetType">DMSwarmSetType</a>(), <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetCellDM.html#DMSwarmGetCellDM">DMSwarmGetCellDM</a>(), <a href="../../../../docs/manualpages/DMSWARM/DMSwarmMigrate.html#DMSwarmMigrate">DMSwarmMigrate</a>()</font>
+<a name="line384">384: </a><font color="#B22222">@*/</font>
+<a name="line385">385: </a><strong><font color="#4169E1"><a name="DMSwarmSetCellDM"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMSWARM/DMSwarmSetCellDM.html#DMSwarmSetCellDM">DMSwarmSetCellDM</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dmcell)</font></strong>
+<a name="line386">386: </a>{
+<a name="line387">387: </a>  DM_Swarm *swarm = (DM_Swarm*)dm-&gt;data;
+
+<a name="line390">390: </a>  swarm-&gt;dmcell = dmcell;
+<a name="line391">391: </a>  <font color="#4169E1">return</font>(0);
+<a name="line392">392: </a>}
+
+<a name="line394">394: </a><font color="#B22222">/*@C</font>
+<a name="line395">395: </a><font color="#B22222">   <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetCellDM.html#DMSwarmGetCellDM">DMSwarmGetCellDM</a> - Fetches the attached cell <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a></font>
+
+<a name="line397">397: </a><font color="#B22222">   Collective on <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a></font>
+
+<a name="line399">399: </a><font color="#B22222">   Input parameter:</font>
+<a name="line400">400: </a><font color="#B22222">.  dm - a DMSwarm</font>
+
+<a name="line402">402: </a><font color="#B22222">   Output parameter:</font>
+<a name="line403">403: </a><font color="#B22222">.  dmcell - the <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> which was attached to the DMSwarm</font>
+
+<a name="line405">405: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line407">407: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMSWARM/DMSwarmSetCellDM.html#DMSwarmSetCellDM">DMSwarmSetCellDM</a>()</font>
+<a name="line408">408: </a><font color="#B22222">@*/</font>
+<a name="line409">409: </a><strong><font color="#4169E1"><a name="DMSwarmGetCellDM"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetCellDM.html#DMSwarmGetCellDM">DMSwarmGetCellDM</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> *dmcell)</font></strong>
+<a name="line410">410: </a>{
+<a name="line411">411: </a>  DM_Swarm *swarm = (DM_Swarm*)dm-&gt;data;
+
+<a name="line414">414: </a>  *dmcell = swarm-&gt;dmcell;
+<a name="line415">415: </a>  <font color="#4169E1">return</font>(0);
+<a name="line416">416: </a>}
+
+<a name="line418">418: </a><font color="#B22222">/*@C</font>
+<a name="line419">419: </a><font color="#B22222">   <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetLocalSize.html#DMSwarmGetLocalSize">DMSwarmGetLocalSize</a> - Retrives the local length of fields registered</font>
+
+<a name="line421">421: </a><font color="#B22222">   Not collective</font>
+
+<a name="line423">423: </a><font color="#B22222">   Input parameter:</font>
+<a name="line424">424: </a><font color="#B22222">.  dm - a DMSwarm</font>
+
+<a name="line426">426: </a><font color="#B22222">   Output parameter:</font>
+<a name="line427">427: </a><font color="#B22222">.  nlocal - the length of each registered field</font>
+
+<a name="line429">429: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line431">431: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetSize.html#DMSwarmGetSize">DMSwarmGetSize</a>(), <a href="../../../../docs/manualpages/DMSWARM/DMSwarmSetLocalSizes.html#DMSwarmSetLocalSizes">DMSwarmSetLocalSizes</a>()</font>
+<a name="line432">432: </a><font color="#B22222">@*/</font>
+<a name="line433">433: </a><strong><font color="#4169E1"><a name="DMSwarmGetLocalSize"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetLocalSize.html#DMSwarmGetLocalSize">DMSwarmGetLocalSize</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *nlocal)</font></strong>
+<a name="line434">434: </a>{
+<a name="line435">435: </a>  DM_Swarm *swarm = (DM_Swarm*)dm-&gt;data;
+
+<a name="line439">439: </a>  <font color="#4169E1">if</font> (nlocal) {DataBucketGetSizes(swarm-&gt;db,nlocal,NULL,NULL);}
+<a name="line440">440: </a>  <font color="#4169E1">return</font>(0);
+<a name="line441">441: </a>}
+
+<a name="line443">443: </a><font color="#B22222">/*@C</font>
+<a name="line444">444: </a><font color="#B22222">   <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetSize.html#DMSwarmGetSize">DMSwarmGetSize</a> - Retrives the total length of fields registered</font>
+
+<a name="line446">446: </a><font color="#B22222">   Collective on <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a></font>
+
+<a name="line448">448: </a><font color="#B22222">   Input parameter:</font>
+<a name="line449">449: </a><font color="#B22222">.  dm - a DMSwarm</font>
+
+<a name="line451">451: </a><font color="#B22222">   Output parameter:</font>
+<a name="line452">452: </a><font color="#B22222">.  n - the total length of each registered field</font>
+
+<a name="line454">454: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line456">456: </a><font color="#B22222">   Note:</font>
+<a name="line457">457: </a><font color="#B22222">   This calls <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Allreduce.html#MPI_Allreduce">MPI_Allreduce</a> upon each call (inefficient but safe)</font>
+
+<a name="line459">459: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetLocalSize.html#DMSwarmGetLocalSize">DMSwarmGetLocalSize</a>(), <a href="../../../../docs/manualpages/DMSWARM/DMSwarmSetLocalSizes.html#DMSwarmSetLocalSizes">DMSwarmSetLocalSizes</a>()</font>
+<a name="line460">460: </a><font color="#B22222">@*/</font>
+<a name="line461">461: </a><strong><font color="#4169E1"><a name="DMSwarmGetSize"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetSize.html#DMSwarmGetSize">DMSwarmGetSize</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *n)</font></strong>
+<a name="line462">462: </a>{
+<a name="line463">463: </a>  DM_Swarm *swarm = (DM_Swarm*)dm-&gt;data;
+<a name="line465">465: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> nlocal,ng;
+
+<a name="line468">468: </a>  DataBucketGetSizes(swarm-&gt;db,&amp;nlocal,NULL,NULL);
+<a name="line469">469: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Allreduce.html#MPI_Allreduce">MPI_Allreduce</a>(&amp;nlocal,&amp;ng,1,MPIU_INT,MPI_SUM,<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm));
+<a name="line470">470: </a>  <font color="#4169E1">if</font> (n) { *n = ng; }
+<a name="line471">471: </a>  <font color="#4169E1">return</font>(0);
+<a name="line472">472: </a>}
+
+<a name="line474">474: </a><font color="#B22222">/*@C</font>
+<a name="line475">475: </a><font color="#B22222">   <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterPetscDatatypeField.html#DMSwarmRegisterPetscDatatypeField">DMSwarmRegisterPetscDatatypeField</a> - Register a field to a DMSwarm with a native PETSc data type</font>
+
+<a name="line477">477: </a><font color="#B22222">   Collective on <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a></font>
+
+<a name="line479">479: </a><font color="#B22222">   Input parameters:</font>
+<a name="line480">480: </a><font color="#B22222">+  dm - a DMSwarm</font>
+<a name="line481">481: </a><font color="#B22222">.  fieldname - the textual name to identify this field</font>
+<a name="line482">482: </a><font color="#B22222">.  blocksize - the number of each data type</font>
+<a name="line483">483: </a><font color="#B22222">-  type - a valid PETSc data type (<a href="../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_CHAR</a>, <a href="../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_SHORT</a>, <a href="../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_INT</a>, <a href="../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_FLOAT</a>, PETSC_REAL, <a href="../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_LONG</a>)</font>
+
+<a name="line485">485: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line487">487: </a><font color="#B22222">   Notes:</font>
+<a name="line488">488: </a><font color="#B22222">   The textual name for each registered field must be unique.</font>
+
+<a name="line490">490: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterUserStructField.html#DMSwarmRegisterUserStructField">DMSwarmRegisterUserStructField</a>(), <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterUserDatatypeField.html#DMSwarmRegisterUserDatatypeField">DMSwarmRegisterUserDatatypeField</a>()</font>
+<a name="line491">491: </a><font color="#B22222">@*/</font>
+<a name="line492">492: </a><strong><font color="#4169E1"><a name="DMSwarmRegisterPetscDatatypeField"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterPetscDatatypeField.html#DMSwarmRegisterPetscDatatypeField">DMSwarmRegisterPetscDatatypeField</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,const char fieldname[],<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> blocksize,<a href="../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PetscDataType</a> type)</font></strong>
+<a name="line493">493: </a>{
+<a name="line495">495: </a>  DM_Swarm *swarm = (DM_Swarm*)dm-&gt;data;
+<a name="line496">496: </a>  size_t size;
+
+<a name="line499">499: </a>  <font color="#4169E1">if</font> (!swarm-&gt;field_registration_initialized) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_USER,<font color="#666666">"Must call <a href="../../../../docs/manualpages/DMSWARM/DMSwarmInitializeFieldRegister.html#DMSwarmInitializeFieldRegister">DMSwarmInitializeFieldRegister</a>() first"</font>);
+<a name="line500">500: </a>  <font color="#4169E1">if</font> (swarm-&gt;field_registration_finalized) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_USER,<font color="#666666">"Cannot register additional fields after calling <a href="../../../../docs/manualpages/DMSWARM/DMSwarmFinalizeFieldRegister.html#DMSwarmFinalizeFieldRegister">DMSwarmFinalizeFieldRegister</a>() first"</font>);
+
+<a name="line502">502: </a>  <font color="#4169E1">if</font> (type == <a href="../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_OBJECT</a>) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_SUP,<font color="#666666">"Valid for {char,short,int,long,float,double}"</font>);
+<a name="line503">503: </a>  <font color="#4169E1">if</font> (type == <a href="../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_FUNCTION</a>) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_SUP,<font color="#666666">"Valid for {char,short,int,long,float,double}"</font>);
+<a name="line504">504: </a>  <font color="#4169E1">if</font> (type == <a href="../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_STRING</a>) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_SUP,<font color="#666666">"Valid for {char,short,int,long,float,double}"</font>);
+<a name="line505">505: </a>  <font color="#4169E1">if</font> (type == <a href="../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_STRUCT</a>) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_SUP,<font color="#666666">"Valid for {char,short,int,long,float,double}"</font>);
+<a name="line506">506: </a>  <font color="#4169E1">if</font> (type == <a href="../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_DATATYPE_UNKNOWN</a>) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_SUP,<font color="#666666">"Valid for {char,short,int,long,float,double}"</font>);
+
+<a name="line508">508: </a>  <a href="../../../../docs/manualpages/Sys/PetscDataTypeGetSize.html#PetscDataTypeGetSize">PetscDataTypeGetSize</a>(type, &amp;size);
+<a name="line509">509: </a>  <font color="#B22222">/* Load a specific data type into data bucket, specifying textual name and its size in bytes */</font>
+<a name="line510">510: </a>  DataBucketRegisterField(swarm-&gt;db,<font color="#666666">"<a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterPetscDatatypeField.html#DMSwarmRegisterPetscDatatypeField">DMSwarmRegisterPetscDatatypeField</a>"</font>,fieldname,blocksize*size,NULL);
+<a name="line511">511: </a>  {
+<a name="line512">512: </a>    DataField gfield;
+
+<a name="line514">514: </a>    DataBucketGetDataFieldByName(swarm-&gt;db,fieldname,&amp;gfield);
+<a name="line515">515: </a>    DataFieldSetBlockSize(gfield,blocksize);
+<a name="line516">516: </a>  }
+<a name="line517">517: </a>  swarm-&gt;db-&gt;field[swarm-&gt;db-&gt;nfields-1]-&gt;petsc_type = type;
+<a name="line518">518: </a>  <font color="#4169E1">return</font>(0);
+<a name="line519">519: </a>}
+
+<a name="line521">521: </a><font color="#B22222">/*@C</font>
+<a name="line522">522: </a><font color="#B22222">   <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterUserStructField.html#DMSwarmRegisterUserStructField">DMSwarmRegisterUserStructField</a> - Register a user defined struct to a DMSwarm</font>
+
+<a name="line524">524: </a><font color="#B22222">   Collective on <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a></font>
+
+<a name="line526">526: </a><font color="#B22222">   Input parameters:</font>
+<a name="line527">527: </a><font color="#B22222">+  dm - a DMSwarm</font>
+<a name="line528">528: </a><font color="#B22222">.  fieldname - the textual name to identify this field</font>
+<a name="line529">529: </a><font color="#B22222">-  size - the size in bytes of the user struct of each data type</font>
+
+<a name="line531">531: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line533">533: </a><font color="#B22222">   Notes:</font>
+<a name="line534">534: </a><font color="#B22222">   The textual name for each registered field must be unique.</font>
+
+<a name="line536">536: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterPetscDatatypeField.html#DMSwarmRegisterPetscDatatypeField">DMSwarmRegisterPetscDatatypeField</a>(), <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterUserDatatypeField.html#DMSwarmRegisterUserDatatypeField">DMSwarmRegisterUserDatatypeField</a>()</font>
+<a name="line537">537: </a><font color="#B22222">@*/</font>
+<a name="line538">538: </a><strong><font color="#4169E1"><a name="DMSwarmRegisterUserStructField"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterUserStructField.html#DMSwarmRegisterUserStructField">DMSwarmRegisterUserStructField</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,const char fieldname[],size_t size)</font></strong>
+<a name="line539">539: </a>{
+<a name="line541">541: </a>  DM_Swarm *swarm = (DM_Swarm*)dm-&gt;data;
+
+<a name="line544">544: </a>  DataBucketRegisterField(swarm-&gt;db,<font color="#666666">"<a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterUserStructField.html#DMSwarmRegisterUserStructField">DMSwarmRegisterUserStructField</a>"</font>,fieldname,size,NULL);
+<a name="line545">545: </a>  swarm-&gt;db-&gt;field[swarm-&gt;db-&gt;nfields-1]-&gt;petsc_type = <a href="../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_STRUCT</a> ;
+<a name="line546">546: </a>  <font color="#4169E1">return</font>(0);
+<a name="line547">547: </a>}
+
+<a name="line549">549: </a><font color="#B22222">/*@C</font>
+<a name="line550">550: </a><font color="#B22222">   <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterUserDatatypeField.html#DMSwarmRegisterUserDatatypeField">DMSwarmRegisterUserDatatypeField</a> - Register a user defined data type to a DMSwarm</font>
+
+<a name="line552">552: </a><font color="#B22222">   Collective on <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a></font>
+
+<a name="line554">554: </a><font color="#B22222">   Input parameters:</font>
+<a name="line555">555: </a><font color="#B22222">+  dm - a DMSwarm</font>
+<a name="line556">556: </a><font color="#B22222">.  fieldname - the textual name to identify this field</font>
+<a name="line557">557: </a><font color="#B22222">.  size - the size in bytes of the user data type</font>
+<a name="line558">558: </a><font color="#B22222">-  blocksize - the number of each data type</font>
+
+<a name="line560">560: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line562">562: </a><font color="#B22222">   Notes:</font>
+<a name="line563">563: </a><font color="#B22222">   The textual name for each registered field must be unique.</font>
+
+<a name="line565">565: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterPetscDatatypeField.html#DMSwarmRegisterPetscDatatypeField">DMSwarmRegisterPetscDatatypeField</a>(), <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterUserStructField.html#DMSwarmRegisterUserStructField">DMSwarmRegisterUserStructField</a>(), <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterUserDatatypeField.html#DMSwarmRegisterUserDatatypeField">DMSwarmRegisterUserDatatypeField</a>()</font>
+<a name="line566">566: </a><font color="#B22222">@*/</font>
+<a name="line567">567: </a><strong><font color="#4169E1"><a name="DMSwarmRegisterUserDatatypeField"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterUserDatatypeField.html#DMSwarmRegisterUserDatatypeField">DMSwarmRegisterUserDatatypeField</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,const char fieldname[],size_t size,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> blocksize)</font></strong>
+<a name="line568">568: </a>{
+<a name="line569">569: </a>  DM_Swarm *swarm = (DM_Swarm*)dm-&gt;data;
+
+<a name="line573">573: </a>  DataBucketRegisterField(swarm-&gt;db,<font color="#666666">"<a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterUserDatatypeField.html#DMSwarmRegisterUserDatatypeField">DMSwarmRegisterUserDatatypeField</a>"</font>,fieldname,blocksize*size,NULL);
+<a name="line574">574: </a>  {
+<a name="line575">575: </a>    DataField gfield;
+
+<a name="line577">577: </a>    DataBucketGetDataFieldByName(swarm-&gt;db,fieldname,&amp;gfield);
+<a name="line578">578: </a>    DataFieldSetBlockSize(gfield,blocksize);
+<a name="line579">579: </a>  }
+<a name="line580">580: </a>  swarm-&gt;db-&gt;field[swarm-&gt;db-&gt;nfields-1]-&gt;petsc_type = <a href="../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_DATATYPE_UNKNOWN</a>;
+<a name="line581">581: </a>  <font color="#4169E1">return</font>(0);
+<a name="line582">582: </a>}
+
+<a name="line584">584: </a><font color="#B22222">/*@C</font>
+<a name="line585">585: </a><font color="#B22222">   <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetField.html#DMSwarmGetField">DMSwarmGetField</a> - Get access to the underlying array storing all entries associated with a registered field</font>
+
+<a name="line587">587: </a><font color="#B22222">   Not collective</font>
+
+<a name="line589">589: </a><font color="#B22222">   Input parameters:</font>
+<a name="line590">590: </a><font color="#B22222">+  dm - a DMSwarm</font>
+<a name="line591">591: </a><font color="#B22222">-  fieldname - the textual name to identify this field</font>
+
+<a name="line593">593: </a><font color="#B22222">   Output parameters:</font>
+<a name="line594">594: </a><font color="#B22222">+  blocksize - the number of each data type</font>
+<a name="line595">595: </a><font color="#B22222">.  type - the data type</font>
+<a name="line596">596: </a><font color="#B22222">-  data - pointer to raw array</font>
+
+<a name="line598">598: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line600">600: </a><font color="#B22222">   Notes:</font>
+<a name="line601">601: </a><font color="#B22222">   The array must be returned using a matching call to <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRestoreField.html#DMSwarmRestoreField">DMSwarmRestoreField</a>().</font>
+
+<a name="line603">603: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRestoreField.html#DMSwarmRestoreField">DMSwarmRestoreField</a>()</font>
+<a name="line604">604: </a><font color="#B22222">@*/</font>
+<a name="line605">605: </a><strong><font color="#4169E1"><a name="DMSwarmGetField"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetField.html#DMSwarmGetField">DMSwarmGetField</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,const char fieldname[],<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *blocksize,<a href="../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PetscDataType</a> *type,void **data)</font></strong>
+<a name="line606">606: </a>{
+<a name="line607">607: </a>  DM_Swarm *swarm = (DM_Swarm*)dm-&gt;data;
+<a name="line608">608: </a>  DataField gfield;
+
+<a name="line612">612: </a>  <font color="#4169E1">if</font> (!swarm-&gt;issetup) { <a href="../../../../docs/manualpages/DM/DMSetUp.html#DMSetUp">DMSetUp</a>(dm); }
+<a name="line613">613: </a>  DataBucketGetDataFieldByName(swarm-&gt;db,fieldname,&amp;gfield);
+<a name="line614">614: </a>  DataFieldGetAccess(gfield);
+<a name="line615">615: </a>  DataFieldGetEntries(gfield,data);
+<a name="line616">616: </a>  <font color="#4169E1">if</font> (blocksize) {*blocksize = gfield-&gt;bs; }
+<a name="line617">617: </a>  <font color="#4169E1">if</font> (type) { *type = gfield-&gt;petsc_type; }
+<a name="line618">618: </a>  <font color="#4169E1">return</font>(0);
+<a name="line619">619: </a>}
+
+<a name="line621">621: </a><font color="#B22222">/*@C</font>
+<a name="line622">622: </a><font color="#B22222">   <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRestoreField.html#DMSwarmRestoreField">DMSwarmRestoreField</a> - Restore access to the underlying array storing all entries associated with a registered field</font>
+
+<a name="line624">624: </a><font color="#B22222">   Not collective</font>
+
+<a name="line626">626: </a><font color="#B22222">   Input parameters:</font>
+<a name="line627">627: </a><font color="#B22222">+  dm - a DMSwarm</font>
+<a name="line628">628: </a><font color="#B22222">-  fieldname - the textual name to identify this field</font>
+
+<a name="line630">630: </a><font color="#B22222">   Output parameters:</font>
+<a name="line631">631: </a><font color="#B22222">+  blocksize - the number of each data type</font>
+<a name="line632">632: </a><font color="#B22222">.  type - the data type</font>
+<a name="line633">633: </a><font color="#B22222">-  data - pointer to raw array</font>
+
+<a name="line635">635: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line637">637: </a><font color="#B22222">   Notes:</font>
+<a name="line638">638: </a><font color="#B22222">   The user must call <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetField.html#DMSwarmGetField">DMSwarmGetField</a>() prior to calling <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRestoreField.html#DMSwarmRestoreField">DMSwarmRestoreField</a>().</font>
+
+<a name="line640">640: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetField.html#DMSwarmGetField">DMSwarmGetField</a>()</font>
+<a name="line641">641: </a><font color="#B22222">@*/</font>
+<a name="line642">642: </a><strong><font color="#4169E1"><a name="DMSwarmRestoreField"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRestoreField.html#DMSwarmRestoreField">DMSwarmRestoreField</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,const char fieldname[],<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *blocksize,<a href="../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PetscDataType</a> *type,void **data)</font></strong>
+<a name="line643">643: </a>{
+<a name="line644">644: </a>  DM_Swarm *swarm = (DM_Swarm*)dm-&gt;data;
+<a name="line645">645: </a>  DataField gfield;
+
+<a name="line649">649: </a>  DataBucketGetDataFieldByName(swarm-&gt;db,fieldname,&amp;gfield);
+<a name="line650">650: </a>  DataFieldRestoreAccess(gfield);
+<a name="line651">651: </a>  <font color="#4169E1">if</font> (data) *data = NULL;
+<a name="line652">652: </a>  <font color="#4169E1">return</font>(0);
+<a name="line653">653: </a>}
+
+<a name="line655">655: </a><font color="#B22222">/*@C</font>
+<a name="line656">656: </a><font color="#B22222">   <a href="../../../../docs/manualpages/DMSWARM/DMSwarmAddPoint.html#DMSwarmAddPoint">DMSwarmAddPoint</a> - Add space for one new point in the DMSwarm</font>
+
+<a name="line658">658: </a><font color="#B22222">   Not collective</font>
+
+<a name="line660">660: </a><font color="#B22222">   Input parameter:</font>
+<a name="line661">661: </a><font color="#B22222">.  dm - a DMSwarm</font>
+
+<a name="line663">663: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line665">665: </a><font color="#B22222">   Notes:</font>
+<a name="line666">666: </a><font color="#B22222">   The new point will have all fields initialized to zero.</font>
+
+<a name="line668">668: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMSWARM/DMSwarmAddNPoints.html#DMSwarmAddNPoints">DMSwarmAddNPoints</a>()</font>
+<a name="line669">669: </a><font color="#B22222">@*/</font>
+<a name="line670">670: </a><strong><font color="#4169E1"><a name="DMSwarmAddPoint"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMSWARM/DMSwarmAddPoint.html#DMSwarmAddPoint">DMSwarmAddPoint</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm)</font></strong>
+<a name="line671">671: </a>{
+<a name="line672">672: </a>  DM_Swarm *swarm = (DM_Swarm*)dm-&gt;data;
+
+<a name="line676">676: </a>  <font color="#4169E1">if</font> (!swarm-&gt;issetup) {<a href="../../../../docs/manualpages/DM/DMSetUp.html#DMSetUp">DMSetUp</a>(dm);}
+<a name="line677">677: </a>  <a href="../../../../docs/manualpages/Profiling/PetscLogEventBegin.html#PetscLogEventBegin">PetscLogEventBegin</a>(DMSWARM_AddPoints,0,0,0,0);
+<a name="line678">678: </a>  DataBucketAddPoint(swarm-&gt;db);
+<a name="line679">679: </a>  <a href="../../../../docs/manualpages/Profiling/PetscLogEventEnd.html#PetscLogEventEnd">PetscLogEventEnd</a>(DMSWARM_AddPoints,0,0,0,0);
+<a name="line680">680: </a>  <font color="#4169E1">return</font>(0);
+<a name="line681">681: </a>}
+
+<a name="line683">683: </a><font color="#B22222">/*@C</font>
+<a name="line684">684: </a><font color="#B22222">   <a href="../../../../docs/manualpages/DMSWARM/DMSwarmAddNPoints.html#DMSwarmAddNPoints">DMSwarmAddNPoints</a> - Add space for a number of new points in the DMSwarm</font>
+
+<a name="line686">686: </a><font color="#B22222">   Not collective</font>
+
+<a name="line688">688: </a><font color="#B22222">   Input parameters:</font>
+<a name="line689">689: </a><font color="#B22222">+  dm - a DMSwarm</font>
+<a name="line690">690: </a><font color="#B22222">-  npoints - the number of new points to add</font>
+
+<a name="line692">692: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line694">694: </a><font color="#B22222">   Notes:</font>
+<a name="line695">695: </a><font color="#B22222">   The new point will have all fields initialized to zero.</font>
+
+<a name="line697">697: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMSWARM/DMSwarmAddPoint.html#DMSwarmAddPoint">DMSwarmAddPoint</a>()</font>
+<a name="line698">698: </a><font color="#B22222">@*/</font>
+<a name="line699">699: </a><strong><font color="#4169E1"><a name="DMSwarmAddNPoints"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMSWARM/DMSwarmAddNPoints.html#DMSwarmAddNPoints">DMSwarmAddNPoints</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> npoints)</font></strong>
+<a name="line700">700: </a>{
+<a name="line701">701: </a>  DM_Swarm *swarm = (DM_Swarm*)dm-&gt;data;
+<a name="line703">703: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> nlocal;
+
+<a name="line706">706: </a>  <a href="../../../../docs/manualpages/Profiling/PetscLogEventBegin.html#PetscLogEventBegin">PetscLogEventBegin</a>(DMSWARM_AddPoints,0,0,0,0);
+<a name="line707">707: </a>  DataBucketGetSizes(swarm-&gt;db,&amp;nlocal,NULL,NULL);
+<a name="line708">708: </a>  nlocal = nlocal + npoints;
+<a name="line709">709: </a>  DataBucketSetSizes(swarm-&gt;db,nlocal,DATA_BUCKET_BUFFER_DEFAULT);
+<a name="line710">710: </a>  <a href="../../../../docs/manualpages/Profiling/PetscLogEventEnd.html#PetscLogEventEnd">PetscLogEventEnd</a>(DMSWARM_AddPoints,0,0,0,0);
+<a name="line711">711: </a>  <font color="#4169E1">return</font>(0);
+<a name="line712">712: </a>}
+
+<a name="line714">714: </a><font color="#B22222">/*@C</font>
+<a name="line715">715: </a><font color="#B22222">   <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRemovePoint.html#DMSwarmRemovePoint">DMSwarmRemovePoint</a> - Remove the last point from the DMSwarm</font>
+
+<a name="line717">717: </a><font color="#B22222">   Not collective</font>
+
+<a name="line719">719: </a><font color="#B22222">   Input parameter:</font>
+<a name="line720">720: </a><font color="#B22222">.  dm - a DMSwarm</font>
+
+<a name="line722">722: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line724">724: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRemovePointAtIndex.html#DMSwarmRemovePointAtIndex">DMSwarmRemovePointAtIndex</a>()</font>
+<a name="line725">725: </a><font color="#B22222">@*/</font>
+<a name="line726">726: </a><strong><font color="#4169E1"><a name="DMSwarmRemovePoint"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRemovePoint.html#DMSwarmRemovePoint">DMSwarmRemovePoint</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm)</font></strong>
+<a name="line727">727: </a>{
+<a name="line728">728: </a>  DM_Swarm *swarm = (DM_Swarm*)dm-&gt;data;
+
+<a name="line732">732: </a>  <a href="../../../../docs/manualpages/Profiling/PetscLogEventBegin.html#PetscLogEventBegin">PetscLogEventBegin</a>(DMSWARM_RemovePoints,0,0,0,0);
+<a name="line733">733: </a>  DataBucketRemovePoint(swarm-&gt;db);
+<a name="line734">734: </a>  <a href="../../../../docs/manualpages/Profiling/PetscLogEventEnd.html#PetscLogEventEnd">PetscLogEventEnd</a>(DMSWARM_RemovePoints,0,0,0,0);
+<a name="line735">735: </a>  <font color="#4169E1">return</font>(0);
+<a name="line736">736: </a>}
+
+<a name="line738">738: </a><font color="#B22222">/*@C</font>
+<a name="line739">739: </a><font color="#B22222">   <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRemovePointAtIndex.html#DMSwarmRemovePointAtIndex">DMSwarmRemovePointAtIndex</a> - Removes a specific point from the DMSwarm</font>
+
+<a name="line741">741: </a><font color="#B22222">   Not collective</font>
+
+<a name="line743">743: </a><font color="#B22222">   Input parameters:</font>
+<a name="line744">744: </a><font color="#B22222">+  dm - a DMSwarm</font>
+<a name="line745">745: </a><font color="#B22222">-  idx - index of point to remove</font>
+
+<a name="line747">747: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line749">749: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRemovePoint.html#DMSwarmRemovePoint">DMSwarmRemovePoint</a>()</font>
+<a name="line750">750: </a><font color="#B22222">@*/</font>
+<a name="line751">751: </a><strong><font color="#4169E1"><a name="DMSwarmRemovePointAtIndex"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRemovePointAtIndex.html#DMSwarmRemovePointAtIndex">DMSwarmRemovePointAtIndex</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> idx)</font></strong>
+<a name="line752">752: </a>{
+<a name="line753">753: </a>  DM_Swarm *swarm = (DM_Swarm*)dm-&gt;data;
+
+<a name="line757">757: </a>  <a href="../../../../docs/manualpages/Profiling/PetscLogEventBegin.html#PetscLogEventBegin">PetscLogEventBegin</a>(DMSWARM_RemovePoints,0,0,0,0);
+<a name="line758">758: </a>  DataBucketRemovePointAtIndex(swarm-&gt;db,idx);
+<a name="line759">759: </a>  <a href="../../../../docs/manualpages/Profiling/PetscLogEventEnd.html#PetscLogEventEnd">PetscLogEventEnd</a>(DMSWARM_RemovePoints,0,0,0,0);
+<a name="line760">760: </a>  <font color="#4169E1">return</font>(0);
+<a name="line761">761: </a>}
+
+<a name="line763">763: </a><font color="#B22222">/*@C</font>
+<a name="line764">764: </a><font color="#B22222">   <a href="../../../../docs/manualpages/DMSWARM/DMSwarmCopyPoint.html#DMSwarmCopyPoint">DMSwarmCopyPoint</a> - Copy point pj to point pi in the DMSwarm</font>
+<a name="line765">765: </a><font color="#B22222"> </font>
+<a name="line766">766: </a><font color="#B22222">   Not collective</font>
+<a name="line767">767: </a><font color="#B22222"> </font>
+<a name="line768">768: </a><font color="#B22222">   Input parameters:</font>
+<a name="line769">769: </a><font color="#B22222">+  dm - a DMSwarm</font>
+<a name="line770">770: </a><font color="#B22222">.  pi - the index of the point to copy</font>
+<a name="line771">771: </a><font color="#B22222">-  pj - the point index where the copy should be located</font>
+<a name="line772">772: </a><font color="#B22222"> </font>
+<a name="line773">773: </a><font color="#B22222"> Level: beginner</font>
+<a name="line774">774: </a><font color="#B22222"> </font>
+<a name="line775">775: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRemovePoint.html#DMSwarmRemovePoint">DMSwarmRemovePoint</a>()</font>
+<a name="line776">776: </a><font color="#B22222">@*/</font>
+<a name="line777">777: </a><strong><font color="#4169E1"><a name="DMSwarmCopyPoint"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMSWARM/DMSwarmCopyPoint.html#DMSwarmCopyPoint">DMSwarmCopyPoint</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> pi,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> pj)</font></strong>
+<a name="line778">778: </a>{
+<a name="line779">779: </a>  DM_Swarm *swarm = (DM_Swarm*)dm-&gt;data;
+<a name="line781">781: </a>
+<a name="line783">783: </a>  <font color="#4169E1">if</font> (!swarm-&gt;issetup) {<a href="../../../../docs/manualpages/DM/DMSetUp.html#DMSetUp">DMSetUp</a>(dm);}
+<a name="line784">784: </a>  DataBucketCopyPoint(swarm-&gt;db,pi,swarm-&gt;db,pj);
+<a name="line785">785: </a>  <font color="#4169E1">return</font>(0);
+<a name="line786">786: </a>}
+
+<a name="line788">788: </a><strong><font color="#4169E1"><a name="DMSwarmMigrate_Basic"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMSwarmMigrate_Basic(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> remove_sent_points)</font></strong>
+<a name="line789">789: </a>{
+
+<a name="line793">793: </a>  DMSwarmMigrate_Push_Basic(dm,remove_sent_points);
+<a name="line794">794: </a>  <font color="#4169E1">return</font>(0);
+<a name="line795">795: </a>}
+
+<a name="line797">797: </a><font color="#B22222">/*@C</font>
+<a name="line798">798: </a><font color="#B22222">   <a href="../../../../docs/manualpages/DMSWARM/DMSwarmMigrate.html#DMSwarmMigrate">DMSwarmMigrate</a> - Relocates points defined in the DMSwarm to other MPI-ranks</font>
+
+<a name="line800">800: </a><font color="#B22222">   Collective on <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a></font>
+
+<a name="line802">802: </a><font color="#B22222">   Input parameters:</font>
+<a name="line803">803: </a><font color="#B22222">+  dm - the DMSwarm</font>
+<a name="line804">804: </a><font color="#B22222">-  remove_sent_points - flag indicating if sent points should be removed from the current MPI-rank</font>
+
+<a name="line806">806: </a><font color="#B22222">   Notes:</font>
+<a name="line807">807: </a><font color="#B22222">   The <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> will be modified to accomodate received points.</font>
+<a name="line808">808: </a><font color="#B22222">   If remove_sent_points = <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>, any points that were sent will be removed from the <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a>.</font>
+<a name="line809">809: </a><font color="#B22222">   Different styles of migration are supported. See DMSwarmSetMigrateType().</font>
+
+<a name="line811">811: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line813">813: </a><font color="#B22222">.seealso: DMSwarmSetMigrateType()</font>
+<a name="line814">814: </a><font color="#B22222">@*/</font>
+<a name="line815">815: </a><strong><font color="#4169E1"><a name="DMSwarmMigrate"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMSWARM/DMSwarmMigrate.html#DMSwarmMigrate">DMSwarmMigrate</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> remove_sent_points)</font></strong>
+<a name="line816">816: </a>{
+<a name="line817">817: </a>  DM_Swarm *swarm = (DM_Swarm*)dm-&gt;data;
+
+<a name="line821">821: </a>  <a href="../../../../docs/manualpages/Profiling/PetscLogEventBegin.html#PetscLogEventBegin">PetscLogEventBegin</a>(DMSWARM_Migrate,0,0,0,0);
+<a name="line822">822: </a>  <font color="#4169E1">switch</font> (swarm-&gt;migrate_type) {
+<a name="line823">823: </a>    <font color="#4169E1">case</font> DMSWARM_MIGRATE_BASIC:
+<a name="line824">824: </a>      DMSwarmMigrate_Basic(dm,remove_sent_points);
+<a name="line825">825: </a>      <font color="#4169E1">break</font>;
+<a name="line826">826: </a>    <font color="#4169E1">case</font> DMSWARM_MIGRATE_DMCELLNSCATTER:
+<a name="line827">827: </a>      DMSwarmMigrate_CellDMScatter(dm,remove_sent_points);
+<a name="line828">828: </a>      <font color="#4169E1">break</font>;
+<a name="line829">829: </a>    <font color="#4169E1">case</font> DMSWARM_MIGRATE_DMCELLEXACT:
+<a name="line830">830: </a>      <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,PETSC_ERR_SUP,<font color="#666666">"DMSWARM_MIGRATE_DMCELLEXACT not implemented"</font>);
+<a name="line831">831: </a>      <font color="#B22222">/*DMSwarmMigrate_CellDMExact(dm,remove_sent_points);*/</font>
+<a name="line832">832: </a>      <font color="#4169E1">break</font>;
+<a name="line833">833: </a>    <font color="#4169E1">case</font> DMSWARM_MIGRATE_USER:
+<a name="line834">834: </a>      <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,PETSC_ERR_SUP,<font color="#666666">"DMSWARM_MIGRATE_USER not implemented"</font>);
+<a name="line835">835: </a>      <font color="#B22222">/*swarm-&gt;migrate(dm,remove_sent_points);*/</font>
+<a name="line836">836: </a>      <font color="#4169E1">break</font>;
+<a name="line837">837: </a><strong><font color="#FF0000">    default:</font></strong>
+<a name="line838">838: </a>      <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,PETSC_ERR_SUP,<font color="#666666">"DMSWARM_MIGRATE type unknown"</font>);
+<a name="line839">839: </a>      <font color="#4169E1">break</font>;
+<a name="line840">840: </a>  }
+<a name="line841">841: </a>  <a href="../../../../docs/manualpages/Profiling/PetscLogEventEnd.html#PetscLogEventEnd">PetscLogEventEnd</a>(DMSWARM_Migrate,0,0,0,0);
+<a name="line842">842: </a>  <font color="#4169E1">return</font>(0);
+<a name="line843">843: </a>}
+
+<a name="line845">845: </a><strong><font color="#4169E1"><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMSwarmMigrate_GlobalToLocal_Basic(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *globalsize)</font></strong>;
+
+<a name="line847">847: </a><font color="#B22222">/*</font>
+<a name="line848">848: </a><font color="#B22222"> <a href="../../../../docs/manualpages/DMSWARM/DMSwarmCollectViewCreate.html#DMSwarmCollectViewCreate">DMSwarmCollectViewCreate</a></font>
+
+<a name="line850">850: </a><font color="#B22222"> * Applies a collection method and gathers point neighbour points into dm</font>
+
+<a name="line852">852: </a><font color="#B22222"> Notes:</font>
+<a name="line853">853: </a><font color="#B22222"> Users should call <a href="../../../../docs/manualpages/DMSWARM/DMSwarmCollectViewDestroy.html#DMSwarmCollectViewDestroy">DMSwarmCollectViewDestroy</a>() after</font>
+<a name="line854">854: </a><font color="#B22222"> they have finished computations associated with the collected points</font>
+<a name="line855">855: </a><font color="#B22222">*/</font>
+
+<a name="line857">857: </a><font color="#B22222">/*@C</font>
+<a name="line858">858: </a><font color="#B22222">   <a href="../../../../docs/manualpages/DMSWARM/DMSwarmCollectViewCreate.html#DMSwarmCollectViewCreate">DMSwarmCollectViewCreate</a> - Applies a collection method and gathers points</font>
+<a name="line859">859: </a><font color="#B22222">   in neighbour MPI-ranks into the DMSwarm</font>
+
+<a name="line861">861: </a><font color="#B22222">   Collective on <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a></font>
+
+<a name="line863">863: </a><font color="#B22222">   Input parameter:</font>
+<a name="line864">864: </a><font color="#B22222">.  dm - the DMSwarm</font>
+
+<a name="line866">866: </a><font color="#B22222">   Notes:</font>
+<a name="line867">867: </a><font color="#B22222">   Users should call <a href="../../../../docs/manualpages/DMSWARM/DMSwarmCollectViewDestroy.html#DMSwarmCollectViewDestroy">DMSwarmCollectViewDestroy</a>() after</font>
+<a name="line868">868: </a><font color="#B22222">   they have finished computations associated with the collected points</font>
+<a name="line869">869: </a><font color="#B22222">   Different collect methods are supported. See DMSwarmSetCollectType().</font>
+
+<a name="line871">871: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line873">873: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMSWARM/DMSwarmCollectViewDestroy.html#DMSwarmCollectViewDestroy">DMSwarmCollectViewDestroy</a>(), DMSwarmSetCollectType()</font>
+<a name="line874">874: </a><font color="#B22222">@*/</font>
+<a name="line875">875: </a><strong><font color="#4169E1"><a name="DMSwarmCollectViewCreate"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMSWARM/DMSwarmCollectViewCreate.html#DMSwarmCollectViewCreate">DMSwarmCollectViewCreate</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm)</font></strong>
+<a name="line876">876: </a>{
+<a name="line878">878: </a>  DM_Swarm *swarm = (DM_Swarm*)dm-&gt;data;
+<a name="line879">879: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> ng;
+
+<a name="line882">882: </a>  <font color="#4169E1">if</font> (swarm-&gt;collect_view_active) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_USER,<font color="#666666">"CollectView currently active"</font>);
+<a name="line883">883: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetLocalSize.html#DMSwarmGetLocalSize">DMSwarmGetLocalSize</a>(dm,&amp;ng);
+<a name="line884">884: </a>  <font color="#4169E1">switch</font> (swarm-&gt;collect_type) {
+
+<a name="line886">886: </a>    <font color="#4169E1">case</font> DMSWARM_COLLECT_BASIC:
+<a name="line887">887: </a>      DMSwarmMigrate_GlobalToLocal_Basic(dm,&amp;ng);
+<a name="line888">888: </a>      <font color="#4169E1">break</font>;
+<a name="line889">889: </a>    <font color="#4169E1">case</font> DMSWARM_COLLECT_DMDABOUNDINGBOX:
+<a name="line890">890: </a>      <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,PETSC_ERR_SUP,<font color="#666666">"DMSWARM_COLLECT_DMDABOUNDINGBOX not implemented"</font>);
+<a name="line891">891: </a>      <font color="#B22222">/*DMSwarmCollect_DMDABoundingBox(dm,&amp;ng);*/</font>
+<a name="line892">892: </a>      <font color="#4169E1">break</font>;
+<a name="line893">893: </a>    <font color="#4169E1">case</font> DMSWARM_COLLECT_GENERAL:
+<a name="line894">894: </a>      <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,PETSC_ERR_SUP,<font color="#666666">"DMSWARM_COLLECT_GENERAL not implemented"</font>);
+<a name="line895">895: </a>      <font color="#B22222">/*DMSwarmCollect_General(dm,..,,..,&amp;ng);*/</font>
+<a name="line896">896: </a>      <font color="#4169E1">break</font>;
+<a name="line897">897: </a><strong><font color="#FF0000">    default:</font></strong>
+<a name="line898">898: </a>      <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,PETSC_ERR_SUP,<font color="#666666">"DMSWARM_COLLECT type unknown"</font>);
+<a name="line899">899: </a>      <font color="#4169E1">break</font>;
+<a name="line900">900: </a>  }
+<a name="line901">901: </a>  swarm-&gt;collect_view_active = <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+<a name="line902">902: </a>  swarm-&gt;collect_view_reset_nlocal = ng;
+<a name="line903">903: </a>  <font color="#4169E1">return</font>(0);
+<a name="line904">904: </a>}
+
+<a name="line906">906: </a><font color="#B22222">/*@C</font>
+<a name="line907">907: </a><font color="#B22222">   <a href="../../../../docs/manualpages/DMSWARM/DMSwarmCollectViewDestroy.html#DMSwarmCollectViewDestroy">DMSwarmCollectViewDestroy</a> - Resets the DMSwarm to the size prior to calling <a href="../../../../docs/manualpages/DMSWARM/DMSwarmCollectViewCreate.html#DMSwarmCollectViewCreate">DMSwarmCollectViewCreate</a>()</font>
+
+<a name="line909">909: </a><font color="#B22222">   Collective on <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a></font>
+
+<a name="line911">911: </a><font color="#B22222">   Input parameters:</font>
+<a name="line912">912: </a><font color="#B22222">.  dm - the DMSwarm</font>
+
+<a name="line914">914: </a><font color="#B22222">   Notes:</font>
+<a name="line915">915: </a><font color="#B22222">   Users should call <a href="../../../../docs/manualpages/DMSWARM/DMSwarmCollectViewCreate.html#DMSwarmCollectViewCreate">DMSwarmCollectViewCreate</a>() before this function is called.</font>
+
+<a name="line917">917: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line919">919: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DMSWARM/DMSwarmCollectViewCreate.html#DMSwarmCollectViewCreate">DMSwarmCollectViewCreate</a>(), DMSwarmSetCollectType()</font>
+<a name="line920">920: </a><font color="#B22222">@*/</font>
+<a name="line921">921: </a><strong><font color="#4169E1"><a name="DMSwarmCollectViewDestroy"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMSWARM/DMSwarmCollectViewDestroy.html#DMSwarmCollectViewDestroy">DMSwarmCollectViewDestroy</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm)</font></strong>
+<a name="line922">922: </a>{
+<a name="line924">924: </a>  DM_Swarm *swarm = (DM_Swarm*)dm-&gt;data;
+
+<a name="line927">927: </a>  <font color="#4169E1">if</font> (!swarm-&gt;collect_view_active) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_USER,<font color="#666666">"CollectView is currently not active"</font>);
+<a name="line928">928: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmSetLocalSizes.html#DMSwarmSetLocalSizes">DMSwarmSetLocalSizes</a>(dm,swarm-&gt;collect_view_reset_nlocal,-1);
+<a name="line929">929: </a>  swarm-&gt;collect_view_active = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+<a name="line930">930: </a>  <font color="#4169E1">return</font>(0);
+<a name="line931">931: </a>}
+
+<a name="line933">933: </a><strong><font color="#4169E1"><a name="DMSwarmSetUpPIC"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMSwarmSetUpPIC(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm)</font></strong>
+<a name="line934">934: </a>{
+<a name="line935">935: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> dim;
+
+<a name="line939">939: </a>  <a href="../../../../docs/manualpages/DM/DMGetDimension.html#DMGetDimension">DMGetDimension</a>(dm,&amp;dim);
+<a name="line940">940: </a>  <font color="#4169E1">if</font> (dim &lt; 1) <a href="../../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_USER,<font color="#666666">"Dimension must be 1,2,3 - found %D"</font>,dim);
+<a name="line941">941: </a>  <font color="#4169E1">if</font> (dim &gt; 3) <a href="../../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_USER,<font color="#666666">"Dimension must be 1,2,3 - found %D"</font>,dim);
+<a name="line942">942: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterPetscDatatypeField.html#DMSwarmRegisterPetscDatatypeField">DMSwarmRegisterPetscDatatypeField</a>(dm,DMSwarmPICField_coor,dim,<a href="../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_DOUBLE</a>);
+<a name="line943">943: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterPetscDatatypeField.html#DMSwarmRegisterPetscDatatypeField">DMSwarmRegisterPetscDatatypeField</a>(dm,DMSwarmPICField_cellid,1,<a href="../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_INT</a>);
+<a name="line944">944: </a>  <font color="#4169E1">return</font>(0);
+<a name="line945">945: </a>}
+
+<a name="line947">947: </a><font color="#B22222">/*@C</font>
+<a name="line948">948: </a><font color="#B22222">   <a href="../../../../docs/manualpages/DMSWARM/DMSwarmSetType.html#DMSwarmSetType">DMSwarmSetType</a> - Set particular flavor of DMSwarm</font>
+
+<a name="line950">950: </a><font color="#B22222">   Collective on <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a></font>
+
+<a name="line952">952: </a><font color="#B22222">   Input parameters:</font>
+<a name="line953">953: </a><font color="#B22222">+  dm - the DMSwarm</font>
+<a name="line954">954: </a><font color="#B22222">-  stype - the DMSwarm type (e.g. DMSWARM_PIC)</font>
+
+<a name="line956">956: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line958">958: </a><font color="#B22222">.seealso: DMSwarmSetMigrateType(), DMSwarmSetCollectType()</font>
+<a name="line959">959: </a><font color="#B22222">@*/</font>
+<a name="line960">960: </a><strong><font color="#4169E1"><a name="DMSwarmSetType"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMSWARM/DMSwarmSetType.html#DMSwarmSetType">DMSwarmSetType</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,DMSwarmType stype)</font></strong>
+<a name="line961">961: </a>{
+<a name="line962">962: </a>  DM_Swarm *swarm = (DM_Swarm*)dm-&gt;data;
+
+<a name="line966">966: </a>  swarm-&gt;swarm_type = stype;
+<a name="line967">967: </a>  <font color="#4169E1">if</font> (swarm-&gt;swarm_type == DMSWARM_PIC) {
+<a name="line968">968: </a>    DMSwarmSetUpPIC(dm);
+<a name="line969">969: </a>  }
+<a name="line970">970: </a>  <font color="#4169E1">return</font>(0);
+<a name="line971">971: </a>}
+
+<a name="line973">973: </a><strong><font color="#4169E1"><a name="DMSetup_Swarm"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMSetup_Swarm(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm)</font></strong>
+<a name="line974">974: </a>{
+<a name="line975">975: </a>  DM_Swarm *swarm = (DM_Swarm*)dm-&gt;data;
+<a name="line977">977: </a>  <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> rank;
+<a name="line978">978: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> p,npoints,*rankval;
+
+<a name="line981">981: </a>  <font color="#4169E1">if</font> (swarm-&gt;issetup) <font color="#4169E1">return</font>(0);
+
+<a name="line983">983: </a>  swarm-&gt;issetup = <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+
+<a name="line985">985: </a>  <font color="#4169E1">if</font> (swarm-&gt;swarm_type == DMSWARM_PIC) {
+<a name="line986">986: </a>    <font color="#B22222">/* check dmcell exists */</font>
+<a name="line987">987: </a>    <font color="#4169E1">if</font> (!swarm-&gt;dmcell) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_USER,<font color="#666666">"DMSWARM_PIC requires you call <a href="../../../../docs/manualpages/DMSWARM/DMSwarmSetCellDM.html#DMSwarmSetCellDM">DMSwarmSetCellDM</a>"</font>);
+
+<a name="line989">989: </a>    <font color="#4169E1">if</font> (swarm-&gt;dmcell-&gt;ops-&gt;locatepointssubdomain) {
+<a name="line990">990: </a>      <font color="#B22222">/* check methods exists for exact ownership identificiation */</font>
+<a name="line991">991: </a>      <a href="../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),<font color="#666666">"  DMSWARM_PIC: Using method CellDM-&gt;ops-&gt;LocatePointsSubdomain\n"</font>);
+<a name="line992">992: </a>      swarm-&gt;migrate_type = DMSWARM_MIGRATE_DMCELLEXACT;
+<a name="line993">993: </a>    } <font color="#4169E1">else</font> {
+<a name="line994">994: </a>      <font color="#B22222">/* check methods exist for point location AND rank neighbor identification */</font>
+<a name="line995">995: </a>      <font color="#4169E1">if</font> (swarm-&gt;dmcell-&gt;ops-&gt;locatepoints) {
+<a name="line996">996: </a>        <a href="../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),<font color="#666666">"  DMSWARM_PIC: Using method CellDM-&gt;LocatePoints\n"</font>);
+<a name="line997">997: </a>      } <font color="#4169E1">else</font> <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_USER,<font color="#666666">"DMSWARM_PIC requires the method CellDM-&gt;ops-&gt;locatepoints be defined"</font>);
+
+<a name="line999">999: </a>      <font color="#4169E1">if</font> (swarm-&gt;dmcell-&gt;ops-&gt;getneighbors) {
+<a name="line1000">1000: </a>        <a href="../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),<font color="#666666">"  DMSWARM_PIC: Using method CellDM-&gt;GetNeigbors\n"</font>);
+<a name="line1001">1001: </a>      } <font color="#4169E1">else</font> <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_USER,<font color="#666666">"DMSWARM_PIC requires the method CellDM-&gt;ops-&gt;getneighbors be defined"</font>);
+
+<a name="line1003">1003: </a>      swarm-&gt;migrate_type = DMSWARM_MIGRATE_DMCELLNSCATTER;
+<a name="line1004">1004: </a>    }
+<a name="line1005">1005: </a>  }
+
+<a name="line1007">1007: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmFinalizeFieldRegister.html#DMSwarmFinalizeFieldRegister">DMSwarmFinalizeFieldRegister</a>(dm);
+
+<a name="line1009">1009: </a>  <font color="#B22222">/* check some fields were registered */</font>
+<a name="line1010">1010: </a>  <font color="#4169E1">if</font> (swarm-&gt;db-&gt;nfields &lt;= 2) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_USER,<font color="#666666">"At least one field user must be registered via DMSwarmRegisterXXX()"</font>);
+
+<a name="line1012">1012: </a>  <font color="#B22222">/* check local sizes were set */</font>
+<a name="line1013">1013: </a>  <font color="#4169E1">if</font> (swarm-&gt;db-&gt;L == -1) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_USER,<font color="#666666">"Local sizes must be set via <a href="../../../../docs/manualpages/DMSWARM/DMSwarmSetLocalSizes.html#DMSwarmSetLocalSizes">DMSwarmSetLocalSizes</a>()"</font>);
+
+<a name="line1015">1015: </a>  <font color="#B22222">/* initialize values in pid and rank placeholders */</font>
+<a name="line1016">1016: </a>  <font color="#B22222">/* TODO: [pid - use <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Scan.html#MPI_Scan">MPI_Scan</a>] */</font>
+<a name="line1017">1017: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),&amp;rank);
+<a name="line1018">1018: </a>  DataBucketGetSizes(swarm-&gt;db,&amp;npoints,NULL,NULL);
+<a name="line1019">1019: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetField.html#DMSwarmGetField">DMSwarmGetField</a>(dm,DMSwarmField_rank,NULL,NULL,(void**)&amp;rankval);
+<a name="line1020">1020: </a>  <font color="#4169E1">for</font> (p=0; p&lt;npoints; p++) {
+<a name="line1021">1021: </a>    rankval[p] = (<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>)rank;
+<a name="line1022">1022: </a>  }
+<a name="line1023">1023: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRestoreField.html#DMSwarmRestoreField">DMSwarmRestoreField</a>(dm,DMSwarmField_rank,NULL,NULL,(void**)&amp;rankval);
+<a name="line1024">1024: </a>  <font color="#4169E1">return</font>(0);
+<a name="line1025">1025: </a>}
+
+<a name="line1027">1027: </a><strong><font color="#4169E1">extern <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMSwarmSortDestroy(DMSwarmSort *_ctx)</font></strong>;
+
+<a name="line1029">1029: </a><strong><font color="#4169E1"><a name="DMDestroy_Swarm"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMDestroy_Swarm(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm)</font></strong>
+<a name="line1030">1030: </a>{
+<a name="line1031">1031: </a>  DM_Swarm *swarm = (DM_Swarm*)dm-&gt;data;
+
+<a name="line1035">1035: </a>  DataBucketDestroy(&amp;swarm-&gt;db);
+<a name="line1036">1036: </a>  <font color="#4169E1">if</font> (swarm-&gt;sort_context) {
+<a name="line1037">1037: </a>    DMSwarmSortDestroy(&amp;swarm-&gt;sort_context);
+<a name="line1038">1038: </a>  }
+<a name="line1039">1039: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(swarm);
+<a name="line1040">1040: </a>  <font color="#4169E1">return</font>(0);
+<a name="line1041">1041: </a>}
+
+<a name="line1043">1043: </a><strong><font color="#4169E1"><a name="DMSwarmView_Draw"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMSwarmView_Draw(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm, <a href="../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer)</font></strong>
+<a name="line1044">1044: </a>{
+<a name="line1045">1045: </a>  <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a>             cdm;
+<a name="line1046">1046: </a>  <a href="../../../../docs/manualpages/Draw/PetscDraw.html#PetscDraw">PetscDraw</a>      draw;
+<a name="line1047">1047: </a>  <a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>     *coords, oldPause;
+<a name="line1048">1048: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       Np, p, bs;
+
+<a name="line1052">1052: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerDrawGetDraw.html#PetscViewerDrawGetDraw">PetscViewerDrawGetDraw</a>(viewer, 0, &amp;draw);
+<a name="line1053">1053: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetCellDM.html#DMSwarmGetCellDM">DMSwarmGetCellDM</a>(dm, &amp;cdm);
+<a name="line1054">1054: </a>  <a href="../../../../docs/manualpages/Draw/PetscDrawGetPause.html#PetscDrawGetPause">PetscDrawGetPause</a>(draw, &amp;oldPause);
+<a name="line1055">1055: </a>  <a href="../../../../docs/manualpages/Draw/PetscDrawSetPause.html#PetscDrawSetPause">PetscDrawSetPause</a>(draw, 0.0);
+<a name="line1056">1056: </a>  <a href="../../../../docs/manualpages/DM/DMView.html#DMView">DMView</a>(cdm, viewer);
+<a name="line1057">1057: </a>  <a href="../../../../docs/manualpages/Draw/PetscDrawSetPause.html#PetscDrawSetPause">PetscDrawSetPause</a>(draw, oldPause);
+
+<a name="line1059">1059: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetLocalSize.html#DMSwarmGetLocalSize">DMSwarmGetLocalSize</a>(dm, &amp;Np);
+<a name="line1060">1060: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetField.html#DMSwarmGetField">DMSwarmGetField</a>(dm, DMSwarmPICField_coor, &amp;bs, NULL, (void **) &amp;coords);
+<a name="line1061">1061: </a>  <font color="#4169E1">for</font> (p = 0; p &lt; Np; ++p) {
+<a name="line1062">1062: </a>    const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i = p*bs;
+
+<a name="line1064">1064: </a>    <a href="../../../../docs/manualpages/Draw/PetscDrawEllipse.html#PetscDrawEllipse">PetscDrawEllipse</a>(draw, coords[i], coords[i+1], 0.01, 0.01, PETSC_DRAW_BLUE);
+<a name="line1065">1065: </a>  }
+<a name="line1066">1066: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRestoreField.html#DMSwarmRestoreField">DMSwarmRestoreField</a>(dm, DMSwarmPICField_coor, &amp;bs, NULL, (void **) &amp;coords);
+<a name="line1067">1067: </a>  <a href="../../../../docs/manualpages/Draw/PetscDrawFlush.html#PetscDrawFlush">PetscDrawFlush</a>(draw);
+<a name="line1068">1068: </a>  <a href="../../../../docs/manualpages/Draw/PetscDrawPause.html#PetscDrawPause">PetscDrawPause</a>(draw);
+<a name="line1069">1069: </a>  <a href="../../../../docs/manualpages/Draw/PetscDrawSave.html#PetscDrawSave">PetscDrawSave</a>(draw);
+<a name="line1070">1070: </a>  <font color="#4169E1">return</font>(0);
+<a name="line1071">1071: </a>}
+
+<a name="line1073">1073: </a><strong><font color="#4169E1"><a name="DMView_Swarm"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMView_Swarm(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm, <a href="../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer)</font></strong>
+<a name="line1074">1074: </a>{
+<a name="line1075">1075: </a>  DM_Swarm *swarm = (DM_Swarm*)dm-&gt;data;
+<a name="line1076">1076: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>      iascii,ibinary,ishdf5,isvtk,isdraw;
+
+<a name="line1082">1082: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer, <a href="../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html#PETSCVIEWERASCII">PETSCVIEWERASCII</a>, &amp;iascii);
+<a name="line1083">1083: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer, <a href="../../../../docs/manualpages/Viewer/PETSCVIEWERBINARY.html#PETSCVIEWERBINARY">PETSCVIEWERBINARY</a>,&amp;ibinary);
+<a name="line1084">1084: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer, <a href="../../../../docs/manualpages/Viewer/PETSCVIEWERVTK.html#PETSCVIEWERVTK">PETSCVIEWERVTK</a>,   &amp;isvtk);
+<a name="line1085">1085: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer, <a href="../../../../docs/manualpages/Viewer/PETSCVIEWERHDF5.html#PETSCVIEWERHDF5">PETSCVIEWERHDF5</a>,  &amp;ishdf5);
+<a name="line1086">1086: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer, <a href="../../../../docs/manualpages/Viewer/PETSCVIEWERDRAW.html#PETSCVIEWERDRAW">PETSCVIEWERDRAW</a>,  &amp;isdraw);
+<a name="line1087">1087: </a>  <font color="#4169E1">if</font> (iascii) {
+<a name="line1088">1088: </a>    DataBucketView(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),swarm-&gt;db,NULL,DATABUCKET_VIEW_STDOUT);
+<a name="line1089">1089: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ibinary) {
+<a name="line1090">1090: </a>    <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_SUP,<font color="#666666">"NO Binary support"</font>);
+<a name="line1091">1091: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ishdf5) {
+<a name="line1092">1092: </a><font color="#A020F0">#if defined(PETSC_HAVE_HDF5)</font>
+<a name="line1093">1093: </a>    <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_SUP,<font color="#666666">"NO HDF5 support"</font>);
+<a name="line1094">1094: </a><font color="#A020F0">#else</font>
+<a name="line1095">1095: </a>    <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_SUP,<font color="#666666">"HDF5 not supported. Please reconfigure using --download-hdf5"</font>);
+<a name="line1096">1096: </a><font color="#A020F0">#endif</font>
+<a name="line1097">1097: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (isvtk) {
+<a name="line1098">1098: </a>    <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_SUP,<font color="#666666">"NO VTK support"</font>);
+<a name="line1099">1099: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (isdraw) {
+<a name="line1100">1100: </a>    DMSwarmView_Draw(dm, viewer);
+<a name="line1101">1101: </a>  }
+<a name="line1102">1102: </a>  <font color="#4169E1">return</font>(0);
+<a name="line1103">1103: </a>}
+
+<a name="line1105">1105: </a><font color="#B22222">/*MC</font>
+
+<a name="line1107">1107: </a><font color="#B22222"> <a href="../../../../docs/manualpages/DMSWARM/DMSWARM.html#DMSWARM">DMSWARM</a> = "swarm" - A <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> object used to represent arrays of data (fields) of arbitrary data type.</font>
+<a name="line1108">1108: </a><font color="#B22222"> This implementation was designed for particle methods in which the underlying</font>
+<a name="line1109">1109: </a><font color="#B22222"> data required to be represented is both (i) dynamic in length, (ii) and of arbitrary data type.</font>
+
+<a name="line1111">1111: </a><font color="#B22222"> User data can be represented by DMSwarm through a registering "fields".</font>
+<a name="line1112">1112: </a><font color="#B22222"> To register a field, the user must provide;</font>
+<a name="line1113">1113: </a><font color="#B22222"> (a) a unique name;</font>
+<a name="line1114">1114: </a><font color="#B22222"> (b) the data type (or size in bytes);</font>
+<a name="line1115">1115: </a><font color="#B22222"> (c) the block size of the data.</font>
+
+<a name="line1117">1117: </a><font color="#B22222"> For example, suppose the application requires a unique id, energy, momentum and density to be stored</font>
+<a name="line1118">1118: </a><font color="#B22222"> on a set of of particles. Then the following code could be used</font>
+
+<a name="line1120">1120: </a><font color="#B22222">$    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmInitializeFieldRegister.html#DMSwarmInitializeFieldRegister">DMSwarmInitializeFieldRegister</a>(dm)</font>
+<a name="line1121">1121: </a><font color="#B22222">$    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterPetscDatatypeField.html#DMSwarmRegisterPetscDatatypeField">DMSwarmRegisterPetscDatatypeField</a>(dm,"uid",1,<a href="../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_LONG</a>);</font>
+<a name="line1122">1122: </a><font color="#B22222">$    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterPetscDatatypeField.html#DMSwarmRegisterPetscDatatypeField">DMSwarmRegisterPetscDatatypeField</a>(dm,"energy",1,PETSC_REAL);</font>
+<a name="line1123">1123: </a><font color="#B22222">$    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterPetscDatatypeField.html#DMSwarmRegisterPetscDatatypeField">DMSwarmRegisterPetscDatatypeField</a>(dm,"momentum",3,PETSC_REAL);</font>
+<a name="line1124">1124: </a><font color="#B22222">$    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterPetscDatatypeField.html#DMSwarmRegisterPetscDatatypeField">DMSwarmRegisterPetscDatatypeField</a>(dm,"density",1,<a href="../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_FLOAT</a>);</font>
+<a name="line1125">1125: </a><font color="#B22222">$    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmFinalizeFieldRegister.html#DMSwarmFinalizeFieldRegister">DMSwarmFinalizeFieldRegister</a>(dm)</font>
+
+<a name="line1127">1127: </a><font color="#B22222"> The fields represented by DMSwarm are dynamic and can be re-sized at any time.</font>
+<a name="line1128">1128: </a><font color="#B22222"> The only restriction imposed by DMSwarm is that all fields contain the same number of points.</font>
+
+<a name="line1130">1130: </a><font color="#B22222"> To support particle methods, "migration" techniques are provided. These methods migrate data</font>
+<a name="line1131">1131: </a><font color="#B22222"> between MPI-ranks.</font>
+
+<a name="line1133">1133: </a><font color="#B22222"> DMSwarm supports the methods <a href="../../../../docs/manualpages/DM/DMCreateGlobalVector.html#DMCreateGlobalVector">DMCreateGlobalVector</a>() and <a href="../../../../docs/manualpages/DM/DMCreateLocalVector.html#DMCreateLocalVector">DMCreateLocalVector</a>().</font>
+<a name="line1134">1134: </a><font color="#B22222"> As a DMSwarm may internally define and store values of different data types,</font>
+<a name="line1135">1135: </a><font color="#B22222"> before calling <a href="../../../../docs/manualpages/DM/DMCreateGlobalVector.html#DMCreateGlobalVector">DMCreateGlobalVector</a>() or <a href="../../../../docs/manualpages/DM/DMCreateLocalVector.html#DMCreateLocalVector">DMCreateLocalVector</a>(), the user must inform DMSwarm which</font>
+<a name="line1136">1136: </a><font color="#B22222"> fields should be used to define a <a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> object via</font>
+<a name="line1137">1137: </a><font color="#B22222">   <a href="../../../../docs/manualpages/DMSWARM/DMSwarmVectorDefineField.html#DMSwarmVectorDefineField">DMSwarmVectorDefineField</a>()</font>
+<a name="line1138">1138: </a><font color="#B22222"> The specified field can can changed be changed at any time - thereby permitting vectors</font>
+<a name="line1139">1139: </a><font color="#B22222"> compatable with different fields to be created.</font>
+
+<a name="line1141">1141: </a><font color="#B22222"> A dual representation of fields in the DMSwarm and a <a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> object is permitted via</font>
+<a name="line1142">1142: </a><font color="#B22222">   <a href="../../../../docs/manualpages/DMSWARM/DMSwarmCreateGlobalVectorFromField.html#DMSwarmCreateGlobalVectorFromField">DMSwarmCreateGlobalVectorFromField</a>()</font>
+<a name="line1143">1143: </a><font color="#B22222"> Here the data defining the field in the DMSwarm is shared with a <a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>.</font>
+<a name="line1144">1144: </a><font color="#B22222"> This is inherently unsafe if you alter the size of the field at any time between</font>
+<a name="line1145">1145: </a><font color="#B22222"> calls to <a href="../../../../docs/manualpages/DMSWARM/DMSwarmCreateGlobalVectorFromField.html#DMSwarmCreateGlobalVectorFromField">DMSwarmCreateGlobalVectorFromField</a>() and <a href="../../../../docs/manualpages/DMSWARM/DMSwarmDestroyGlobalVectorFromField.html#DMSwarmDestroyGlobalVectorFromField">DMSwarmDestroyGlobalVectorFromField</a>().</font>
+<a name="line1146">1146: </a><font color="#B22222"> If the local size of the DMSwarm does not match the local size of the global vector</font>
+<a name="line1147">1147: </a><font color="#B22222"> when <a href="../../../../docs/manualpages/DMSWARM/DMSwarmDestroyGlobalVectorFromField.html#DMSwarmDestroyGlobalVectorFromField">DMSwarmDestroyGlobalVectorFromField</a>() is called, an error is thrown.</font>
+
+<a name="line1149">1149: </a><font color="#B22222"> Additional high-level support is provided for Particle-In-Cell methods. </font>
+<a name="line1150">1150: </a><font color="#B22222"> Please refer to the man page for <a href="../../../../docs/manualpages/DMSWARM/DMSwarmSetType.html#DMSwarmSetType">DMSwarmSetType</a>().</font>
+<a name="line1151">1151: </a><font color="#B22222"> </font>
+<a name="line1152">1152: </a><font color="#B22222"> Level: beginner</font>
+
+<a name="line1154">1154: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/DM/DMType.html#DMType">DMType</a>, <a href="../../../../docs/manualpages/DM/DMCreate.html#DMCreate">DMCreate</a>(), <a href="../../../../docs/manualpages/DM/DMSetType.html#DMSetType">DMSetType</a>()</font>
+<a name="line1155">1155: </a><font color="#B22222">M*/</font>
+<a name="line1156">1156: </a><strong><font color="#4169E1"><a name="DMCreate_Swarm"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMCreate_Swarm(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm)</font></strong>
+<a name="line1157">1157: </a>{
+<a name="line1158">1158: </a>  DM_Swarm      *swarm;
+
+<a name="line1163">1163: </a>  <a href="../../../../docs/manualpages/Sys/PetscNewLog.html#PetscNewLog">PetscNewLog</a>(dm,&amp;swarm);
+<a name="line1164">1164: </a>  dm-&gt;data = swarm;
+
+<a name="line1166">1166: </a>  DataBucketCreate(&amp;swarm-&gt;db);
+<a name="line1167">1167: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmInitializeFieldRegister.html#DMSwarmInitializeFieldRegister">DMSwarmInitializeFieldRegister</a>(dm);
+
+<a name="line1169">1169: </a>  swarm-&gt;vec_field_set = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+<a name="line1170">1170: </a>  swarm-&gt;issetup = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+<a name="line1171">1171: </a>  swarm-&gt;swarm_type = DMSWARM_BASIC;
+<a name="line1172">1172: </a>  swarm-&gt;migrate_type = DMSWARM_MIGRATE_BASIC;
+<a name="line1173">1173: </a>  swarm-&gt;collect_type = DMSWARM_COLLECT_BASIC;
+<a name="line1174">1174: </a>  swarm-&gt;migrate_error_on_missing_point = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+
+<a name="line1176">1176: </a>  swarm-&gt;dmcell = NULL;
+<a name="line1177">1177: </a>  swarm-&gt;collect_view_active = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+<a name="line1178">1178: </a>  swarm-&gt;collect_view_reset_nlocal = -1;
+
+<a name="line1180">1180: </a>  dm-&gt;dim  = 0;
+<a name="line1181">1181: </a>  dm-&gt;ops-&gt;view                            = DMView_Swarm;
+<a name="line1182">1182: </a>  dm-&gt;ops-&gt;load                            = NULL;
+<a name="line1183">1183: </a>  dm-&gt;ops-&gt;setfromoptions                  = NULL;
+<a name="line1184">1184: </a>  dm-&gt;ops-&gt;clone                           = NULL;
+<a name="line1185">1185: </a>  dm-&gt;ops-&gt;setup                           = DMSetup_Swarm;
+<a name="line1186">1186: </a>  dm-&gt;ops-&gt;createdefaultsection            = NULL;
+<a name="line1187">1187: </a>  dm-&gt;ops-&gt;createdefaultconstraints        = NULL;
+<a name="line1188">1188: </a>  dm-&gt;ops-&gt;createglobalvector              = DMCreateGlobalVector_Swarm;
+<a name="line1189">1189: </a>  dm-&gt;ops-&gt;createlocalvector               = DMCreateLocalVector_Swarm;
+<a name="line1190">1190: </a>  dm-&gt;ops-&gt;getlocaltoglobalmapping         = NULL;
+<a name="line1191">1191: </a>  dm-&gt;ops-&gt;createfieldis                   = NULL;
+<a name="line1192">1192: </a>  dm-&gt;ops-&gt;createcoordinatedm              = NULL;
+<a name="line1193">1193: </a>  dm-&gt;ops-&gt;getcoloring                     = NULL;
+<a name="line1194">1194: </a>  dm-&gt;ops-&gt;creatematrix                    = NULL;
+<a name="line1195">1195: </a>  dm-&gt;ops-&gt;createinterpolation             = NULL;
+<a name="line1196">1196: </a>  dm-&gt;ops-&gt;getaggregates                   = NULL;
+<a name="line1197">1197: </a>  dm-&gt;ops-&gt;getinjection                    = NULL;
+<a name="line1198">1198: </a>  dm-&gt;ops-&gt;refine                          = NULL;
+<a name="line1199">1199: </a>  dm-&gt;ops-&gt;coarsen                         = NULL;
+<a name="line1200">1200: </a>  dm-&gt;ops-&gt;refinehierarchy                 = NULL;
+<a name="line1201">1201: </a>  dm-&gt;ops-&gt;coarsenhierarchy                = NULL;
+<a name="line1202">1202: </a>  dm-&gt;ops-&gt;globaltolocalbegin              = NULL;
+<a name="line1203">1203: </a>  dm-&gt;ops-&gt;globaltolocalend                = NULL;
+<a name="line1204">1204: </a>  dm-&gt;ops-&gt;localtoglobalbegin              = NULL;
+<a name="line1205">1205: </a>  dm-&gt;ops-&gt;localtoglobalend                = NULL;
+<a name="line1206">1206: </a>  dm-&gt;ops-&gt;destroy                         = DMDestroy_Swarm;
+<a name="line1207">1207: </a>  dm-&gt;ops-&gt;createsubdm                     = NULL;
+<a name="line1208">1208: </a>  dm-&gt;ops-&gt;getdimpoints                    = NULL;
+<a name="line1209">1209: </a>  dm-&gt;ops-&gt;locatepoints                    = NULL;
+<a name="line1210">1210: </a>  <font color="#4169E1">return</font>(0);
+<a name="line1211">1211: </a>}
+</pre>
+</body>
+
+</html>

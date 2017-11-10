@@ -1,0 +1,151 @@
+<center><a href="ex10.c">Actual source code: ex10.c</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/vec/vec/examples/tutorials/ex10.c.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:15:49+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/vec/vec/examples/tutorials/ex10.c.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+
+<a name="line2">  2: </a>static char help[] = <font color="#666666">"Tests I/O of vectors for different data formats (binary,HDF5) and illustrates the use of user-defined event logging\n\n"</font>;
+
+<a name="line4">  4: </a> #include <A href="../../../../../include/petscvec.h.html">&lt;petscvec.h&gt;</A>
+<a name="line5">  5: </a><font color="#A020F0">#include &lt;petscviewerhdf5.h&gt;</font>
+
+<a name="line7">  7: </a><font color="#B22222">/* Note:  Most applications would not read and write a vector within</font>
+<a name="line8">  8: </a><font color="#B22222">  the same program.  This example is intended only to demonstrate</font>
+<a name="line9">  9: </a><font color="#B22222">  both input and output and is written for use with either 1,2,or 4 processors. */</font>
+
+<a name="line11"> 11: </a><strong><font color="#4169E1"><a name="main"></a>int main(int argc,char **args)</font></strong>
+<a name="line12"> 12: </a>{
+<a name="line13"> 13: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+<a name="line14"> 14: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>       rank,size;
+<a name="line15"> 15: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          i,m = 20,low,high,ldim,iglobal,lsize;
+<a name="line16"> 16: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>       v;
+<a name="line17"> 17: </a>  <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>               u;
+<a name="line18"> 18: </a>  <a href="../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a>       viewer;
+<a name="line19"> 19: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>         vstage2,vstage3,mpiio_use,isbinary,ishdf5;
+<a name="line20"> 20: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> const *values;
+<a name="line21"> 21: </a><font color="#A020F0">#if defined(PETSC_USE_LOG)</font>
+<a name="line22"> 22: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscLogEvent.html#PetscLogEvent">PetscLogEvent</a>  VECTOR_GENERATE,VECTOR_READ;
+<a name="line23"> 23: </a><font color="#A020F0">#endif</font>
+
+<a name="line25"> 25: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInitialize.html#PetscInitialize">PetscInitialize</a>(&amp;argc,&amp;args,(char*)0,help);<font color="#4169E1">if</font> (ierr) <font color="#4169E1">return</font> ierr;
+<a name="line26"> 26: </a>  isbinary  = ishdf5 = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+<a name="line27"> 27: </a>  mpiio_use = vstage2 = vstage3 = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+
+<a name="line29"> 29: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsGetBool.html#PetscOptionsGetBool">PetscOptionsGetBool</a>(NULL,NULL,<font color="#666666">"-binary"</font>,&amp;isbinary,NULL);
+<a name="line30"> 30: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsGetBool.html#PetscOptionsGetBool">PetscOptionsGetBool</a>(NULL,NULL,<font color="#666666">"-hdf5"</font>,&amp;ishdf5,NULL);
+<a name="line31"> 31: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsGetBool.html#PetscOptionsGetBool">PetscOptionsGetBool</a>(NULL,NULL,<font color="#666666">"-mpiio"</font>,&amp;mpiio_use,NULL);
+<a name="line32"> 32: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsGetBool.html#PetscOptionsGetBool">PetscOptionsGetBool</a>(NULL,NULL,<font color="#666666">"-sizes_set"</font>,&amp;vstage2,NULL);
+<a name="line33"> 33: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsGetBool.html#PetscOptionsGetBool">PetscOptionsGetBool</a>(NULL,NULL,<font color="#666666">"-type_set"</font>,&amp;vstage3,NULL);
+
+<a name="line35"> 35: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,&amp;rank);
+<a name="line36"> 36: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,&amp;size);
+<a name="line37"> 37: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsGetInt.html#PetscOptionsGetInt">PetscOptionsGetInt</a>(NULL,NULL,<font color="#666666">"-m"</font>,&amp;m,NULL);
+
+<a name="line39"> 39: </a>  <font color="#B22222">/* PART 1:  Generate vector, then write it in the given data format */</font>
+
+<a name="line41"> 41: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscLogEventRegister.html#PetscLogEventRegister">PetscLogEventRegister</a>(<font color="#666666">"Generate Vector"</font>,VEC_CLASSID,&amp;VECTOR_GENERATE);
+<a name="line42"> 42: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscLogEventBegin.html#PetscLogEventBegin">PetscLogEventBegin</a>(VECTOR_GENERATE,0,0,0,0);
+<a name="line43"> 43: </a>  <font color="#B22222">/* Generate vector */</font>
+<a name="line44"> 44: </a>  <a href="../../../../../docs/manualpages/Vec/VecCreate.html#VecCreate">VecCreate</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,&amp;u);
+<a name="line45"> 45: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectSetName.html#PetscObjectSetName">PetscObjectSetName</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)u, <font color="#666666">"Test_Vec"</font>);
+<a name="line46"> 46: </a>  <a href="../../../../../docs/manualpages/Vec/VecSetSizes.html#VecSetSizes">VecSetSizes</a>(u,<a href="../../../../../docs/manualpages/Sys/PETSC_DECIDE.html#PETSC_DECIDE">PETSC_DECIDE</a>,m);
+<a name="line47"> 47: </a>  <a href="../../../../../docs/manualpages/Vec/VecSetFromOptions.html#VecSetFromOptions">VecSetFromOptions</a>(u);
+<a name="line48"> 48: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetOwnershipRange.html#VecGetOwnershipRange">VecGetOwnershipRange</a>(u,&amp;low,&amp;high);
+<a name="line49"> 49: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetLocalSize.html#VecGetLocalSize">VecGetLocalSize</a>(u,&amp;ldim);
+<a name="line50"> 50: </a>  <font color="#4169E1">for</font> (i=0; i&lt;ldim; i++) {
+<a name="line51"> 51: </a>    iglobal = i + low;
+<a name="line52"> 52: </a>    v       = (<a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>)(i + 100*rank);
+<a name="line53"> 53: </a>    <a href="../../../../../docs/manualpages/Vec/VecSetValues.html#VecSetValues">VecSetValues</a>(u,1,&amp;iglobal,&amp;v,<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>);
+<a name="line54"> 54: </a>  }
+<a name="line55"> 55: </a>  <a href="../../../../../docs/manualpages/Vec/VecAssemblyBegin.html#VecAssemblyBegin">VecAssemblyBegin</a>(u);
+<a name="line56"> 56: </a>  <a href="../../../../../docs/manualpages/Vec/VecAssemblyEnd.html#VecAssemblyEnd">VecAssemblyEnd</a>(u);
+<a name="line57"> 57: </a>  <a href="../../../../../docs/manualpages/Vec/VecView.html#VecView">VecView</a>(u,<a href="../../../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html#PETSC_VIEWER_STDOUT_WORLD">PETSC_VIEWER_STDOUT_WORLD</a>);
+
+<a name="line59"> 59: </a>  <font color="#4169E1">if</font> (isbinary) {
+<a name="line60"> 60: </a>    <a href="../../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<font color="#666666">"writing vector in binary to vector.dat ...\n"</font>);
+<a name="line61"> 61: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerBinaryOpen.html#PetscViewerBinaryOpen">PetscViewerBinaryOpen</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<font color="#666666">"vector.dat"</font>,<a href="../../../../../docs/manualpages/Sys/PetscFileMode.html#PetscFileMode">FILE_MODE_WRITE</a>,&amp;viewer);
+<a name="line62"> 62: </a><font color="#A020F0">#if defined(PETSC_HAVE_HDF5)</font>
+<a name="line63"> 63: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ishdf5) {
+<a name="line64"> 64: </a>    <a href="../../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<font color="#666666">"writing vector in hdf5 to vector.dat ...\n"</font>);
+<a name="line65"> 65: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerHDF5Open.html#PetscViewerHDF5Open">PetscViewerHDF5Open</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<font color="#666666">"vector.dat"</font>,<a href="../../../../../docs/manualpages/Sys/PetscFileMode.html#PetscFileMode">FILE_MODE_WRITE</a>,&amp;viewer);
+<a name="line66"> 66: </a><font color="#A020F0">#endif</font>
+<a name="line67"> 67: </a>  } <font color="#4169E1">else</font> <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,PETSC_ERR_SUP,<font color="#666666">"No data format specified, run with either -binary or -hdf5 option\n"</font>);
+<a name="line68"> 68: </a>  <a href="../../../../../docs/manualpages/Vec/VecView.html#VecView">VecView</a>(u,viewer);
+<a name="line69"> 69: </a>  <a href="../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html#PetscViewerDestroy">PetscViewerDestroy</a>(&amp;viewer);
+<a name="line70"> 70: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;u);
+
+
+<a name="line73"> 73: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscLogEventEnd.html#PetscLogEventEnd">PetscLogEventEnd</a>(VECTOR_GENERATE,0,0,0,0);
+
+<a name="line75"> 75: </a>  <font color="#B22222">/* PART 2:  Read in vector in binary format */</font>
+
+<a name="line77"> 77: </a>  <font color="#B22222">/* Read new vector in binary format */</font>
+<a name="line78"> 78: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscLogEventRegister.html#PetscLogEventRegister">PetscLogEventRegister</a>(<font color="#666666">"Read Vector"</font>,VEC_CLASSID,&amp;VECTOR_READ);
+<a name="line79"> 79: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscLogEventBegin.html#PetscLogEventBegin">PetscLogEventBegin</a>(VECTOR_READ,0,0,0,0);
+<a name="line80"> 80: </a>  <font color="#4169E1">if</font> (mpiio_use) {
+<a name="line81"> 81: </a>    <a href="../../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<font color="#666666">"Using MPI IO for reading the vector\n"</font>);
+<a name="line82"> 82: </a>    <a href="../../../../../docs/manualpages/Sys/PetscOptionsSetValue.html#PetscOptionsSetValue">PetscOptionsSetValue</a>(NULL,<font color="#666666">"-viewer_binary_mpiio"</font>,<font color="#666666">""</font>);
+<a name="line83"> 83: </a>  }
+<a name="line84"> 84: </a>  <font color="#4169E1">if</font> (isbinary) {
+<a name="line85"> 85: </a>    <a href="../../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<font color="#666666">"reading vector in binary from vector.dat ...\n"</font>);
+<a name="line86"> 86: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerBinaryOpen.html#PetscViewerBinaryOpen">PetscViewerBinaryOpen</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<font color="#666666">"vector.dat"</font>,<a href="../../../../../docs/manualpages/Sys/PetscFileMode.html#PetscFileMode">FILE_MODE_READ</a>,&amp;viewer);
+<a name="line87"> 87: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerBinarySetFlowControl.html#PetscViewerBinarySetFlowControl">PetscViewerBinarySetFlowControl</a>(viewer,2);
+<a name="line88"> 88: </a><font color="#A020F0">#if defined(PETSC_HAVE_HDF5)</font>
+<a name="line89"> 89: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ishdf5) {
+<a name="line90"> 90: </a>    <a href="../../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<font color="#666666">"reading vector in hdf5 from vector.dat ...\n"</font>);
+<a name="line91"> 91: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerHDF5Open.html#PetscViewerHDF5Open">PetscViewerHDF5Open</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<font color="#666666">"vector.dat"</font>,<a href="../../../../../docs/manualpages/Sys/PetscFileMode.html#PetscFileMode">FILE_MODE_READ</a>,&amp;viewer);
+<a name="line92"> 92: </a><font color="#A020F0">#endif</font>
+<a name="line93"> 93: </a>  }
+<a name="line94"> 94: </a>  <a href="../../../../../docs/manualpages/Vec/VecCreate.html#VecCreate">VecCreate</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,&amp;u);
+<a name="line95"> 95: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectSetName.html#PetscObjectSetName">PetscObjectSetName</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>) u,<font color="#666666">"Test_Vec"</font>);
+
+<a name="line97"> 97: </a>  <font color="#4169E1">if</font> (vstage2) {
+<a name="line98"> 98: </a>    <a href="../../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<font color="#666666">"Setting vector sizes...\n"</font>);
+<a name="line99"> 99: </a>    <font color="#4169E1">if</font> (size &gt; 1) {
+<a name="line100">100: </a>      <font color="#4169E1">if</font> (!rank) {
+<a name="line101">101: </a>        lsize = m/size + size;
+<a name="line102">102: </a>        <a href="../../../../../docs/manualpages/Vec/VecSetSizes.html#VecSetSizes">VecSetSizes</a>(u,lsize,m);
+<a name="line103">103: </a>      } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (rank == size-1) {
+<a name="line104">104: </a>        lsize = m/size - size;
+<a name="line105">105: </a>        <a href="../../../../../docs/manualpages/Vec/VecSetSizes.html#VecSetSizes">VecSetSizes</a>(u,lsize,m);
+<a name="line106">106: </a>      } <font color="#4169E1">else</font> {
+<a name="line107">107: </a>        lsize = m/size;
+<a name="line108">108: </a>        <a href="../../../../../docs/manualpages/Vec/VecSetSizes.html#VecSetSizes">VecSetSizes</a>(u,lsize,m);
+<a name="line109">109: </a>      }
+<a name="line110">110: </a>    } <font color="#4169E1">else</font> {
+<a name="line111">111: </a>      <a href="../../../../../docs/manualpages/Vec/VecSetSizes.html#VecSetSizes">VecSetSizes</a>(u,m,m);
+<a name="line112">112: </a>    }
+<a name="line113">113: </a>  }
+
+<a name="line115">115: </a>  <font color="#4169E1">if</font> (vstage3) {
+<a name="line116">116: </a>    <a href="../../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<font color="#666666">"Setting vector type...\n"</font>);
+<a name="line117">117: </a>    <a href="../../../../../docs/manualpages/Vec/VecSetType.html#VecSetType">VecSetType</a>(u, <a href="../../../../../docs/manualpages/Vec/VECMPI.html#VECMPI">VECMPI</a>);
+<a name="line118">118: </a>  }
+<a name="line119">119: </a>  <a href="../../../../../docs/manualpages/Vec/VecLoad.html#VecLoad">VecLoad</a>(u,viewer);
+<a name="line120">120: </a>  <a href="../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html#PetscViewerDestroy">PetscViewerDestroy</a>(&amp;viewer);
+<a name="line121">121: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscLogEventEnd.html#PetscLogEventEnd">PetscLogEventEnd</a>(VECTOR_READ,0,0,0,0);
+<a name="line122">122: </a>  <a href="../../../../../docs/manualpages/Vec/VecView.html#VecView">VecView</a>(u,<a href="../../../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html#PETSC_VIEWER_STDOUT_WORLD">PETSC_VIEWER_STDOUT_WORLD</a>);
+<a name="line123">123: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetArrayRead.html#VecGetArrayRead">VecGetArrayRead</a>(u,&amp;values);
+<a name="line124">124: </a>  <font color="#4169E1">for</font> (i=0; i&lt;ldim; i++) {
+<a name="line125">125: </a>    <font color="#4169E1">if</font> (values[i] != (<a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>)(i + 100*rank)) <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,PETSC_ERR_SUP,<font color="#666666">"Data check failed!\n"</font>);
+<a name="line126">126: </a>  }
+<a name="line127">127: </a>  <a href="../../../../../docs/manualpages/Vec/VecRestoreArrayRead.html#VecRestoreArrayRead">VecRestoreArrayRead</a>(u,&amp;values);
+
+<a name="line129">129: </a>  <font color="#B22222">/* Free data structures */</font>
+<a name="line130">130: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;u);
+<a name="line131">131: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFinalize.html#PetscFinalize">PetscFinalize</a>();
+<a name="line132">132: </a>  <font color="#4169E1">return</font> ierr;
+<a name="line133">133: </a>}
+
+</pre>
+</body>
+
+</html>

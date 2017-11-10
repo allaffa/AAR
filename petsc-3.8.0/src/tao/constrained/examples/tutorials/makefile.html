@@ -1,0 +1,62 @@
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/tao/constrained/examples/tutorials/makefile.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-27T00:22:08+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/tao/constrained/examples/tutorials/makefile.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80"><strong><font color="#FF0000">ALL:</font></strong> 
+
+CFLAGS		 = 
+FFLAGS		 = 
+CPPFLAGS         =
+FPPFLAGS         =
+EXAMPLESC        = maros.c toy.c
+EXAMPLESF        = toyf.F
+EXAMPLESCH       =
+EXAMPLESFH       = 
+TUTORIALS        = 
+LOCDIR		 = src/tao/constrained/examples/tutorials/
+MANSEC		 =
+DOCS		 = 
+DIRS		 = 
+
+include ${PETSC_DIR}/lib/petsc/conf/variables
+include ${PETSC_DIR}/lib/petsc/conf/rules
+
+<strong><font color="#FF0000">maros:</font></strong> maros.o chkopts
+	-${CLINKER} -o maros maros.o ${PETSC_TAO_LIB}
+	${RM} maros.o
+
+<strong><font color="#FF0000">toy:</font></strong> toy.o chkopts
+	-${CLINKER} -o toy toy.o ${PETSC_TAO_LIB}
+	${RM} toy.o
+
+<strong><font color="#FF0000">toyf:</font></strong> toyf.o chkopts
+	-${CLINKER} -o toyf toyf.o ${PETSC_TAO_LIB}
+	${RM} toyf.o
+
+<strong><font color="#FF0000">runmaros:</font></strong>
+	-@${MPIEXEC} -n 1 ./maros   &gt; maros_1.tmp 2&gt;&amp;1; \
+           ${DIFF} output/maros_1.out maros_1.tmp || printf  <font color="#666666">"${PWD}\nPossible problem with maros_1, diffs above\n=========================================\n"</font>; \
+           ${RM} -f maros_1.tmp
+
+<strong><font color="#FF0000">runtoy:</font></strong>
+	-@${MPIEXEC} -n 1 ./toy -tao_converged_reason  &gt; toy_1.tmp 2&gt;&amp;1; \
+           ${DIFF} output/toy_1.out toy_1.tmp || printf  <font color="#666666">"${PWD}\nPossible problem with toy_1, diffs above\n=========================================\n"</font>; \
+           ${RM} -f toy_1.tmp
+
+TESTEXAMPLES_C             =  maros.PETSc maros.rm toy.PETSc toy.rm
+TESTEXAMPLES_C_SUPERLU     =  maros.PETSc runmaros maros.rm toy.PETSc runtoy toy.rm
+TEXTEXAMPLES_FORTRAN       = toyf.PETSc toyf.rm 
+
+include ${PETSC_DIR}/lib/petsc/conf/test
+
+</pre>
+</body>
+
+</html>

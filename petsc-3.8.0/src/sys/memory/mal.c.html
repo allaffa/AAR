@@ -1,0 +1,318 @@
+<center><a href="mal.c">Actual source code: mal.c</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/sys/memory/mal.c.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:07:38+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/sys/memory/mal.c.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+
+<a name="line2">  2: </a><font color="#B22222">/*</font>
+<a name="line3">  3: </a><font color="#B22222">    Code that allows a user to dictate what malloc() PETSc uses.</font>
+<a name="line4">  4: </a><font color="#B22222">*/</font>
+<a name="line5">  5: </a> #include <A href="../../../include/petscsys.h.html">&lt;petscsys.h&gt;</A>
+<a name="line6">  6: </a><font color="#A020F0">#if defined(PETSC_HAVE_MALLOC_H)</font>
+<a name="line7">  7: </a><font color="#A020F0">#include &lt;malloc.h&gt;</font>
+<a name="line8">  8: </a><font color="#A020F0">#endif</font>
+<a name="line9">  9: </a><font color="#A020F0">#if defined(PETSC_HAVE_MEMKIND)</font>
+<a name="line10"> 10: </a><font color="#A020F0">#include &lt;memkind.h&gt;</font>
+<a name="line11"> 11: </a><font color="#4169E1">typedef</font> <font color="#4169E1">enum</font> {PETSC_MK_DEFAULT=0,PETSC_MK_HBW_PREFERRED=1} PetscMemkindType;
+<a name="line12"> 12: </a>PetscMemkindType currentmktype = PETSC_MK_HBW_PREFERRED;
+<a name="line13"> 13: </a>PetscMemkindType previousmktype = PETSC_MK_HBW_PREFERRED;
+<a name="line14"> 14: </a><font color="#A020F0">#endif</font>
+<a name="line15"> 15: </a><font color="#B22222">/*</font>
+<a name="line16"> 16: </a><font color="#B22222">        We want to make sure that all mallocs of double or complex numbers are complex aligned.</font>
+<a name="line17"> 17: </a><font color="#B22222">    1) on systems with memalign() we call that routine to get an aligned memory location</font>
+<a name="line18"> 18: </a><font color="#B22222">    2) on systems without memalign() we</font>
+<a name="line19"> 19: </a><font color="#B22222">       - allocate one sizeof(<a href="../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>) extra space</font>
+<a name="line20"> 20: </a><font color="#B22222">       - we shift the pointer up slightly if needed to get <a href="../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> aligned</font>
+<a name="line21"> 21: </a><font color="#B22222">       - if shifted we store at ptr[-1] the amount of shift (plus a classid)</font>
+<a name="line22"> 22: </a><font color="#B22222">*/</font>
+<a name="line23"> 23: </a><strong><font color="#228B22">#define SHIFT_CLASSID 456123</font></strong>
+
+<a name="line25"> 25: </a><strong><font color="#4169E1"><a name="PetscMallocAlign"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  PetscMallocAlign(size_t mem,int line,const char func[],const char file[],void **result)</font></strong>
+<a name="line26"> 26: </a>{
+<a name="line27"> 27: </a>  <font color="#4169E1">if</font> (!mem) { *result = NULL; <font color="#4169E1">return</font> 0; }
+<a name="line28"> 28: </a><font color="#A020F0">#if defined(PETSC_HAVE_MEMKIND)</font>
+<a name="line29"> 29: </a>  {
+<a name="line30"> 30: </a>    int ierr;
+<a name="line31"> 31: </a>    <font color="#4169E1">if</font> (!currentmktype) memkind_posix_memalign(MEMKIND_DEFAULT,result,PETSC_MEMALIGN,mem);
+<a name="line32"> 32: </a>    <font color="#4169E1">else</font> memkind_posix_memalign(MEMKIND_HBW_PREFERRED,result,PETSC_MEMALIGN,mem);
+<a name="line33"> 33: </a>    <font color="#4169E1">if</font> (ierr) <a href="../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_MEM,<font color="#666666">"Memory requested with memkind %.0f"</font>,(PetscLogDouble)mem);
+<a name="line34"> 34: </a>  }
+<a name="line35"> 35: </a><font color="#A020F0">#else</font>
+<a name="line36"> 36: </a><font color="#A020F0">#  if defined(PETSC_HAVE_DOUBLE_ALIGN_MALLOC) &amp;&amp; (PETSC_MEMALIGN == 8)</font>
+<a name="line37"> 37: </a>  *result = malloc(mem);
+<a name="line38"> 38: </a><font color="#A020F0">#  elif defined(PETSC_HAVE_MEMALIGN)</font>
+<a name="line39"> 39: </a>  *result = memalign(PETSC_MEMALIGN,mem);
+<a name="line40"> 40: </a><font color="#A020F0">#  else</font>
+<a name="line41"> 41: </a>  {
+<a name="line42"> 42: </a>    <font color="#B22222">/*</font>
+<a name="line43"> 43: </a><font color="#B22222">      malloc space for two extra chunks and shift ptr 1 + enough to get it <a href="../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> aligned</font>
+<a name="line44"> 44: </a><font color="#B22222">    */</font>
+<a name="line45"> 45: </a>    int *ptr = (int*)malloc(mem + 2*PETSC_MEMALIGN);
+<a name="line46"> 46: </a>    <font color="#4169E1">if</font> (ptr) {
+<a name="line47"> 47: </a>      int shift    = (int)(((PETSC_UINTPTR_T) ptr) % PETSC_MEMALIGN);
+<a name="line48"> 48: </a>      shift        = (2*PETSC_MEMALIGN - shift)/<font color="#4169E1">sizeof</font>(int);
+<a name="line49"> 49: </a>      ptr[shift-1] = shift + SHIFT_CLASSID;
+<a name="line50"> 50: </a>      ptr         += shift;
+<a name="line51"> 51: </a>      *result      = (void*)ptr;
+<a name="line52"> 52: </a>    } <font color="#4169E1">else</font> {
+<a name="line53"> 53: </a>      *result      = NULL;
+<a name="line54"> 54: </a>    }
+<a name="line55"> 55: </a>  }
+<a name="line56"> 56: </a><font color="#A020F0">#  endif</font>
+<a name="line57"> 57: </a><font color="#A020F0">#endif</font>
+<a name="line58"> 58: </a>  <font color="#4169E1">if</font> (!*result) <font color="#4169E1">return</font> <a href="../../../docs/manualpages/Sys/PetscError.html#PetscError">PetscError</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,line,func,file,PETSC_ERR_MEM,<a href="../../../docs/manualpages/Sys/PetscErrorType.html#PetscErrorType">PETSC_ERROR_INITIAL</a>,<font color="#666666">"Memory requested %.0f"</font>,(PetscLogDouble)mem);
+<a name="line59"> 59: </a>  <font color="#4169E1">return</font> 0;
+<a name="line60"> 60: </a>}
+
+<a name="line62"> 62: </a><strong><font color="#4169E1"><a name="PetscFreeAlign"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  PetscFreeAlign(void *ptr,int line,const char func[],const char file[])</font></strong>
+<a name="line63"> 63: </a>{
+<a name="line64"> 64: </a>  <font color="#4169E1">if</font> (!ptr) <font color="#4169E1">return</font> 0;
+<a name="line65"> 65: </a><font color="#A020F0">#if defined(PETSC_HAVE_MEMKIND)</font>
+<a name="line66"> 66: </a>  memkind_free(0,ptr); <font color="#B22222">/* specify the kind to 0 so that memkind will look up for the right type */</font>
+<a name="line67"> 67: </a><font color="#A020F0">#else</font>
+<a name="line68"> 68: </a><font color="#A020F0">#  if (!(defined(PETSC_HAVE_DOUBLE_ALIGN_MALLOC) &amp;&amp; (PETSC_MEMALIGN == 8)) &amp;&amp; !defined(PETSC_HAVE_MEMALIGN))</font>
+<a name="line69"> 69: </a>  {
+<a name="line70"> 70: </a>    <font color="#B22222">/*</font>
+<a name="line71"> 71: </a><font color="#B22222">      Previous int tells us how many ints the pointer has been shifted from</font>
+<a name="line72"> 72: </a><font color="#B22222">      the original address provided by the system malloc().</font>
+<a name="line73"> 73: </a><font color="#B22222">    */</font>
+<a name="line74"> 74: </a>    int shift = *(((int*)ptr)-1) - SHIFT_CLASSID;
+<a name="line75"> 75: </a>    <font color="#4169E1">if</font> (shift &gt; PETSC_MEMALIGN-1) <font color="#4169E1">return</font> <a href="../../../docs/manualpages/Sys/PetscError.html#PetscError">PetscError</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,line,func,file,PETSC_ERR_PLIB,<a href="../../../docs/manualpages/Sys/PetscErrorType.html#PetscErrorType">PETSC_ERROR_INITIAL</a>,<font color="#666666">"Likely memory corruption in heap"</font>);
+<a name="line76"> 76: </a>    <font color="#4169E1">if</font> (shift &lt; 0) <font color="#4169E1">return</font> <a href="../../../docs/manualpages/Sys/PetscError.html#PetscError">PetscError</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,line,func,file,PETSC_ERR_PLIB,<a href="../../../docs/manualpages/Sys/PetscErrorType.html#PetscErrorType">PETSC_ERROR_INITIAL</a>,<font color="#666666">"Likely memory corruption in heap"</font>);
+<a name="line77"> 77: </a>    ptr = (void*)(((int*)ptr) - shift);
+<a name="line78"> 78: </a>  }
+<a name="line79"> 79: </a><font color="#A020F0">#  endif</font>
+
+<a name="line81"> 81: </a><font color="#A020F0">#  if defined(PETSC_HAVE_FREE_RETURN_INT)</font>
+<a name="line82"> 82: </a>  int err = free(ptr);
+<a name="line83"> 83: </a>  <font color="#4169E1">if</font> (err) <font color="#4169E1">return</font> <a href="../../../docs/manualpages/Sys/PetscError.html#PetscError">PetscError</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,line,func,file,PETSC_ERR_PLIB,<a href="../../../docs/manualpages/Sys/PetscErrorType.html#PetscErrorType">PETSC_ERROR_INITIAL</a>,<font color="#666666">"System free returned error %d\n"</font>,err);
+<a name="line84"> 84: </a><font color="#A020F0">#  else</font>
+<a name="line85"> 85: </a>  free(ptr);
+<a name="line86"> 86: </a><font color="#A020F0">#  endif</font>
+<a name="line87"> 87: </a><font color="#A020F0">#endif</font>
+<a name="line88"> 88: </a>  <font color="#4169E1">return</font> 0;
+<a name="line89"> 89: </a>}
+
+<a name="line91"> 91: </a><strong><font color="#4169E1"><a name="PetscReallocAlign"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscReallocAlign(size_t mem, int line, const char func[], const char file[], void **result)</font></strong>
+<a name="line92"> 92: </a>{
+
+<a name="line95"> 95: </a>  <font color="#4169E1">if</font> (!mem) {
+<a name="line96"> 96: </a>    PetscFreeAlign(*result, line, func, file);
+<a name="line97"> 97: </a>    <font color="#4169E1">if</font> (ierr) <font color="#4169E1">return</font> ierr;
+<a name="line98"> 98: </a>    *result = NULL;
+<a name="line99"> 99: </a>    <font color="#4169E1">return</font> 0;
+<a name="line100">100: </a>  }
+<a name="line101">101: </a><font color="#A020F0">#if defined(PETSC_HAVE_MEMKIND)</font>
+<a name="line102">102: </a>  <font color="#4169E1">if</font> (!currentmktype) *result = memkind_realloc(MEMKIND_DEFAULT,*result,mem);
+<a name="line103">103: </a>  <font color="#4169E1">else</font> *result = memkind_realloc(MEMKIND_HBW_PREFERRED,*result,mem);
+<a name="line104">104: </a><font color="#A020F0">#else</font>
+<a name="line105">105: </a><font color="#A020F0">#  if (!(defined(PETSC_HAVE_DOUBLE_ALIGN_MALLOC) &amp;&amp; (PETSC_MEMALIGN == 8)) &amp;&amp; !defined(PETSC_HAVE_MEMALIGN))</font>
+<a name="line106">106: </a>  {
+<a name="line107">107: </a>    <font color="#B22222">/*</font>
+<a name="line108">108: </a><font color="#B22222">      Previous int tells us how many ints the pointer has been shifted from</font>
+<a name="line109">109: </a><font color="#B22222">      the original address provided by the system malloc().</font>
+<a name="line110">110: </a><font color="#B22222">    */</font>
+<a name="line111">111: </a>    int shift = *(((int*)*result)-1) - SHIFT_CLASSID;
+<a name="line112">112: </a>    <font color="#4169E1">if</font> (shift &gt; PETSC_MEMALIGN-1) <font color="#4169E1">return</font> <a href="../../../docs/manualpages/Sys/PetscError.html#PetscError">PetscError</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,line,func,file,PETSC_ERR_PLIB,<a href="../../../docs/manualpages/Sys/PetscErrorType.html#PetscErrorType">PETSC_ERROR_INITIAL</a>,<font color="#666666">"Likely memory corruption in heap"</font>);
+<a name="line113">113: </a>    <font color="#4169E1">if</font> (shift &lt; 0) <font color="#4169E1">return</font> <a href="../../../docs/manualpages/Sys/PetscError.html#PetscError">PetscError</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,line,func,file,PETSC_ERR_PLIB,<a href="../../../docs/manualpages/Sys/PetscErrorType.html#PetscErrorType">PETSC_ERROR_INITIAL</a>,<font color="#666666">"Likely memory corruption in heap"</font>);
+<a name="line114">114: </a>    *result = (void*)(((int*)*result) - shift);
+<a name="line115">115: </a>  }
+<a name="line116">116: </a><font color="#A020F0">#  endif</font>
+
+<a name="line118">118: </a><font color="#A020F0">#  if (defined(PETSC_HAVE_DOUBLE_ALIGN_MALLOC) &amp;&amp; (PETSC_MEMALIGN == 8)) || defined(PETSC_HAVE_MEMALIGN)</font>
+<a name="line119">119: </a>  *result = realloc(*result, mem);
+<a name="line120">120: </a><font color="#A020F0">#  else</font>
+<a name="line121">121: </a>  {
+<a name="line122">122: </a>    <font color="#B22222">/*</font>
+<a name="line123">123: </a><font color="#B22222">      malloc space for two extra chunks and shift ptr 1 + enough to get it <a href="../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> aligned</font>
+<a name="line124">124: </a><font color="#B22222">    */</font>
+<a name="line125">125: </a>    int *ptr = (int *) realloc(*result, mem + 2*PETSC_MEMALIGN);
+<a name="line126">126: </a>    <font color="#4169E1">if</font> (ptr) {
+<a name="line127">127: </a>      int shift    = (int)(((PETSC_UINTPTR_T) ptr) % PETSC_MEMALIGN);
+<a name="line128">128: </a>      shift        = (2*PETSC_MEMALIGN - shift)/<font color="#4169E1">sizeof</font>(int);
+<a name="line129">129: </a>      ptr[shift-1] = shift + SHIFT_CLASSID;
+<a name="line130">130: </a>      ptr         += shift;
+<a name="line131">131: </a>      *result      = (void*)ptr;
+<a name="line132">132: </a>    } <font color="#4169E1">else</font> {
+<a name="line133">133: </a>      *result      = NULL;
+<a name="line134">134: </a>    }
+<a name="line135">135: </a>  }
+<a name="line136">136: </a><font color="#A020F0">#  endif</font>
+<a name="line137">137: </a><font color="#A020F0">#endif</font>
+<a name="line138">138: </a>  <font color="#4169E1">if</font> (!*result) <font color="#4169E1">return</font> <a href="../../../docs/manualpages/Sys/PetscError.html#PetscError">PetscError</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,line,func,file,PETSC_ERR_MEM,<a href="../../../docs/manualpages/Sys/PetscErrorType.html#PetscErrorType">PETSC_ERROR_INITIAL</a>,<font color="#666666">"Memory requested %.0f"</font>,(PetscLogDouble)mem);
+<a name="line139">139: </a><font color="#A020F0">#if defined(PETSC_HAVE_MEMALIGN)</font>
+<a name="line140">140: </a>  <font color="#B22222">/* There are no standard guarantees that realloc() maintains the alignment of memalign(), so I think we have to</font>
+<a name="line141">141: </a><font color="#B22222">   * realloc and, if the alignment is wrong, malloc/copy/free. */</font>
+<a name="line142">142: </a>  <font color="#4169E1">if</font> (((size_t) (*result)) % PETSC_MEMALIGN) {
+<a name="line143">143: </a>    void *newResult;
+<a name="line144">144: </a><font color="#A020F0">#  if defined(PETSC_HAVE_MEMKIND)</font>
+<a name="line145">145: </a>    {
+<a name="line146">146: </a>      int ierr;
+<a name="line147">147: </a>      <font color="#4169E1">if</font> (!currentmktype) memkind_posix_memalign(MEMKIND_DEFAULT,&amp;newResult,PETSC_MEMALIGN,mem);
+<a name="line148">148: </a>      <font color="#4169E1">else</font> memkind_posix_memalign(MEMKIND_HBW_PREFERRED,&amp;newResult,PETSC_MEMALIGN,mem);
+<a name="line149">149: </a>      <font color="#4169E1">if</font> (ierr) <a href="../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_MEM,<font color="#666666">"Memory requested with memkind %.0f"</font>,(PetscLogDouble)mem);
+<a name="line150">150: </a>    }
+<a name="line151">151: </a><font color="#A020F0">#  else</font>
+<a name="line152">152: </a>    newResult = memalign(PETSC_MEMALIGN,mem);
+<a name="line153">153: </a><font color="#A020F0">#  endif</font>
+<a name="line154">154: </a>    <font color="#4169E1">if</font> (!newResult) <font color="#4169E1">return</font> <a href="../../../docs/manualpages/Sys/PetscError.html#PetscError">PetscError</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,line,func,file,PETSC_ERR_MEM,<a href="../../../docs/manualpages/Sys/PetscErrorType.html#PetscErrorType">PETSC_ERROR_INITIAL</a>,<font color="#666666">"Memory requested %.0f"</font>,(PetscLogDouble)mem);
+<a name="line155">155: </a>    <a href="../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(newResult,*result,mem);
+<a name="line156">156: </a>    <font color="#4169E1">if</font> (ierr) <font color="#4169E1">return</font> ierr;
+<a name="line157">157: </a><font color="#A020F0">#  if defined(PETSC_HAVE_FREE_RETURN_INT)</font>
+<a name="line158">158: </a>    {
+<a name="line159">159: </a>      int err = free(*result);
+<a name="line160">160: </a>      <font color="#4169E1">if</font> (err) <font color="#4169E1">return</font> <a href="../../../docs/manualpages/Sys/PetscError.html#PetscError">PetscError</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,line,func,file,PETSC_ERR_PLIB,<a href="../../../docs/manualpages/Sys/PetscErrorType.html#PetscErrorType">PETSC_ERROR_INITIAL</a>,<font color="#666666">"System free returned error %d\n"</font>,err);
+<a name="line161">161: </a>    }
+<a name="line162">162: </a><font color="#A020F0">#  else</font>
+<a name="line163">163: </a><font color="#A020F0">#    if defined(PETSC_HAVE_MEMKIND)</font>
+<a name="line164">164: </a>    memkind_free(0,*result);
+<a name="line165">165: </a><font color="#A020F0">#    else</font>
+<a name="line166">166: </a>    free(*result);
+<a name="line167">167: </a><font color="#A020F0">#    endif</font>
+<a name="line168">168: </a><font color="#A020F0">#  endif</font>
+<a name="line169">169: </a>    *result = newResult;
+<a name="line170">170: </a>  }
+<a name="line171">171: </a><font color="#A020F0">#endif</font>
+<a name="line172">172: </a>  <font color="#4169E1">return</font> 0;
+<a name="line173">173: </a>}
+
+<a name="line175">175: </a><strong><font color="#4169E1"><a name="etscErrorCode"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> (*PetscTrMalloc)(size_t,int,const char[],const char[],void**)</font></strong> = PetscMallocAlign;
+<a name="line176">176: </a><strong><font color="#4169E1"><a name="etscErrorCode"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> (*PetscTrFree)(void*,int,const char[],const char[])</font></strong>           = PetscFreeAlign;
+<a name="line177">177: </a><strong><font color="#4169E1"><a name="etscErrorCode"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> (*PetscTrRealloc)(size_t,int,const char[],const char[],void**)</font></strong> = PetscReallocAlign;
+
+<a name="line179">179: </a><a href="../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> petscsetmallocvisited = <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+
+<a name="line181">181: </a><font color="#B22222">/*@C</font>
+<a name="line182">182: </a><font color="#B22222">   <a href="../../../docs/manualpages/Sys/PetscMallocSet.html#PetscMallocSet">PetscMallocSet</a> - Sets the routines used to do mallocs and frees.</font>
+<a name="line183">183: </a><font color="#B22222">   This routine MUST be called before <a href="../../../docs/manualpages/Sys/PetscInitialize.html#PetscInitialize">PetscInitialize</a>() and may be</font>
+<a name="line184">184: </a><font color="#B22222">   called only once.</font>
+
+<a name="line186">186: </a><font color="#B22222">   Not Collective</font>
+
+<a name="line188">188: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line189">189: </a><font color="#B22222">+  malloc - the malloc routine</font>
+<a name="line190">190: </a><font color="#B22222">-  free - the free routine</font>
+
+<a name="line192">192: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line194">194: </a><font color="#B22222">   Concepts: malloc</font>
+<a name="line195">195: </a><font color="#B22222">   Concepts: memory^allocation</font>
+
+<a name="line197">197: </a><font color="#B22222">@*/</font>
+<a name="line198">198: </a><strong><font color="#4169E1"><a name="PetscMallocSet"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../docs/manualpages/Sys/PetscMallocSet.html#PetscMallocSet">PetscMallocSet</a>(<a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> (*imalloc)(size_t,int,const char[],const char[],void**),</font></strong>
+<a name="line199">199: </a><strong><font color="#4169E1">                                              <a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> (*ifree)(void*,int,const char[],const char[]))</font></strong>
+<a name="line200">200: </a>{
+<a name="line202">202: </a>  <font color="#4169E1">if</font> (petscsetmallocvisited &amp;&amp; (imalloc != PetscTrMalloc || ifree != PetscTrFree)) <a href="../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_SUP,<font color="#666666">"cannot call multiple times"</font>);
+<a name="line203">203: </a>  PetscTrMalloc         = imalloc;
+<a name="line204">204: </a>  PetscTrFree           = ifree;
+<a name="line205">205: </a>  petscsetmallocvisited = <a href="../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+<a name="line206">206: </a>  <font color="#4169E1">return</font>(0);
+<a name="line207">207: </a>}
+
+<a name="line209">209: </a><font color="#B22222">/*@C</font>
+<a name="line210">210: </a><font color="#B22222">   <a href="../../../docs/manualpages/Sys/PetscMallocClear.html#PetscMallocClear">PetscMallocClear</a> - Resets the routines used to do mallocs and frees to the</font>
+<a name="line211">211: </a><font color="#B22222">        defaults.</font>
+
+<a name="line213">213: </a><font color="#B22222">   Not Collective</font>
+
+<a name="line215">215: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line217">217: </a><font color="#B22222">   Notes:</font>
+<a name="line218">218: </a><font color="#B22222">    In general one should never run a PETSc program with different malloc() and</font>
+<a name="line219">219: </a><font color="#B22222">    free() settings for different parts; this is because one NEVER wants to</font>
+<a name="line220">220: </a><font color="#B22222">    free() an address that was malloced by a different memory management system</font>
+
+<a name="line222">222: </a><font color="#B22222">@*/</font>
+<a name="line223">223: </a><strong><font color="#4169E1"><a name="PetscMallocClear"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../docs/manualpages/Sys/PetscMallocClear.html#PetscMallocClear">PetscMallocClear</a>(void)</font></strong>
+<a name="line224">224: </a>{
+<a name="line226">226: </a>  PetscTrMalloc         = PetscMallocAlign;
+<a name="line227">227: </a>  PetscTrFree           = PetscFreeAlign;
+<a name="line228">228: </a>  petscsetmallocvisited = <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+<a name="line229">229: </a>  <font color="#4169E1">return</font>(0);
+<a name="line230">230: </a>}
+
+<a name="line232">232: </a><strong><font color="#4169E1"><a name="PetscMemoryTrace"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscMemoryTrace(const char label[])</font></strong>
+<a name="line233">233: </a>{
+<a name="line234">234: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>        ierr;
+<a name="line235">235: </a>  PetscLogDouble        mem,mal;
+<a name="line236">236: </a>  static PetscLogDouble oldmem = 0,oldmal = 0;
+
+<a name="line239">239: </a>  <a href="../../../docs/manualpages/Sys/PetscMemoryGetCurrentUsage.html#PetscMemoryGetCurrentUsage">PetscMemoryGetCurrentUsage</a>(&amp;mem);
+<a name="line240">240: </a>  <a href="../../../docs/manualpages/Sys/PetscMallocGetCurrentUsage.html#PetscMallocGetCurrentUsage">PetscMallocGetCurrentUsage</a>(&amp;mal);
+
+<a name="line242">242: </a>  <a href="../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<font color="#666666">"%s High water  %8.3f MB increase %8.3f MB Current %8.3f MB increase %8.3f MB\n"</font>,label,mem*1e-6,(mem - oldmem)*1e-6,mal*1e-6,(mal - oldmal)*1e-6);
+<a name="line243">243: </a>  oldmem = mem;
+<a name="line244">244: </a>  oldmal = mal;
+<a name="line245">245: </a>  <font color="#4169E1">return</font>(0);
+<a name="line246">246: </a>}
+
+<a name="line248">248: </a><strong><font color="#4169E1"><a name="PetscErrorCode"></a>static <a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> (*PetscTrMallocOld)(size_t,int,const char[],const char[],void**)</font></strong> = PetscMallocAlign;
+<a name="line249">249: </a><strong><font color="#4169E1"><a name="PetscErrorCode"></a>static <a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> (*PetscTrFreeOld)(void*,int,const char[],const char[])</font></strong>           = PetscFreeAlign;
+
+<a name="line251">251: </a><font color="#B22222">/*@C</font>
+<a name="line252">252: </a><font color="#B22222">   <a href="../../../docs/manualpages/Sys/PetscMallocSetDRAM.html#PetscMallocSetDRAM">PetscMallocSetDRAM</a> - Set <a href="../../../docs/manualpages/Sys/PetscMalloc.html#PetscMalloc">PetscMalloc</a> to use DRAM.</font>
+<a name="line253">253: </a><font color="#B22222">     If memkind is available, change the memkind type. Otherwise, switch the</font>
+<a name="line254">254: </a><font color="#B22222">     current malloc and free routines to the PetscMallocAlign and</font>
+<a name="line255">255: </a><font color="#B22222">     PetscFreeAlign (PETSc default).</font>
+
+<a name="line257">257: </a><font color="#B22222">   Not Collective</font>
+
+<a name="line259">259: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line261">261: </a><font color="#B22222">   Notes:</font>
+<a name="line262">262: </a><font color="#B22222">     This provides a way to do the allocation on DRAM temporarily. One</font>
+<a name="line263">263: </a><font color="#B22222">     can switch back to the previous choice by calling PetscMallocReset().</font>
+<a name="line264">264: </a><font color="#B22222"> </font>
+<a name="line265">265: </a><font color="#B22222">.seealso: PetscMallocReset()</font>
+<a name="line266">266: </a><font color="#B22222">@*/</font>
+<a name="line267">267: </a><strong><font color="#4169E1"><a name="PetscMallocSetDRAM"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../docs/manualpages/Sys/PetscMallocSetDRAM.html#PetscMallocSetDRAM">PetscMallocSetDRAM</a>(void)</font></strong>
+<a name="line268">268: </a>{
+<a name="line270">270: </a>  <font color="#4169E1">if</font> (PetscTrMalloc == PetscMallocAlign) {
+<a name="line271">271: </a><font color="#A020F0">#if defined(PETSC_HAVE_MEMKIND)</font>
+<a name="line272">272: </a>    previousmktype = currentmktype;
+<a name="line273">273: </a>    currentmktype  = PETSC_MK_DEFAULT;
+<a name="line274">274: </a><font color="#A020F0">#endif</font>
+<a name="line275">275: </a>  } <font color="#4169E1">else</font> {
+<a name="line276">276: </a>    <font color="#B22222">/* Save the previous choice */</font>
+<a name="line277">277: </a>    PetscTrMallocOld = PetscTrMalloc;
+<a name="line278">278: </a>    PetscTrFreeOld   = PetscTrFree;
+<a name="line279">279: </a>    PetscTrMalloc    = PetscMallocAlign;
+<a name="line280">280: </a>    PetscTrFree      = PetscFreeAlign;
+<a name="line281">281: </a>  }
+<a name="line282">282: </a>  <font color="#4169E1">return</font>(0);
+<a name="line283">283: </a>}
+
+<a name="line285">285: </a><font color="#B22222">/*@C</font>
+<a name="line286">286: </a><font color="#B22222">   <a href="../../../docs/manualpages/Sys/PetscMallocResetDRAM.html#PetscMallocResetDRAM">PetscMallocResetDRAM</a> - Reset the changes made by <a href="../../../docs/manualpages/Sys/PetscMallocSetDRAM.html#PetscMallocSetDRAM">PetscMallocSetDRAM</a></font>
+
+<a name="line288">288: </a><font color="#B22222">   Not Collective</font>
+
+<a name="line290">290: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line292">292: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/Sys/PetscMallocSetDRAM.html#PetscMallocSetDRAM">PetscMallocSetDRAM</a>()</font>
+<a name="line293">293: </a><font color="#B22222">@*/</font>
+<a name="line294">294: </a><strong><font color="#4169E1"><a name="PetscMallocResetDRAM"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../docs/manualpages/Sys/PetscMallocResetDRAM.html#PetscMallocResetDRAM">PetscMallocResetDRAM</a>(void)</font></strong>
+<a name="line295">295: </a>{
+<a name="line297">297: </a>  <font color="#4169E1">if</font> (PetscTrMalloc == PetscMallocAlign) {
+<a name="line298">298: </a><font color="#A020F0">#if defined(PETSC_HAVE_MEMKIND)</font>
+<a name="line299">299: </a>    currentmktype = previousmktype;
+<a name="line300">300: </a><font color="#A020F0">#endif </font>
+<a name="line301">301: </a>  } <font color="#4169E1">else</font> {
+<a name="line302">302: </a>    <font color="#B22222">/* Reset to the previous choice */</font>
+<a name="line303">303: </a>    PetscTrMalloc = PetscTrMallocOld;
+<a name="line304">304: </a>    PetscTrFree   = PetscTrFreeOld;
+<a name="line305">305: </a>  }
+<a name="line306">306: </a>  <font color="#4169E1">return</font>(0);
+<a name="line307">307: </a>}
+</pre>
+</body>
+
+</html>

@@ -1,0 +1,187 @@
+<center><a href="snesshell.c">Actual source code: snesshell.c</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/snes/impls/shell/snesshell.c.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-27T00:06:57+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/snes/impls/shell/snesshell.c.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+<a name="line1">  1: </a> #include <A href="../../../../include/petsc/private/snesimpl.h.html">&lt;petsc/private/snesimpl.h&gt;</A>
+
+<a name="line3">  3: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {<a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> (*solve)(<a href="../../../../docs/manualpages/SNES/SNES.html#SNES">SNES</a>,<a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>);void *ctx;} SNES_Shell;
+
+<a name="line5">  5: </a><font color="#B22222">/*@C</font>
+<a name="line6">  6: </a><font color="#B22222">   <a href="../../../../docs/manualpages/SNES/SNESShellSetSolve.html#SNESShellSetSolve">SNESShellSetSolve</a> - Sets routine to apply as solver</font>
+
+<a name="line8">  8: </a><font color="#B22222">   Logically Collective on <a href="../../../../docs/manualpages/SNES/SNES.html#SNES">SNES</a></font>
+
+<a name="line10"> 10: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line11"> 11: </a><font color="#B22222">+  snes - the nonlinear solver context</font>
+<a name="line12"> 12: </a><font color="#B22222">-  apply - the application-provided solver routine</font>
+
+<a name="line14"> 14: </a><font color="#B22222">   Calling sequence of solve:</font>
+<a name="line15"> 15: </a><font color="#B22222">.vb</font>
+<a name="line16"> 16: </a><font color="#B22222">   <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> apply (<a href="../../../../docs/manualpages/SNES/SNES.html#SNES">SNES</a> snes,<a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> xout)</font>
+<a name="line17"> 17: </a><font color="#B22222">.ve</font>
+
+<a name="line19"> 19: </a><font color="#B22222">+  snes - the preconditioner, get the application context with <a href="../../../../docs/manualpages/SNES/SNESShellGetContext.html#SNESShellGetContext">SNESShellGetContext</a>()</font>
+<a name="line20"> 20: </a><font color="#B22222">-  xout - solution vector</font>
+
+<a name="line22"> 22: </a><font color="#B22222">   Notes: the function MUST return an error code of 0 on success and nonzero on failure.</font>
+
+<a name="line24"> 24: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line26"> 26: </a><font color="#B22222">.keywords: <a href="../../../../docs/manualpages/SNES/SNES.html#SNES">SNES</a>, shell, set, apply, user-provided</font>
+
+<a name="line28"> 28: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/SNES/SNESSHELL.html#SNESSHELL">SNESSHELL</a>, <a href="../../../../docs/manualpages/SNES/SNESShellSetContext.html#SNESShellSetContext">SNESShellSetContext</a>(), <a href="../../../../docs/manualpages/SNES/SNESShellGetContext.html#SNESShellGetContext">SNESShellGetContext</a>()</font>
+<a name="line29"> 29: </a><font color="#B22222">@*/</font>
+<a name="line30"> 30: </a><strong><font color="#4169E1"><a name="SNESShellSetSolve"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../docs/manualpages/SNES/SNESShellSetSolve.html#SNESShellSetSolve">SNESShellSetSolve</a>(<a href="../../../../docs/manualpages/SNES/SNES.html#SNES">SNES</a> snes,<a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> (*solve)(<a href="../../../../docs/manualpages/SNES/SNES.html#SNES">SNES</a>,<a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>))</font></strong>
+<a name="line31"> 31: </a>{
+
+<a name="line36"> 36: </a>  PetscTryMethod(snes,<font color="#666666">"SNESShellSetSolve_C"</font>,(<a href="../../../../docs/manualpages/SNES/SNES.html#SNES">SNES</a>,<a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> (*)(<a href="../../../../docs/manualpages/SNES/SNES.html#SNES">SNES</a>,<a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>)),(snes,solve));
+<a name="line37"> 37: </a>  <font color="#4169E1">return</font>(0);
+<a name="line38"> 38: </a>}
+
+<a name="line40"> 40: </a><strong><font color="#4169E1"><a name="SNESReset_Shell"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> SNESReset_Shell(<a href="../../../../docs/manualpages/SNES/SNES.html#SNES">SNES</a> snes)</font></strong>
+<a name="line41"> 41: </a>{
+<a name="line43"> 43: </a>  <font color="#4169E1">return</font>(0);
+<a name="line44"> 44: </a>}
+
+<a name="line46"> 46: </a><strong><font color="#4169E1"><a name="SNESDestroy_Shell"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> SNESDestroy_Shell(<a href="../../../../docs/manualpages/SNES/SNES.html#SNES">SNES</a> snes)</font></strong>
+<a name="line47"> 47: </a>{
+
+<a name="line51"> 51: </a>  SNESReset_Shell(snes);
+<a name="line52"> 52: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(snes-&gt;data);
+<a name="line53"> 53: </a>  <font color="#4169E1">return</font>(0);
+<a name="line54"> 54: </a>}
+
+<a name="line56"> 56: </a><strong><font color="#4169E1"><a name="SNESSetUp_Shell"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> SNESSetUp_Shell(<a href="../../../../docs/manualpages/SNES/SNES.html#SNES">SNES</a> snes)</font></strong>
+<a name="line57"> 57: </a>{
+<a name="line59"> 59: </a>  <font color="#4169E1">return</font>(0);
+<a name="line60"> 60: </a>}
+
+<a name="line62"> 62: </a><strong><font color="#4169E1"><a name="SNESSetFromOptions_Shell"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> SNESSetFromOptions_Shell(PetscOptionItems *PetscOptionsObject,<a href="../../../../docs/manualpages/SNES/SNES.html#SNES">SNES</a> snes)</font></strong>
+<a name="line63"> 63: </a>{
+
+<a name="line67"> 67: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsHead.html#PetscOptionsHead">PetscOptionsHead</a>(PetscOptionsObject,<font color="#666666">"<a href="../../../../docs/manualpages/SNES/SNES.html#SNES">SNES</a> Shell options"</font>);
+<a name="line68"> 68: </a>  <font color="#4169E1">return</font>(0);
+<a name="line69"> 69: </a>}
+
+<a name="line71"> 71: </a><strong><font color="#4169E1"><a name="SNESView_Shell"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> SNESView_Shell(<a href="../../../../docs/manualpages/SNES/SNES.html#SNES">SNES</a> snes, <a href="../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer)</font></strong>
+<a name="line72"> 72: </a>{
+<a name="line74"> 74: </a>  <font color="#4169E1">return</font>(0);
+<a name="line75"> 75: </a>}
+
+<a name="line77"> 77: </a><font color="#B22222">/*@</font>
+<a name="line78"> 78: </a><font color="#B22222">    <a href="../../../../docs/manualpages/SNES/SNESShellGetContext.html#SNESShellGetContext">SNESShellGetContext</a> - Returns the user-provided context associated with a shell <a href="../../../../docs/manualpages/SNES/SNES.html#SNES">SNES</a></font>
+
+<a name="line80"> 80: </a><font color="#B22222">    Not Collective</font>
+
+<a name="line82"> 82: </a><font color="#B22222">    Input Parameter:</font>
+<a name="line83"> 83: </a><font color="#B22222">.   snes - should have been created with <a href="../../../../docs/manualpages/SNES/SNESSetType.html#SNESSetType">SNESSetType</a>(snes,<a href="../../../../docs/manualpages/SNES/SNESSHELL.html#SNESSHELL">SNESSHELL</a>);</font>
+
+<a name="line85"> 85: </a><font color="#B22222">    Output Parameter:</font>
+<a name="line86"> 86: </a><font color="#B22222">.   ctx - the user provided context</font>
+
+<a name="line88"> 88: </a><font color="#B22222">    Level: advanced</font>
+
+<a name="line90"> 90: </a><font color="#B22222">    Notes:</font>
+<a name="line91"> 91: </a><font color="#B22222">    This routine is intended for use within various shell routines</font>
+
+<a name="line93"> 93: </a><font color="#B22222">.keywords: <a href="../../../../docs/manualpages/SNES/SNES.html#SNES">SNES</a>, shell, get, context</font>
+
+<a name="line95"> 95: </a><font color="#B22222">.seealso: SNESCreateShell(), <a href="../../../../docs/manualpages/SNES/SNESShellSetContext.html#SNESShellSetContext">SNESShellSetContext</a>()</font>
+<a name="line96"> 96: </a><font color="#B22222">@*/</font>
+<a name="line97"> 97: </a><strong><font color="#4169E1"><a name="SNESShellGetContext"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../docs/manualpages/SNES/SNESShellGetContext.html#SNESShellGetContext">SNESShellGetContext</a>(<a href="../../../../docs/manualpages/SNES/SNES.html#SNES">SNES</a> snes,void **ctx)</font></strong>
+<a name="line98"> 98: </a>{
+<a name="line100">100: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>      flg;
+
+<a name="line105">105: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)snes,<a href="../../../../docs/manualpages/SNES/SNESSHELL.html#SNESSHELL">SNESSHELL</a>,&amp;flg);
+<a name="line106">106: </a>  <font color="#4169E1">if</font> (!flg) *ctx = 0;
+<a name="line107">107: </a>  <font color="#4169E1">else</font>      *ctx = ((SNES_Shell*)(snes-&gt;data))-&gt;ctx;
+<a name="line108">108: </a>  <font color="#4169E1">return</font>(0);
+<a name="line109">109: </a>}
+
+<a name="line111">111: </a><font color="#B22222">/*@</font>
+<a name="line112">112: </a><font color="#B22222">    <a href="../../../../docs/manualpages/SNES/SNESShellSetContext.html#SNESShellSetContext">SNESShellSetContext</a> - sets the context for a shell <a href="../../../../docs/manualpages/SNES/SNES.html#SNES">SNES</a></font>
+
+<a name="line114">114: </a><font color="#B22222">   Logically Collective on <a href="../../../../docs/manualpages/SNES/SNES.html#SNES">SNES</a></font>
+
+<a name="line116">116: </a><font color="#B22222">    Input Parameters:</font>
+<a name="line117">117: </a><font color="#B22222">+   snes - the shell <a href="../../../../docs/manualpages/SNES/SNES.html#SNES">SNES</a></font>
+<a name="line118">118: </a><font color="#B22222">-   ctx - the context</font>
+
+<a name="line120">120: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line122">122: </a><font color="#B22222">   Fortran Notes: The context can only be an integer or a <a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a></font>
+<a name="line123">123: </a><font color="#B22222">      unfortunately it cannot be a Fortran array or derived type.</font>
+
+
+<a name="line126">126: </a><font color="#B22222">.seealso: SNESCreateShell(), <a href="../../../../docs/manualpages/SNES/SNESShellGetContext.html#SNESShellGetContext">SNESShellGetContext</a>()</font>
+<a name="line127">127: </a><font color="#B22222">@*/</font>
+<a name="line128">128: </a><strong><font color="#4169E1"><a name="SNESShellSetContext"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../../docs/manualpages/SNES/SNESShellSetContext.html#SNESShellSetContext">SNESShellSetContext</a>(<a href="../../../../docs/manualpages/SNES/SNES.html#SNES">SNES</a> snes,void *ctx)</font></strong>
+<a name="line129">129: </a>{
+<a name="line130">130: </a>  SNES_Shell     *shell = (SNES_Shell*)snes-&gt;data;
+<a name="line132">132: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>      flg;
+
+<a name="line136">136: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)snes,<a href="../../../../docs/manualpages/SNES/SNESSHELL.html#SNESSHELL">SNESSHELL</a>,&amp;flg);
+<a name="line137">137: </a>  <font color="#4169E1">if</font> (flg) shell-&gt;ctx = ctx;
+<a name="line138">138: </a>  <font color="#4169E1">return</font>(0);
+<a name="line139">139: </a>}
+
+<a name="line141">141: </a><strong><font color="#4169E1"><a name="SNESSolve_Shell"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> SNESSolve_Shell(<a href="../../../../docs/manualpages/SNES/SNES.html#SNES">SNES</a> snes)</font></strong>
+<a name="line142">142: </a>{
+<a name="line143">143: </a>  SNES_Shell     *shell = (SNES_Shell*) snes-&gt;data;
+
+<a name="line147">147: </a>  <font color="#4169E1">if</font> (!shell-&gt;solve) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)snes),PETSC_ERR_ARG_WRONGSTATE,<font color="#666666">"Must call <a href="../../../../docs/manualpages/SNES/SNESShellSetSolve.html#SNESShellSetSolve">SNESShellSetSolve</a>() first"</font>);
+<a name="line148">148: </a>  snes-&gt;reason = <a href="../../../../docs/manualpages/SNES/SNESConvergedReason.html#SNESConvergedReason">SNES_CONVERGED_ITS</a>;
+<a name="line149">149: </a>  (*shell-&gt;solve)(snes,snes-&gt;vec_sol);
+<a name="line150">150: </a>  <font color="#4169E1">return</font>(0);
+<a name="line151">151: </a>}
+
+<a name="line153">153: </a><strong><font color="#4169E1"><a name="SNESShellSetSolve_Shell"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  SNESShellSetSolve_Shell(<a href="../../../../docs/manualpages/SNES/SNES.html#SNES">SNES</a> snes,<a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> (*solve)(<a href="../../../../docs/manualpages/SNES/SNES.html#SNES">SNES</a>,<a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>))</font></strong>
+<a name="line154">154: </a>{
+<a name="line155">155: </a>  SNES_Shell *shell = (SNES_Shell*)snes-&gt;data;
+
+<a name="line158">158: </a>  shell-&gt;solve = solve;
+<a name="line159">159: </a>  <font color="#4169E1">return</font>(0);
+<a name="line160">160: </a>}
+
+<a name="line162">162: </a><font color="#B22222">/*MC</font>
+<a name="line163">163: </a><font color="#B22222">  <a href="../../../../docs/manualpages/SNES/SNESSHELL.html#SNESSHELL">SNESSHELL</a> - a user provided nonlinear solver</font>
+
+<a name="line165">165: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line167">167: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/SNES/SNESCreate.html#SNESCreate">SNESCreate</a>(), <a href="../../../../docs/manualpages/SNES/SNES.html#SNES">SNES</a>, <a href="../../../../docs/manualpages/SNES/SNESSetType.html#SNESSetType">SNESSetType</a>(), <a href="../../../../docs/manualpages/SNES/SNESType.html#SNESType">SNESType</a> (for list of available types)</font>
+<a name="line168">168: </a><font color="#B22222">M*/</font>
+
+<a name="line170">170: </a><strong><font color="#4169E1"><a name="SNESCreate_Shell"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> SNESCreate_Shell(<a href="../../../../docs/manualpages/SNES/SNES.html#SNES">SNES</a> snes)</font></strong>
+<a name="line171">171: </a>{
+<a name="line172">172: </a>  SNES_Shell     *shell;
+
+<a name="line176">176: </a>  snes-&gt;ops-&gt;destroy        = SNESDestroy_Shell;
+<a name="line177">177: </a>  snes-&gt;ops-&gt;setup          = SNESSetUp_Shell;
+<a name="line178">178: </a>  snes-&gt;ops-&gt;setfromoptions = SNESSetFromOptions_Shell;
+<a name="line179">179: </a>  snes-&gt;ops-&gt;view           = SNESView_Shell;
+<a name="line180">180: </a>  snes-&gt;ops-&gt;solve          = SNESSolve_Shell;
+<a name="line181">181: </a>  snes-&gt;ops-&gt;reset          = SNESReset_Shell;
+
+<a name="line183">183: </a>  snes-&gt;usesksp = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+<a name="line184">184: </a>  snes-&gt;usesnpc = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+
+<a name="line186">186: </a>  snes-&gt;alwayscomputesfinalresidual = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+
+<a name="line188">188: </a>  <a href="../../../../docs/manualpages/Sys/PetscNewLog.html#PetscNewLog">PetscNewLog</a>(snes,&amp;shell);
+<a name="line189">189: </a>  snes-&gt;data = (void*) shell;
+<a name="line190">190: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html#PetscObjectComposeFunction">PetscObjectComposeFunction</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)snes,<font color="#666666">"SNESShellSetSolve_C"</font>,SNESShellSetSolve_Shell);
+<a name="line191">191: </a>  <font color="#4169E1">return</font>(0);
+<a name="line192">192: </a>}
+</pre>
+</body>
+
+</html>

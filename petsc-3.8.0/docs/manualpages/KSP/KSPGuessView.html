@@ -1,0 +1,37 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML3.2 EN">
+<HTML>
+<HEAD> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/KSP/KSPGuessView.html" />
+<META NAME="GENERATOR" CONTENT="DOCTEXT">
+<TITLE>KSPGuessView</TITLE>
+</HEAD>
+<BODY BGCOLOR="FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 docs/manualpages/KSP/KSPGuessView.html "><small>Report Typos and Errors</small></a></div>
+<A NAME="KSPGuessView"><H1>KSPGuessView</H1></A>
+View the <A HREF="../KSP/KSPGuess.html#KSPGuess">KSPGuess</A> object 
+<H3><FONT COLOR="#CC3333">Synopsis</FONT></H3>
+<PRE>
+#include "petscksp.h"  
+<A HREF="../Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</A>  <A HREF="../KSP/KSPGuessView.html#KSPGuessView">KSPGuessView</A>(<A HREF="../KSP/KSPGuess.html#KSPGuess">KSPGuess</A> guess, <A HREF="../Viewer/PetscViewer.html#PetscViewer">PetscViewer</A> view)
+</PRE>
+Logically Collective on <A HREF="../KSP/KSPGuess.html#KSPGuess">KSPGuess</A>
+<P>
+<H3><FONT COLOR="#CC3333">Input Parameters</FONT></H3>
+<TABLE border="0" cellpadding="0" cellspacing="0">
+<TR><TD WIDTH=40></TD><TD ALIGN=LEFT VALIGN=TOP><B>guess  </B></TD><TD>- the initial guess object for the Krylov method
+</TD></TR>
+<TR><TD WIDTH=40></TD><TD ALIGN=LEFT VALIGN=TOP><B>viewer </B></TD><TD>- the viewer object
+</TD></TR></TABLE>
+<P>
+<H3><FONT COLOR="#CC3333">Notes</FONT></H3>
+<P>
+
+<P>
+<H3><FONT COLOR="#CC3333">See Also</FONT></H3>
+ <A HREF="../KSP/KSP.html#KSP">KSP</A>, <A HREF="../KSP/KSPGuess.html#KSPGuess">KSPGuess</A>, <A HREF="../KSP/KSPGuessType.html#KSPGuessType">KSPGuessType</A>, KSPGuessRegister(), <A HREF="../KSP/KSPGuessCreate.html#KSPGuessCreate">KSPGuessCreate</A>(), <A HREF="../Viewer/PetscViewer.html#PetscViewer">PetscViewer</A>
+<BR><P><B><P><B><FONT COLOR="#CC3333">Level:</FONT></B>intermediate
+<BR><FONT COLOR="#CC3333">Location:</FONT></B><A HREF="../../../src/ksp/ksp/interface/iguess.c.html#KSPGuessView">src/ksp/ksp/interface/iguess.c</A>
+<BR><A HREF="./index.html">Index of all KSP routines</A>
+<BR><A HREF="../../index.html">Table of Contents for all manual pages</A>
+<BR><A HREF="../singleindex.html">Index of all manual pages</A>
+</BODY></HTML>

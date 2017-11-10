@@ -1,0 +1,741 @@
+<center><a href="mprint.c">Actual source code: mprint.c</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/sys/fileio/mprint.c.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:07:22+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/sys/fileio/mprint.c.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+<a name="line1">  1: </a><font color="#B22222">/*</font>
+<a name="line2">  2: </a><font color="#B22222">      Utilites routines to add simple ASCII IO capability.</font>
+<a name="line3">  3: </a><font color="#B22222">*/</font>
+<a name="line4">  4: </a> #include <A href="../../../include/../src/sys/fileio/mprint.h.html">&lt;../src/sys/fileio/mprint.h&gt;</A>
+<a name="line5">  5: </a><font color="#A020F0">#include &lt;errno.h&gt;</font>
+<a name="line6">  6: </a><font color="#B22222">/*</font>
+<a name="line7">  7: </a><font color="#B22222">   If petsc_history is on, then all Petsc*Printf() results are saved</font>
+<a name="line8">  8: </a><font color="#B22222">   if the appropriate (usually .petschistory) file.</font>
+<a name="line9">  9: </a><font color="#B22222">*/</font>
+<a name="line10"> 10: </a>extern FILE *petsc_history;
+<a name="line11"> 11: </a><font color="#B22222">/*</font>
+<a name="line12"> 12: </a><font color="#B22222">     Allows one to overwrite where standard out is sent. For example</font>
+<a name="line13"> 13: </a><font color="#B22222">     PETSC_STDOUT = fopen("/dev/ttyXX","w") will cause all standard out</font>
+<a name="line14"> 14: </a><font color="#B22222">     writes to go to terminal XX; assuming you have write permission there</font>
+<a name="line15"> 15: </a><font color="#B22222">*/</font>
+<a name="line16"> 16: </a>FILE *PETSC_STDOUT = 0;
+<a name="line17"> 17: </a><font color="#B22222">/*</font>
+<a name="line18"> 18: </a><font color="#B22222">     Allows one to overwrite where standard error is sent. For example</font>
+<a name="line19"> 19: </a><font color="#B22222">     PETSC_STDERR = fopen("/dev/ttyXX","w") will cause all standard error</font>
+<a name="line20"> 20: </a><font color="#B22222">     writes to go to terminal XX; assuming you have write permission there</font>
+<a name="line21"> 21: </a><font color="#B22222">*/</font>
+<a name="line22"> 22: </a>FILE *PETSC_STDERR = 0;
+
+<a name="line24"> 24: </a><font color="#B22222">/*</font>
+<a name="line25"> 25: </a><font color="#B22222">     Return the maximum expected new size of the format</font>
+<a name="line26"> 26: </a><font color="#B22222">*/</font>
+<a name="line27"> 27: </a><strong><font color="#228B22">#define PETSC_MAX_LENGTH_FORMAT(l) (l+l/8)</font></strong>
+
+<a name="line29"> 29: </a><font color="#B22222">/*@C</font>
+<a name="line30"> 30: </a><font color="#B22222">     <a href="../../../docs/manualpages/Sys/PetscFormatConvert.html#PetscFormatConvert">PetscFormatConvert</a> - Takes a PETSc format string and converts it to a reqular C format string</font>
+
+<a name="line32"> 32: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line33"> 33: </a><font color="#B22222">+   format - the PETSc format string</font>
+<a name="line34"> 34: </a><font color="#B22222">.   newformat - the location to put the standard C format string values</font>
+<a name="line35"> 35: </a><font color="#B22222">-   size - the length of newformat</font>
+
+<a name="line37"> 37: </a><font color="#B22222">    Note: this exists so we can have the same code when <a href="../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> is either int or long long and <a href="../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> is either __float128, double, or float</font>
+
+<a name="line39"> 39: </a><font color="#B22222"> Level: developer</font>
+
+<a name="line41"> 41: </a><font color="#B22222">@*/</font>
+<a name="line42"> 42: </a><strong><font color="#4169E1"><a name="PetscFormatConvert"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../docs/manualpages/Sys/PetscFormatConvert.html#PetscFormatConvert">PetscFormatConvert</a>(const char *format,char *newformat,size_t size)</font></strong>
+<a name="line43"> 43: </a>{
+<a name="line44"> 44: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i = 0,j = 0;
+
+<a name="line47"> 47: </a>  <font color="#4169E1">while</font> (format[i] &amp;&amp; j &lt; (<a href="../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>)size-1) {
+<a name="line48"> 48: </a>    <font color="#4169E1">if</font> (format[i] == '%' &amp;&amp; format[i+1] == '%') {
+<a name="line49"> 49: </a>      newformat[j++] = format[i++];
+<a name="line50"> 50: </a>      newformat[j++] = format[i++];
+<a name="line51"> 51: </a>    } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (format[i] == '%') {
+<a name="line52"> 52: </a>      <font color="#4169E1">if</font> (format[i+1] == 'g') {
+<a name="line53"> 53: </a>        newformat[j++] = '[';
+<a name="line54"> 54: </a>        newformat[j++] = '|';
+<a name="line55"> 55: </a>      }
+<a name="line56"> 56: </a>      <font color="#B22222">/* Find the letter */</font>
+<a name="line57"> 57: </a>      <font color="#4169E1">for</font> (; format[i] &amp;&amp; format[i] &lt;= '9'; i++) newformat[j++] = format[i];
+<a name="line58"> 58: </a>      <font color="#4169E1">switch</font> (format[i]) {
+<a name="line59"> 59: </a>      <font color="#4169E1">case</font> 'D':
+<a name="line60"> 60: </a><font color="#A020F0">#if !defined(PETSC_USE_64BIT_INDICES)</font>
+<a name="line61"> 61: </a>        newformat[j++] = 'd';
+<a name="line62"> 62: </a><font color="#A020F0">#else</font>
+<a name="line63"> 63: </a>        newformat[j++] = 'l';
+<a name="line64"> 64: </a>        newformat[j++] = 'l';
+<a name="line65"> 65: </a>        newformat[j++] = 'd';
+<a name="line66"> 66: </a><font color="#A020F0">#endif</font>
+<a name="line67"> 67: </a>        <font color="#4169E1">break</font>;
+<a name="line68"> 68: </a>      <font color="#4169E1">case</font> 'g':
+<a name="line69"> 69: </a>        newformat[j++] = format[i];
+<a name="line70"> 70: </a>        <font color="#4169E1">if</font> (format[i-1] == '%') {
+<a name="line71"> 71: </a>          newformat[j++] = '|';
+<a name="line72"> 72: </a>          newformat[j++] = ']';
+<a name="line73"> 73: </a>        }
+<a name="line74"> 74: </a>        <font color="#4169E1">break</font>;
+<a name="line75"> 75: </a>      <font color="#4169E1">case</font> 'G':
+<a name="line76"> 76: </a>        <a href="../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_SUP,<font color="#666666">"%%G format is no longer supported, use %%g and cast the argument to double"</font>);
+<a name="line77"> 77: </a>        <font color="#4169E1">break</font>;
+<a name="line78"> 78: </a>      <font color="#4169E1">case</font> 'F':
+<a name="line79"> 79: </a>        <a href="../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_SUP,<font color="#666666">"%%F format is no longer supported, use %%f and cast the argument to double"</font>);
+<a name="line80"> 80: </a>        <font color="#4169E1">break</font>;
+<a name="line81"> 81: </a><strong><font color="#FF0000">      default:</font></strong>
+<a name="line82"> 82: </a>        newformat[j++] = format[i];
+<a name="line83"> 83: </a>        <font color="#4169E1">break</font>;
+<a name="line84"> 84: </a>      }
+<a name="line85"> 85: </a>      i++;
+<a name="line86"> 86: </a>    } <font color="#4169E1">else</font> newformat[j++] = format[i++];
+<a name="line87"> 87: </a>  }
+<a name="line88"> 88: </a>  newformat[j] = 0;
+<a name="line89"> 89: </a>  <font color="#4169E1">return</font>(0);
+<a name="line90"> 90: </a>}
+
+<a name="line92"> 92: </a><font color="#B22222">/*@C</font>
+<a name="line93"> 93: </a><font color="#B22222">     <a href="../../../docs/manualpages/Sys/PetscVSNPrintf.html#PetscVSNPrintf">PetscVSNPrintf</a> - The PETSc version of vsnprintf(). Converts a PETSc format string into a standard C format string and then puts all the</font>
+<a name="line94"> 94: </a><font color="#B22222">       function arguments into a string using the format statement.</font>
+
+<a name="line96"> 96: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line97"> 97: </a><font color="#B22222">+   str - location to put result</font>
+<a name="line98"> 98: </a><font color="#B22222">.   len - the amount of space in str</font>
+<a name="line99"> 99: </a><font color="#B22222">+   format - the PETSc format string</font>
+<a name="line100">100: </a><font color="#B22222">-   fullLength - the amount of space in str actually used.</font>
+
+<a name="line102">102: </a><font color="#B22222">    Developer Notes: this function may be called from an error handler, if an error occurs when it is called by the error handler than likely</font>
+<a name="line103">103: </a><font color="#B22222">      a recursion will occur and possible crash.</font>
+
+<a name="line105">105: </a><font color="#B22222"> Level: developer</font>
+
+<a name="line107">107: </a><font color="#B22222">@*/</font>
+<a name="line108">108: </a><strong><font color="#4169E1"><a name="PetscVSNPrintf"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../docs/manualpages/Sys/PetscVSNPrintf.html#PetscVSNPrintf">PetscVSNPrintf</a>(char *str,size_t len,const char *format,size_t *fullLength,va_list Argp)</font></strong>
+<a name="line109">109: </a>{
+<a name="line110">110: </a>  char           *newformat;
+<a name="line111">111: </a>  char           formatbuf[8*1024];
+<a name="line112">112: </a>  size_t         oldLength,length;
+
+<a name="line116">116: </a>  <a href="../../../docs/manualpages/Sys/PetscStrlen.html#PetscStrlen">PetscStrlen</a>(format, &amp;oldLength);
+<a name="line117">117: </a>  <font color="#4169E1">if</font> (oldLength &lt; 8*1024) {
+<a name="line118">118: </a>    newformat = formatbuf;
+<a name="line119">119: </a>    oldLength = 8*1024-1;
+<a name="line120">120: </a>  } <font color="#4169E1">else</font> {
+<a name="line121">121: </a>    oldLength = PETSC_MAX_LENGTH_FORMAT(oldLength);
+<a name="line122">122: </a>    <a href="../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(oldLength, &amp;newformat);
+<a name="line123">123: </a>  }
+<a name="line124">124: </a>  <a href="../../../docs/manualpages/Sys/PetscFormatConvert.html#PetscFormatConvert">PetscFormatConvert</a>(format,newformat,oldLength);
+<a name="line125">125: </a>  <a href="../../../docs/manualpages/Sys/PetscStrlen.html#PetscStrlen">PetscStrlen</a>(newformat, &amp;length);
+<a name="line126">126: </a><font color="#A020F0">#if 0</font>
+<a name="line127">127: </a>  <font color="#4169E1">if</font> (length &gt; len) newformat[len] = '\0';
+<a name="line128">128: </a><font color="#A020F0">#endif</font>
+<a name="line129">129: </a><font color="#A020F0">#if defined(PETSC_HAVE_VSNPRINTF_CHAR)</font>
+<a name="line130">130: </a>  (void) vsnprintf(str,len,newformat,(char*)Argp);
+<a name="line131">131: </a><font color="#A020F0">#elif defined(PETSC_HAVE_VSNPRINTF)</font>
+<a name="line132">132: </a>  (void) vsnprintf(str,len,newformat,Argp);
+<a name="line133">133: </a><font color="#A020F0">#elif defined(PETSC_HAVE__VSNPRINTF)</font>
+<a name="line134">134: </a>  (void) _vsnprintf(str,len,newformat,Argp);
+<a name="line135">135: </a><font color="#A020F0">#else</font>
+<a name="line136">136: </a><font color="#A020F0">#error </font><font color="#666666">"vsnprintf not found"</font><font color="#A020F0"></font>
+<a name="line137">137: </a><font color="#A020F0">#endif</font>
+<a name="line138">138: </a>  <font color="#4169E1">if</font> (oldLength &gt;= 8*1024) {
+<a name="line139">139: </a>    <a href="../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(newformat);
+<a name="line140">140: </a>  }
+<a name="line141">141: </a>  {
+<a name="line142">142: </a>    <a href="../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> foundedot;
+<a name="line143">143: </a>    size_t cnt = 0,ncnt = 0,leng;
+<a name="line144">144: </a>    <a href="../../../docs/manualpages/Sys/PetscStrlen.html#PetscStrlen">PetscStrlen</a>(str,&amp;leng);
+<a name="line145">145: </a>    <font color="#4169E1">if</font> (leng &gt; 4) {
+<a name="line146">146: </a>      <font color="#4169E1">for</font> (cnt=0; cnt&lt;leng-4; cnt++) {
+<a name="line147">147: </a>        <font color="#4169E1">if</font> (str[cnt] == '[' &amp;&amp; str[cnt+1] == '|'){
+<a name="line148">148: </a>           cnt++; cnt++;
+<a name="line149">149: </a>           foundedot = <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+<a name="line150">150: </a>           <font color="#4169E1">for</font> (; cnt&lt;leng-1; cnt++) {
+<a name="line151">151: </a>             <font color="#4169E1">if</font> (str[cnt] == '|' &amp;&amp; str[cnt+1] == ']'){
+<a name="line152">152: </a>               cnt++;
+<a name="line153">153: </a>               <font color="#4169E1">if</font> (!foundedot) str[ncnt++] = '.';
+<a name="line154">154: </a>               ncnt--;
+<a name="line155">155: </a>               <font color="#4169E1">break</font>;
+<a name="line156">156: </a>             } <font color="#4169E1">else</font> {
+<a name="line157">157: </a>               <font color="#4169E1">if</font> (str[cnt] == 'e' || str[cnt] == '.') foundedot = <a href="../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+<a name="line158">158: </a>               str[ncnt++] = str[cnt];
+<a name="line159">159: </a>             }
+<a name="line160">160: </a>           }
+<a name="line161">161: </a>        } <font color="#4169E1">else</font> {
+<a name="line162">162: </a>          str[ncnt] = str[cnt];
+<a name="line163">163: </a>        }
+<a name="line164">164: </a>        ncnt++;
+<a name="line165">165: </a>      }
+<a name="line166">166: </a>      <font color="#4169E1">while</font> (cnt &lt; leng) {
+<a name="line167">167: </a>        str[ncnt] = str[cnt]; ncnt++; cnt++;
+<a name="line168">168: </a>      }
+<a name="line169">169: </a>      str[ncnt] = 0;
+<a name="line170">170: </a>    }
+<a name="line171">171: </a>  }
+<a name="line172">172: </a><font color="#A020F0">#if defined(PETSC_HAVE_WINDOWS_H) &amp;&amp; !defined(PETSC_HAVE__SET_OUTPUT_FORMAT)</font>
+<a name="line173">173: </a>  <font color="#B22222">/* older Windows OS always produces e-+0np for floating point output; remove the extra 0 */</font>
+<a name="line174">174: </a>  {
+<a name="line175">175: </a>    size_t cnt = 0,ncnt = 0,leng;
+<a name="line176">176: </a>    <a href="../../../docs/manualpages/Sys/PetscStrlen.html#PetscStrlen">PetscStrlen</a>(str,&amp;leng);
+<a name="line177">177: </a>    <font color="#4169E1">if</font> (leng &gt; 5) {
+<a name="line178">178: </a>      <font color="#4169E1">for</font> (cnt=0; cnt&lt;leng-4; cnt++) {
+<a name="line179">179: </a>        <font color="#4169E1">if</font> (str[cnt] == 'e' &amp;&amp; (str[cnt+1] == '-' || str[cnt+1] == '+') &amp;&amp; str[cnt+2] == '0'  &amp;&amp; str[cnt+3] &gt;= '0' &amp;&amp; str[cnt+3] &lt;= '9' &amp;&amp; str[cnt+4] &gt;= '0' &amp;&amp; str[cnt+4] &lt;= '9') {
+<a name="line180">180: </a>          str[ncnt] = str[cnt]; ncnt++; cnt++;
+<a name="line181">181: </a>          str[ncnt] = str[cnt]; ncnt++; cnt++; cnt++;
+<a name="line182">182: </a>          str[ncnt] = str[cnt];
+<a name="line183">183: </a>        } <font color="#4169E1">else</font> {
+<a name="line184">184: </a>          str[ncnt] = str[cnt];
+<a name="line185">185: </a>        }
+<a name="line186">186: </a>        ncnt++;
+<a name="line187">187: </a>      }
+<a name="line188">188: </a>      <font color="#4169E1">while</font> (cnt &lt; leng) {
+<a name="line189">189: </a>        str[ncnt] = str[cnt]; ncnt++; cnt++;
+<a name="line190">190: </a>      }
+<a name="line191">191: </a>      str[ncnt] = 0;
+<a name="line192">192: </a>    }
+<a name="line193">193: </a>  }
+<a name="line194">194: </a><font color="#A020F0">#endif</font>
+<a name="line195">195: </a>  <font color="#4169E1">if</font> (fullLength) {
+<a name="line196">196: </a>    <a href="../../../docs/manualpages/Sys/PetscStrlen.html#PetscStrlen">PetscStrlen</a>(str,fullLength);
+<a name="line197">197: </a>  }
+<a name="line198">198: </a>  <font color="#4169E1">return</font>(0);
+<a name="line199">199: </a>}
+
+<a name="line201">201: </a><font color="#B22222">/*@C</font>
+<a name="line202">202: </a><font color="#B22222">     <a href="../../../docs/manualpages/Sys/PetscVFPrintf.html#PetscVFPrintf">PetscVFPrintf</a> -  All PETSc standard out and error messages are sent through this function; so, in theory, this can</font>
+<a name="line203">203: </a><font color="#B22222">        can be replaced with something that does not simply write to a file.</font>
+
+<a name="line205">205: </a><font color="#B22222">      To use, write your own function for example,</font>
+<a name="line206">206: </a><font color="#B22222">$<a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> mypetscvfprintf(FILE *fd,const char format[],va_list Argp)</font>
+<a name="line207">207: </a><font color="#B22222">${</font>
+<a name="line209">209: </a><font color="#B22222">$</font>
+<a name="line211">211: </a><font color="#B22222">$   if (fd != stdout &amp;&amp; fd != stderr) {  handle regular files</font>
+<a name="line212">212: </a><font color="#B22222">$      PetscVFPrintfDefault(fd,format,Argp);CHKERR(ierr);</font>
+<a name="line213">213: </a><font color="#B22222">$  } else {</font>
+<a name="line214">214: </a><font color="#B22222">$     char   buff[BIG];</font>
+<a name="line215">215: </a><font color="#B22222">$     size_t length;</font>
+<a name="line216">216: </a><font color="#B22222">$     <a href="../../../docs/manualpages/Sys/PetscVSNPrintf.html#PetscVSNPrintf">PetscVSNPrintf</a>(buff,BIG,format,&amp;length,Argp);</font>
+<a name="line217">217: </a><font color="#B22222">$     now send buff to whatever stream or whatever you want</font>
+<a name="line218">218: </a><font color="#B22222">$ }</font>
+<a name="line219">219: </a><font color="#B22222">$ return(0);</font>
+<a name="line220">220: </a><font color="#B22222">$}</font>
+<a name="line221">221: </a><font color="#B22222">then before the call to <a href="../../../docs/manualpages/Sys/PetscInitialize.html#PetscInitialize">PetscInitialize</a>() do the assignment</font>
+<a name="line222">222: </a><font color="#B22222">$    <a href="../../../docs/manualpages/Sys/PetscVFPrintf.html#PetscVFPrintf">PetscVFPrintf</a> = mypetscvfprintf;</font>
+
+<a name="line224">224: </a><font color="#B22222">      Notes: For error messages this may be called by any process, for regular standard out it is</font>
+<a name="line225">225: </a><font color="#B22222">          called only by process 0 of a given communicator</font>
+
+<a name="line227">227: </a><font color="#B22222">      Developer Notes: this could be called by an error handler, if that happens then a recursion of the error handler may occur</font>
+<a name="line228">228: </a><font color="#B22222">                       and a crash</font>
+
+<a name="line230">230: </a><font color="#B22222">  Level:  developer</font>
+
+<a name="line232">232: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/Sys/PetscVSNPrintf.html#PetscVSNPrintf">PetscVSNPrintf</a>(), <a href="../../../docs/manualpages/Sys/PetscErrorPrintf.html#PetscErrorPrintf">PetscErrorPrintf</a>()</font>
+
+<a name="line234">234: </a><font color="#B22222">@*/</font>
+<a name="line235">235: </a><strong><font color="#4169E1"><a name="PetscVFPrintfDefault"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  PetscVFPrintfDefault(FILE *fd,const char *format,va_list Argp)</font></strong>
+<a name="line236">236: </a>{
+<a name="line237">237: </a>  char           str[8*1024];
+
+<a name="line241">241: </a>  <a href="../../../docs/manualpages/Sys/PetscVSNPrintf.html#PetscVSNPrintf">PetscVSNPrintf</a>(str,<font color="#4169E1">sizeof</font>(str),format,NULL,Argp);
+<a name="line242">242: </a>  fprintf(fd,<font color="#666666">"%s"</font>,str);
+<a name="line243">243: </a>  fflush(fd);
+<a name="line244">244: </a>  <font color="#4169E1">return</font>(0);
+<a name="line245">245: </a>}
+
+<a name="line247">247: </a><font color="#B22222">/*@C</font>
+<a name="line248">248: </a><font color="#B22222">    <a href="../../../docs/manualpages/Sys/PetscSNPrintf.html#PetscSNPrintf">PetscSNPrintf</a> - Prints to a string of given length</font>
+
+<a name="line250">250: </a><font color="#B22222">    Not Collective</font>
+
+<a name="line252">252: </a><font color="#B22222">    Input Parameters:</font>
+<a name="line253">253: </a><font color="#B22222">+   str - the string to print to</font>
+<a name="line254">254: </a><font color="#B22222">.   len - the length of str</font>
+<a name="line255">255: </a><font color="#B22222">.   format - the usual printf() format string</font>
+<a name="line256">256: </a><font color="#B22222">-   any arguments</font>
+
+<a name="line258">258: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line260">260: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/Sys/PetscSynchronizedFlush.html#PetscSynchronizedFlush">PetscSynchronizedFlush</a>(), <a href="../../../docs/manualpages/Sys/PetscSynchronizedFPrintf.html#PetscSynchronizedFPrintf">PetscSynchronizedFPrintf</a>(), <a href="../../../docs/manualpages/Sys/PetscFPrintf.html#PetscFPrintf">PetscFPrintf</a>(), <a href="../../../docs/manualpages/Sys/PetscVSNPrintf.html#PetscVSNPrintf">PetscVSNPrintf</a>(),</font>
+<a name="line261">261: </a><font color="#B22222">          <a href="../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(), <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(), <a href="../../../docs/manualpages/Viewer/PetscViewerASCIISynchronizedPrintf.html#PetscViewerASCIISynchronizedPrintf">PetscViewerASCIISynchronizedPrintf</a>()</font>
+<a name="line262">262: </a><font color="#B22222">@*/</font>
+<a name="line263">263: </a><strong><font color="#4169E1"><a name="PetscSNPrintf"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../docs/manualpages/Sys/PetscSNPrintf.html#PetscSNPrintf">PetscSNPrintf</a>(char *str,size_t len,const char format[],...)</font></strong>
+<a name="line264">264: </a>{
+<a name="line266">266: </a>  size_t         fullLength;
+<a name="line267">267: </a>  va_list        Argp;
+
+<a name="line270">270: </a>  va_start(Argp,format);
+<a name="line271">271: </a>  <a href="../../../docs/manualpages/Sys/PetscVSNPrintf.html#PetscVSNPrintf">PetscVSNPrintf</a>(str,len,format,&amp;fullLength,Argp);
+<a name="line272">272: </a>  <font color="#4169E1">return</font>(0);
+<a name="line273">273: </a>}
+
+<a name="line275">275: </a><font color="#B22222">/*@C</font>
+<a name="line276">276: </a><font color="#B22222">    <a href="../../../docs/manualpages/Sys/PetscSNPrintfCount.html#PetscSNPrintfCount">PetscSNPrintfCount</a> - Prints to a string of given length, returns count</font>
+
+<a name="line278">278: </a><font color="#B22222">    Not Collective</font>
+
+<a name="line280">280: </a><font color="#B22222">    Input Parameters:</font>
+<a name="line281">281: </a><font color="#B22222">+   str - the string to print to</font>
+<a name="line282">282: </a><font color="#B22222">.   len - the length of str</font>
+<a name="line283">283: </a><font color="#B22222">.   format - the usual printf() format string</font>
+<a name="line284">284: </a><font color="#B22222">.   countused - number of characters used</font>
+<a name="line285">285: </a><font color="#B22222">-   any arguments</font>
+
+<a name="line287">287: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line289">289: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/Sys/PetscSynchronizedFlush.html#PetscSynchronizedFlush">PetscSynchronizedFlush</a>(), <a href="../../../docs/manualpages/Sys/PetscSynchronizedFPrintf.html#PetscSynchronizedFPrintf">PetscSynchronizedFPrintf</a>(), <a href="../../../docs/manualpages/Sys/PetscFPrintf.html#PetscFPrintf">PetscFPrintf</a>(), <a href="../../../docs/manualpages/Sys/PetscVSNPrintf.html#PetscVSNPrintf">PetscVSNPrintf</a>(),</font>
+<a name="line290">290: </a><font color="#B22222">          <a href="../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(), <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(), <a href="../../../docs/manualpages/Viewer/PetscViewerASCIISynchronizedPrintf.html#PetscViewerASCIISynchronizedPrintf">PetscViewerASCIISynchronizedPrintf</a>(), <a href="../../../docs/manualpages/Sys/PetscSNPrintf.html#PetscSNPrintf">PetscSNPrintf</a>()</font>
+<a name="line291">291: </a><font color="#B22222">@*/</font>
+<a name="line292">292: </a><strong><font color="#4169E1"><a name="PetscSNPrintfCount"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../docs/manualpages/Sys/PetscSNPrintfCount.html#PetscSNPrintfCount">PetscSNPrintfCount</a>(char *str,size_t len,const char format[],size_t *countused,...)</font></strong>
+<a name="line293">293: </a>{
+<a name="line295">295: </a>  va_list        Argp;
+
+<a name="line298">298: </a>  va_start(Argp,countused);
+<a name="line299">299: </a>  <a href="../../../docs/manualpages/Sys/PetscVSNPrintf.html#PetscVSNPrintf">PetscVSNPrintf</a>(str,len,format,countused,Argp);
+<a name="line300">300: </a>  <font color="#4169E1">return</font>(0);
+<a name="line301">301: </a>}
+
+<a name="line303">303: </a><font color="#B22222">/* ----------------------------------------------------------------------- */</font>
+
+<a name="line305">305: </a>PrintfQueue petsc_printfqueue       = 0,petsc_printfqueuebase = 0;
+<a name="line306">306: </a>int         petsc_printfqueuelength = 0;
+
+<a name="line308">308: </a><font color="#B22222">/*@C</font>
+<a name="line309">309: </a><font color="#B22222">    <a href="../../../docs/manualpages/Sys/PetscSynchronizedPrintf.html#PetscSynchronizedPrintf">PetscSynchronizedPrintf</a> - Prints synchronized output from several processors.</font>
+<a name="line310">310: </a><font color="#B22222">    Output of the first processor is followed by that of the second, etc.</font>
+
+<a name="line312">312: </a><font color="#B22222">    Not Collective</font>
+
+<a name="line314">314: </a><font color="#B22222">    Input Parameters:</font>
+<a name="line315">315: </a><font color="#B22222">+   comm - the communicator</font>
+<a name="line316">316: </a><font color="#B22222">-   format - the usual printf() format string</font>
+
+<a name="line318">318: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line320">320: </a><font color="#B22222">    Notes:</font>
+<a name="line321">321: </a><font color="#B22222">    REQUIRES a call to <a href="../../../docs/manualpages/Sys/PetscSynchronizedFlush.html#PetscSynchronizedFlush">PetscSynchronizedFlush</a>() by all the processes after the completion of the calls to <a href="../../../docs/manualpages/Sys/PetscSynchronizedPrintf.html#PetscSynchronizedPrintf">PetscSynchronizedPrintf</a>() for the information</font>
+<a name="line322">322: </a><font color="#B22222">    from all the processors to be printed.</font>
+
+<a name="line324">324: </a><font color="#B22222">    Fortran Note:</font>
+<a name="line325">325: </a><font color="#B22222">    The call sequence is <a href="../../../docs/manualpages/Sys/PetscSynchronizedPrintf.html#PetscSynchronizedPrintf">PetscSynchronizedPrintf</a>(<a href="../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a>, character(*), <a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr) from Fortran.</font>
+<a name="line326">326: </a><font color="#B22222">    That is, you can only pass a single character string from Fortran.</font>
+
+<a name="line328">328: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/Sys/PetscSynchronizedFlush.html#PetscSynchronizedFlush">PetscSynchronizedFlush</a>(), <a href="../../../docs/manualpages/Sys/PetscSynchronizedFPrintf.html#PetscSynchronizedFPrintf">PetscSynchronizedFPrintf</a>(), <a href="../../../docs/manualpages/Sys/PetscFPrintf.html#PetscFPrintf">PetscFPrintf</a>(),</font>
+<a name="line329">329: </a><font color="#B22222">          <a href="../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(), <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(), <a href="../../../docs/manualpages/Viewer/PetscViewerASCIISynchronizedPrintf.html#PetscViewerASCIISynchronizedPrintf">PetscViewerASCIISynchronizedPrintf</a>()</font>
+<a name="line330">330: </a><font color="#B22222">@*/</font>
+<a name="line331">331: </a><strong><font color="#4169E1"><a name="PetscSynchronizedPrintf"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../docs/manualpages/Sys/PetscSynchronizedPrintf.html#PetscSynchronizedPrintf">PetscSynchronizedPrintf</a>(<a href="../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a> comm,const char format[],...)</font></strong>
+<a name="line332">332: </a>{
+<a name="line334">334: </a>  <a href="../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>    rank;
+
+<a name="line337">337: </a>  <font color="#4169E1">if</font> (comm == MPI_COMM_NULL) <a href="../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_PLIB,<font color="#666666">"Called with MPI_COMM_NULL, likely <a href="../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>() failed"</font>);
+<a name="line338">338: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm,&amp;rank);
+
+<a name="line340">340: </a>  <font color="#B22222">/* First processor prints immediately to stdout */</font>
+<a name="line341">341: </a>  <font color="#4169E1">if</font> (!rank) {
+<a name="line342">342: </a>    va_list Argp;
+<a name="line343">343: </a>    va_start(Argp,format);
+<a name="line344">344: </a>    (*<a href="../../../docs/manualpages/Sys/PetscVFPrintf.html#PetscVFPrintf">PetscVFPrintf</a>)(PETSC_STDOUT,format,Argp);
+<a name="line345">345: </a>    <font color="#4169E1">if</font> (petsc_history) {
+<a name="line346">346: </a>      va_start(Argp,format);
+<a name="line347">347: </a>      (*<a href="../../../docs/manualpages/Sys/PetscVFPrintf.html#PetscVFPrintf">PetscVFPrintf</a>)(petsc_history,format,Argp);
+<a name="line348">348: </a>    }
+<a name="line349">349: </a>    va_end(Argp);
+<a name="line350">350: </a>  } <font color="#4169E1">else</font> { <font color="#B22222">/* other processors add to local queue */</font>
+<a name="line351">351: </a>    va_list     Argp;
+<a name="line352">352: </a>    PrintfQueue next;
+<a name="line353">353: </a>    size_t      fullLength = 8191;
+
+<a name="line355">355: </a>    <a href="../../../docs/manualpages/Sys/PetscNew.html#PetscNew">PetscNew</a>(&amp;next);
+<a name="line356">356: </a>    <font color="#4169E1">if</font> (petsc_printfqueue) {
+<a name="line357">357: </a>      petsc_printfqueue-&gt;next = next;
+<a name="line358">358: </a>      petsc_printfqueue       = next;
+<a name="line359">359: </a>      petsc_printfqueue-&gt;next = 0;
+<a name="line360">360: </a>    } <font color="#4169E1">else</font> petsc_printfqueuebase = petsc_printfqueue = next;
+<a name="line361">361: </a>    petsc_printfqueuelength++;
+<a name="line362">362: </a>    next-&gt;size = -1;
+<a name="line363">363: </a>    <font color="#4169E1">while</font> ((<a href="../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>)fullLength &gt;= next-&gt;size) {
+<a name="line364">364: </a>      next-&gt;size = fullLength+1;
+
+<a name="line366">366: </a>      <a href="../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(next-&gt;size, &amp;next-&gt;string);
+<a name="line367">367: </a>      va_start(Argp,format);
+<a name="line368">368: </a>      <a href="../../../docs/manualpages/Sys/PetscMemzero.html#PetscMemzero">PetscMemzero</a>(next-&gt;string,next-&gt;size);
+<a name="line369">369: </a>      <a href="../../../docs/manualpages/Sys/PetscVSNPrintf.html#PetscVSNPrintf">PetscVSNPrintf</a>(next-&gt;string,next-&gt;size,format, &amp;fullLength,Argp);
+<a name="line370">370: </a>      va_end(Argp);
+<a name="line371">371: </a>    }
+<a name="line372">372: </a>  }
+<a name="line373">373: </a>  <font color="#4169E1">return</font>(0);
+<a name="line374">374: </a>}
+
+<a name="line376">376: </a><font color="#B22222">/*@C</font>
+<a name="line377">377: </a><font color="#B22222">    <a href="../../../docs/manualpages/Sys/PetscSynchronizedFPrintf.html#PetscSynchronizedFPrintf">PetscSynchronizedFPrintf</a> - Prints synchronized output to the specified file from</font>
+<a name="line378">378: </a><font color="#B22222">    several processors.  Output of the first processor is followed by that of the</font>
+<a name="line379">379: </a><font color="#B22222">    second, etc.</font>
+
+<a name="line381">381: </a><font color="#B22222">    Not Collective</font>
+
+<a name="line383">383: </a><font color="#B22222">    Input Parameters:</font>
+<a name="line384">384: </a><font color="#B22222">+   comm - the communicator</font>
+<a name="line385">385: </a><font color="#B22222">.   fd - the file pointer</font>
+<a name="line386">386: </a><font color="#B22222">-   format - the usual printf() format string</font>
+
+<a name="line388">388: </a><font color="#B22222">    Level: intermediate</font>
+
+<a name="line390">390: </a><font color="#B22222">    Notes:</font>
+<a name="line391">391: </a><font color="#B22222">    REQUIRES a intervening call to <a href="../../../docs/manualpages/Sys/PetscSynchronizedFlush.html#PetscSynchronizedFlush">PetscSynchronizedFlush</a>() for the information</font>
+<a name="line392">392: </a><font color="#B22222">    from all the processors to be printed.</font>
+
+<a name="line394">394: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/Sys/PetscSynchronizedPrintf.html#PetscSynchronizedPrintf">PetscSynchronizedPrintf</a>(), <a href="../../../docs/manualpages/Sys/PetscSynchronizedFlush.html#PetscSynchronizedFlush">PetscSynchronizedFlush</a>(), <a href="../../../docs/manualpages/Sys/PetscFPrintf.html#PetscFPrintf">PetscFPrintf</a>(),</font>
+<a name="line395">395: </a><font color="#B22222">          <a href="../../../docs/manualpages/Sys/PetscFOpen.html#PetscFOpen">PetscFOpen</a>(), <a href="../../../docs/manualpages/Viewer/PetscViewerASCIISynchronizedPrintf.html#PetscViewerASCIISynchronizedPrintf">PetscViewerASCIISynchronizedPrintf</a>(), <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>()</font>
+
+<a name="line397">397: </a><font color="#B22222">@*/</font>
+<a name="line398">398: </a><strong><font color="#4169E1"><a name="PetscSynchronizedFPrintf"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../docs/manualpages/Sys/PetscSynchronizedFPrintf.html#PetscSynchronizedFPrintf">PetscSynchronizedFPrintf</a>(<a href="../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a> comm,FILE *fp,const char format[],...)</font></strong>
+<a name="line399">399: </a>{
+<a name="line401">401: </a>  <a href="../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>    rank;
+
+<a name="line404">404: </a>  <font color="#4169E1">if</font> (comm == MPI_COMM_NULL) <a href="../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_PLIB,<font color="#666666">"Called with MPI_COMM_NULL, likely <a href="../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>() failed"</font>);
+<a name="line405">405: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm,&amp;rank);
+
+<a name="line407">407: </a>  <font color="#B22222">/* First processor prints immediately to fp */</font>
+<a name="line408">408: </a>  <font color="#4169E1">if</font> (!rank) {
+<a name="line409">409: </a>    va_list Argp;
+<a name="line410">410: </a>    va_start(Argp,format);
+<a name="line411">411: </a>    (*<a href="../../../docs/manualpages/Sys/PetscVFPrintf.html#PetscVFPrintf">PetscVFPrintf</a>)(fp,format,Argp);
+<a name="line412">412: </a>    <font color="#4169E1">if</font> (petsc_history &amp;&amp; (fp !=petsc_history)) {
+<a name="line413">413: </a>      va_start(Argp,format);
+<a name="line414">414: </a>      (*<a href="../../../docs/manualpages/Sys/PetscVFPrintf.html#PetscVFPrintf">PetscVFPrintf</a>)(petsc_history,format,Argp);
+<a name="line415">415: </a>    }
+<a name="line416">416: </a>    va_end(Argp);
+<a name="line417">417: </a>  } <font color="#4169E1">else</font> { <font color="#B22222">/* other processors add to local queue */</font>
+<a name="line418">418: </a>    va_list     Argp;
+<a name="line419">419: </a>    PrintfQueue next;
+<a name="line420">420: </a>    size_t      fullLength = 8191;
+<a name="line421">421: </a>    <a href="../../../docs/manualpages/Sys/PetscNew.html#PetscNew">PetscNew</a>(&amp;next);
+<a name="line422">422: </a>    <font color="#4169E1">if</font> (petsc_printfqueue) {
+<a name="line423">423: </a>      petsc_printfqueue-&gt;next = next;
+<a name="line424">424: </a>      petsc_printfqueue       = next;
+<a name="line425">425: </a>      petsc_printfqueue-&gt;next = 0;
+<a name="line426">426: </a>    } <font color="#4169E1">else</font> petsc_printfqueuebase = petsc_printfqueue = next;
+<a name="line427">427: </a>    petsc_printfqueuelength++;
+<a name="line428">428: </a>    next-&gt;size = -1;
+<a name="line429">429: </a>    <font color="#4169E1">while</font> ((<a href="../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>)fullLength &gt;= next-&gt;size) {
+<a name="line430">430: </a>      next-&gt;size = fullLength+1;
+<a name="line431">431: </a>      <a href="../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(next-&gt;size, &amp;next-&gt;string);
+<a name="line432">432: </a>      va_start(Argp,format);
+<a name="line433">433: </a>      <a href="../../../docs/manualpages/Sys/PetscMemzero.html#PetscMemzero">PetscMemzero</a>(next-&gt;string,next-&gt;size);
+<a name="line434">434: </a>      <a href="../../../docs/manualpages/Sys/PetscVSNPrintf.html#PetscVSNPrintf">PetscVSNPrintf</a>(next-&gt;string,next-&gt;size,format,&amp;fullLength,Argp);
+<a name="line435">435: </a>      va_end(Argp);
+<a name="line436">436: </a>    }
+<a name="line437">437: </a>  }
+<a name="line438">438: </a>  <font color="#4169E1">return</font>(0);
+<a name="line439">439: </a>}
+
+<a name="line441">441: </a><font color="#B22222">/*@C</font>
+<a name="line442">442: </a><font color="#B22222">    <a href="../../../docs/manualpages/Sys/PetscSynchronizedFlush.html#PetscSynchronizedFlush">PetscSynchronizedFlush</a> - Flushes to the screen output from all processors</font>
+<a name="line443">443: </a><font color="#B22222">    involved in previous <a href="../../../docs/manualpages/Sys/PetscSynchronizedPrintf.html#PetscSynchronizedPrintf">PetscSynchronizedPrintf</a>()/<a href="../../../docs/manualpages/Sys/PetscSynchronizedFPrintf.html#PetscSynchronizedFPrintf">PetscSynchronizedFPrintf</a>() calls.</font>
+
+<a name="line445">445: </a><font color="#B22222">    Collective on <a href="../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a></font>
+
+<a name="line447">447: </a><font color="#B22222">    Input Parameters:</font>
+<a name="line448">448: </a><font color="#B22222">+   comm - the communicator</font>
+<a name="line449">449: </a><font color="#B22222">-   fd - the file pointer (valid on process 0 of the communicator)</font>
+
+<a name="line451">451: </a><font color="#B22222">    Level: intermediate</font>
+
+<a name="line453">453: </a><font color="#B22222">    Notes:</font>
+<a name="line454">454: </a><font color="#B22222">    If <a href="../../../docs/manualpages/Sys/PetscSynchronizedPrintf.html#PetscSynchronizedPrintf">PetscSynchronizedPrintf</a>() and/or <a href="../../../docs/manualpages/Sys/PetscSynchronizedFPrintf.html#PetscSynchronizedFPrintf">PetscSynchronizedFPrintf</a>() are called with</font>
+<a name="line455">455: </a><font color="#B22222">    different MPI communicators there must be an intervening call to <a href="../../../docs/manualpages/Sys/PetscSynchronizedFlush.html#PetscSynchronizedFlush">PetscSynchronizedFlush</a>() between the calls with different MPI communicators.</font>
+
+<a name="line457">457: </a><font color="#B22222">    From Fortran pass PETSC_STDOUT if the flush is for standard out; otherwise pass a value obtained from <a href="../../../docs/manualpages/Sys/PetscFOpen.html#PetscFOpen">PetscFOpen</a>()</font>
+
+<a name="line459">459: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/Sys/PetscSynchronizedPrintf.html#PetscSynchronizedPrintf">PetscSynchronizedPrintf</a>(), <a href="../../../docs/manualpages/Sys/PetscFPrintf.html#PetscFPrintf">PetscFPrintf</a>(), <a href="../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(), <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(),</font>
+<a name="line460">460: </a><font color="#B22222">          <a href="../../../docs/manualpages/Viewer/PetscViewerASCIISynchronizedPrintf.html#PetscViewerASCIISynchronizedPrintf">PetscViewerASCIISynchronizedPrintf</a>()</font>
+<a name="line461">461: </a><font color="#B22222">@*/</font>
+<a name="line462">462: </a><strong><font color="#4169E1"><a name="PetscSynchronizedFlush"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../docs/manualpages/Sys/PetscSynchronizedFlush.html#PetscSynchronizedFlush">PetscSynchronizedFlush</a>(<a href="../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a> comm,FILE *fd)</font></strong>
+<a name="line463">463: </a>{
+<a name="line465">465: </a>  <a href="../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>    rank,size,tag,i,j,n = 0,dummy = 0;
+<a name="line466">466: </a>  char          *message;
+<a name="line467">467: </a>  MPI_Status     status;
+
+<a name="line470">470: </a>  <a href="../../../docs/manualpages/Sys/PetscCommDuplicate.html#PetscCommDuplicate">PetscCommDuplicate</a>(comm,&amp;comm,&amp;tag);
+<a name="line471">471: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm,&amp;rank);
+<a name="line472">472: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm,&amp;size);
+
+<a name="line474">474: </a>  <font color="#B22222">/* First processor waits for messages from all other processors */</font>
+<a name="line475">475: </a>  <font color="#4169E1">if</font> (!rank) {
+<a name="line476">476: </a>    <font color="#4169E1">if</font> (!fd) fd = PETSC_STDOUT;
+<a name="line477">477: </a>    <font color="#4169E1">for</font> (i=1; i&lt;size; i++) {
+<a name="line478">478: </a>      <font color="#B22222">/* to prevent a flood of messages to process zero, request each message separately */</font>
+<a name="line479">479: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Send.html#MPI_Send">MPI_Send</a>(&amp;dummy,1,MPI_INT,i,tag,comm);
+<a name="line480">480: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Recv.html#MPI_Recv">MPI_Recv</a>(&amp;n,1,MPI_INT,i,tag,comm,&amp;status);
+<a name="line481">481: </a>      <font color="#4169E1">for</font> (j=0; j&lt;n; j++) {
+<a name="line482">482: </a>        <a href="../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> size = 0;
+
+<a name="line484">484: </a>        <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Recv.html#MPI_Recv">MPI_Recv</a>(&amp;size,1,MPI_INT,i,tag,comm,&amp;status);
+<a name="line485">485: </a>        <a href="../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(size, &amp;message);
+<a name="line486">486: </a>        <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Recv.html#MPI_Recv">MPI_Recv</a>(message,size,MPI_CHAR,i,tag,comm,&amp;status);
+<a name="line487">487: </a>        <a href="../../../docs/manualpages/Sys/PetscFPrintf.html#PetscFPrintf">PetscFPrintf</a>(comm,fd,<font color="#666666">"%s"</font>,message);
+<a name="line488">488: </a>        <a href="../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(message);
+<a name="line489">489: </a>      }
+<a name="line490">490: </a>    }
+<a name="line491">491: </a>  } <font color="#4169E1">else</font> { <font color="#B22222">/* other processors send queue to processor 0 */</font>
+<a name="line492">492: </a>    PrintfQueue next = petsc_printfqueuebase,previous;
+
+<a name="line494">494: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Recv.html#MPI_Recv">MPI_Recv</a>(&amp;dummy,1,MPI_INT,0,tag,comm,&amp;status);
+<a name="line495">495: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Send.html#MPI_Send">MPI_Send</a>(&amp;petsc_printfqueuelength,1,MPI_INT,0,tag,comm);
+<a name="line496">496: </a>    <font color="#4169E1">for</font> (i=0; i&lt;petsc_printfqueuelength; i++) {
+<a name="line497">497: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Send.html#MPI_Send">MPI_Send</a>(&amp;next-&gt;size,1,MPI_INT,0,tag,comm);
+<a name="line498">498: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Send.html#MPI_Send">MPI_Send</a>(next-&gt;string,next-&gt;size,MPI_CHAR,0,tag,comm);
+<a name="line499">499: </a>      previous = next;
+<a name="line500">500: </a>      next     = next-&gt;next;
+<a name="line501">501: </a>      <a href="../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(previous-&gt;string);
+<a name="line502">502: </a>      <a href="../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(previous);
+<a name="line503">503: </a>    }
+<a name="line504">504: </a>    petsc_printfqueue       = 0;
+<a name="line505">505: </a>    petsc_printfqueuelength = 0;
+<a name="line506">506: </a>  }
+<a name="line507">507: </a>  <a href="../../../docs/manualpages/Sys/PetscCommDestroy.html#PetscCommDestroy">PetscCommDestroy</a>(&amp;comm);
+<a name="line508">508: </a>  <font color="#4169E1">return</font>(0);
+<a name="line509">509: </a>}
+
+<a name="line511">511: </a><font color="#B22222">/* ---------------------------------------------------------------------------------------*/</font>
+
+<a name="line513">513: </a><font color="#B22222">/*@C</font>
+<a name="line514">514: </a><font color="#B22222">    <a href="../../../docs/manualpages/Sys/PetscFPrintf.html#PetscFPrintf">PetscFPrintf</a> - Prints to a file, only from the first</font>
+<a name="line515">515: </a><font color="#B22222">    processor in the communicator.</font>
+
+<a name="line517">517: </a><font color="#B22222">    Not Collective</font>
+
+<a name="line519">519: </a><font color="#B22222">    Input Parameters:</font>
+<a name="line520">520: </a><font color="#B22222">+   comm - the communicator</font>
+<a name="line521">521: </a><font color="#B22222">.   fd - the file pointer</font>
+<a name="line522">522: </a><font color="#B22222">-   format - the usual printf() format string</font>
+
+<a name="line524">524: </a><font color="#B22222">    Level: intermediate</font>
+
+<a name="line526">526: </a><font color="#B22222">    Fortran Note:</font>
+<a name="line527">527: </a><font color="#B22222">    This routine is not supported in Fortran.</font>
+
+<a name="line529">529: </a><font color="#B22222">   Concepts: printing^in parallel</font>
+<a name="line530">530: </a><font color="#B22222">   Concepts: printf^in parallel</font>
+
+<a name="line532">532: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(), <a href="../../../docs/manualpages/Sys/PetscSynchronizedPrintf.html#PetscSynchronizedPrintf">PetscSynchronizedPrintf</a>(), <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(),</font>
+<a name="line533">533: </a><font color="#B22222">          <a href="../../../docs/manualpages/Viewer/PetscViewerASCIISynchronizedPrintf.html#PetscViewerASCIISynchronizedPrintf">PetscViewerASCIISynchronizedPrintf</a>(), <a href="../../../docs/manualpages/Sys/PetscSynchronizedFlush.html#PetscSynchronizedFlush">PetscSynchronizedFlush</a>()</font>
+<a name="line534">534: </a><font color="#B22222">@*/</font>
+<a name="line535">535: </a><strong><font color="#4169E1"><a name="PetscFPrintf"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../docs/manualpages/Sys/PetscFPrintf.html#PetscFPrintf">PetscFPrintf</a>(<a href="../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a> comm,FILE* fd,const char format[],...)</font></strong>
+<a name="line536">536: </a>{
+<a name="line538">538: </a>  <a href="../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>    rank;
+
+<a name="line541">541: </a>  <font color="#4169E1">if</font> (comm == MPI_COMM_NULL) <a href="../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_PLIB,<font color="#666666">"Called with MPI_COMM_NULL, likely <a href="../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>() failed"</font>);
+<a name="line542">542: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm,&amp;rank);
+<a name="line543">543: </a>  <font color="#4169E1">if</font> (!rank) {
+<a name="line544">544: </a>    va_list Argp;
+<a name="line545">545: </a>    va_start(Argp,format);
+<a name="line546">546: </a>    (*<a href="../../../docs/manualpages/Sys/PetscVFPrintf.html#PetscVFPrintf">PetscVFPrintf</a>)(fd,format,Argp);
+<a name="line547">547: </a>    <font color="#4169E1">if</font> (petsc_history &amp;&amp; (fd !=petsc_history)) {
+<a name="line548">548: </a>      va_start(Argp,format);
+<a name="line549">549: </a>      (*<a href="../../../docs/manualpages/Sys/PetscVFPrintf.html#PetscVFPrintf">PetscVFPrintf</a>)(petsc_history,format,Argp);
+<a name="line550">550: </a>    }
+<a name="line551">551: </a>    va_end(Argp);
+<a name="line552">552: </a>  }
+<a name="line553">553: </a>  <font color="#4169E1">return</font>(0);
+<a name="line554">554: </a>}
+
+<a name="line556">556: </a><font color="#B22222">/*@C</font>
+<a name="line557">557: </a><font color="#B22222">    <a href="../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a> - Prints to standard out, only from the first</font>
+<a name="line558">558: </a><font color="#B22222">    processor in the communicator. Calls from other processes are ignored.</font>
+
+<a name="line560">560: </a><font color="#B22222">    Not Collective</font>
+
+<a name="line562">562: </a><font color="#B22222">    Input Parameters:</font>
+<a name="line563">563: </a><font color="#B22222">+   comm - the communicator</font>
+<a name="line564">564: </a><font color="#B22222">-   format - the usual printf() format string</font>
+
+<a name="line566">566: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line568">568: </a><font color="#B22222">    Fortran Note:</font>
+<a name="line569">569: </a><font color="#B22222">    The call sequence is <a href="../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a>, character(*), <a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr) from Fortran.</font>
+<a name="line570">570: </a><font color="#B22222">    That is, you can only pass a single character string from Fortran.</font>
+
+<a name="line572">572: </a><font color="#B22222">   Concepts: printing^in parallel</font>
+<a name="line573">573: </a><font color="#B22222">   Concepts: printf^in parallel</font>
+
+<a name="line575">575: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/Sys/PetscFPrintf.html#PetscFPrintf">PetscFPrintf</a>(), <a href="../../../docs/manualpages/Sys/PetscSynchronizedPrintf.html#PetscSynchronizedPrintf">PetscSynchronizedPrintf</a>()</font>
+<a name="line576">576: </a><font color="#B22222">@*/</font>
+<a name="line577">577: </a><strong><font color="#4169E1"><a name="PetscPrintf"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a> comm,const char format[],...)</font></strong>
+<a name="line578">578: </a>{
+<a name="line580">580: </a>  <a href="../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>    rank;
+
+<a name="line583">583: </a>  <font color="#4169E1">if</font> (comm == MPI_COMM_NULL) <a href="../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_PLIB,<font color="#666666">"Called with MPI_COMM_NULL, likely <a href="../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>() failed"</font>);
+<a name="line584">584: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm,&amp;rank);
+<a name="line585">585: </a>  <font color="#4169E1">if</font> (!rank) {
+<a name="line586">586: </a>    va_list Argp;
+<a name="line587">587: </a>    va_start(Argp,format);
+<a name="line588">588: </a>    (*<a href="../../../docs/manualpages/Sys/PetscVFPrintf.html#PetscVFPrintf">PetscVFPrintf</a>)(PETSC_STDOUT,format,Argp);
+<a name="line589">589: </a>    <font color="#4169E1">if</font> (petsc_history) {
+<a name="line590">590: </a>      va_start(Argp,format);
+<a name="line591">591: </a>      (*<a href="../../../docs/manualpages/Sys/PetscVFPrintf.html#PetscVFPrintf">PetscVFPrintf</a>)(petsc_history,format,Argp);
+<a name="line592">592: </a>    }
+<a name="line593">593: </a>    va_end(Argp);
+<a name="line594">594: </a>  }
+<a name="line595">595: </a>  <font color="#4169E1">return</font>(0);
+<a name="line596">596: </a>}
+
+<a name="line598">598: </a><font color="#B22222">/* ---------------------------------------------------------------------------------------*/</font>
+<a name="line599">599: </a><font color="#B22222">/*@C</font>
+<a name="line600">600: </a><font color="#B22222">     <a href="../../../docs/manualpages/Sys/PetscHelpPrintf.html#PetscHelpPrintf">PetscHelpPrintf</a> -  All PETSc help messages are passing through this function. You can change how help messages are printed by</font>
+<a name="line601">601: </a><font color="#B22222">        replacinng it  with something that does not simply write to a stdout.</font>
+
+<a name="line603">603: </a><font color="#B22222">      To use, write your own function for example,</font>
+<a name="line604">604: </a><font color="#B22222">$<a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> mypetschelpprintf(<a href="../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a> comm,const char format[],....)</font>
+<a name="line605">605: </a><font color="#B22222">${</font>
+<a name="line606">606: </a><font color="#B22222">$ return(0);</font>
+<a name="line607">607: </a><font color="#B22222">$}</font>
+<a name="line608">608: </a><font color="#B22222">then before the call to <a href="../../../docs/manualpages/Sys/PetscInitialize.html#PetscInitialize">PetscInitialize</a>() do the assignment</font>
+<a name="line609">609: </a><font color="#B22222">$    <a href="../../../docs/manualpages/Sys/PetscHelpPrintf.html#PetscHelpPrintf">PetscHelpPrintf</a> = mypetschelpprintf;</font>
+
+<a name="line611">611: </a><font color="#B22222">  Note: the default routine used is called PetscHelpPrintfDefault().</font>
+
+<a name="line613">613: </a><font color="#B22222">  Level:  developer</font>
+
+<a name="line615">615: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/Sys/PetscVSNPrintf.html#PetscVSNPrintf">PetscVSNPrintf</a>(), <a href="../../../docs/manualpages/Sys/PetscVFPrintf.html#PetscVFPrintf">PetscVFPrintf</a>(), <a href="../../../docs/manualpages/Sys/PetscErrorPrintf.html#PetscErrorPrintf">PetscErrorPrintf</a>()</font>
+<a name="line616">616: </a><font color="#B22222">@*/</font>
+<a name="line617">617: </a><strong><font color="#4169E1"><a name="PetscHelpPrintfDefault"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  PetscHelpPrintfDefault(<a href="../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a> comm,const char format[],...)</font></strong>
+<a name="line618">618: </a>{
+<a name="line620">620: </a>  <a href="../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>    rank;
+
+<a name="line623">623: </a>  <font color="#4169E1">if</font> (comm == MPI_COMM_NULL) <a href="../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_PLIB,<font color="#666666">"Called with MPI_COMM_NULL, likely <a href="../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>() failed"</font>);
+<a name="line624">624: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm,&amp;rank);
+<a name="line625">625: </a>  <font color="#4169E1">if</font> (!rank) {
+<a name="line626">626: </a>    va_list Argp;
+<a name="line627">627: </a>    va_start(Argp,format);
+<a name="line628">628: </a>    (*<a href="../../../docs/manualpages/Sys/PetscVFPrintf.html#PetscVFPrintf">PetscVFPrintf</a>)(PETSC_STDOUT,format,Argp);
+<a name="line629">629: </a>    <font color="#4169E1">if</font> (petsc_history) {
+<a name="line630">630: </a>      va_start(Argp,format);
+<a name="line631">631: </a>      (*<a href="../../../docs/manualpages/Sys/PetscVFPrintf.html#PetscVFPrintf">PetscVFPrintf</a>)(petsc_history,format,Argp);
+<a name="line632">632: </a>    }
+<a name="line633">633: </a>    va_end(Argp);
+<a name="line634">634: </a>  }
+<a name="line635">635: </a>  <font color="#4169E1">return</font>(0);
+<a name="line636">636: </a>}
+
+<a name="line638">638: </a><font color="#B22222">/* ---------------------------------------------------------------------------------------*/</font>
+
+
+<a name="line641">641: </a><font color="#B22222">/*@C</font>
+<a name="line642">642: </a><font color="#B22222">    <a href="../../../docs/manualpages/Sys/PetscSynchronizedFGets.html#PetscSynchronizedFGets">PetscSynchronizedFGets</a> - Several processors all get the same line from a file.</font>
+
+<a name="line644">644: </a><font color="#B22222">    Collective on <a href="../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a></font>
+
+<a name="line646">646: </a><font color="#B22222">    Input Parameters:</font>
+<a name="line647">647: </a><font color="#B22222">+   comm - the communicator</font>
+<a name="line648">648: </a><font color="#B22222">.   fd - the file pointer</font>
+<a name="line649">649: </a><font color="#B22222">-   len - the length of the output buffer</font>
+
+<a name="line651">651: </a><font color="#B22222">    Output Parameter:</font>
+<a name="line652">652: </a><font color="#B22222">.   string - the line read from the file, at end of file string[0] == 0</font>
+
+<a name="line654">654: </a><font color="#B22222">    Level: intermediate</font>
+
+<a name="line656">656: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/Sys/PetscSynchronizedPrintf.html#PetscSynchronizedPrintf">PetscSynchronizedPrintf</a>(), <a href="../../../docs/manualpages/Sys/PetscSynchronizedFlush.html#PetscSynchronizedFlush">PetscSynchronizedFlush</a>(),</font>
+<a name="line657">657: </a><font color="#B22222">          <a href="../../../docs/manualpages/Sys/PetscFOpen.html#PetscFOpen">PetscFOpen</a>(), <a href="../../../docs/manualpages/Viewer/PetscViewerASCIISynchronizedPrintf.html#PetscViewerASCIISynchronizedPrintf">PetscViewerASCIISynchronizedPrintf</a>(), <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>()</font>
+
+<a name="line659">659: </a><font color="#B22222">@*/</font>
+<a name="line660">660: </a><strong><font color="#4169E1"><a name="PetscSynchronizedFGets"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../docs/manualpages/Sys/PetscSynchronizedFGets.html#PetscSynchronizedFGets">PetscSynchronizedFGets</a>(<a href="../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a> comm,FILE *fp,size_t len,char string[])</font></strong>
+<a name="line661">661: </a>{
+<a name="line663">663: </a>  <a href="../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>    rank;
+
+<a name="line666">666: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm,&amp;rank);
+
+<a name="line668">668: </a>  <font color="#4169E1">if</font> (!rank) {
+<a name="line669">669: </a>    char *ptr = fgets(string, len, fp);
+
+<a name="line671">671: </a>    <font color="#4169E1">if</font> (!ptr) {
+<a name="line672">672: </a>      string[0] = 0;
+<a name="line673">673: </a>      <font color="#4169E1">if</font> (!feof(fp)) <a href="../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>, PETSC_ERR_FILE_READ, <font color="#666666">"Error reading from file: %d"</font>, errno);
+<a name="line674">674: </a>    }
+<a name="line675">675: </a>  }
+<a name="line676">676: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Bcast.html#MPI_Bcast">MPI_Bcast</a>(string,len,MPI_BYTE,0,comm);
+<a name="line677">677: </a>  <font color="#4169E1">return</font>(0);
+<a name="line678">678: </a>}
+
+<a name="line680">680: </a><font color="#A020F0">#if defined(PETSC_HAVE_CLOSURES)</font>
+<a name="line681">681: </a>int (^SwiftClosure)(const char*) = 0;
+
+<a name="line683">683: </a><strong><font color="#4169E1"><a name="PetscVFPrintfToString"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  PetscVFPrintfToString(FILE *fd,const char format[],va_list Argp)</font></strong>
+<a name="line684">684: </a>{
+
+<a name="line688">688: </a>  <font color="#4169E1">if</font> (fd != stdout &amp;&amp; fd != stderr) { <font color="#B22222">/* handle regular files */</font>
+<a name="line689">689: </a>    PetscVFPrintfDefault(fd,format,Argp);
+<a name="line690">690: </a>  } <font color="#4169E1">else</font> {
+<a name="line691">691: </a>    size_t len=8*1024,length;
+<a name="line692">692: </a>    char   buf[len];
+
+<a name="line694">694: </a>    <a href="../../../docs/manualpages/Sys/PetscVSNPrintf.html#PetscVSNPrintf">PetscVSNPrintf</a>(buf,len,format,&amp;length,Argp);
+<a name="line695">695: </a>    SwiftClosure(buf);
+<a name="line696">696: </a>  }
+<a name="line697">697: </a>  <font color="#4169E1">return</font>(0);
+<a name="line698">698: </a>}
+
+<a name="line700">700: </a><font color="#B22222">/*</font>
+<a name="line701">701: </a><font color="#B22222">   Provide a Swift function that processes all the PETSc calls to <a href="../../../docs/manualpages/Sys/PetscVFPrintf.html#PetscVFPrintf">PetscVFPrintf</a>()</font>
+<a name="line702">702: </a><font color="#B22222">*/</font>
+<a name="line703">703: </a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscVFPrintfSetClosure(int (^closure)(const char*))
+<a name="line704">704: </a>{
+<a name="line705">705: </a>  <a href="../../../docs/manualpages/Sys/PetscVFPrintf.html#PetscVFPrintf">PetscVFPrintf</a> = PetscVFPrintfToString;
+<a name="line706">706: </a>  SwiftClosure  = closure;
+<a name="line707">707: </a>  <font color="#4169E1">return</font> 0;
+<a name="line708">708: </a>}
+<a name="line709">709: </a><font color="#A020F0">#endif</font>
+
+<a name="line711">711: </a><font color="#A020F0">#if defined(PETSC_HAVE_MATLAB_ENGINE)</font>
+<a name="line712">712: </a><font color="#A020F0">#include &lt;mex.h&gt;</font>
+<a name="line713">713: </a><strong><font color="#4169E1"><a name="PetscVFPrintf_Matlab"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  PetscVFPrintf_Matlab(FILE *fd,const char format[],va_list Argp)</font></strong>
+<a name="line714">714: </a>{
+
+<a name="line718">718: </a>  <font color="#4169E1">if</font> (fd != stdout &amp;&amp; fd != stderr) { <font color="#B22222">/* handle regular files */</font>
+<a name="line719">719: </a>    PetscVFPrintfDefault(fd,format,Argp);
+<a name="line720">720: </a>  } <font color="#4169E1">else</font> {
+<a name="line721">721: </a>    size_t len=8*1024,length;
+<a name="line722">722: </a>    char   buf[len];
+
+<a name="line724">724: </a>    <a href="../../../docs/manualpages/Sys/PetscVSNPrintf.html#PetscVSNPrintf">PetscVSNPrintf</a>(buf,len,format,&amp;length,Argp);
+<a name="line725">725: </a>    mexPrintf(<font color="#666666">"%s"</font>,buf);
+<a name="line726">726: </a>  }
+<a name="line727">727: </a>  <font color="#4169E1">return</font>(0);
+<a name="line728">728: </a>}
+<a name="line729">729: </a><font color="#A020F0">#endif</font>
+
+<a name="line731">731: </a><font color="#B22222">/*@C</font>
+<a name="line732">732: </a><font color="#B22222">     <a href="../../../docs/manualpages/Sys/PetscFormatStrip.html#PetscFormatStrip">PetscFormatStrip</a> - Takes a PETSc format string and removes all numerical modifiers to % operations</font>
+
+<a name="line734">734: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line735">735: </a><font color="#B22222">.   format - the PETSc format string</font>
+
+<a name="line737">737: </a><font color="#B22222"> Level: developer</font>
+
+<a name="line739">739: </a><font color="#B22222">@*/</font>
+<a name="line740">740: </a><strong><font color="#4169E1"><a name="PetscFormatStrip"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../docs/manualpages/Sys/PetscFormatStrip.html#PetscFormatStrip">PetscFormatStrip</a>(char *format)</font></strong>
+<a name="line741">741: </a>{
+<a name="line742">742: </a>  size_t loc1 = 0, loc2 = 0;
+
+<a name="line745">745: </a>  <font color="#4169E1">while</font> (format[loc2]) {
+<a name="line746">746: </a>    <font color="#4169E1">if</font> (format[loc2] == '%') {
+<a name="line747">747: </a>      format[loc1++] = format[loc2++];
+<a name="line748">748: </a>      <font color="#4169E1">while</font> (format[loc2] &amp;&amp; ((format[loc2] &gt;= '0' &amp;&amp; format[loc2] &lt;= '9') || format[loc2] == '.')) loc2++;
+<a name="line749">749: </a>    }
+<a name="line750">750: </a>    format[loc1++] = format[loc2++];
+<a name="line751">751: </a>  }
+<a name="line752">752: </a>  <font color="#4169E1">return</font>(0);
+<a name="line753">753: </a>}
+
+</pre>
+</body>
+
+</html>

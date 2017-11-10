@@ -1,0 +1,41 @@
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/dm/impls/forest/examples/tutorials/makefile.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:46:57+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/dm/impls/forest/examples/tutorials/makefile.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">CFLAGS          =
+FFLAGS          =
+CPPFLAGS        =
+FPPFLAGS        =
+LOCDIR          = src/dm/impls/forest/examples/tutorials/
+EXAMPLESC       = ex1.c
+EXAMPLESF       =
+MANSEC          = <a href="ROOT/docs/manualpages/DM/DM.html#DM">DM</a>
+
+include ${PETSC_DIR}/lib/petsc/conf/variables
+include ${PETSC_DIR}/lib/petsc/conf/rules
+
+<strong><font color="#FF0000">ex1:</font></strong> ex1.o  chkopts
+	-${CLINKER} -o ex1 ex1.o ${PETSC_DM_LIB}
+	${RM} -f ex1.o
+
+<strong><font color="#FF0000">runex1_moebius:</font></strong>
+	-@${MPIEXEC} -n 3 ./ex1 -dm_type p4est -dm_forest_topology moebius -dm_view vtk:moebius.vtu
+<strong><font color="#FF0000">runex1_shell:</font></strong>
+	-@${MPIEXEC} -n 3 ./ex1 -dm_type p8est -dm_forest_topology shell -dm_view vtk:shell.vtu
+<strong><font color="#FF0000">runex1_brick:</font></strong>
+	-@${MPIEXEC} -n 3 ./ex1 -dm_type p8est -dm_forest_topology brick -dm_p4est_brick_size 2,3,5 -dm_view vtk:brick.vtu
+
+<font color="#A020F0">#--------------------------------------------------------------------------</font>
+
+include ${PETSC_DIR}/lib/petsc/conf/test
+</pre>
+</body>
+
+</html>

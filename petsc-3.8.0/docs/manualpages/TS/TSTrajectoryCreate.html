@@ -1,0 +1,42 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML3.2 EN">
+<HTML>
+<HEAD> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/TS/TSTrajectoryCreate.html" />
+<META NAME="GENERATOR" CONTENT="DOCTEXT">
+<TITLE>TSTrajectoryCreate</TITLE>
+</HEAD>
+<BODY BGCOLOR="FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 docs/manualpages/TS/TSTrajectoryCreate.html "><small>Report Typos and Errors</small></a></div>
+<A NAME="TSTrajectoryCreate"><H1>TSTrajectoryCreate</H1></A>
+This function creates an empty trajectory object used to store the time dependent solution of an ODE/DAE 
+<H3><FONT COLOR="#CC3333">Synopsis</FONT></H3>
+<PRE>
+#include "petscts.h"  
+<A HREF="../Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</A>  <A HREF="../TS/TSTrajectoryCreate.html#TSTrajectoryCreate">TSTrajectoryCreate</A>(<A HREF="../Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</A> comm,<A HREF="../TS/TSTrajectory.html#TSTrajectory">TSTrajectory</A> *tj)
+</PRE>
+Collective on <A HREF="../Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</A>
+<P>
+<H3><FONT COLOR="#CC3333">Input Parameter</FONT></H3>
+<DT><B>comm </B> -the communicator
+<br>
+<P>
+<H3><FONT COLOR="#CC3333">Output Parameter</FONT></H3>
+<DT><B>tj   </B> -the trajectory object
+<br>
+<P>
+
+<P>
+Notes: Usually one does not call this routine, it is called automatically when one calls <A HREF="../TS/TSSetSaveTrajectory.html#TSSetSaveTrajectory">TSSetSaveTrajectory</A>().
+<P>
+<H3><FONT COLOR="#CC3333">Keywords</FONT></H3>
+ <A HREF="../TS/TS.html#TS">TS</A>, trajectory, create
+<BR>
+<P>
+<H3><FONT COLOR="#CC3333">See Also</FONT></H3>
+ <A HREF="../TS/TSTrajectorySetUp.html#TSTrajectorySetUp">TSTrajectorySetUp</A>(), <A HREF="../TS/TSTrajectoryDestroy.html#TSTrajectoryDestroy">TSTrajectoryDestroy</A>(), <A HREF="../TS/TSTrajectorySetType.html#TSTrajectorySetType">TSTrajectorySetType</A>(), <A HREF="../TS/TSTrajectorySetVariableNames.html#TSTrajectorySetVariableNames">TSTrajectorySetVariableNames</A>(), <A HREF="../TS/TSGetTrajectory.html#TSGetTrajectory">TSGetTrajectory</A>()
+<BR><P><B><P><B><FONT COLOR="#CC3333">Level:</FONT></B>developer
+<BR><FONT COLOR="#CC3333">Location:</FONT></B><A HREF="../../../src/ts/trajectory/interface/traj.c.html#TSTrajectoryCreate">src/ts/trajectory/interface/traj.c</A>
+<BR><A HREF="./index.html">Index of all TS routines</A>
+<BR><A HREF="../../index.html">Table of Contents for all manual pages</A>
+<BR><A HREF="../singleindex.html">Index of all manual pages</A>
+</BODY></HTML>

@@ -1,0 +1,212 @@
+<center><a href="matpreallocator.c">Actual source code: matpreallocator.c</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/mat/impls/preallocator/matpreallocator.c.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:33:00+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/mat/impls/preallocator/matpreallocator.c.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+<a name="line1">  1: </a> #include <A href="../../../../include/petsc/private/matimpl.h.html">&lt;petsc/private/matimpl.h&gt;</A>
+<a name="line2">  2: </a> #include <A href="../../../../include/petsc/private/hash.h.html">&lt;petsc/private/hash.h&gt;</A>
+
+<a name="line4">  4: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line5">  5: </a>  PetscHashJK ht;
+<a name="line6">  6: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>   *dnz, *onz;
+<a name="line7">  7: </a>} Mat_Preallocator;
+
+<a name="line9">  9: </a><strong><font color="#4169E1"><a name="MatDestroy_Preallocator"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatDestroy_Preallocator(<a href="../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> A)</font></strong>
+<a name="line10"> 10: </a>{
+<a name="line11"> 11: </a>  Mat_Preallocator *p = (Mat_Preallocator *) A-&gt;data;
+<a name="line12"> 12: </a>  <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+
+<a name="line15"> 15: </a>  MatStashDestroy_Private(&amp;A-&gt;stash);
+<a name="line16"> 16: </a>  PetscHashJKDestroy(&amp;p-&gt;ht);
+<a name="line17"> 17: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree2.html#PetscFree2">PetscFree2</a>(p-&gt;dnz, p-&gt;onz);
+<a name="line18"> 18: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(A-&gt;data);
+<a name="line19"> 19: </a>  PetscObjectChangeTypeName((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>) A, 0);
+<a name="line20"> 20: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html#PetscObjectComposeFunction">PetscObjectComposeFunction</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>) A, <font color="#666666">"MatPreallocatorPreallocate_C"</font>, NULL);
+<a name="line21"> 21: </a>  <font color="#4169E1">return</font>(0);
+<a name="line22"> 22: </a>}
+
+<a name="line24"> 24: </a><strong><font color="#4169E1"><a name="MatSetUp_Preallocator"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatSetUp_Preallocator(<a href="../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> A)</font></strong>
+<a name="line25"> 25: </a>{
+<a name="line26"> 26: </a>  Mat_Preallocator *p = (Mat_Preallocator *) A-&gt;data;
+<a name="line27"> 27: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          m, bs;
+<a name="line28"> 28: </a>  <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+
+<a name="line31"> 31: </a>  <a href="../../../../docs/manualpages/IS/PetscLayoutSetUp.html#PetscLayoutSetUp">PetscLayoutSetUp</a>(A-&gt;rmap);
+<a name="line32"> 32: </a>  <a href="../../../../docs/manualpages/IS/PetscLayoutSetUp.html#PetscLayoutSetUp">PetscLayoutSetUp</a>(A-&gt;cmap);
+<a name="line33"> 33: </a>  <a href="../../../../docs/manualpages/Mat/MatGetLocalSize.html#MatGetLocalSize">MatGetLocalSize</a>(A, &amp;m, NULL);
+<a name="line34"> 34: </a>  PetscHashJKCreate(&amp;p-&gt;ht);
+<a name="line35"> 35: </a>  <a href="../../../../docs/manualpages/Mat/MatGetBlockSize.html#MatGetBlockSize">MatGetBlockSize</a>(A, &amp;bs);
+<a name="line36"> 36: </a>  MatStashCreate_Private(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>) A), bs, &amp;A-&gt;stash);
+<a name="line37"> 37: </a>  <a href="../../../../docs/manualpages/Sys/PetscCalloc2.html#PetscCalloc2">PetscCalloc2</a>(m, &amp;p-&gt;dnz, m, &amp;p-&gt;onz);
+<a name="line38"> 38: </a>  <font color="#4169E1">return</font>(0);
+<a name="line39"> 39: </a>}
+
+<a name="line41"> 41: </a><strong><font color="#4169E1"><a name="MatSetValues_Preallocator"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatSetValues_Preallocator(<a href="../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> A, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> m, const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *rows, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> n, const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *cols, const <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> *values, <a href="../../../../docs/manualpages/Sys/InsertMode.html#InsertMode">InsertMode</a> addv)</font></strong>
+<a name="line42"> 42: </a>{
+<a name="line43"> 43: </a>  Mat_Preallocator *p = (Mat_Preallocator *) A-&gt;data;
+<a name="line44"> 44: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          rStart, rEnd, r, cStart, cEnd, c;
+<a name="line45"> 45: </a>  <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+
+<a name="line48"> 48: </a>  <font color="#B22222">/* TODO: Handle blocksize */</font>
+<a name="line49"> 49: </a>  <a href="../../../../docs/manualpages/Mat/MatGetOwnershipRange.html#MatGetOwnershipRange">MatGetOwnershipRange</a>(A, &amp;rStart, &amp;rEnd);
+<a name="line50"> 50: </a>  <a href="../../../../docs/manualpages/Mat/MatGetOwnershipRangeColumn.html#MatGetOwnershipRangeColumn">MatGetOwnershipRangeColumn</a>(A, &amp;cStart, &amp;cEnd);
+<a name="line51"> 51: </a>  <font color="#4169E1">for</font> (r = 0; r &lt; m; ++r) {
+<a name="line52"> 52: </a>    PetscHashJKKey  key;
+<a name="line53"> 53: </a>    PetscHashJKIter missing, iter;
+
+<a name="line55"> 55: </a>    key.j = rows[r];
+<a name="line56"> 56: </a>    <font color="#4169E1">if</font> (key.j &lt; 0) <font color="#4169E1">continue</font>;
+<a name="line57"> 57: </a>    <font color="#4169E1">if</font> ((key.j &lt; rStart) || (key.j &gt;= rEnd)) {
+<a name="line58"> 58: </a>      MatStashValuesRow_Private(&amp;A-&gt;stash, key.j, n, cols, values, <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>);
+<a name="line59"> 59: </a>    } <font color="#4169E1">else</font> {
+<a name="line60"> 60: </a>      <font color="#4169E1">for</font> (c = 0; c &lt; n; ++c) {
+<a name="line61"> 61: </a>        key.k = cols[c];
+<a name="line62"> 62: </a>        <font color="#4169E1">if</font> (key.k &lt; 0) <font color="#4169E1">continue</font>;
+<a name="line63"> 63: </a>        PetscHashJKPut(p-&gt;ht, key, &amp;missing, &amp;iter);
+<a name="line64"> 64: </a>        <font color="#4169E1">if</font> (missing) {
+<a name="line65"> 65: </a>          PetscHashJKSet(p-&gt;ht, iter, 1);
+<a name="line66"> 66: </a>          <font color="#4169E1">if</font> ((key.k &gt;= cStart) &amp;&amp; (key.k &lt; cEnd)) ++p-&gt;dnz[key.j-rStart];
+<a name="line67"> 67: </a>          <font color="#4169E1">else</font>                                     ++p-&gt;onz[key.j-rStart];
+<a name="line68"> 68: </a>        }
+<a name="line69"> 69: </a>      }
+<a name="line70"> 70: </a>    }
+<a name="line71"> 71: </a>  }
+<a name="line72"> 72: </a>  <font color="#4169E1">return</font>(0);
+<a name="line73"> 73: </a>}
+
+<a name="line75"> 75: </a><strong><font color="#4169E1"><a name="MatAssemblyBegin_Preallocator"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatAssemblyBegin_Preallocator(<a href="../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> A, <a href="../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MatAssemblyType</a> type)</font></strong>
+<a name="line76"> 76: </a>{
+<a name="line77"> 77: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       nstash, reallocs;
+
+<a name="line81"> 81: </a>  <a href="../../../../docs/manualpages/IS/PetscLayoutSetUp.html#PetscLayoutSetUp">PetscLayoutSetUp</a>(A-&gt;rmap);
+<a name="line82"> 82: </a>  MatStashScatterBegin_Private(A, &amp;A-&gt;stash, A-&gt;rmap-&gt;range);
+<a name="line83"> 83: </a>  MatStashGetInfo_Private(&amp;A-&gt;stash, &amp;nstash, &amp;reallocs);
+<a name="line84"> 84: </a>  PetscInfo2(A, <font color="#666666">"Stash has %D entries, uses %D mallocs.\n"</font>, nstash, reallocs);
+<a name="line85"> 85: </a>  <font color="#4169E1">return</font>(0);
+<a name="line86"> 86: </a>}
+
+<a name="line88"> 88: </a><strong><font color="#4169E1"><a name="MatAssemblyEnd_Preallocator"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatAssemblyEnd_Preallocator(<a href="../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> A, <a href="../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MatAssemblyType</a> type)</font></strong>
+<a name="line89"> 89: </a>{
+<a name="line90"> 90: </a>  <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>   *val;
+<a name="line91"> 91: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>      *row, *col;
+<a name="line92"> 92: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       i, j, rstart, ncols, flg;
+<a name="line93"> 93: </a>  <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>    n;
+
+<a name="line97"> 97: </a>  <font color="#4169E1">while</font> (1) {
+<a name="line98"> 98: </a>    MatStashScatterGetMesg_Private(&amp;A-&gt;stash, &amp;n, &amp;row, &amp;col, &amp;val, &amp;flg);
+<a name="line99"> 99: </a>    <font color="#4169E1">if</font> (!flg) <font color="#4169E1">break</font>;
+
+<a name="line101">101: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; n; ) {
+<a name="line102">102: </a>      <font color="#B22222">/* Now identify the consecutive vals belonging to the same row */</font>
+<a name="line103">103: </a>      <font color="#4169E1">for</font> (j = i, rstart = row[j]; j &lt; n; j++) {
+<a name="line104">104: </a>        <font color="#4169E1">if</font> (row[j] != rstart) <font color="#4169E1">break</font>;
+<a name="line105">105: </a>      }
+<a name="line106">106: </a>      <font color="#4169E1">if</font> (j &lt; n) ncols = j-i;
+<a name="line107">107: </a>      <font color="#4169E1">else</font>       ncols = n-i;
+<a name="line108">108: </a>      <font color="#B22222">/* Now assemble all these values with a single function call */</font>
+<a name="line109">109: </a>      MatSetValues_Preallocator(A, 1, row+i, ncols, col+i, val+i, <a href="../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>);
+<a name="line110">110: </a>      i = j;
+<a name="line111">111: </a>    }
+<a name="line112">112: </a>  }
+<a name="line113">113: </a>  MatStashScatterEnd_Private(&amp;A-&gt;stash);
+<a name="line114">114: </a>  <font color="#4169E1">return</font>(0);
+<a name="line115">115: </a>}
+
+<a name="line117">117: </a><strong><font color="#4169E1"><a name="MatView_Preallocator"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatView_Preallocator(<a href="../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> A, <a href="../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer)</font></strong>
+<a name="line118">118: </a>{
+<a name="line120">120: </a>  <font color="#4169E1">return</font>(0);
+<a name="line121">121: </a>}
+
+<a name="line123">123: </a><strong><font color="#4169E1"><a name="MatSetOption_Preallocator"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatSetOption_Preallocator(<a href="../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> A, <a href="../../../../docs/manualpages/Mat/MatOption.html#MatOption">MatOption</a> op, <a href="../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> flg)</font></strong>
+<a name="line124">124: </a>{
+<a name="line126">126: </a>  <font color="#4169E1">return</font>(0);
+<a name="line127">127: </a>}
+
+<a name="line129">129: </a><strong><font color="#4169E1"><a name="MatPreallocatorPreallocate_Preallocator"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatPreallocatorPreallocate_Preallocator(<a href="../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> mat, <a href="../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> fill, <a href="../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> A)</font></strong>
+<a name="line130">130: </a>{
+<a name="line131">131: </a>  Mat_Preallocator *p = (Mat_Preallocator *) mat-&gt;data;
+<a name="line132">132: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>         *udnz = NULL, *uonz = NULL;
+<a name="line133">133: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          bs;
+<a name="line134">134: </a>  <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+
+<a name="line137">137: </a>  <a href="../../../../docs/manualpages/Mat/MatGetBlockSize.html#MatGetBlockSize">MatGetBlockSize</a>(mat, &amp;bs);
+<a name="line138">138: </a>  <a href="../../../../docs/manualpages/Mat/MatXAIJSetPreallocation.html#MatXAIJSetPreallocation">MatXAIJSetPreallocation</a>(A, bs, p-&gt;dnz, p-&gt;onz, udnz, uonz);
+<a name="line139">139: </a>  <a href="../../../../docs/manualpages/Mat/MatSetOption.html#MatSetOption">MatSetOption</a>(A, <a href="../../../../docs/manualpages/Mat/MatOption.html#MatOption">MAT_NEW_NONZERO_ALLOCATION_ERR</a>, <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>);
+<a name="line140">140: </a>  <font color="#4169E1">return</font>(0);
+<a name="line141">141: </a>}
+
+<a name="line143">143: </a><font color="#B22222">/*@</font>
+<a name="line144">144: </a><font color="#B22222">  <a href="../../../../docs/manualpages/Mat/MatPreallocatorPreallocate.html#MatPreallocatorPreallocate">MatPreallocatorPreallocate</a> - Preallocates the input matrix, optionally filling it with zeros</font>
+
+<a name="line146">146: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line147">147: </a><font color="#B22222">+ mat  - the preallocator</font>
+<a name="line148">148: </a><font color="#B22222">- fill - fill the matrix with zeros</font>
+
+<a name="line150">150: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line151">151: </a><font color="#B22222">. A    - the matrix</font>
+
+<a name="line153">153: </a><font color="#B22222">  Level: advanced</font>
+
+<a name="line155">155: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/Mat/MATPREALLOCATOR.html#MATPREALLOCATOR">MATPREALLOCATOR</a></font>
+<a name="line156">156: </a><font color="#B22222">@*/</font>
+<a name="line157">157: </a><strong><font color="#4169E1"><a name="MatPreallocatorPreallocate"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/Mat/MatPreallocatorPreallocate.html#MatPreallocatorPreallocate">MatPreallocatorPreallocate</a>(<a href="../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> mat, <a href="../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> fill, <a href="../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> A)</font></strong>
+<a name="line158">158: </a>{
+
+<a name="line164">164: </a>  PetscUseMethod(mat, <font color="#666666">"MatPreallocatorPreallocate_C"</font>, (<a href="../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>,<a href="../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>,<a href="../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>),(mat,fill,A));
+<a name="line165">165: </a>  <font color="#4169E1">return</font>(0);
+<a name="line166">166: </a>}
+
+<a name="line168">168: </a><font color="#B22222">/*MC</font>
+<a name="line169">169: </a><font color="#B22222">   <a href="../../../../docs/manualpages/Mat/MATPREALLOCATOR.html#MATPREALLOCATOR">MATPREALLOCATOR</a> - <a href="../../../../docs/manualpages/Mat/MATPREALLOCATOR.html#MATPREALLOCATOR">MATPREALLOCATOR</a> = "preallocator" - A matrix type to be used for computing a matrix preallocation.</font>
+
+<a name="line171">171: </a><font color="#B22222">   Operations Provided:</font>
+<a name="line172">172: </a><font color="#B22222">.  <a href="../../../../docs/manualpages/Mat/MatSetValues.html#MatSetValues">MatSetValues</a>()</font>
+
+<a name="line174">174: </a><font color="#B22222">   Options Database Keys:</font>
+<a name="line175">175: </a><font color="#B22222">. -mat_type preallocator - sets the matrix type to "preallocator" during a call to <a href="../../../../docs/manualpages/Mat/MatSetFromOptions.html#MatSetFromOptions">MatSetFromOptions</a>()</font>
+
+<a name="line177">177: </a><font color="#B22222">  Level: advanced</font>
+
+<a name="line179">179: </a><font color="#B22222">.seealso: <a href="../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a></font>
+
+<a name="line181">181: </a><font color="#B22222">M*/</font>
+
+<a name="line183">183: </a><strong><font color="#4169E1"><a name="MatCreate_Preallocator"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> MatCreate_Preallocator(<a href="../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> A)</font></strong>
+<a name="line184">184: </a>{
+<a name="line185">185: </a>  Mat_Preallocator *p;
+<a name="line186">186: </a>  <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+
+<a name="line189">189: </a>  <a href="../../../../docs/manualpages/Sys/PetscNewLog.html#PetscNewLog">PetscNewLog</a>(A, &amp;p);
+<a name="line190">190: </a>  A-&gt;data = (void *) p;
+
+<a name="line192">192: </a>  p-&gt;ht  = NULL;
+<a name="line193">193: </a>  p-&gt;dnz = NULL;
+<a name="line194">194: </a>  p-&gt;onz = NULL;
+
+<a name="line196">196: </a>  <font color="#B22222">/* matrix ops */</font>
+<a name="line197">197: </a>  <a href="../../../../docs/manualpages/Sys/PetscMemzero.html#PetscMemzero">PetscMemzero</a>(A-&gt;ops, <font color="#4169E1">sizeof</font>(<font color="#4169E1">struct _MatOps</font>));
+<a name="line198">198: </a>  A-&gt;ops-&gt;destroy                 = MatDestroy_Preallocator;
+<a name="line199">199: </a>  A-&gt;ops-&gt;setup                   = MatSetUp_Preallocator;
+<a name="line200">200: </a>  A-&gt;ops-&gt;setvalues               = MatSetValues_Preallocator;
+<a name="line201">201: </a>  A-&gt;ops-&gt;assemblybegin           = MatAssemblyBegin_Preallocator;
+<a name="line202">202: </a>  A-&gt;ops-&gt;assemblyend             = MatAssemblyEnd_Preallocator;
+<a name="line203">203: </a>  A-&gt;ops-&gt;view                    = MatView_Preallocator;
+<a name="line204">204: </a>  A-&gt;ops-&gt;setoption               = MatSetOption_Preallocator;
+
+<a name="line206">206: </a>  <font color="#B22222">/* special <a href="../../../../docs/manualpages/Mat/MATPREALLOCATOR.html#MATPREALLOCATOR">MATPREALLOCATOR</a> functions */</font>
+<a name="line207">207: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html#PetscObjectComposeFunction">PetscObjectComposeFunction</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>) A, <font color="#666666">"MatPreallocatorPreallocate_C"</font>, MatPreallocatorPreallocate_Preallocator);
+<a name="line208">208: </a>  PetscObjectChangeTypeName((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>) A, <a href="../../../../docs/manualpages/Mat/MATPREALLOCATOR.html#MATPREALLOCATOR">MATPREALLOCATOR</a>);
+<a name="line209">209: </a>  <font color="#4169E1">return</font>(0);
+<a name="line210">210: </a>}
+</pre>
+</body>
+
+</html>

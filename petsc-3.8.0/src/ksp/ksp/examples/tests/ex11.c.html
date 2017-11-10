@@ -1,0 +1,232 @@
+<center><a href="ex11.c">Actual source code: ex11.c</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/ksp/ksp/examples/tests/ex11.c.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-27T00:01:32+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/ksp/ksp/examples/tests/ex11.c.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+<a name="line1">  1: </a>static const char help[] = <font color="#666666">"Solves a Q1-P0 Stokes problem from Underworld.\n\</font>
+<a name="line2">  2: </a><font color="#666666">\n\</font>
+<a name="line3">  3: </a><font color="#666666">You can obtain a sample matrix from http://ftp.mcs.anl.gov/pub/petsc/matrices/underworld32.gz\n\</font>
+<a name="line4">  4: </a><font color="#666666">and run with -f underworld32.gz\n\n"</font>;
+
+<a name="line6">  6: </a> #include <A href="../../../../../include/petscksp.h.html">&lt;petscksp.h&gt;</A>
+<a name="line7">  7: </a> #include <A href="../../../../../include/petscdmda.h.html">&lt;petscdmda.h&gt;</A>
+
+<a name="line9">  9: </a><strong><font color="#4169E1"><a name="LSCLoadTestOperators"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> LSCLoadTestOperators(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> *A11,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> *A12,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> *A21,<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> *A22,<a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> *b1,<a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> *b2)</font></strong>
+<a name="line10"> 10: </a>{
+<a name="line11"> 11: </a>  <a href="../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a>    viewer;
+<a name="line13"> 13: </a>  char           filename[PETSC_MAX_PATH_LEN];
+<a name="line14"> 14: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>      flg;
+
+<a name="line17"> 17: </a>  <a href="../../../../../docs/manualpages/Mat/MatCreate.html#MatCreate">MatCreate</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,A11);
+<a name="line18"> 18: </a>  <a href="../../../../../docs/manualpages/Mat/MatCreate.html#MatCreate">MatCreate</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,A12);
+<a name="line19"> 19: </a>  <a href="../../../../../docs/manualpages/Mat/MatCreate.html#MatCreate">MatCreate</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,A21);
+<a name="line20"> 20: </a>  <a href="../../../../../docs/manualpages/Mat/MatCreate.html#MatCreate">MatCreate</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,A22);
+<a name="line21"> 21: </a>  <a href="../../../../../docs/manualpages/Mat/MatSetOptionsPrefix.html#MatSetOptionsPrefix">MatSetOptionsPrefix</a>(*A11,<font color="#666666">"a11_"</font>);
+<a name="line22"> 22: </a>  <a href="../../../../../docs/manualpages/Mat/MatSetOptionsPrefix.html#MatSetOptionsPrefix">MatSetOptionsPrefix</a>(*A22,<font color="#666666">"a22_"</font>);
+<a name="line23"> 23: </a>  <a href="../../../../../docs/manualpages/Mat/MatSetFromOptions.html#MatSetFromOptions">MatSetFromOptions</a>(*A11);
+<a name="line24"> 24: </a>  <a href="../../../../../docs/manualpages/Mat/MatSetFromOptions.html#MatSetFromOptions">MatSetFromOptions</a>(*A22);
+<a name="line25"> 25: </a>  <a href="../../../../../docs/manualpages/Vec/VecCreate.html#VecCreate">VecCreate</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,b1);
+<a name="line26"> 26: </a>  <a href="../../../../../docs/manualpages/Vec/VecCreate.html#VecCreate">VecCreate</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,b2);
+<a name="line27"> 27: </a>  <font color="#B22222">/* Load matrices from a Q1-P0 discretisation of variable viscosity Stokes. The matrix blocks are packed into one file. */</font>
+<a name="line28"> 28: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsGetString.html#PetscOptionsGetString">PetscOptionsGetString</a>(NULL,NULL,<font color="#666666">"-f"</font>,filename,<font color="#4169E1">sizeof</font>(filename),&amp;flg);
+<a name="line29"> 29: </a>  <font color="#4169E1">if</font> (!flg) <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,PETSC_ERR_USER,<font color="#666666">"Must provide a matrix file with -f"</font>);
+<a name="line30"> 30: </a>  <a href="../../../../../docs/manualpages/Viewer/PetscViewerBinaryOpen.html#PetscViewerBinaryOpen">PetscViewerBinaryOpen</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,filename,<a href="../../../../../docs/manualpages/Sys/PetscFileMode.html#PetscFileMode">FILE_MODE_READ</a>,&amp;viewer);
+<a name="line31"> 31: </a>  <a href="../../../../../docs/manualpages/Mat/MatLoad.html#MatLoad">MatLoad</a>(*A11,viewer);
+<a name="line32"> 32: </a>  <a href="../../../../../docs/manualpages/Mat/MatLoad.html#MatLoad">MatLoad</a>(*A12,viewer);
+<a name="line33"> 33: </a>  <a href="../../../../../docs/manualpages/Mat/MatLoad.html#MatLoad">MatLoad</a>(*A21,viewer);
+<a name="line34"> 34: </a>  <a href="../../../../../docs/manualpages/Mat/MatLoad.html#MatLoad">MatLoad</a>(*A22,viewer);
+<a name="line35"> 35: </a>  <a href="../../../../../docs/manualpages/Vec/VecLoad.html#VecLoad">VecLoad</a>(*b1,viewer);
+<a name="line36"> 36: </a>  <a href="../../../../../docs/manualpages/Vec/VecLoad.html#VecLoad">VecLoad</a>(*b2,viewer);
+<a name="line37"> 37: </a>  <a href="../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html#PetscViewerDestroy">PetscViewerDestroy</a>(&amp;viewer);
+<a name="line38"> 38: </a>  <font color="#4169E1">return</font>(0);
+<a name="line39"> 39: </a>}
+
+<a name="line41"> 41: </a><strong><font color="#4169E1"><a name="LoadTestMatrices"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> LoadTestMatrices(<a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a> *_A,<a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> *_x,<a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> *_b,<a href="../../../../../docs/manualpages/IS/IS.html#IS">IS</a> *_isu,<a href="../../../../../docs/manualpages/IS/IS.html#IS">IS</a> *_isp)</font></strong>
+<a name="line42"> 42: </a>{
+<a name="line43"> 43: </a>  <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>            f,h,x,b,bX[2];
+<a name="line44"> 44: </a>  <a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>            A,Auu,Aup,Apu,App,bA[2][2];
+<a name="line45"> 45: </a>  <a href="../../../../../docs/manualpages/IS/IS.html#IS">IS</a>             is_u,is_p,bis[2];
+<a name="line46"> 46: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       lnu,lnp,nu,np,i,start_u,end_u,start_p,end_p;
+<a name="line47"> 47: </a>  <a href="../../../../../docs/manualpages/Vec/VecScatter.html#VecScatter">VecScatter</a>     *vscat;
+<a name="line48"> 48: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>    rank;
+
+<a name="line52"> 52: </a>  <font color="#B22222">/* fetch test matrices and vectors */</font>
+<a name="line53"> 53: </a>  LSCLoadTestOperators(&amp;Auu,&amp;Aup,&amp;Apu,&amp;App,&amp;f,&amp;h);
+
+<a name="line55"> 55: </a>  <font color="#B22222">/* build the mat-nest */</font>
+<a name="line56"> 56: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetSize.html#VecGetSize">VecGetSize</a>(f,&amp;nu);
+<a name="line57"> 57: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetSize.html#VecGetSize">VecGetSize</a>(h,&amp;np);
+
+<a name="line59"> 59: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetLocalSize.html#VecGetLocalSize">VecGetLocalSize</a>(f,&amp;lnu);
+<a name="line60"> 60: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetLocalSize.html#VecGetLocalSize">VecGetLocalSize</a>(h,&amp;lnp);
+
+<a name="line62"> 62: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetOwnershipRange.html#VecGetOwnershipRange">VecGetOwnershipRange</a>(f,&amp;start_u,&amp;end_u);
+<a name="line63"> 63: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetOwnershipRange.html#VecGetOwnershipRange">VecGetOwnershipRange</a>(h,&amp;start_p,&amp;end_p);
+
+<a name="line65"> 65: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,&amp;rank);
+<a name="line66"> 66: </a>  <a href="../../../../../docs/manualpages/Sys/PetscSynchronizedPrintf.html#PetscSynchronizedPrintf">PetscSynchronizedPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<font color="#666666">"[%d] lnu = %D | lnp = %D \n"</font>, rank, lnu, lnp);
+<a name="line67"> 67: </a>  <a href="../../../../../docs/manualpages/Sys/PetscSynchronizedPrintf.html#PetscSynchronizedPrintf">PetscSynchronizedPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<font color="#666666">"[%d] s_u = %D | e_u = %D \n"</font>, rank, start_u, end_u);
+<a name="line68"> 68: </a>  <a href="../../../../../docs/manualpages/Sys/PetscSynchronizedPrintf.html#PetscSynchronizedPrintf">PetscSynchronizedPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<font color="#666666">"[%d] s_p = %D | e_p = %D \n"</font>, rank, start_p, end_p);
+<a name="line69"> 69: </a>  <a href="../../../../../docs/manualpages/Sys/PetscSynchronizedPrintf.html#PetscSynchronizedPrintf">PetscSynchronizedPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<font color="#666666">"[%d] is_u (offset) = %D \n"</font>, rank, start_u+start_p);
+<a name="line70"> 70: </a>  <a href="../../../../../docs/manualpages/Sys/PetscSynchronizedPrintf.html#PetscSynchronizedPrintf">PetscSynchronizedPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<font color="#666666">"[%d] is_p (offset) = %D \n"</font>, rank, start_u+start_p+lnu);
+<a name="line71"> 71: </a>  <a href="../../../../../docs/manualpages/Sys/PetscSynchronizedFlush.html#PetscSynchronizedFlush">PetscSynchronizedFlush</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,PETSC_STDOUT);
+
+<a name="line73"> 73: </a>  <a href="../../../../../docs/manualpages/IS/ISCreateStride.html#ISCreateStride">ISCreateStride</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,lnu,start_u+start_p,1,&amp;is_u);
+<a name="line74"> 74: </a>  <a href="../../../../../docs/manualpages/IS/ISCreateStride.html#ISCreateStride">ISCreateStride</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,lnp,start_u+start_p+lnu,1,&amp;is_p);
+
+<a name="line76"> 76: </a>  bis[0]   = is_u; bis[1]   = is_p;
+<a name="line77"> 77: </a>  bA[0][0] = Auu;  bA[0][1] = Aup;
+<a name="line78"> 78: </a>  bA[1][0] = Apu;  bA[1][1] = App;
+<a name="line79"> 79: </a>  <a href="../../../../../docs/manualpages/Mat/MatCreateNest.html#MatCreateNest">MatCreateNest</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,2,bis,2,bis,&amp;bA[0][0],&amp;A);
+<a name="line80"> 80: </a>  <a href="../../../../../docs/manualpages/Mat/MatAssemblyBegin.html#MatAssemblyBegin">MatAssemblyBegin</a>(A,<a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+<a name="line81"> 81: </a>  <a href="../../../../../docs/manualpages/Mat/MatAssemblyEnd.html#MatAssemblyEnd">MatAssemblyEnd</a>(A,<a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+
+<a name="line83"> 83: </a>  <font color="#B22222">/* Pull f,h into b */</font>
+<a name="line84"> 84: </a>  <a href="../../../../../docs/manualpages/Mat/MatCreateVecs.html#MatCreateVecs">MatCreateVecs</a>(A,&amp;b,&amp;x);
+<a name="line85"> 85: </a>  bX[0] = f;  bX[1] = h;
+<a name="line86"> 86: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(2,&amp;vscat);
+<a name="line87"> 87: </a>  <font color="#4169E1">for</font> (i=0; i&lt;2; i++) {
+<a name="line88"> 88: </a>    <a href="../../../../../docs/manualpages/Vec/VecScatterCreate.html#VecScatterCreate">VecScatterCreate</a>(b,bis[i],bX[i],NULL,&amp;vscat[i]);
+<a name="line89"> 89: </a>    <a href="../../../../../docs/manualpages/Vec/VecScatterBegin.html#VecScatterBegin">VecScatterBegin</a>(vscat[i],bX[i],b,<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_REVERSE.html#SCATTER_REVERSE">SCATTER_REVERSE</a>);
+<a name="line90"> 90: </a>  }
+<a name="line91"> 91: </a>  <font color="#4169E1">for</font> (i=0; i&lt;2; i++) {
+<a name="line92"> 92: </a>    <a href="../../../../../docs/manualpages/Vec/VecScatterEnd.html#VecScatterEnd">VecScatterEnd</a>(vscat[i],bX[i],b,<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_REVERSE.html#SCATTER_REVERSE">SCATTER_REVERSE</a>);
+<a name="line93"> 93: </a>  }
+
+<a name="line95"> 95: </a>  <font color="#B22222">/* tidy up */</font>
+<a name="line96"> 96: </a>  <font color="#4169E1">for</font> (i=0; i&lt;2; i++) {
+<a name="line97"> 97: </a>    <a href="../../../../../docs/manualpages/Vec/VecScatterDestroy.html#VecScatterDestroy">VecScatterDestroy</a>(&amp;vscat[i]);
+<a name="line98"> 98: </a>  }
+<a name="line99"> 99: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(vscat);
+<a name="line100">100: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;Auu);
+<a name="line101">101: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;Aup);
+<a name="line102">102: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;Apu);
+<a name="line103">103: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;App);
+<a name="line104">104: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;f);
+<a name="line105">105: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;h);
+
+<a name="line107">107: </a>  *_isu = is_u;
+<a name="line108">108: </a>  *_isp = is_p;
+<a name="line109">109: </a>  *_A   = A;
+<a name="line110">110: </a>  *_x   = x;
+<a name="line111">111: </a>  *_b   = b;
+<a name="line112">112: </a>  <font color="#4169E1">return</font>(0);
+<a name="line113">113: </a>}
+
+
+<a name="line116">116: </a><strong><font color="#4169E1"><a name="port_lsd_bfbt"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> port_lsd_bfbt(void)</font></strong>
+<a name="line117">117: </a>{
+<a name="line118">118: </a>  <a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>            A;
+<a name="line119">119: </a>  <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>            x,b;
+<a name="line120">120: </a>  <a href="../../../../../docs/manualpages/KSP/KSP.html#KSP">KSP</a>            ksp_A;
+<a name="line121">121: </a>  <a href="../../../../../docs/manualpages/PC/PC.html#PC">PC</a>             pc_A;
+<a name="line122">122: </a>  <a href="../../../../../docs/manualpages/IS/IS.html#IS">IS</a>             isu,isp;
+
+<a name="line126">126: </a>  LoadTestMatrices(&amp;A,&amp;x,&amp;b,&amp;isu,&amp;isp);
+
+<a name="line128">128: </a>  <a href="../../../../../docs/manualpages/KSP/KSPCreate.html#KSPCreate">KSPCreate</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,&amp;ksp_A);
+<a name="line129">129: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSetOptionsPrefix.html#KSPSetOptionsPrefix">KSPSetOptionsPrefix</a>(ksp_A,<font color="#666666">"fc_"</font>);
+<a name="line130">130: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSetOperators.html#KSPSetOperators">KSPSetOperators</a>(ksp_A,A,A);
+
+<a name="line132">132: </a>  <a href="../../../../../docs/manualpages/KSP/KSPGetPC.html#KSPGetPC">KSPGetPC</a>(ksp_A,&amp;pc_A);
+<a name="line133">133: </a>  <a href="../../../../../docs/manualpages/PC/PCSetType.html#PCSetType">PCSetType</a>(pc_A,<a href="../../../../../docs/manualpages/PC/PCFIELDSPLIT.html#PCFIELDSPLIT">PCFIELDSPLIT</a>);
+<a name="line134">134: </a>  <a href="../../../../../docs/manualpages/PC/PCFieldSplitSetBlockSize.html#PCFieldSplitSetBlockSize">PCFieldSplitSetBlockSize</a>(pc_A,2);
+<a name="line135">135: </a>  <a href="../../../../../docs/manualpages/PC/PCFieldSplitSetIS.html#PCFieldSplitSetIS">PCFieldSplitSetIS</a>(pc_A,<font color="#666666">"velocity"</font>,isu);
+<a name="line136">136: </a>  <a href="../../../../../docs/manualpages/PC/PCFieldSplitSetIS.html#PCFieldSplitSetIS">PCFieldSplitSetIS</a>(pc_A,<font color="#666666">"pressure"</font>,isp);
+
+<a name="line138">138: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSetFromOptions.html#KSPSetFromOptions">KSPSetFromOptions</a>(ksp_A);
+<a name="line139">139: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSolve.html#KSPSolve">KSPSolve</a>(ksp_A,b,x);
+
+<a name="line141">141: </a>  <font color="#B22222">/* Pull u,p out of x */</font>
+<a name="line142">142: </a>  {
+<a name="line143">143: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>    loc;
+<a name="line144">144: </a>    <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>   max,norm;
+<a name="line145">145: </a>    <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> sum;
+<a name="line146">146: </a>    <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>         uvec,pvec;
+<a name="line147">147: </a>    <a href="../../../../../docs/manualpages/Vec/VecScatter.html#VecScatter">VecScatter</a>  uscat,pscat;
+<a name="line148">148: </a>    <a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>         A11,A22;
+
+<a name="line150">150: </a>    <font color="#B22222">/* grab matrices and create the compatable u,p vectors */</font>
+<a name="line151">151: </a>    <a href="../../../../../docs/manualpages/Mat/MatCreateSubMatrix.html#MatCreateSubMatrix">MatCreateSubMatrix</a>(A,isu,isu,<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MAT_INITIAL_MATRIX</a>,&amp;A11);
+<a name="line152">152: </a>    <a href="../../../../../docs/manualpages/Mat/MatCreateSubMatrix.html#MatCreateSubMatrix">MatCreateSubMatrix</a>(A,isp,isp,<a href="../../../../../docs/manualpages/Mat/MatReuse.html#MatReuse">MAT_INITIAL_MATRIX</a>,&amp;A22);
+
+<a name="line154">154: </a>    <a href="../../../../../docs/manualpages/Mat/MatCreateVecs.html#MatCreateVecs">MatCreateVecs</a>(A11,&amp;uvec,NULL);
+<a name="line155">155: </a>    <a href="../../../../../docs/manualpages/Mat/MatCreateVecs.html#MatCreateVecs">MatCreateVecs</a>(A22,&amp;pvec,NULL);
+
+<a name="line157">157: </a>    <font color="#B22222">/* perform the scatter from x -&gt; (u,p) */</font>
+<a name="line158">158: </a>    <a href="../../../../../docs/manualpages/Vec/VecScatterCreate.html#VecScatterCreate">VecScatterCreate</a>(x,isu,uvec,NULL,&amp;uscat);
+<a name="line159">159: </a>    <a href="../../../../../docs/manualpages/Vec/VecScatterBegin.html#VecScatterBegin">VecScatterBegin</a>(uscat,x,uvec,<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html#SCATTER_FORWARD">SCATTER_FORWARD</a>);
+<a name="line160">160: </a>    <a href="../../../../../docs/manualpages/Vec/VecScatterEnd.html#VecScatterEnd">VecScatterEnd</a>(uscat,x,uvec,<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html#SCATTER_FORWARD">SCATTER_FORWARD</a>);
+
+<a name="line162">162: </a>    <a href="../../../../../docs/manualpages/Vec/VecScatterCreate.html#VecScatterCreate">VecScatterCreate</a>(x,isp,pvec,NULL,&amp;pscat);
+<a name="line163">163: </a>    <a href="../../../../../docs/manualpages/Vec/VecScatterBegin.html#VecScatterBegin">VecScatterBegin</a>(pscat,x,pvec,<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html#SCATTER_FORWARD">SCATTER_FORWARD</a>);
+<a name="line164">164: </a>    <a href="../../../../../docs/manualpages/Vec/VecScatterEnd.html#VecScatterEnd">VecScatterEnd</a>(pscat,x,pvec,<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html#SCATTER_FORWARD">SCATTER_FORWARD</a>);
+
+<a name="line166">166: </a>    <a href="../../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<font color="#666666">"-- vector vector values --\n"</font>);
+<a name="line167">167: </a>    <a href="../../../../../docs/manualpages/Vec/VecMin.html#VecMin">VecMin</a>(uvec,&amp;loc,&amp;max);
+<a name="line168">168: </a>    <a href="../../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<font color="#666666">"  Min(u)  = %1.6f [loc=%D]\n"</font>,(double)max,loc);
+<a name="line169">169: </a>    <a href="../../../../../docs/manualpages/Vec/VecMax.html#VecMax">VecMax</a>(uvec,&amp;loc,&amp;max);
+<a name="line170">170: </a>    <a href="../../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<font color="#666666">"  Max(u)  = %1.6f [loc=%D]\n"</font>,(double)max,loc);
+<a name="line171">171: </a>    <a href="../../../../../docs/manualpages/Vec/VecNorm.html#VecNorm">VecNorm</a>(uvec,<a href="../../../../../docs/manualpages/Vec/NORM_2.html#NORM_2">NORM_2</a>,&amp;norm);
+<a name="line172">172: </a>    <a href="../../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<font color="#666666">"  Norm(u) = %1.6f \n"</font>,(double)norm);
+<a name="line173">173: </a>    <a href="../../../../../docs/manualpages/Vec/VecSum.html#VecSum">VecSum</a>(uvec,&amp;sum);
+<a name="line174">174: </a>    <a href="../../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<font color="#666666">"  Sum(u)  = %1.6f \n"</font>,(double)PetscRealPart(sum));
+
+<a name="line176">176: </a>    <a href="../../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<font color="#666666">"-- pressure vector values --\n"</font>);
+<a name="line177">177: </a>    <a href="../../../../../docs/manualpages/Vec/VecMin.html#VecMin">VecMin</a>(pvec,&amp;loc,&amp;max);
+<a name="line178">178: </a>    <a href="../../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<font color="#666666">"  Min(p)  = %1.6f [loc=%D]\n"</font>,(double)max,loc);
+<a name="line179">179: </a>    <a href="../../../../../docs/manualpages/Vec/VecMax.html#VecMax">VecMax</a>(pvec,&amp;loc,&amp;max);
+<a name="line180">180: </a>    <a href="../../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<font color="#666666">"  Max(p)  = %1.6f [loc=%D]\n"</font>,(double)max,loc);
+<a name="line181">181: </a>    <a href="../../../../../docs/manualpages/Vec/VecNorm.html#VecNorm">VecNorm</a>(pvec,<a href="../../../../../docs/manualpages/Vec/NORM_2.html#NORM_2">NORM_2</a>,&amp;norm);
+<a name="line182">182: </a>    <a href="../../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<font color="#666666">"  Norm(p) = %1.6f \n"</font>,(double)norm);
+<a name="line183">183: </a>    <a href="../../../../../docs/manualpages/Vec/VecSum.html#VecSum">VecSum</a>(pvec,&amp;sum);
+<a name="line184">184: </a>    <a href="../../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<font color="#666666">"  Sum(p)  = %1.6f \n"</font>,(double)PetscRealPart(sum));
+
+<a name="line186">186: </a>    <a href="../../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<font color="#666666">"-- Full vector values --\n"</font>);
+<a name="line187">187: </a>    <a href="../../../../../docs/manualpages/Vec/VecMin.html#VecMin">VecMin</a>(x,&amp;loc,&amp;max);
+<a name="line188">188: </a>    <a href="../../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<font color="#666666">"  Min(u,p)  = %1.6f [loc=%D]\n"</font>,(double)max,loc);
+<a name="line189">189: </a>    <a href="../../../../../docs/manualpages/Vec/VecMax.html#VecMax">VecMax</a>(x,&amp;loc,&amp;max);
+<a name="line190">190: </a>    <a href="../../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<font color="#666666">"  Max(u,p)  = %1.6f [loc=%D]\n"</font>,(double)max,loc);
+<a name="line191">191: </a>    <a href="../../../../../docs/manualpages/Vec/VecNorm.html#VecNorm">VecNorm</a>(x,<a href="../../../../../docs/manualpages/Vec/NORM_2.html#NORM_2">NORM_2</a>,&amp;norm);
+<a name="line192">192: </a>    <a href="../../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<font color="#666666">"  Norm(u,p) = %1.6f \n"</font>,(double)norm);
+<a name="line193">193: </a>    <a href="../../../../../docs/manualpages/Vec/VecSum.html#VecSum">VecSum</a>(x,&amp;sum);
+<a name="line194">194: </a>    <a href="../../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<font color="#666666">"  Sum(u,p)  = %1.6f \n"</font>,(double)PetscRealPart(sum));
+
+<a name="line196">196: </a>    <a href="../../../../../docs/manualpages/Vec/VecScatterDestroy.html#VecScatterDestroy">VecScatterDestroy</a>(&amp;uscat);
+<a name="line197">197: </a>    <a href="../../../../../docs/manualpages/Vec/VecScatterDestroy.html#VecScatterDestroy">VecScatterDestroy</a>(&amp;pscat);
+<a name="line198">198: </a>    <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;uvec);
+<a name="line199">199: </a>    <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;pvec);
+<a name="line200">200: </a>    <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;A11);
+<a name="line201">201: </a>    <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;A22);
+<a name="line202">202: </a>  }
+
+<a name="line204">204: </a>  <a href="../../../../../docs/manualpages/KSP/KSPDestroy.html#KSPDestroy">KSPDestroy</a>(&amp;ksp_A);
+<a name="line205">205: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;A);
+<a name="line206">206: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;x);
+<a name="line207">207: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;b);
+<a name="line208">208: </a>  <a href="../../../../../docs/manualpages/IS/ISDestroy.html#ISDestroy">ISDestroy</a>(&amp;isu);
+<a name="line209">209: </a>  <a href="../../../../../docs/manualpages/IS/ISDestroy.html#ISDestroy">ISDestroy</a>(&amp;isp);
+<a name="line210">210: </a>  <font color="#4169E1">return</font>(0);
+<a name="line211">211: </a>}
+
+
+<a name="line214">214: </a><strong><font color="#4169E1"><a name="main"></a>int main(int argc,char **argv)</font></strong>
+<a name="line215">215: </a>{
+
+<a name="line218">218: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInitialize.html#PetscInitialize">PetscInitialize</a>(&amp;argc,&amp;argv,0,help);<font color="#4169E1">if</font> (ierr) <font color="#4169E1">return</font> ierr;
+<a name="line219">219: </a>  port_lsd_bfbt();
+<a name="line220">220: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFinalize.html#PetscFinalize">PetscFinalize</a>();
+<a name="line221">221: </a>  <font color="#4169E1">return</font> ierr;
+<a name="line222">222: </a>}
+</pre>
+</body>
+
+</html>

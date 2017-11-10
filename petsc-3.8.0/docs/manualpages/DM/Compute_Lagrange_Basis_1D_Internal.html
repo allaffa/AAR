@@ -1,0 +1,54 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML3.2 EN">
+<HTML>
+<HEAD> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/DM/Compute_Lagrange_Basis_1D_Internal.html" />
+<META NAME="GENERATOR" CONTENT="DOCTEXT">
+<TITLE>Compute_Lagrange_Basis_1D_Internal</TITLE>
+</HEAD>
+<BODY BGCOLOR="FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 docs/manualpages/DM/Compute_Lagrange_Basis_1D_Internal.html "><small>Report Typos and Errors</small></a></div>
+<A NAME="Compute_Lagrange_Basis_1D_Internal"><H1>Compute_Lagrange_Basis_1D_Internal</H1></A>
+Evaluate bases and derivatives at quadrature points for a EDGE2 or EDGE3 element. 
+<H3><FONT COLOR="#CC3333">Synopsis</FONT></H3>
+<PRE>
+#include "petscdt.h" 
+#include "petscdmmoab.h"   
+<A HREF="../Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</A> <A HREF="../DM/Compute_Lagrange_Basis_1D_Internal.html#Compute_Lagrange_Basis_1D_Internal">Compute_Lagrange_Basis_1D_Internal</A> ( const <A HREF="../Sys/PetscInt.html#PetscInt">PetscInt</A> nverts, const <A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A> *coords, const <A HREF="../Sys/PetscInt.html#PetscInt">PetscInt</A> npts, const <A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A> *quad, <A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A> *phypts,
+    <A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A> *jxw, <A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A> *phi, <A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A> *dphidx,
+    <A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A> *jacobian, <A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A> *ijacobian, <A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A> *volume)
+</PRE>
+The routine is given the coordinates of the vertices of a linear or quadratic edge element.
+<P>
+The routine evaluates the basis functions associated with each quadrature point provided,
+and their derivatives with respect to X.
+<P>
+<H3><FONT COLOR="#CC3333">Notes</FONT></H3>
+<P>
+Example Physical Element
+<P>
+1-------2        1----3----2
+EDGE2             EDGE3
+<P>
+<H3><FONT COLOR="#CC3333">Input Parameter</FONT></H3>
+<P>
+<DT><B><A HREF="../Sys/PetscInt.html#PetscInt">PetscInt</A>  nverts,           the number of element vertices</B> -.  <A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A> coords[3*nverts], the physical coordinates of the vertices (in canonical numbering)
+<br>
+<DT><B><A HREF="../Sys/PetscInt.html#PetscInt">PetscInt</A>  npts,             the number of evaluation points (quadrature points)</B> -.  <A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A> quad[3*npts],     the evaluation points (quadrature points) in the reference space
+<br>
+<P>
+<H3><FONT COLOR="#CC3333">Output Parameter</FONT></H3>
+<DT><B><A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A> phypts[3*npts],   the evaluation points (quadrature points) transformed to the physical space</B> -.  <A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A> jxw[npts],        the jacobian determinant * quadrature weight necessary for assembling discrete contributions
+<br>
+<DT><B><A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A> phi[npts],        the bases evaluated at the specified quadrature points</B> -.  <A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A> dphidx[npts],     the derivative of the bases wrt X-direction evaluated at the specified quadrature points
+<br>
+<P>
+
+<P>
+<H3><FONT COLOR="#CC3333">Keywords</FONT></H3>
+ DMMoab, FEM, 1-D
+<BR><P><B><P><B><FONT COLOR="#CC3333">Level:</FONT></B>advanced
+<BR><FONT COLOR="#CC3333">Location:</FONT></B><A HREF="../../../src/dm/impls/moab/dmmbfem.cxx#Compute_Lagrange_Basis_1D_Internal">src/dm/impls/moab/dmmbfem.cxx</A>
+<BR><A HREF="./index.html">Index of all DM routines</A>
+<BR><A HREF="../../index.html">Table of Contents for all manual pages</A>
+<BR><A HREF="../singleindex.html">Index of all manual pages</A>
+</BODY></HTML>

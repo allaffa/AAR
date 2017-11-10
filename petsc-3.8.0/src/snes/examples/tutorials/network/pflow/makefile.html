@@ -1,0 +1,52 @@
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/snes/examples/tutorials/network/pflow/makefile.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-27T00:10:36+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/snes/examples/tutorials/network/pflow/makefile.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80"><font color="#A020F0">#requiresdefine   'PETSC_HAVE_ATTRIBUTEALIGNED'</font>
+
+<strong><font color="#FF0000">ALL:</font></strong>pf
+CFLAGS	         = 
+FFLAGS	         = 
+CPPFLAGS         = 
+FPPFLAGS         =
+EXAMPLESC        = pf.c
+LOCDIR           = src/snes/examples/tutorials/network/pflow/
+
+OBJECTS_PF = pf.o PFReadData.o
+
+include ${PETSC_DIR}/lib/petsc/conf/variables
+include ${PETSC_DIR}/lib/petsc/conf/rules
+
+
+<strong><font color="#FF0000">pf:</font></strong> $(OBJECTS_PF) chkopts
+	-${CLINKER} -o pf $(OBJECTS_PF) ${PETSC_SNES_LIB}
+	${RM} $(OBJECTS_PF)
+
+<font color="#A020F0">#--------------------------------------------------------------------------</font>
+<strong><font color="#FF0000">runpf:</font></strong>
+	-@${MPIEXEC} -n 1 ./pf -snes_rtol 1.e-3 &gt; pf.tmp 2&gt;&amp;1;   \
+	   <font color="#4169E1">if</font> (${DIFF} output/pf.out pf.tmp) then true; \
+	   <font color="#4169E1">else</font> printf <font color="#666666">"${PWD}\nPossible problem with pf, diffs above\n=========================================\n"</font>; fi; \
+	   ${RM} -f pf.tmp
+
+<strong><font color="#FF0000">runpf_2:</font></strong>
+	-@${MPIEXEC} -n 3 ./pf -snes_rtol 1.e-3 -petscpartitioner_type simple &gt; pf.tmp 2&gt;&amp;1;   \
+	   <font color="#4169E1">if</font> (${DIFF} output/pf_2.out pf.tmp) then true; \
+	   <font color="#4169E1">else</font> printf <font color="#666666">"${PWD}\nPossible problem with pf_2, diffs above\n=========================================\n"</font>; fi; \
+	   ${RM} -f pf.tmp
+
+
+TESTEXAMPLES_C		       =  pf.PETSc runpf runpf_2 pf.rm
+
+include ${PETSC_DIR}/lib/petsc/conf/test
+</pre>
+</body>
+
+</html>

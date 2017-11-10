@@ -1,0 +1,255 @@
+<center><a href="tsfwdsen.c">Actual source code: tsfwdsen.c</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/ts/interface/tsfwdsen.c.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-27T00:12:59+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/ts/interface/tsfwdsen.c.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+<a name="line1">  1: </a> #include <A href="../../../include/petsc/private/tsimpl.h.html">&lt;petsc/private/tsimpl.h&gt;</A>
+
+<a name="line3">  3: </a><a href="../../../docs/manualpages/Profiling/PetscLogEvent.html#PetscLogEvent">PetscLogEvent</a> TS_ForwardStep;
+
+<a name="line5">  5: </a><font color="#B22222">/*@</font>
+<a name="line6">  6: </a><font color="#B22222">  <a href="../../../docs/manualpages/TS/TSForwardSetUp.html#TSForwardSetUp">TSForwardSetUp</a> - Sets up the internal data structures for the later use</font>
+<a name="line7">  7: </a><font color="#B22222">  of forward sensitivity analysis</font>
+
+<a name="line9">  9: </a><font color="#B22222">  Collective on <a href="../../../docs/manualpages/TS/TS.html#TS">TS</a></font>
+
+<a name="line11"> 11: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line12"> 12: </a><font color="#B22222">. ts - the <a href="../../../docs/manualpages/TS/TS.html#TS">TS</a> context obtained from <a href="../../../docs/manualpages/TS/TSCreate.html#TSCreate">TSCreate</a>()</font>
+
+<a name="line14"> 14: </a><font color="#B22222">  Level: advanced</font>
+
+<a name="line16"> 16: </a><font color="#B22222">.keywords: <a href="../../../docs/manualpages/TS/TS.html#TS">TS</a>, forward sensitivity, setup</font>
+
+<a name="line18"> 18: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/TS/TSCreate.html#TSCreate">TSCreate</a>(), <a href="../../../docs/manualpages/TS/TSDestroy.html#TSDestroy">TSDestroy</a>(), <a href="../../../docs/manualpages/TS/TSSetUp.html#TSSetUp">TSSetUp</a>()</font>
+<a name="line19"> 19: </a><font color="#B22222">@*/</font>
+<a name="line20"> 20: </a><strong><font color="#4169E1"><a name="TSForwardSetUp"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../docs/manualpages/TS/TSForwardSetUp.html#TSForwardSetUp">TSForwardSetUp</a>(<a href="../../../docs/manualpages/TS/TS.html#TS">TS</a> ts)</font></strong>
+<a name="line21"> 21: </a>{
+<a name="line25"> 25: </a>  <font color="#4169E1">if</font> (ts-&gt;forwardsetupcalled) <font color="#4169E1">return</font>(0);
+
+<a name="line27"> 27: </a>  <font color="#4169E1">if</font> (ts-&gt;vec_costintegral &amp;&amp; !ts-&gt;vecs_integral_sensi &amp;&amp; !ts-&gt;vecs_integral_sensip ) <a href="../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_WRONGSTATE,<font color="#666666">"Must call <a href="../../../docs/manualpages/TS/TSForwardSetIntegralGradients.html#TSForwardSetIntegralGradients">TSForwardSetIntegralGradients</a>() before <a href="../../../docs/manualpages/TS/TSSetCostIntegrand.html#TSSetCostIntegrand">TSSetCostIntegrand</a>()"</font>);
+
+<a name="line29"> 29: </a>  <font color="#4169E1">if</font> (ts-&gt;vecs_integral_sensi || ts-&gt;vecs_integral_sensip) {
+<a name="line30"> 30: </a>    <a href="../../../docs/manualpages/Vec/VecDuplicateVecs.html#VecDuplicateVecs">VecDuplicateVecs</a>(ts-&gt;vec_sol,ts-&gt;numcost,&amp;ts-&gt;vecs_drdy);
+<a name="line31"> 31: </a>  }
+<a name="line32"> 32: </a>  <font color="#4169E1">if</font> (ts-&gt;vecs_integral_sensip) {
+<a name="line33"> 33: </a>    <a href="../../../docs/manualpages/Vec/VecDuplicateVecs.html#VecDuplicateVecs">VecDuplicateVecs</a>(ts-&gt;vecs_integral_sensip[0],ts-&gt;numcost,&amp;ts-&gt;vecs_drdp);
+<a name="line34"> 34: </a>  }
+<a name="line35"> 35: </a>  <font color="#4169E1">if</font> (ts-&gt;ops-&gt;forwardsetup) {
+<a name="line36"> 36: </a>    (*ts-&gt;ops-&gt;forwardsetup)(ts);
+<a name="line37"> 37: </a>  }
+<a name="line38"> 38: </a>  ts-&gt;forwardsetupcalled = <a href="../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+<a name="line39"> 39: </a>  <font color="#4169E1">return</font>(0);
+<a name="line40"> 40: </a>}
+
+<a name="line42"> 42: </a><font color="#B22222">/*@C</font>
+<a name="line43"> 43: </a><font color="#B22222">  <a href="../../../docs/manualpages/TS/TSForwardSetRHSJacobianP.html#TSForwardSetRHSJacobianP">TSForwardSetRHSJacobianP</a> - Sets the function that computes the Jacobian of G w.r.t. the parameters p where y_t = G(y,p,t), as well as the location to store the vector array.</font>
+
+<a name="line45"> 45: </a><font color="#B22222">  Logically Collective on <a href="../../../docs/manualpages/TS/TS.html#TS">TS</a></font>
+
+<a name="line47"> 47: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line48"> 48: </a><font color="#B22222">+ ts   - The <a href="../../../docs/manualpages/TS/TS.html#TS">TS</a> context obtained from <a href="../../../docs/manualpages/TS/TSCreate.html#TSCreate">TSCreate</a>()</font>
+<a name="line49"> 49: </a><font color="#B22222">- func - The function</font>
+
+<a name="line51"> 51: </a><font color="#B22222">  Calling sequence of func:</font>
+<a name="line52"> 52: </a><font color="#B22222">$ func (<a href="../../../docs/manualpages/TS/TS.html#TS">TS</a> ts,<a href="../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> t,<a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> y,<a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>* a,void *ctx);</font>
+<a name="line53"> 53: </a><font color="#B22222">+   t - current timestep</font>
+<a name="line54"> 54: </a><font color="#B22222">.   y - input vector (current ODE solution)</font>
+<a name="line55"> 55: </a><font color="#B22222">.   a - output vector array</font>
+<a name="line56"> 56: </a><font color="#B22222">-   ctx - [optional] user-defined function context</font>
+
+<a name="line58"> 58: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line60"> 60: </a><font color="#B22222">  Notes: the number of vectors in a is the same as the number of parameters and each vector is of the same size as the system dimension.</font>
+
+<a name="line62"> 62: </a><font color="#B22222">.keywords: <a href="../../../docs/manualpages/TS/TS.html#TS">TS</a>, forward sensitivity</font>
+
+<a name="line64"> 64: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/TS/TSForwardSetSensitivities.html#TSForwardSetSensitivities">TSForwardSetSensitivities</a>(), <a href="../../../docs/manualpages/TS/TSForwardGetSensitivities.html#TSForwardGetSensitivities">TSForwardGetSensitivities</a>(), <a href="../../../docs/manualpages/TS/TSForwardSetIntegralGradients.html#TSForwardSetIntegralGradients">TSForwardSetIntegralGradients</a>(), <a href="../../../docs/manualpages/TS/TSForwardGetIntegralGradients.html#TSForwardGetIntegralGradients">TSForwardGetIntegralGradients</a>(), <a href="../../../docs/manualpages/TS/TSForwardStep.html#TSForwardStep">TSForwardStep</a>()</font>
+<a name="line65"> 65: </a><font color="#B22222">@*/</font>
+<a name="line66"> 66: </a><strong><font color="#4169E1"><a name="TSForwardSetRHSJacobianP"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../docs/manualpages/TS/TSForwardSetRHSJacobianP.html#TSForwardSetRHSJacobianP">TSForwardSetRHSJacobianP</a>(<a href="../../../docs/manualpages/TS/TS.html#TS">TS</a> ts,<a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>* a,<a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> (*func)(<a href="../../../docs/manualpages/TS/TS.html#TS">TS</a>,<a href="../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>,<a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>,<a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>*,void*),void *ctx)</font></strong>
+<a name="line67"> 67: </a>{
+
+<a name="line72"> 72: </a>  ts-&gt;vecsrhsjacobianp    = func;
+<a name="line73"> 73: </a>  ts-&gt;vecsrhsjacobianpctx = ctx;
+<a name="line74"> 74: </a>  <font color="#4169E1">if</font>(a) ts-&gt;vecs_jacp = a;
+<a name="line75"> 75: </a>  <font color="#4169E1">return</font>(0);
+<a name="line76"> 76: </a>}
+
+<a name="line78"> 78: </a><font color="#B22222">/*@C</font>
+<a name="line79"> 79: </a><font color="#B22222">  <a href="../../../docs/manualpages/TS/TSForwardComputeRHSJacobianP.html#TSForwardComputeRHSJacobianP">TSForwardComputeRHSJacobianP</a> - Runs the user-defined JacobianP function.</font>
+
+<a name="line81"> 81: </a><font color="#B22222">  Collective on <a href="../../../docs/manualpages/TS/TS.html#TS">TS</a></font>
+
+<a name="line83"> 83: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line84"> 84: </a><font color="#B22222">. ts   - The <a href="../../../docs/manualpages/TS/TS.html#TS">TS</a> context obtained from <a href="../../../docs/manualpages/TS/TSCreate.html#TSCreate">TSCreate</a>()</font>
+
+<a name="line86"> 86: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line88"> 88: </a><font color="#B22222">.keywords: <a href="../../../docs/manualpages/TS/TS.html#TS">TS</a>, forward sensitivity</font>
+
+<a name="line90"> 90: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/TS/TSForwardSetRHSJacobianP.html#TSForwardSetRHSJacobianP">TSForwardSetRHSJacobianP</a>()</font>
+<a name="line91"> 91: </a><font color="#B22222">@*/</font>
+<a name="line92"> 92: </a><strong><font color="#4169E1"><a name="TSForwardComputeRHSJacobianP"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>  <a href="../../../docs/manualpages/TS/TSForwardComputeRHSJacobianP.html#TSForwardComputeRHSJacobianP">TSForwardComputeRHSJacobianP</a>(<a href="../../../docs/manualpages/TS/TS.html#TS">TS</a> ts,<a href="../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> t,<a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> X,<a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>* A )</font></strong>
+<a name="line93"> 93: </a>{
+
+<a name="line100">100: </a>  <font color="#4169E1">if</font> (ts-&gt;vecsrhsjacobianp) {
+<a name="line101">101: </a>    PetscStackPush(<font color="#666666">"<a href="../../../docs/manualpages/TS/TS.html#TS">TS</a> user JacobianP function for sensitivity analysis"</font>);
+<a name="line102">102: </a>    (*ts-&gt;vecsrhsjacobianp)(ts,t,X,A,ts-&gt;vecsrhsjacobianpctx);
+<a name="line103">103: </a>    PetscStackPop;
+<a name="line104">104: </a>  }
+<a name="line105">105: </a>  <font color="#4169E1">return</font>(0);
+<a name="line106">106: </a>}
+
+<a name="line108">108: </a><font color="#B22222">/*@</font>
+<a name="line109">109: </a><font color="#B22222">  <a href="../../../docs/manualpages/TS/TSForwardSetIntegralGradients.html#TSForwardSetIntegralGradients">TSForwardSetIntegralGradients</a> - Set the vectors holding forward sensitivities of the integral term.</font>
+
+<a name="line111">111: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line112">112: </a><font color="#B22222">. ts- the <a href="../../../docs/manualpages/TS/TS.html#TS">TS</a> context obtained from <a href="../../../docs/manualpages/TS/TSCreate.html#TSCreate">TSCreate</a>()</font>
+<a name="line113">113: </a><font color="#B22222">. numfwdint- number of integrals</font>
+<a name="line114">114: </a><font color="#B22222">. v  = the vectors containing the gradients for each integral wrt initial values</font>
+<a name="line115">115: </a><font color="#B22222">. vp = the vectors containing the gradients for each integral wrt parameters</font>
+
+<a name="line117">117: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line119">119: </a><font color="#B22222">.keywords: <a href="../../../docs/manualpages/TS/TS.html#TS">TS</a>, forward sensitivity</font>
+
+<a name="line121">121: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/TS/TSForwardGetSensitivities.html#TSForwardGetSensitivities">TSForwardGetSensitivities</a>(), <a href="../../../docs/manualpages/TS/TSForwardSetIntegralGradients.html#TSForwardSetIntegralGradients">TSForwardSetIntegralGradients</a>(), <a href="../../../docs/manualpages/TS/TSForwardGetIntegralGradients.html#TSForwardGetIntegralGradients">TSForwardGetIntegralGradients</a>(), <a href="../../../docs/manualpages/TS/TSForwardStep.html#TSForwardStep">TSForwardStep</a>()</font>
+<a name="line122">122: </a><font color="#B22222">@*/</font>
+<a name="line123">123: </a><strong><font color="#4169E1"><a name="TSForwardSetIntegralGradients"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../docs/manualpages/TS/TSForwardSetIntegralGradients.html#TSForwardSetIntegralGradients">TSForwardSetIntegralGradients</a>(<a href="../../../docs/manualpages/TS/TS.html#TS">TS</a> ts,<a href="../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> numfwdint,<a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> *vp,<a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> *v)</font></strong>
+<a name="line124">124: </a>{
+<a name="line127">127: </a>  <font color="#4169E1">if</font> (ts-&gt;numcost &amp;&amp; ts-&gt;numcost!=numfwdint) <a href="../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)ts),PETSC_ERR_USER,<font color="#666666">"The number of cost functions (2rd parameter of <a href="../../../docs/manualpages/TS/TSSetCostIntegrand.html#TSSetCostIntegrand">TSSetCostIntegrand</a>()) is inconsistent with the one set by <a href="../../../docs/manualpages/TS/TSSetCostIntegrand.html#TSSetCostIntegrand">TSSetCostIntegrand</a>()"</font>);
+<a name="line128">128: </a>  <font color="#4169E1">if</font> (!ts-&gt;numcost) ts-&gt;numcost = numfwdint;
+
+<a name="line130">130: </a>  ts-&gt;vecs_integral_sensi  = v;
+<a name="line131">131: </a>  ts-&gt;vecs_integral_sensip = vp;
+<a name="line132">132: </a>  <font color="#4169E1">return</font>(0);
+<a name="line133">133: </a>}
+
+<a name="line135">135: </a><font color="#B22222">/*@</font>
+<a name="line136">136: </a><font color="#B22222">  <a href="../../../docs/manualpages/TS/TSForwardGetIntegralGradients.html#TSForwardGetIntegralGradients">TSForwardGetIntegralGradients</a> - Returns the forward sensitivities ofthe integral term.</font>
+
+<a name="line138">138: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line139">139: </a><font color="#B22222">. ts- the <a href="../../../docs/manualpages/TS/TS.html#TS">TS</a> context obtained from <a href="../../../docs/manualpages/TS/TSCreate.html#TSCreate">TSCreate</a>()</font>
+
+<a name="line141">141: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line142">142: </a><font color="#B22222">. v  = the vectors containing the gradients for each integral wrt initial values</font>
+<a name="line143">143: </a><font color="#B22222">. vp = the vectors containing the gradients for each integral wrt parameters</font>
+
+<a name="line145">145: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line147">147: </a><font color="#B22222">.keywords: <a href="../../../docs/manualpages/TS/TS.html#TS">TS</a>, forward sensitivity</font>
+
+<a name="line149">149: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/TS/TSForwardSetSensitivities.html#TSForwardSetSensitivities">TSForwardSetSensitivities</a>(), <a href="../../../docs/manualpages/TS/TSForwardSetIntegralGradients.html#TSForwardSetIntegralGradients">TSForwardSetIntegralGradients</a>(), <a href="../../../docs/manualpages/TS/TSForwardGetIntegralGradients.html#TSForwardGetIntegralGradients">TSForwardGetIntegralGradients</a>(), <a href="../../../docs/manualpages/TS/TSForwardStep.html#TSForwardStep">TSForwardStep</a>()</font>
+<a name="line150">150: </a><font color="#B22222">@*/</font>
+<a name="line151">151: </a><strong><font color="#4169E1"><a name="TSForwardGetIntegralGradients"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../docs/manualpages/TS/TSForwardGetIntegralGradients.html#TSForwardGetIntegralGradients">TSForwardGetIntegralGradients</a>(<a href="../../../docs/manualpages/TS/TS.html#TS">TS</a> ts,<a href="../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *numfwdint,<a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> **v,<a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> **vp)</font></strong>
+<a name="line152">152: </a>{
+<a name="line156">156: </a>  <font color="#4169E1">if</font> (numfwdint) *numfwdint = ts-&gt;numcost;
+<a name="line157">157: </a>  <font color="#4169E1">if</font> (v) *v = ts-&gt;vecs_integral_sensi;
+<a name="line158">158: </a>  <font color="#4169E1">if</font> (vp) *vp = ts-&gt;vecs_integral_sensip;
+<a name="line159">159: </a>  <font color="#4169E1">return</font>(0);
+<a name="line160">160: </a>}
+
+<a name="line162">162: </a><font color="#B22222">/*@</font>
+<a name="line163">163: </a><font color="#B22222">  <a href="../../../docs/manualpages/TS/TSForwardStep.html#TSForwardStep">TSForwardStep</a> - Compute the forward sensitivity for one time step.</font>
+
+<a name="line165">165: </a><font color="#B22222">  Collective on <a href="../../../docs/manualpages/TS/TS.html#TS">TS</a></font>
+
+<a name="line167">167: </a><font color="#B22222">  Input Arguments:</font>
+<a name="line168">168: </a><font color="#B22222">. ts - time stepping context</font>
+
+<a name="line170">170: </a><font color="#B22222">  Level: advanced</font>
+
+<a name="line172">172: </a><font color="#B22222">  Notes:</font>
+<a name="line173">173: </a><font color="#B22222">  This function cannot be called until <a href="../../../docs/manualpages/TS/TSStep.html#TSStep">TSStep</a>() has been completed.</font>
+
+<a name="line175">175: </a><font color="#B22222">.keywords: <a href="../../../docs/manualpages/TS/TS.html#TS">TS</a>, forward sensitivity</font>
+
+<a name="line177">177: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/TS/TSForwardSetSensitivities.html#TSForwardSetSensitivities">TSForwardSetSensitivities</a>(), <a href="../../../docs/manualpages/TS/TSForwardGetSensitivities.html#TSForwardGetSensitivities">TSForwardGetSensitivities</a>(), <a href="../../../docs/manualpages/TS/TSForwardSetIntegralGradients.html#TSForwardSetIntegralGradients">TSForwardSetIntegralGradients</a>(), <a href="../../../docs/manualpages/TS/TSForwardGetIntegralGradients.html#TSForwardGetIntegralGradients">TSForwardGetIntegralGradients</a>(), <a href="../../../docs/manualpages/TS/TSForwardSetUp.html#TSForwardSetUp">TSForwardSetUp</a>()</font>
+<a name="line178">178: </a><font color="#B22222">@*/</font>
+<a name="line179">179: </a><strong><font color="#4169E1"><a name="TSForwardStep"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../docs/manualpages/TS/TSForwardStep.html#TSForwardStep">TSForwardStep</a>(<a href="../../../docs/manualpages/TS/TS.html#TS">TS</a> ts)</font></strong>
+<a name="line180">180: </a>{
+<a name="line183">183: </a>  <font color="#4169E1">if</font> (!ts-&gt;ops-&gt;forwardstep) <a href="../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)ts),PETSC_ERR_SUP,<font color="#666666">"%s does not provide forward sensitivity analysis"</font>,((<a href="../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)ts)-&gt;type_name);
+<a name="line184">184: </a>  <a href="../../../docs/manualpages/Profiling/PetscLogEventBegin.html#PetscLogEventBegin">PetscLogEventBegin</a>(TS_ForwardStep,ts,0,0,0);
+<a name="line185">185: </a>  (*ts-&gt;ops-&gt;forwardstep)(ts);
+<a name="line186">186: </a>  <a href="../../../docs/manualpages/Profiling/PetscLogEventEnd.html#PetscLogEventEnd">PetscLogEventEnd</a>(TS_ForwardStep,ts,0,0,0);
+<a name="line187">187: </a>  <font color="#4169E1">return</font>(0);
+<a name="line188">188: </a>}
+
+<a name="line190">190: </a><font color="#B22222">/*@</font>
+<a name="line191">191: </a><font color="#B22222">  <a href="../../../docs/manualpages/TS/TSForwardSetSensitivities.html#TSForwardSetSensitivities">TSForwardSetSensitivities</a> - Sets the initial value of the trajectory sensitivities of solution  w.r.t. the problem parameters and initial values.</font>
+
+<a name="line193">193: </a><font color="#B22222">  Logically Collective on <a href="../../../docs/manualpages/TS/TS.html#TS">TS</a> and <a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a></font>
+
+<a name="line195">195: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line196">196: </a><font color="#B22222">+ ts - the <a href="../../../docs/manualpages/TS/TS.html#TS">TS</a> context obtained from <a href="../../../docs/manualpages/TS/TSCreate.html#TSCreate">TSCreate</a>()</font>
+<a name="line197">197: </a><font color="#B22222">. nump - number of parameters</font>
+<a name="line198">198: </a><font color="#B22222">. sp - sensitivities with respect to the parameters, the number of entries in these vectors is the same as the number of parameters</font>
+<a name="line199">199: </a><font color="#B22222">. num - number of initial values</font>
+<a name="line200">200: </a><font color="#B22222">- s - sensitivities with respect to the (selected) initial condition variables, the dimension and parallel layout of these vectors is the same as the ODE solution vector</font>
+
+<a name="line202">202: </a><font color="#B22222">  Level: beginner</font>
+
+<a name="line204">204: </a><font color="#B22222">  Notes:</font>
+<a name="line205">205: </a><font color="#B22222">  Forward sensitivity is also called 'trajectory sensitivity' in some fields such as power systems.</font>
+<a name="line206">206: </a><font color="#B22222">  This function turns on a flag to trigger <a href="../../../docs/manualpages/TS/TSSolve.html#TSSolve">TSSolve</a>() to compute forward sensitivities automatically.</font>
+<a name="line207">207: </a><font color="#B22222">  You must call this function before <a href="../../../docs/manualpages/TS/TSSolve.html#TSSolve">TSSolve</a>().</font>
+<a name="line208">208: </a><font color="#B22222">  The entries in these vectors must be correctly initialized with the values s_i = dy/dp|startingtime.</font>
+<a name="line209">209: </a><font color="#B22222">  The two user-provided sensitivity vector arrays will be packed into one big array to simplify implementation.</font>
+
+<a name="line211">211: </a><font color="#B22222">.keywords: <a href="../../../docs/manualpages/TS/TS.html#TS">TS</a>, timestep, set, forward sensitivity, initial values</font>
+
+<a name="line213">213: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/TS/TSForwardGetSensitivities.html#TSForwardGetSensitivities">TSForwardGetSensitivities</a>(), <a href="../../../docs/manualpages/TS/TSForwardSetIntegralGradients.html#TSForwardSetIntegralGradients">TSForwardSetIntegralGradients</a>(), <a href="../../../docs/manualpages/TS/TSForwardGetIntegralGradients.html#TSForwardGetIntegralGradients">TSForwardGetIntegralGradients</a>(), <a href="../../../docs/manualpages/TS/TSForwardStep.html#TSForwardStep">TSForwardStep</a>()</font>
+<a name="line214">214: </a><font color="#B22222">@*/</font>
+<a name="line215">215: </a><strong><font color="#4169E1"><a name="TSForwardSetSensitivities"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../docs/manualpages/TS/TSForwardSetSensitivities.html#TSForwardSetSensitivities">TSForwardSetSensitivities</a>(<a href="../../../docs/manualpages/TS/TS.html#TS">TS</a> ts,<a href="../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> nump,<a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> *sp,<a href="../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> num,<a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> *s)</font></strong>
+<a name="line216">216: </a>{
+<a name="line217">217: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       i;
+
+<a name="line222">222: </a>  ts-&gt;forward_solve     = <a href="../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+<a name="line223">223: </a>  ts-&gt;num_parameters    = sp ? nump:0;
+<a name="line224">224: </a>  ts-&gt;num_initialvalues = s ? num:0;
+<a name="line225">225: </a>  <font color="#B22222">/* pack fwdsensi and fwdsensip into a big array */</font>
+<a name="line226">226: </a>  <font color="#4169E1">if</font> (!ts-&gt;vecs_fwdsensipacked) {
+<a name="line227">227: </a>    <a href="../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(num+nump,&amp;ts-&gt;vecs_fwdsensipacked);
+<a name="line228">228: </a>  }
+<a name="line229">229: </a>  <font color="#4169E1">for</font> (i=0; i&lt;num; i++) ts-&gt;vecs_fwdsensipacked[i] = s[i];
+<a name="line230">230: </a>  <font color="#4169E1">for</font> (i=0; i&lt;nump; i++) ts-&gt;vecs_fwdsensipacked[i+num] = sp[i];
+<a name="line231">231: </a>  <font color="#4169E1">return</font>(0);
+<a name="line232">232: </a>}
+
+<a name="line234">234: </a><font color="#B22222">/*@</font>
+<a name="line235">235: </a><font color="#B22222">  <a href="../../../docs/manualpages/TS/TSForwardGetSensitivities.html#TSForwardGetSensitivities">TSForwardGetSensitivities</a> - Returns the trajectory sensitivities</font>
+
+<a name="line237">237: </a><font color="#B22222">  Not Collective, but <a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> returned is parallel if <a href="../../../docs/manualpages/TS/TS.html#TS">TS</a> is parallel</font>
+
+<a name="line239">239: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line240">240: </a><font color="#B22222">+ ts - the <a href="../../../docs/manualpages/TS/TS.html#TS">TS</a> context obtained from <a href="../../../docs/manualpages/TS/TSCreate.html#TSCreate">TSCreate</a>()</font>
+<a name="line241">241: </a><font color="#B22222">. nump - number of parameters</font>
+<a name="line242">242: </a><font color="#B22222">. sp - sensitivities with respect to the parameters, the number of entries in these vectors is the same as the number of parameters</font>
+<a name="line243">243: </a><font color="#B22222">. num - number of initial values</font>
+<a name="line244">244: </a><font color="#B22222">- s - sensitivities with respect to the (selected) initial condition variables, the dimension and parallel layout of these vectors is the same as the ODE solution vector</font>
+
+<a name="line246">246: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line248">248: </a><font color="#B22222">.keywords: <a href="../../../docs/manualpages/TS/TS.html#TS">TS</a>, forward sensitivity</font>
+
+<a name="line250">250: </a><font color="#B22222">.seealso: <a href="../../../docs/manualpages/TS/TSForwardSetSensitivities.html#TSForwardSetSensitivities">TSForwardSetSensitivities</a>(), <a href="../../../docs/manualpages/TS/TSForwardSetIntegralGradients.html#TSForwardSetIntegralGradients">TSForwardSetIntegralGradients</a>(), <a href="../../../docs/manualpages/TS/TSForwardGetIntegralGradients.html#TSForwardGetIntegralGradients">TSForwardGetIntegralGradients</a>(), <a href="../../../docs/manualpages/TS/TSForwardStep.html#TSForwardStep">TSForwardStep</a>()</font>
+<a name="line251">251: </a><font color="#B22222">@*/</font>
+<a name="line252">252: </a><strong><font color="#4169E1"><a name="TSForwardGetSensitivities"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../docs/manualpages/TS/TSForwardGetSensitivities.html#TSForwardGetSensitivities">TSForwardGetSensitivities</a>(<a href="../../../docs/manualpages/TS/TS.html#TS">TS</a> ts,<a href="../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *nump,<a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> **sp,<a href="../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *num,<a href="../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> **s)</font></strong>
+<a name="line253">253: </a>{
+<a name="line255">255: </a>  <font color="#4169E1">if</font> (nump) *nump = ts-&gt;num_parameters;
+<a name="line256">256: </a>  <font color="#4169E1">if</font> (num) *num   = ts-&gt;num_initialvalues;
+<a name="line257">257: </a>  <font color="#4169E1">if</font> (sp) *sp     = &amp;ts-&gt;vecs_fwdsensipacked[(*num)];
+<a name="line258">258: </a>  <font color="#4169E1">if</font> (s) *s       = ts-&gt;vecs_fwdsensipacked;
+<a name="line259">259: </a>  <font color="#4169E1">return</font>(0);
+<a name="line260">260: </a>}
+</pre>
+</body>
+
+</html>

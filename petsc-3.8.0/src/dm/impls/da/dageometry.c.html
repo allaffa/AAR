@@ -1,0 +1,861 @@
+<center><a href="dageometry.c">Actual source code: dageometry.c</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/dm/impls/da/dageometry.c.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:39:33+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/dm/impls/da/dageometry.c.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+<a name="line1">  1: </a> #include <A href="../../../../include/petscsf.h.html">&lt;petscsf.h&gt;</A>
+<a name="line2">  2: </a> #include <A href="../../../../include/petsc/private/dmdaimpl.h.html">&lt;petsc/private/dmdaimpl.h&gt;</A>
+
+<a name="line4">  4: </a><strong><font color="#4169E1"><a name="FillClosureArray_Static"></a>PETSC_STATIC_INLINE <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> FillClosureArray_Static(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm, <a href="../../../../docs/manualpages/IS/PetscSection.html#PetscSection">PetscSection</a> section, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> nP, const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> points[], <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> *vArray, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *csize, <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> **array)</font></strong>
+<a name="line5">  5: </a>{
+<a name="line6">  6: </a>  <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>    *a;
+<a name="line7">  7: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       pStart, pEnd, size = 0, dof, off, d, k, i;
+
+<a name="line11"> 11: </a>  <a href="../../../../docs/manualpages/IS/PetscSectionGetChart.html#PetscSectionGetChart">PetscSectionGetChart</a>(section, &amp;pStart, &amp;pEnd);
+<a name="line12"> 12: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; nP; ++i) {
+<a name="line13"> 13: </a>    const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> p = points[i];
+
+<a name="line15"> 15: </a>    <font color="#4169E1">if</font> ((p &lt; pStart) || (p &gt;= pEnd)) <font color="#4169E1">continue</font>;
+<a name="line16"> 16: </a>    <a href="../../../../docs/manualpages/IS/PetscSectionGetDof.html#PetscSectionGetDof">PetscSectionGetDof</a>(section, p, &amp;dof);
+<a name="line17"> 17: </a>    size += dof;
+<a name="line18"> 18: </a>  }
+<a name="line19"> 19: </a>  <font color="#4169E1">if</font> (csize) *csize = size;
+<a name="line20"> 20: </a>  <font color="#4169E1">if</font> (array) {
+<a name="line21"> 21: </a>    <a href="../../../../docs/manualpages/DM/DMGetWorkArray.html#DMGetWorkArray">DMGetWorkArray</a>(dm, size, PETSC_SCALAR, &amp;a);
+<a name="line22"> 22: </a>    <font color="#4169E1">for</font> (i = 0, k = 0; i &lt; nP; ++i) {
+<a name="line23"> 23: </a>      const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> p = points[i];
+
+<a name="line25"> 25: </a>      <font color="#4169E1">if</font> ((p &lt; pStart) || (p &gt;= pEnd)) <font color="#4169E1">continue</font>;
+<a name="line26"> 26: </a>      <a href="../../../../docs/manualpages/IS/PetscSectionGetDof.html#PetscSectionGetDof">PetscSectionGetDof</a>(section, p, &amp;dof);
+<a name="line27"> 27: </a>      <a href="../../../../docs/manualpages/IS/PetscSectionGetOffset.html#PetscSectionGetOffset">PetscSectionGetOffset</a>(section, p, &amp;off);
+
+<a name="line29"> 29: </a>      <font color="#4169E1">for</font> (d = 0; d &lt; dof; ++d, ++k) a[k] = vArray[off+d];
+<a name="line30"> 30: </a>    }
+<a name="line31"> 31: </a>    *array = a;
+<a name="line32"> 32: </a>  }
+<a name="line33"> 33: </a>  <font color="#4169E1">return</font>(0);
+<a name="line34"> 34: </a>}
+
+<a name="line36"> 36: </a><strong><font color="#4169E1"><a name="FillClosureVec_Private"></a>PETSC_STATIC_INLINE <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> FillClosureVec_Private(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm, <a href="../../../../docs/manualpages/IS/PetscSection.html#PetscSection">PetscSection</a> section, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> nP, const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> points[], <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> *vArray, const <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> *array, <a href="../../../../docs/manualpages/Sys/InsertMode.html#InsertMode">InsertMode</a> mode)</font></strong>
+<a name="line37"> 37: </a>{
+<a name="line38"> 38: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       dof, off, d, k, i;
+
+<a name="line42"> 42: </a>  <font color="#4169E1">if</font> ((mode == <a href="../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>) || (mode == <a href="../../../../docs/manualpages/Sys/InsertMode.html#InsertMode">INSERT_ALL_VALUES</a>)) {
+<a name="line43"> 43: </a>    <font color="#4169E1">for</font> (i = 0, k = 0; i &lt; nP; ++i) {
+<a name="line44"> 44: </a>      <a href="../../../../docs/manualpages/IS/PetscSectionGetDof.html#PetscSectionGetDof">PetscSectionGetDof</a>(section, points[i], &amp;dof);
+<a name="line45"> 45: </a>      <a href="../../../../docs/manualpages/IS/PetscSectionGetOffset.html#PetscSectionGetOffset">PetscSectionGetOffset</a>(section, points[i], &amp;off);
+
+<a name="line47"> 47: </a>      <font color="#4169E1">for</font> (d = 0; d &lt; dof; ++d, ++k) vArray[off+d] = array[k];
+<a name="line48"> 48: </a>    }
+<a name="line49"> 49: </a>  } <font color="#4169E1">else</font> {
+<a name="line50"> 50: </a>    <font color="#4169E1">for</font> (i = 0, k = 0; i &lt; nP; ++i) {
+<a name="line51"> 51: </a>      <a href="../../../../docs/manualpages/IS/PetscSectionGetDof.html#PetscSectionGetDof">PetscSectionGetDof</a>(section, points[i], &amp;dof);
+<a name="line52"> 52: </a>      <a href="../../../../docs/manualpages/IS/PetscSectionGetOffset.html#PetscSectionGetOffset">PetscSectionGetOffset</a>(section, points[i], &amp;off);
+
+<a name="line54"> 54: </a>      <font color="#4169E1">for</font> (d = 0; d &lt; dof; ++d, ++k) vArray[off+d] += array[k];
+<a name="line55"> 55: </a>    }
+<a name="line56"> 56: </a>  }
+<a name="line57"> 57: </a>  <font color="#4169E1">return</font>(0);
+<a name="line58"> 58: </a>}
+
+<a name="line60"> 60: </a><strong><font color="#4169E1"><a name="GetPointArray_Private"></a>PETSC_STATIC_INLINE <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> GetPointArray_Private(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> n,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *points,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *rn,const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> **rpoints)</font></strong>
+<a name="line61"> 61: </a>{
+<a name="line63"> 63: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       *work;
+
+<a name="line66"> 66: </a>  <font color="#4169E1">if</font> (rn) *rn = n;
+<a name="line67"> 67: </a>  <font color="#4169E1">if</font> (rpoints) {
+<a name="line68"> 68: </a>    <a href="../../../../docs/manualpages/DM/DMGetWorkArray.html#DMGetWorkArray">DMGetWorkArray</a>(dm,n,<a href="../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_INT</a>,&amp;work);
+<a name="line69"> 69: </a>    <a href="../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(work,points,n*<font color="#4169E1">sizeof</font>(<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>));
+<a name="line70"> 70: </a>    *rpoints = work;
+<a name="line71"> 71: </a>  }
+<a name="line72"> 72: </a>  <font color="#4169E1">return</font>(0);
+<a name="line73"> 73: </a>}
+
+<a name="line75"> 75: </a><strong><font color="#4169E1"><a name="RestorePointArray_Private"></a>PETSC_STATIC_INLINE <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> RestorePointArray_Private(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *rn,const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> **rpoints)</font></strong>
+<a name="line76"> 76: </a>{
+
+<a name="line80"> 80: </a>  <font color="#4169E1">if</font> (rn) *rn = 0;
+<a name="line81"> 81: </a>  <font color="#4169E1">if</font> (rpoints) {
+<a name="line82"> 82: </a>    <font color="#B22222">/* note the second argument to <a href="../../../../docs/manualpages/DM/DMRestoreWorkArray.html#DMRestoreWorkArray">DMRestoreWorkArray</a>() is always ignored */</font>
+<a name="line83"> 83: </a>    <a href="../../../../docs/manualpages/DM/DMRestoreWorkArray.html#DMRestoreWorkArray">DMRestoreWorkArray</a>(dm,0, <a href="../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_INT</a>, (void*) rpoints);
+<a name="line84"> 84: </a>  }
+<a name="line85"> 85: </a>  <font color="#4169E1">return</font>(0);
+<a name="line86"> 86: </a>}
+
+<a name="line88"> 88: </a><strong><font color="#4169E1"><a name="DMDAGetTransitiveClosure"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMDAGetTransitiveClosure(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> p, <a href="../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> useClosure, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *closureSize, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> **closure)</font></strong>
+<a name="line89"> 89: </a>{
+<a name="line90"> 90: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       dim = dm-&gt;dim;
+<a name="line91"> 91: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       nVx, nVy, nVz, nxF, nXF, nyF, nYF, nzF, nZF;
+<a name="line92"> 92: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       pStart, pEnd, cStart, cEnd, vStart, vEnd, fStart, fEnd, xfStart, xfEnd, yfStart;
+
+<a name="line96"> 96: </a>  <font color="#4169E1">if</font> (!useClosure) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>) dm), PETSC_ERR_SUP, <font color="#666666">"Star operation is not yet supported"</font>);
+<a name="line99"> 99: </a>  DMDAGetHeightStratum(dm, -1,  &amp;pStart, &amp;pEnd);
+<a name="line100">100: </a>  DMDAGetHeightStratum(dm,  0,  &amp;cStart, &amp;cEnd);
+<a name="line101">101: </a>  DMDAGetHeightStratum(dm,  1,  &amp;fStart, &amp;fEnd);
+<a name="line102">102: </a>  DMDAGetHeightStratum(dm, dim, &amp;vStart, &amp;vEnd);
+<a name="line103">103: </a>  DMDAGetNumVertices(dm, &amp;nVx, &amp;nVy, &amp;nVz, NULL);
+<a name="line104">104: </a>  DMDAGetNumFaces(dm, &amp;nxF, &amp;nXF, &amp;nyF, &amp;nYF, &amp;nzF, &amp;nZF);
+<a name="line105">105: </a>  xfStart = fStart; xfEnd = xfStart+nXF;
+<a name="line106">106: </a>  yfStart = xfEnd;
+<a name="line107">107: </a>  <font color="#4169E1">if</font> ((p &lt; pStart) || (p &gt;= pEnd)) <a href="../../../../docs/manualpages/Sys/SETERRQ3.html#SETERRQ3">SETERRQ3</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>) dm), PETSC_ERR_ARG_OUTOFRANGE, <font color="#666666">"Invalid point %d should be in [%d, %d)"</font>, p, pStart, pEnd);
+<a name="line108">108: </a>  <font color="#4169E1">if</font> ((p &gt;= cStart) || (p &lt; cEnd)) {
+<a name="line109">109: </a>    <font color="#B22222">/* Cell */</font>
+<a name="line110">110: </a>    <font color="#4169E1">if</font> (dim == 1) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_SUP, <font color="#666666">"Not implemented"</font>);
+<a name="line111">111: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 2) {
+<a name="line112">112: </a>      <font color="#B22222">/* 4 faces, 4 vertices</font>
+<a name="line113">113: </a><font color="#B22222">         Bottom-left vertex follows same order as cells</font>
+<a name="line114">114: </a><font color="#B22222">         Bottom y-face same order as cells</font>
+<a name="line115">115: </a><font color="#B22222">         Left x-face follows same order as cells</font>
+<a name="line116">116: </a><font color="#B22222">         We number the quad:</font>
+
+<a name="line118">118: </a><font color="#B22222">           8--3--7</font>
+<a name="line119">119: </a><font color="#B22222">           |     |</font>
+<a name="line120">120: </a><font color="#B22222">           4  0  2</font>
+<a name="line121">121: </a><font color="#B22222">           |     |</font>
+<a name="line122">122: </a><font color="#B22222">           5--1--6</font>
+<a name="line123">123: </a><font color="#B22222">      */</font>
+<a name="line124">124: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> c  = p - cStart, cx = c % (nVx-1), cy = c / (nVx-1);
+<a name="line125">125: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> v  = cy*nVx + cx +  vStart;
+<a name="line126">126: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> xf = cy*nxF + cx + xfStart;
+<a name="line127">127: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> yf = c + yfStart;
+
+<a name="line129">129: </a>      *closureSize = 9;
+<a name="line130">130: </a>      <font color="#4169E1">if</font> (!(*closure)) {<a href="../../../../docs/manualpages/DM/DMGetWorkArray.html#DMGetWorkArray">DMGetWorkArray</a>(dm, *closureSize, <a href="../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_INT</a>, closure);}
+<a name="line131">131: </a>      (*closure)[0] = p; (*closure)[1] = yf; (*closure)[2] = xf+1; (*closure)[3] = yf+nyF; (*closure)[4] = xf+0; (*closure)[5] = v+0; (*closure)[6]= v+1; (*closure)[7] = v+nVx+1; (*closure)[8] = v+nVx+0;
+<a name="line132">132: </a>    } <font color="#4169E1">else</font> {
+<a name="line133">133: </a>      <font color="#B22222">/* 6 faces, 12 edges, 8 vertices</font>
+<a name="line134">134: </a><font color="#B22222">         Bottom-left vertex follows same order as cells</font>
+<a name="line135">135: </a><font color="#B22222">         Bottom y-face same order as cells</font>
+<a name="line136">136: </a><font color="#B22222">         Left x-face follows same order as cells</font>
+<a name="line137">137: </a><font color="#B22222">         We number the quad:</font>
+
+<a name="line139">139: </a><font color="#B22222">           8--3--7</font>
+<a name="line140">140: </a><font color="#B22222">           |     |</font>
+<a name="line141">141: </a><font color="#B22222">           4  0  2</font>
+<a name="line142">142: </a><font color="#B22222">           |     |</font>
+<a name="line143">143: </a><font color="#B22222">           5--1--6</font>
+<a name="line144">144: </a><font color="#B22222">      */</font>
+<a name="line145">145: </a><font color="#A020F0">#if 0</font>
+<a name="line146">146: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> c  = p - cStart, cx = c % (nVx-1), cy = c / (nVx-1), cz = c / ((nVx-1)*(nVy-1));
+<a name="line147">147: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> v  = cy*nVx + cx +  vStart;
+<a name="line148">148: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> xf = cy*nxF + cx + xfStart;
+<a name="line149">149: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> yf = c + yfStart;
+
+<a name="line151">151: </a>      *closureSize = 26;
+<a name="line152">152: </a>      <font color="#4169E1">if</font> (!(*closure)) {<a href="../../../../docs/manualpages/DM/DMGetWorkArray.html#DMGetWorkArray">DMGetWorkArray</a>(dm, *closureSize, <a href="../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_INT</a>, closure);}
+<a name="line153">153: </a><font color="#A020F0">#endif</font>
+<a name="line154">154: </a>      <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_SUP, <font color="#666666">"Not implemented"</font>);
+<a name="line155">155: </a>    }
+<a name="line156">156: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> ((p &gt;= vStart) || (p &lt; vEnd)) {
+<a name="line157">157: </a>    <font color="#B22222">/* Vertex */</font>
+<a name="line158">158: </a>    *closureSize = 1;
+<a name="line159">159: </a>    <font color="#4169E1">if</font> (!(*closure)) {<a href="../../../../docs/manualpages/DM/DMGetWorkArray.html#DMGetWorkArray">DMGetWorkArray</a>(dm, *closureSize, <a href="../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_INT</a>, closure);}
+<a name="line160">160: </a>    (*closure)[0] = p;
+<a name="line161">161: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> ((p &gt;= fStart) || (p &lt; fStart + nXF)) {
+<a name="line162">162: </a>    <font color="#B22222">/* X Face */</font>
+<a name="line163">163: </a>    <font color="#4169E1">if</font> (dim == 1) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_PLIB, <font color="#666666">"There are no faces in 1D"</font>);
+<a name="line164">164: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 2) {
+<a name="line165">165: </a>      <font color="#B22222">/* 2 vertices: The bottom vertex has the same numbering as the face */</font>
+<a name="line166">166: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> f = p - xfStart;
+
+<a name="line168">168: </a>      *closureSize = 3;
+<a name="line169">169: </a>      <font color="#4169E1">if</font> (!(*closure)) {<a href="../../../../docs/manualpages/DM/DMGetWorkArray.html#DMGetWorkArray">DMGetWorkArray</a>(dm, *closureSize, <a href="../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_INT</a>, closure);}
+<a name="line170">170: </a>      (*closure)[0] = p; (*closure)[1] = f; (*closure)[2] = f+nVx;
+<a name="line171">171: </a>    } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 3) {
+<a name="line172">172: </a>      <font color="#B22222">/* 4 vertices */</font>
+<a name="line173">173: </a>      <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_SUP, <font color="#666666">"Not implemented"</font>);
+<a name="line174">174: </a>    }
+<a name="line175">175: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> ((p &gt;= fStart + nXF) || (p &lt; fStart + nXF + nYF)) {
+<a name="line176">176: </a>    <font color="#B22222">/* Y Face */</font>
+<a name="line177">177: </a>    <font color="#4169E1">if</font> (dim == 1) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_PLIB, <font color="#666666">"There are no faces in 1D"</font>);
+<a name="line178">178: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 2) {
+<a name="line179">179: </a>      <font color="#B22222">/* 2 vertices: The left vertex has the same numbering as the face */</font>
+<a name="line180">180: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> f = p - yfStart;
+
+<a name="line182">182: </a>      *closureSize = 3;
+<a name="line183">183: </a>      <font color="#4169E1">if</font> (!(*closure)) {<a href="../../../../docs/manualpages/DM/DMGetWorkArray.html#DMGetWorkArray">DMGetWorkArray</a>(dm, *closureSize, <a href="../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_INT</a>, closure);}
+<a name="line184">184: </a>      (*closure)[0] = p; (*closure)[1] = f; (*closure)[2]= f+1;
+<a name="line185">185: </a>    } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 3) {
+<a name="line186">186: </a>      <font color="#B22222">/* 4 vertices */</font>
+<a name="line187">187: </a>      <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_SUP, <font color="#666666">"Not implemented"</font>);
+<a name="line188">188: </a>    }
+<a name="line189">189: </a>  } <font color="#4169E1">else</font> {
+<a name="line190">190: </a>    <font color="#B22222">/* Z Face */</font>
+<a name="line191">191: </a>    <font color="#4169E1">if</font> (dim == 1) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_PLIB, <font color="#666666">"There are no faces in 1D"</font>);
+<a name="line192">192: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 2) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_PLIB, <font color="#666666">"There are no z-faces in 2D"</font>);
+<a name="line193">193: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 3) {
+<a name="line194">194: </a>      <font color="#B22222">/* 4 vertices */</font>
+<a name="line195">195: </a>      <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_SUP, <font color="#666666">"Not implemented"</font>);
+<a name="line196">196: </a>    }
+<a name="line197">197: </a>  }
+<a name="line198">198: </a>  <font color="#4169E1">return</font>(0);
+<a name="line199">199: </a>}
+
+<a name="line201">201: </a><strong><font color="#4169E1"><a name="DMDARestoreTransitiveClosure"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMDARestoreTransitiveClosure(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> p, <a href="../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> useClosure, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *closureSize, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> **closure)</font></strong>
+<a name="line202">202: </a>{
+
+<a name="line206">206: </a>  <a href="../../../../docs/manualpages/DM/DMRestoreWorkArray.html#DMRestoreWorkArray">DMRestoreWorkArray</a>(dm, 0, <a href="../../../../docs/manualpages/Sys/PetscDataType.html#PetscDataType">PETSC_INT</a>, closure);
+<a name="line207">207: </a>  <font color="#4169E1">return</font>(0);
+<a name="line208">208: </a>}
+
+<a name="line210">210: </a><strong><font color="#4169E1"><a name="DMDAGetClosure"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMDAGetClosure(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm, <a href="../../../../docs/manualpages/IS/PetscSection.html#PetscSection">PetscSection</a> section, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> p,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *n,const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> **closure)</font></strong>
+<a name="line211">211: </a>{
+<a name="line212">212: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       dim = dm-&gt;dim;
+<a name="line213">213: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       nVx, nVy, nxF, nXF, nyF, nYF, nzF, nZF;
+<a name="line214">214: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       pStart, pEnd, cStart, cEnd, vStart, vEnd, fStart, fEnd, xfStart, xfEnd, yfStart;
+
+<a name="line221">221: </a>  <font color="#4169E1">if</font> (!section) {<a href="../../../../docs/manualpages/DM/DMGetDefaultSection.html#DMGetDefaultSection">DMGetDefaultSection</a>(dm, &amp;section);}
+<a name="line222">222: </a>  <font color="#4169E1">if</font> (!section) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_ARG_WRONG, <font color="#666666">"This <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> has not default <a href="../../../../docs/manualpages/IS/PetscSection.html#PetscSection">PetscSection</a>"</font>);
+<a name="line223">223: </a>  DMDAGetHeightStratum(dm, -1,  &amp;pStart, &amp;pEnd);
+<a name="line224">224: </a>  DMDAGetHeightStratum(dm, 0,   &amp;cStart, &amp;cEnd);
+<a name="line225">225: </a>  DMDAGetHeightStratum(dm, 1,   &amp;fStart, &amp;fEnd);
+<a name="line226">226: </a>  DMDAGetHeightStratum(dm, dim, &amp;vStart, &amp;vEnd);
+<a name="line227">227: </a>  DMDAGetNumVertices(dm, &amp;nVx, &amp;nVy, NULL, NULL);
+<a name="line228">228: </a>  DMDAGetNumFaces(dm, &amp;nxF, &amp;nXF, &amp;nyF, &amp;nYF, &amp;nzF, &amp;nZF);
+<a name="line229">229: </a>  xfStart = fStart; xfEnd = xfStart+nXF;
+<a name="line230">230: </a>  yfStart = xfEnd;
+<a name="line231">231: </a>  <font color="#4169E1">if</font> ((p &lt; pStart) || (p &gt;= pEnd)) <a href="../../../../docs/manualpages/Sys/SETERRQ3.html#SETERRQ3">SETERRQ3</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_ARG_OUTOFRANGE, <font color="#666666">"Invalid point %d should be in [%d, %d)"</font>, p, pStart, pEnd);
+<a name="line232">232: </a>  <font color="#4169E1">if</font> ((p &gt;= cStart) || (p &lt; cEnd)) {
+<a name="line233">233: </a>    <font color="#B22222">/* Cell */</font>
+<a name="line234">234: </a>    <font color="#4169E1">if</font> (dim == 1) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_SUP, <font color="#666666">"Not implemented"</font>);
+<a name="line235">235: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 2) {
+<a name="line236">236: </a>      <font color="#B22222">/* 4 faces, 4 vertices</font>
+<a name="line237">237: </a><font color="#B22222">         Bottom-left vertex follows same order as cells</font>
+<a name="line238">238: </a><font color="#B22222">         Bottom y-face same order as cells</font>
+<a name="line239">239: </a><font color="#B22222">         Left x-face follows same order as cells</font>
+<a name="line240">240: </a><font color="#B22222">         We number the quad:</font>
+
+<a name="line242">242: </a><font color="#B22222">           8--3--7</font>
+<a name="line243">243: </a><font color="#B22222">           |     |</font>
+<a name="line244">244: </a><font color="#B22222">           4  0  2</font>
+<a name="line245">245: </a><font color="#B22222">           |     |</font>
+<a name="line246">246: </a><font color="#B22222">           5--1--6</font>
+<a name="line247">247: </a><font color="#B22222">      */</font>
+<a name="line248">248: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> c  = p - cStart, cx = c % (nVx-1), cy = c / (nVx-1);
+<a name="line249">249: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> v  = cy*nVx + cx +  vStart;
+<a name="line250">250: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> xf = cy*nxF + cx + xfStart;
+<a name="line251">251: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> yf = c + yfStart;
+<a name="line252">252: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> points[9];
+
+<a name="line254">254: </a>      <font color="#B22222">/* Note: initializer list is not computable at compile time, hence we fill the array manually */</font>
+<a name="line255">255: </a>      points[0] = p; points[1] = yf; points[2] = xf+1; points[3] = yf+nyF; points[4] = xf+0; points[5] = v+0; points[6]= v+1; points[7] = v+nVx+1; points[8] = v+nVx+0;
+
+<a name="line257">257: </a>      GetPointArray_Private(dm,9,points,n,closure);
+<a name="line258">258: </a>    } <font color="#4169E1">else</font> <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_SUP, <font color="#666666">"Not implemented"</font>);
+<a name="line259">259: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> ((p &gt;= vStart) || (p &lt; vEnd)) {
+<a name="line260">260: </a>    <font color="#B22222">/* Vertex */</font>
+<a name="line261">261: </a>    GetPointArray_Private(dm,1,&amp;p,n,closure);
+<a name="line262">262: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> ((p &gt;= fStart) || (p &lt; fStart + nXF)) {
+<a name="line263">263: </a>    <font color="#B22222">/* X Face */</font>
+<a name="line264">264: </a>    <font color="#4169E1">if</font> (dim == 1) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_PLIB, <font color="#666666">"There are no faces in 1D"</font>);
+<a name="line265">265: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 2) {
+<a name="line266">266: </a>      <font color="#B22222">/* 2 vertices: The bottom vertex has the same numbering as the face */</font>
+<a name="line267">267: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> f = p - xfStart;
+<a name="line268">268: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> points[3];
+
+<a name="line270">270: </a>      points[0] = p; points[1] = f; points[2] = f+nVx;
+<a name="line271">271: </a>      <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_SUP, <font color="#666666">"Broken"</font>);
+<a name="line272">272: </a>      GetPointArray_Private(dm,3,points,n,closure);
+<a name="line273">273: </a>    } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 3) {
+<a name="line274">274: </a>      <font color="#B22222">/* 4 vertices */</font>
+<a name="line275">275: </a>      <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_SUP, <font color="#666666">"Not implemented"</font>);
+<a name="line276">276: </a>    }
+<a name="line277">277: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> ((p &gt;= fStart + nXF) || (p &lt; fStart + nXF + nYF)) {
+<a name="line278">278: </a>    <font color="#B22222">/* Y Face */</font>
+<a name="line279">279: </a>    <font color="#4169E1">if</font> (dim == 1) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_PLIB, <font color="#666666">"There are no faces in 1D"</font>);
+<a name="line280">280: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 2) {
+<a name="line281">281: </a>      <font color="#B22222">/* 2 vertices: The left vertex has the same numbering as the face */</font>
+<a name="line282">282: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> f = p - yfStart;
+<a name="line283">283: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> points[3];
+
+<a name="line285">285: </a>      points[0] = p; points[1] = f; points[2]= f+1;
+<a name="line286">286: </a>      <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_SUP, <font color="#666666">"Broken"</font>);
+<a name="line287">287: </a>      GetPointArray_Private(dm, 3, points, n, closure);
+<a name="line288">288: </a>    } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 3) {
+<a name="line289">289: </a>      <font color="#B22222">/* 4 vertices */</font>
+<a name="line290">290: </a>      <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_SUP, <font color="#666666">"Not implemented"</font>);
+<a name="line291">291: </a>    }
+<a name="line292">292: </a>  } <font color="#4169E1">else</font> {
+<a name="line293">293: </a>    <font color="#B22222">/* Z Face */</font>
+<a name="line294">294: </a>    <font color="#4169E1">if</font> (dim == 1) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_PLIB, <font color="#666666">"There are no faces in 1D"</font>);
+<a name="line295">295: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 2) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_PLIB, <font color="#666666">"There are no z-faces in 2D"</font>);
+<a name="line296">296: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 3) {
+<a name="line297">297: </a>      <font color="#B22222">/* 4 vertices */</font>
+<a name="line298">298: </a>      <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_SUP, <font color="#666666">"Not implemented"</font>);
+<a name="line299">299: </a>    }
+<a name="line300">300: </a>  }
+<a name="line301">301: </a>  <font color="#4169E1">return</font>(0);
+<a name="line302">302: </a>}
+
+<a name="line304">304: </a><font color="#B22222">/* Zeros n and closure. */</font>
+<a name="line305">305: </a><strong><font color="#4169E1"><a name="DMDARestoreClosure"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMDARestoreClosure(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm, <a href="../../../../docs/manualpages/IS/PetscSection.html#PetscSection">PetscSection</a> section, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> p,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *n,const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> **closure)</font></strong>
+<a name="line306">306: </a>{
+
+<a name="line313">313: </a>  RestorePointArray_Private(dm,n,closure);
+<a name="line314">314: </a>  <font color="#4169E1">return</font>(0);
+<a name="line315">315: </a>}
+
+<a name="line317">317: </a><strong><font color="#4169E1"><a name="DMDAGetClosureScalar"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMDAGetClosureScalar(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm, <a href="../../../../docs/manualpages/IS/PetscSection.html#PetscSection">PetscSection</a> section, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> p, <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> *vArray, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *csize, <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> **values)</font></strong>
+<a name="line318">318: </a>{
+<a name="line319">319: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       dim = dm-&gt;dim;
+<a name="line320">320: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       nVx, nVy, nxF, nXF, nyF, nYF, nzF, nZF;
+<a name="line321">321: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       pStart, pEnd, cStart, cEnd, vStart, vEnd, fStart, fEnd, xfStart, xfEnd, yfStart, yfEnd, zfStart;
+
+<a name="line328">328: </a>  <font color="#4169E1">if</font> (!section) {<a href="../../../../docs/manualpages/DM/DMGetDefaultSection.html#DMGetDefaultSection">DMGetDefaultSection</a>(dm, &amp;section);}
+<a name="line329">329: </a>  <font color="#4169E1">if</font> (!section) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_ARG_WRONG, <font color="#666666">"This <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> has not default <a href="../../../../docs/manualpages/IS/PetscSection.html#PetscSection">PetscSection</a>"</font>);
+<a name="line330">330: </a>  DMDAGetHeightStratum(dm, -1,  &amp;pStart, &amp;pEnd);
+<a name="line331">331: </a>  DMDAGetHeightStratum(dm, 0,   &amp;cStart, &amp;cEnd);
+<a name="line332">332: </a>  DMDAGetHeightStratum(dm, 1,   &amp;fStart, &amp;fEnd);
+<a name="line333">333: </a>  DMDAGetHeightStratum(dm, dim, &amp;vStart, &amp;vEnd);
+<a name="line334">334: </a>  DMDAGetNumVertices(dm, &amp;nVx, &amp;nVy, NULL, NULL);
+<a name="line335">335: </a>  DMDAGetNumFaces(dm, &amp;nxF, &amp;nXF, &amp;nyF, &amp;nYF, &amp;nzF, &amp;nZF);
+<a name="line336">336: </a>  xfStart = fStart; xfEnd = xfStart+nXF;
+<a name="line337">337: </a>  yfStart = xfEnd;  yfEnd = yfStart+nYF;
+<a name="line338">338: </a>  zfStart = yfEnd;
+<a name="line339">339: </a>  <font color="#4169E1">if</font> ((p &lt; pStart) || (p &gt;= pEnd)) <a href="../../../../docs/manualpages/Sys/SETERRQ3.html#SETERRQ3">SETERRQ3</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_ARG_OUTOFRANGE, <font color="#666666">"Invalid point %d should be in [%d, %d)"</font>, p, pStart, pEnd);
+<a name="line340">340: </a>  <font color="#4169E1">if</font> ((p &gt;= cStart) || (p &lt; cEnd)) {
+<a name="line341">341: </a>    <font color="#B22222">/* Cell */</font>
+<a name="line342">342: </a>    <font color="#4169E1">if</font> (dim == 1) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_SUP, <font color="#666666">"Not implemented"</font>);
+<a name="line343">343: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 2) {
+<a name="line344">344: </a>      <font color="#B22222">/* 4 faces, 4 vertices</font>
+<a name="line345">345: </a><font color="#B22222">         Bottom-left vertex follows same order as cells</font>
+<a name="line346">346: </a><font color="#B22222">         Bottom y-face same order as cells</font>
+<a name="line347">347: </a><font color="#B22222">         Left x-face follows same order as cells</font>
+<a name="line348">348: </a><font color="#B22222">         We number the quad:</font>
+
+<a name="line350">350: </a><font color="#B22222">           8--3--7</font>
+<a name="line351">351: </a><font color="#B22222">           |     |</font>
+<a name="line352">352: </a><font color="#B22222">           4  0  2</font>
+<a name="line353">353: </a><font color="#B22222">           |     |</font>
+<a name="line354">354: </a><font color="#B22222">           5--1--6</font>
+<a name="line355">355: </a><font color="#B22222">      */</font>
+<a name="line356">356: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> c  = p - cStart, cx = c % (nVx-1), cy = c / (nVx-1);
+<a name="line357">357: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> v  = cy*nVx + cx +  vStart;
+<a name="line358">358: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> xf = cx*nxF + cy + xfStart;
+<a name="line359">359: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> yf = c + yfStart;
+<a name="line360">360: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> points[9];
+
+<a name="line362">362: </a>      points[0] = p;
+<a name="line363">363: </a>      points[1] = yf;  points[2] = xf+nxF; points[3] = yf+nyF;  points[4] = xf;
+<a name="line364">364: </a>      points[5] = v+0; points[6] = v+1;    points[7] = v+nVx+1; points[8] = v+nVx+0;
+<a name="line365">365: </a>      FillClosureArray_Static(dm, section, 9, points, vArray, csize, values);
+<a name="line366">366: </a>    } <font color="#4169E1">else</font> {
+<a name="line367">367: </a>      <font color="#B22222">/* 6 faces, 8 vertices</font>
+<a name="line368">368: </a><font color="#B22222">         Bottom-left-back vertex follows same order as cells</font>
+<a name="line369">369: </a><font color="#B22222">         Back z-face follows same order as cells</font>
+<a name="line370">370: </a><font color="#B22222">         Bottom y-face follows same order as cells</font>
+<a name="line371">371: </a><font color="#B22222">         Left x-face follows same order as cells</font>
+
+<a name="line373">373: </a><font color="#B22222">              14-----13</font>
+<a name="line374">374: </a><font color="#B22222">              /|    /|</font>
+<a name="line375">375: </a><font color="#B22222">             / | 2 / |</font>
+<a name="line376">376: </a><font color="#B22222">            / 5|  /  |</font>
+<a name="line377">377: </a><font color="#B22222">          10-----9  4|</font>
+<a name="line378">378: </a><font color="#B22222">           |  11-|---12</font>
+<a name="line379">379: </a><font color="#B22222">           |6 /  |  /</font>
+<a name="line380">380: </a><font color="#B22222">           | /1 3| /</font>
+<a name="line381">381: </a><font color="#B22222">           |/    |/</font>
+<a name="line382">382: </a><font color="#B22222">           7-----8</font>
+<a name="line383">383: </a><font color="#B22222">      */</font>
+<a name="line384">384: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> c = p - cStart;
+<a name="line385">385: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> points[15];
+
+<a name="line387">387: </a>      points[0]  = p; points[1] = c+zfStart; points[2] = c+zfStart+nzF; points[3] = c+yfStart; points[4] = c+xfStart+nxF; points[5] = c+yfStart+nyF; points[6] = c+xfStart;
+<a name="line388">388: </a>      points[7]  = c+vStart+0; points[8] = c+vStart+1; points[9] = c+vStart+nVx+1; points[10] = c+vStart+nVx+0; points[11] = c+vStart+nVx*nVy+0;
+<a name="line389">389: </a>      points[12] = c+vStart+nVx*nVy+1; points[13] = c+vStart+nVx*nVy+nVx+1; points[14] = c+vStart+nVx*nVy+nVx+0;
+
+<a name="line391">391: </a>      <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_SUP, <font color="#666666">"Broken"</font>);
+<a name="line392">392: </a>      FillClosureArray_Static(dm, section, 15, points, vArray, csize, values);
+<a name="line393">393: </a>    }
+<a name="line394">394: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> ((p &gt;= vStart) || (p &lt; vEnd)) {
+<a name="line395">395: </a>    <font color="#B22222">/* Vertex */</font>
+<a name="line396">396: </a>    FillClosureArray_Static(dm, section, 1, &amp;p, vArray, csize, values);
+<a name="line397">397: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> ((p &gt;= fStart) || (p &lt; fStart + nXF)) {
+<a name="line398">398: </a>    <font color="#B22222">/* X Face */</font>
+<a name="line399">399: </a>    <font color="#4169E1">if</font> (dim == 1) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_PLIB, <font color="#666666">"There are no faces in 1D"</font>);
+<a name="line400">400: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 2) {
+<a name="line401">401: </a>      <font color="#B22222">/* 2 vertices: The bottom vertex has the same numbering as the face */</font>
+<a name="line402">402: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> f = p - xfStart;
+<a name="line403">403: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> points[3];
+
+<a name="line405">405: </a>      points[0] = p; points[1] = f; points[2] = f+nVx;
+<a name="line406">406: </a>      <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_SUP, <font color="#666666">"Broken"</font>);
+<a name="line407">407: </a>      FillClosureArray_Static(dm, section, 3, points, vArray, csize, values);
+<a name="line408">408: </a>    } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 3) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_SUP, <font color="#666666">"Not implemented"</font>);
+<a name="line409">409: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> ((p &gt;= fStart + nXF) || (p &lt; fStart + nXF + nYF)) {
+<a name="line410">410: </a>    <font color="#B22222">/* Y Face */</font>
+<a name="line411">411: </a>    <font color="#4169E1">if</font> (dim == 1) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_PLIB, <font color="#666666">"There are no faces in 1D"</font>);
+<a name="line412">412: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 2) {
+<a name="line413">413: </a>      <font color="#B22222">/* 2 vertices: The left vertex has the same numbering as the face */</font>
+<a name="line414">414: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> f = p - yfStart;
+<a name="line415">415: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> points[3];
+
+<a name="line417">417: </a>      points[0] = p; points[1] = f; points[2] = f+1;
+<a name="line418">418: </a>      <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_SUP, <font color="#666666">"Broken"</font>);
+<a name="line419">419: </a>      FillClosureArray_Static(dm, section, 3, points, vArray, csize, values);
+<a name="line420">420: </a>    } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 3) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_SUP, <font color="#666666">"Not implemented"</font>);
+<a name="line421">421: </a>  } <font color="#4169E1">else</font> {
+<a name="line422">422: </a>    <font color="#B22222">/* Z Face */</font>
+<a name="line423">423: </a>    <font color="#4169E1">if</font> (dim == 1) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_PLIB, <font color="#666666">"There are no faces in 1D"</font>);
+<a name="line424">424: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 2) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_PLIB, <font color="#666666">"There are no z-faces in 2D"</font>);
+<a name="line425">425: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 3) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_SUP, <font color="#666666">"Not implemented"</font>);
+<a name="line426">426: </a>  }
+<a name="line427">427: </a>  <font color="#4169E1">return</font>(0);
+<a name="line428">428: </a>}
+
+<a name="line430">430: </a><strong><font color="#4169E1"><a name="DMDAVecGetClosure"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMDAVecGetClosure(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm, <a href="../../../../docs/manualpages/IS/PetscSection.html#PetscSection">PetscSection</a> section, <a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> v, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> p, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *csize, <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> **values)</font></strong>
+<a name="line431">431: </a>{
+<a name="line432">432: </a>  <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>    *vArray;
+
+<a name="line439">439: </a>  <a href="../../../../docs/manualpages/Vec/VecGetArray.html#VecGetArray">VecGetArray</a>(v, &amp;vArray);
+<a name="line440">440: </a>  DMDAGetClosureScalar(dm, section, p, vArray, csize, values);
+<a name="line441">441: </a>  <a href="../../../../docs/manualpages/Vec/VecRestoreArray.html#VecRestoreArray">VecRestoreArray</a>(v, &amp;vArray);
+<a name="line442">442: </a>  <font color="#4169E1">return</font>(0);
+<a name="line443">443: </a>}
+
+<a name="line445">445: </a><strong><font color="#4169E1"><a name="DMDARestoreClosureScalar"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMDARestoreClosureScalar(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm, <a href="../../../../docs/manualpages/IS/PetscSection.html#PetscSection">PetscSection</a> section, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> p, <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> *vArray, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *csize, <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> **values)</font></strong>
+<a name="line446">446: </a>{
+
+<a name="line452">452: </a>  <a href="../../../../docs/manualpages/DM/DMRestoreWorkArray.html#DMRestoreWorkArray">DMRestoreWorkArray</a>(dm, csize ? *csize : 0, PETSC_SCALAR, (void*) values);
+<a name="line453">453: </a>  <font color="#4169E1">return</font>(0);
+<a name="line454">454: </a>}
+
+<a name="line456">456: </a><strong><font color="#4169E1"><a name="DMDAVecRestoreClosure"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMDAVecRestoreClosure(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm, <a href="../../../../docs/manualpages/IS/PetscSection.html#PetscSection">PetscSection</a> section, <a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> v, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> p, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *csize, <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> **values)</font></strong>
+<a name="line457">457: </a>{
+
+<a name="line464">464: </a>  DMDARestoreClosureScalar(dm, section, p, NULL, csize, values);
+<a name="line465">465: </a>  <font color="#4169E1">return</font>(0);
+<a name="line466">466: </a>}
+
+<a name="line468">468: </a><strong><font color="#4169E1"><a name="DMDASetClosureScalar"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMDASetClosureScalar(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm, <a href="../../../../docs/manualpages/IS/PetscSection.html#PetscSection">PetscSection</a> section, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> p,<a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> *vArray, const <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> *values, <a href="../../../../docs/manualpages/Sys/InsertMode.html#InsertMode">InsertMode</a> mode)</font></strong>
+<a name="line469">469: </a>{
+<a name="line470">470: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       dim = dm-&gt;dim;
+<a name="line471">471: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       nVx, nVy, nxF, nXF, nyF, nYF, nzF, nZF, nCx, nCy;
+<a name="line472">472: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       pStart, pEnd, cStart, cEnd, vStart, vEnd, fStart, fEnd, xfStart, xfEnd, yfStart, yfEnd, zfStart;
+
+<a name="line479">479: </a>  <font color="#4169E1">if</font> (!section) {<a href="../../../../docs/manualpages/DM/DMGetDefaultSection.html#DMGetDefaultSection">DMGetDefaultSection</a>(dm, &amp;section);}
+<a name="line480">480: </a>  <font color="#4169E1">if</font> (!section) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_ARG_WRONG, <font color="#666666">"This <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> has not default <a href="../../../../docs/manualpages/IS/PetscSection.html#PetscSection">PetscSection</a>"</font>);
+<a name="line481">481: </a>  DMDAGetHeightStratum(dm, -1,  &amp;pStart, &amp;pEnd);
+<a name="line482">482: </a>  DMDAGetHeightStratum(dm, 0,   &amp;cStart, &amp;cEnd);
+<a name="line483">483: </a>  DMDAGetHeightStratum(dm, 1,   &amp;fStart, &amp;fEnd);
+<a name="line484">484: </a>  DMDAGetHeightStratum(dm, dim, &amp;vStart, &amp;vEnd);
+<a name="line485">485: </a>  <a href="../../../../docs/manualpages/DMDA/DMDAGetNumCells.html#DMDAGetNumCells">DMDAGetNumCells</a>(dm, &amp;nCx, &amp;nCy, NULL, NULL);
+<a name="line486">486: </a>  DMDAGetNumVertices(dm, &amp;nVx, &amp;nVy, NULL, NULL);
+<a name="line487">487: </a>  DMDAGetNumFaces(dm, &amp;nxF, &amp;nXF, &amp;nyF, &amp;nYF, &amp;nzF, &amp;nZF);
+<a name="line488">488: </a>  xfStart = fStart; xfEnd = xfStart+nXF;
+<a name="line489">489: </a>  yfStart = xfEnd;  yfEnd = yfStart+nYF;
+<a name="line490">490: </a>  zfStart = yfEnd;
+<a name="line491">491: </a>  <font color="#4169E1">if</font> ((p &lt; pStart) || (p &gt;= pEnd)) <a href="../../../../docs/manualpages/Sys/SETERRQ3.html#SETERRQ3">SETERRQ3</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_ARG_OUTOFRANGE, <font color="#666666">"Invalid point %d should be in [%d, %d)"</font>, p, pStart, pEnd);
+<a name="line492">492: </a>  <font color="#4169E1">if</font> ((p &gt;= cStart) || (p &lt; cEnd)) {
+<a name="line493">493: </a>    <font color="#B22222">/* Cell */</font>
+<a name="line494">494: </a>    <font color="#4169E1">if</font> (dim == 1) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_SUP, <font color="#666666">"Not implemented"</font>);
+<a name="line495">495: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 2) {
+<a name="line496">496: </a>      <font color="#B22222">/* 4 faces, 4 vertices</font>
+<a name="line497">497: </a><font color="#B22222">         Bottom-left vertex follows same order as cells</font>
+<a name="line498">498: </a><font color="#B22222">         Bottom y-face same order as cells</font>
+<a name="line499">499: </a><font color="#B22222">         Left x-face follows same order as cells</font>
+<a name="line500">500: </a><font color="#B22222">         We number the quad:</font>
+
+<a name="line502">502: </a><font color="#B22222">           8--3--7</font>
+<a name="line503">503: </a><font color="#B22222">           |     |</font>
+<a name="line504">504: </a><font color="#B22222">           4  0  2</font>
+<a name="line505">505: </a><font color="#B22222">           |     |</font>
+<a name="line506">506: </a><font color="#B22222">           5--1--6</font>
+<a name="line507">507: </a><font color="#B22222">      */</font>
+<a name="line508">508: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> c = p - cStart, cx = c % (nVx-1), cy = c / (nVx-1);
+<a name="line509">509: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> v  = cy*nVx + cx +  vStart;
+<a name="line510">510: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> xf = cx*nxF + cy + xfStart;
+<a name="line511">511: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> yf = c + yfStart;
+<a name="line512">512: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> points[9];
+
+<a name="line514">514: </a>      points[0] = p;
+<a name="line515">515: </a>      points[1] = yf;  points[2] = xf+nxF; points[3] = yf+nyF;  points[4] = xf;
+<a name="line516">516: </a>      points[5] = v+0; points[6] = v+1;    points[7] = v+nVx+1; points[8] = v+nVx+0;
+<a name="line517">517: </a>      FillClosureVec_Private(dm, section, 9, points, vArray, values, mode);
+<a name="line518">518: </a>    } <font color="#4169E1">else</font> {
+<a name="line519">519: </a>      <font color="#B22222">/* 6 faces, 8 vertices</font>
+<a name="line520">520: </a><font color="#B22222">         Bottom-left-back vertex follows same order as cells</font>
+<a name="line521">521: </a><font color="#B22222">         Back z-face follows same order as cells</font>
+<a name="line522">522: </a><font color="#B22222">         Bottom y-face follows same order as cells</font>
+<a name="line523">523: </a><font color="#B22222">         Left x-face follows same order as cells</font>
+
+<a name="line525">525: </a><font color="#B22222">              14-----13</font>
+<a name="line526">526: </a><font color="#B22222">              /|    /|</font>
+<a name="line527">527: </a><font color="#B22222">             / | 2 / |</font>
+<a name="line528">528: </a><font color="#B22222">            / 5|  /  |</font>
+<a name="line529">529: </a><font color="#B22222">          10-----9  4|</font>
+<a name="line530">530: </a><font color="#B22222">           |  11-|---12</font>
+<a name="line531">531: </a><font color="#B22222">           |6 /  |  /</font>
+<a name="line532">532: </a><font color="#B22222">           | /1 3| /</font>
+<a name="line533">533: </a><font color="#B22222">           |/    |/</font>
+<a name="line534">534: </a><font color="#B22222">           7-----8</font>
+<a name="line535">535: </a><font color="#B22222">      */</font>
+<a name="line536">536: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> c = p - cStart;
+<a name="line537">537: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> points[15];
+
+<a name="line539">539: </a>      points[0]  = p; points[1] = c+zfStart; points[2] = c+zfStart+nzF; points[3] = c+yfStart; points[4] = c+xfStart+nxF; points[5] = c+yfStart+nyF; points[6] = c+xfStart;
+<a name="line540">540: </a>      points[7]  = c+vStart+0; points[8] = c+vStart+1; points[9] = c+vStart+nVx+1; points[10] = c+vStart+nVx+0; points[11] = c+vStart+nVx*nVy+0; points[12] = c+vStart+nVx*nVy+1;
+<a name="line541">541: </a>      points[13] = c+vStart+nVx*nVy+nVx+1; points[14] = c+vStart+nVx*nVy+nVx+0;
+<a name="line542">542: </a>      FillClosureVec_Private(dm, section, 15, points, vArray, values, mode);
+<a name="line543">543: </a>    }
+<a name="line544">544: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> ((p &gt;= vStart) || (p &lt; vEnd)) {
+<a name="line545">545: </a>    <font color="#B22222">/* Vertex */</font>
+<a name="line546">546: </a>    FillClosureVec_Private(dm, section, 1, &amp;p, vArray, values, mode);
+<a name="line547">547: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> ((p &gt;= fStart) || (p &lt; fStart + nXF)) {
+<a name="line548">548: </a>    <font color="#B22222">/* X Face */</font>
+<a name="line549">549: </a>    <font color="#4169E1">if</font> (dim == 1) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_PLIB, <font color="#666666">"There are no faces in 1D"</font>);
+<a name="line550">550: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 2) {
+<a name="line551">551: </a>      <font color="#B22222">/* 2 vertices: The bottom vertex has the same numbering as the face */</font>
+<a name="line552">552: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> f = p - xfStart;
+<a name="line553">553: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> points[3];
+
+<a name="line555">555: </a>      points[0] = p; points[1] = f; points[2] = f+nVx;
+<a name="line556">556: </a>      FillClosureVec_Private(dm, section, 3, points, vArray, values, mode);
+<a name="line557">557: </a>    } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 3) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_SUP, <font color="#666666">"Not implemented"</font>);
+<a name="line558">558: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> ((p &gt;= fStart + nXF) || (p &lt; fStart + nXF + nYF)) {
+<a name="line559">559: </a>    <font color="#B22222">/* Y Face */</font>
+<a name="line560">560: </a>    <font color="#4169E1">if</font> (dim == 1) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_PLIB, <font color="#666666">"There are no faces in 1D"</font>);
+<a name="line561">561: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 2) {
+<a name="line562">562: </a>      <font color="#B22222">/* 2 vertices: The left vertex has the same numbering as the face */</font>
+<a name="line563">563: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> f = p - yfStart;
+<a name="line564">564: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> points[3];
+
+<a name="line566">566: </a>      points[0] = p; points[1] = f; points[2] = f+1;
+<a name="line567">567: </a>      FillClosureVec_Private(dm, section, 3, points, vArray, values, mode);
+<a name="line568">568: </a>    } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 3) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_SUP, <font color="#666666">"Not implemented"</font>);
+<a name="line569">569: </a>  } <font color="#4169E1">else</font> {
+<a name="line570">570: </a>    <font color="#B22222">/* Z Face */</font>
+<a name="line571">571: </a>    <font color="#4169E1">if</font> (dim == 1) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_PLIB, <font color="#666666">"There are no faces in 1D"</font>);
+<a name="line572">572: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 2) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_PLIB, <font color="#666666">"There are no z-faces in 2D"</font>);
+<a name="line573">573: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 3) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_SUP, <font color="#666666">"Not implemented"</font>);
+<a name="line574">574: </a>  }
+<a name="line575">575: </a>  <font color="#4169E1">return</font>(0);
+<a name="line576">576: </a>}
+
+<a name="line578">578: </a><strong><font color="#4169E1"><a name="DMDAVecSetClosure"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMDAVecSetClosure(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm, <a href="../../../../docs/manualpages/IS/PetscSection.html#PetscSection">PetscSection</a> section, <a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> v, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> p, const <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> *values, <a href="../../../../docs/manualpages/Sys/InsertMode.html#InsertMode">InsertMode</a> mode)</font></strong>
+<a name="line579">579: </a>{
+<a name="line580">580: </a>  <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>    *vArray;
+
+<a name="line587">587: </a>  <a href="../../../../docs/manualpages/Vec/VecGetArray.html#VecGetArray">VecGetArray</a>(v,&amp;vArray);
+<a name="line588">588: </a>  DMDASetClosureScalar(dm,section,p,vArray,values,mode);
+<a name="line589">589: </a>  <a href="../../../../docs/manualpages/Vec/VecRestoreArray.html#VecRestoreArray">VecRestoreArray</a>(v,&amp;vArray);
+<a name="line590">590: </a>  <font color="#4169E1">return</font>(0);
+<a name="line591">591: </a>}
+
+<a name="line593">593: </a><font color="#B22222">/*@</font>
+<a name="line594">594: </a><font color="#B22222">  <a href="../../../../docs/manualpages/DMDA/DMDAConvertToCell.html#DMDAConvertToCell">DMDAConvertToCell</a> - Convert (i,j,k) to local cell number</font>
+
+<a name="line596">596: </a><font color="#B22222">  Not Collective</font>
+
+<a name="line598">598: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line599">599: </a><font color="#B22222">+ da - the distributed array</font>
+<a name="line600">600: </a><font color="#B22222">- s - A <a href="../../../../docs/manualpages/Mat/MatStencil.html#MatStencil">MatStencil</a> giving (i,j,k)</font>
+
+<a name="line602">602: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line603">603: </a><font color="#B22222">. cell - the local cell number</font>
+
+<a name="line605">605: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line607">607: </a><font color="#B22222">.seealso: DMDAVecGetClosure()</font>
+<a name="line608">608: </a><font color="#B22222">@*/</font>
+<a name="line609">609: </a><strong><font color="#4169E1"><a name="DMDAConvertToCell"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMDA/DMDAConvertToCell.html#DMDAConvertToCell">DMDAConvertToCell</a>(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm, <a href="../../../../docs/manualpages/Mat/MatStencil.html#MatStencil">MatStencil</a> s, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *cell)</font></strong>
+<a name="line610">610: </a>{
+<a name="line611">611: </a>  DM_DA          *da = (DM_DA*) dm-&gt;data;
+<a name="line612">612: </a>  const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> dim = dm-&gt;dim;
+<a name="line613">613: </a>  const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> mx  = (da-&gt;Xe - da-&gt;Xs)/da-&gt;w, my = da-&gt;Ye - da-&gt;Ys <font color="#B22222">/*, mz = da-&gt;Ze - da-&gt;Zs*/</font>;
+<a name="line614">614: </a>  const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> il  = s.i - da-&gt;Xs/da-&gt;w, jl = dim &gt; 1 ? s.j - da-&gt;Ys : 0, kl = dim &gt; 2 ? s.k - da-&gt;Zs : 0;
+
+<a name="line617">617: </a>  *cell = -1;
+<a name="line618">618: </a>  <font color="#4169E1">if</font> ((s.i &lt; da-&gt;Xs/da-&gt;w) || (s.i &gt;= da-&gt;Xe/da-&gt;w))    <a href="../../../../docs/manualpages/Sys/SETERRQ3.html#SETERRQ3">SETERRQ3</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_ARG_OUTOFRANGE, <font color="#666666">"Stencil i %d should be in [%d, %d)"</font>, s.i, da-&gt;Xs/da-&gt;w, da-&gt;Xe/da-&gt;w);
+<a name="line619">619: </a>  <font color="#4169E1">if</font> ((dim &gt; 1) &amp;&amp; ((s.j &lt; da-&gt;Ys) || (s.j &gt;= da-&gt;Ye))) <a href="../../../../docs/manualpages/Sys/SETERRQ3.html#SETERRQ3">SETERRQ3</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_ARG_OUTOFRANGE, <font color="#666666">"Stencil j %d should be in [%d, %d)"</font>, s.j, da-&gt;Ys, da-&gt;Ye);
+<a name="line620">620: </a>  <font color="#4169E1">if</font> ((dim &gt; 2) &amp;&amp; ((s.k &lt; da-&gt;Zs) || (s.k &gt;= da-&gt;Ze))) <a href="../../../../docs/manualpages/Sys/SETERRQ3.html#SETERRQ3">SETERRQ3</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm), PETSC_ERR_ARG_OUTOFRANGE, <font color="#666666">"Stencil k %d should be in [%d, %d)"</font>, s.k, da-&gt;Zs, da-&gt;Ze);
+<a name="line621">621: </a>  *cell = (kl*my + jl)*mx + il;
+<a name="line622">622: </a>  <font color="#4169E1">return</font>(0);
+<a name="line623">623: </a>}
+
+<a name="line625">625: </a><strong><font color="#4169E1"><a name="DMDAComputeCellGeometry_2D"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMDAComputeCellGeometry_2D(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm, const <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> vertices[], const <a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> refPoint[], <a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> J[], <a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> invJ[], <a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> *detJ)</font></strong>
+<a name="line626">626: </a>{
+<a name="line627">627: </a>  const <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> x0   = vertices[0];
+<a name="line628">628: </a>  const <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> y0   = vertices[1];
+<a name="line629">629: </a>  const <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> x1   = vertices[2];
+<a name="line630">630: </a>  const <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> y1   = vertices[3];
+<a name="line631">631: </a>  const <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> x2   = vertices[4];
+<a name="line632">632: </a>  const <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> y2   = vertices[5];
+<a name="line633">633: </a>  const <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> x3   = vertices[6];
+<a name="line634">634: </a>  const <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> y3   = vertices[7];
+<a name="line635">635: </a>  const <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> f_01 = x2 - x1 - x3 + x0;
+<a name="line636">636: </a>  const <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> g_01 = y2 - y1 - y3 + y0;
+<a name="line637">637: </a>  const <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> x    = refPoint[0];
+<a name="line638">638: </a>  const <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> y    = refPoint[1];
+<a name="line639">639: </a>  <a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>         invDet;
+<a name="line640">640: </a>  <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+
+<a name="line643">643: </a><font color="#A020F0">#if 0</font>
+<a name="line644">644: </a>  <a href="../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>, <font color="#666666">"Cell (%g,%g)--(%g,%g)--(%g,%g)--(%g,%g)\n"</font>,
+<a name="line645">645: </a>                     PetscRealPart(x0),PetscRealPart(y0),PetscRealPart(x1),PetscRealPart(y1),PetscRealPart(x2),PetscRealPart(y2),PetscRealPart(x3),PetscRealPart(y3));
+<a name="line646">646: </a>  <a href="../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>, <font color="#666666">"Ref Point (%g,%g)\n"</font>, PetscRealPart(x), PetscRealPart(y));
+<a name="line647">647: </a><font color="#A020F0">#endif</font>
+<a name="line648">648: </a>  J[0]    = PetscRealPart(x1 - x0 + f_01*y) * 0.5; J[1] = PetscRealPart(x3 - x0 + f_01*x) * 0.5;
+<a name="line649">649: </a>  J[2]    = PetscRealPart(y1 - y0 + g_01*y) * 0.5; J[3] = PetscRealPart(y3 - y0 + g_01*x) * 0.5;
+<a name="line650">650: </a>  *detJ   = J[0]*J[3] - J[1]*J[2];
+<a name="line651">651: </a>  invDet  = 1.0/(*detJ);
+<a name="line652">652: </a>  <font color="#4169E1">if</font> (invJ) {
+<a name="line653">653: </a>    invJ[0] =  invDet*J[3]; invJ[1] = -invDet*J[1];
+<a name="line654">654: </a>    invJ[2] = -invDet*J[2]; invJ[3] =  invDet*J[0];
+<a name="line655">655: </a>  }
+<a name="line656">656: </a>  <a href="../../../../docs/manualpages/Profiling/PetscLogFlops.html#PetscLogFlops">PetscLogFlops</a>(30);
+<a name="line657">657: </a>  <font color="#4169E1">return</font>(0);
+<a name="line658">658: </a>}
+
+<a name="line660">660: </a><strong><font color="#4169E1"><a name="DMDAComputeCellGeometryFEM"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMDAComputeCellGeometryFEM(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm, <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> cell, <a href="../../../../docs/manualpages/DM/PetscQuadrature.html#PetscQuadrature">PetscQuadrature</a> quad, <a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> v0[], <a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> J[], <a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> invJ[], <a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> detJ[])</font></strong>
+<a name="line661">661: </a>{
+<a name="line662">662: </a>  <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a>               cdm;
+<a name="line663">663: </a>  <a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>              coordinates;
+<a name="line664">664: </a>  const <a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> *quadPoints;
+<a name="line665">665: </a>  <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>     *vertices = NULL;
+<a name="line666">666: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>         Nq, csize, dim, d, q;
+<a name="line667">667: </a>  <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr;
+
+<a name="line671">671: </a>  <a href="../../../../docs/manualpages/DMDA/DMDAGetInfo.html#DMDAGetInfo">DMDAGetInfo</a>(dm, &amp;dim, 0,0,0,0,0,0,0,0,0,0,0,0);
+<a name="line672">672: </a>  <a href="../../../../docs/manualpages/DM/DMGetCoordinatesLocal.html#DMGetCoordinatesLocal">DMGetCoordinatesLocal</a>(dm, &amp;coordinates);
+<a name="line673">673: </a>  <a href="../../../../docs/manualpages/DM/DMGetCoordinateDM.html#DMGetCoordinateDM">DMGetCoordinateDM</a>(dm, &amp;cdm);
+<a name="line674">674: </a>  DMDAVecGetClosure(cdm, NULL, coordinates, cell, &amp;csize, &amp;vertices);
+<a name="line675">675: </a>  <font color="#4169E1">for</font> (d = 0; d &lt; dim; ++d) v0[d] = PetscRealPart(vertices[d]);
+<a name="line676">676: </a>  <font color="#4169E1">switch</font> (dim) {
+<a name="line677">677: </a>  <font color="#4169E1">case</font> 2:
+<a name="line678">678: </a>    <a href="../../../../docs/manualpages/DT/PetscQuadratureGetData.html#PetscQuadratureGetData">PetscQuadratureGetData</a>(quad, NULL, NULL, &amp;Nq, &amp;quadPoints, NULL);
+<a name="line679">679: </a>    <font color="#4169E1">for</font> (q = 0; q &lt; Nq; ++q) {
+<a name="line680">680: </a>      DMDAComputeCellGeometry_2D(dm, vertices, &amp;quadPoints[q*dim], J, invJ, detJ);
+<a name="line681">681: </a>    }
+<a name="line682">682: </a>    <font color="#4169E1">break</font>;
+<a name="line683">683: </a><strong><font color="#FF0000">  default:</font></strong>
+<a name="line684">684: </a>    <a href="../../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>) dm), PETSC_ERR_SUP, <font color="#666666">"Dimension %d not supported"</font>, dim);
+<a name="line685">685: </a>  }
+<a name="line686">686: </a>  DMDAVecRestoreClosure(cdm, NULL, coordinates, cell, &amp;csize, &amp;vertices);
+<a name="line687">687: </a>  <font color="#4169E1">return</font>(0);
+<a name="line688">688: </a>}
+
+<a name="line690">690: </a><strong><font color="#4169E1"><a name="private_DMDALocatePointsIS_2D_Regular"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> private_DMDALocatePointsIS_2D_Regular(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dmregular,<a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> pos,<a href="../../../../docs/manualpages/IS/IS.html#IS">IS</a> *iscell)</font></strong>
+<a name="line691">691: </a>{
+<a name="line692">692: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          n,bs,p,npoints;
+<a name="line693">693: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          xs,xe,Xs,Xe,mxlocal;
+<a name="line694">694: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          ys,ye,Ys,Ye,mylocal;
+<a name="line695">695: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          d,c0,c1;
+<a name="line696">696: </a>  <a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>         gmin_l[2],gmax_l[2],dx[2];
+<a name="line697">697: </a>  <a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>         gmin[2],gmax[2];
+<a name="line698">698: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          *cellidx;
+<a name="line699">699: </a>  <a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>               coor;
+<a name="line700">700: </a>  const <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> *_coor;
+<a name="line701">701: </a>  <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+
+<a name="line704">704: </a>  <a href="../../../../docs/manualpages/DMDA/DMDAGetCorners.html#DMDAGetCorners">DMDAGetCorners</a>(dmregular,&amp;xs,&amp;ys,0,&amp;xe,&amp;ye,0);
+<a name="line705">705: </a>  <a href="../../../../docs/manualpages/DMDA/DMDAGetGhostCorners.html#DMDAGetGhostCorners">DMDAGetGhostCorners</a>(dmregular,&amp;Xs,&amp;Ys,0,&amp;Xe,&amp;Ye,0);
+<a name="line706">706: </a>  xe += xs; Xe += Xs; <font color="#4169E1">if</font> (xs != Xs) xs -= 1;
+<a name="line707">707: </a>  ye += ys; Ye += Ys; <font color="#4169E1">if</font> (ys != Ys) ys -= 1;
+<a name="line708">708: </a>
+<a name="line709">709: </a>  mxlocal = xe - xs - 1;
+<a name="line710">710: </a>  mylocal = ye - ys - 1;
+<a name="line711">711: </a>
+<a name="line712">712: </a>  <a href="../../../../docs/manualpages/DM/DMGetCoordinatesLocal.html#DMGetCoordinatesLocal">DMGetCoordinatesLocal</a>(dmregular,&amp;coor);
+<a name="line713">713: </a>  <a href="../../../../docs/manualpages/Vec/VecGetArrayRead.html#VecGetArrayRead">VecGetArrayRead</a>(coor,&amp;_coor);
+<a name="line714">714: </a>  c0 = (xs-Xs) + (ys-Ys)*(Xe-Xs);
+<a name="line715">715: </a>  c1 = (xe-2-Xs+1) + (ye-2-Ys+1)*(Xe-Xs);
+<a name="line716">716: </a>
+<a name="line717">717: </a>  gmin_l[0] = PetscRealPart(_coor[2*c0+0]);
+<a name="line718">718: </a>  gmin_l[1] = PetscRealPart(_coor[2*c0+1]);
+<a name="line719">719: </a>
+<a name="line720">720: </a>  gmax_l[0] = PetscRealPart(_coor[2*c1+0]);
+<a name="line721">721: </a>  gmax_l[1] = PetscRealPart(_coor[2*c1+1]);
+<a name="line722">722: </a>
+<a name="line723">723: </a>  dx[0] = (gmax_l[0]-gmin_l[0])/((<a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>)mxlocal);
+<a name="line724">724: </a>  dx[1] = (gmax_l[1]-gmin_l[1])/((<a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>)mylocal);
+<a name="line725">725: </a>
+<a name="line726">726: </a>  <a href="../../../../docs/manualpages/Vec/VecRestoreArrayRead.html#VecRestoreArrayRead">VecRestoreArrayRead</a>(coor,&amp;_coor);
+<a name="line727">727: </a>
+<a name="line728">728: </a>  <a href="../../../../docs/manualpages/DMDA/DMDAGetBoundingBox.html#DMDAGetBoundingBox">DMDAGetBoundingBox</a>(dmregular,gmin,gmax);
+<a name="line729">729: </a>
+<a name="line730">730: </a>  <a href="../../../../docs/manualpages/Vec/VecGetLocalSize.html#VecGetLocalSize">VecGetLocalSize</a>(pos,&amp;n);
+<a name="line731">731: </a>  <a href="../../../../docs/manualpages/Vec/VecGetBlockSize.html#VecGetBlockSize">VecGetBlockSize</a>(pos,&amp;bs);
+<a name="line732">732: </a>  npoints = n/bs;
+<a name="line733">733: </a>
+<a name="line734">734: </a>  <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(npoints,&amp;cellidx);
+<a name="line735">735: </a>  <a href="../../../../docs/manualpages/Vec/VecGetArrayRead.html#VecGetArrayRead">VecGetArrayRead</a>(pos,&amp;_coor);
+<a name="line736">736: </a>  <font color="#4169E1">for</font> (p=0; p&lt;npoints; p++) {
+<a name="line737">737: </a>    <a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> coor_p[2];
+<a name="line738">738: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>  mi[2];
+<a name="line739">739: </a>
+<a name="line740">740: </a>    coor_p[0] = PetscRealPart(_coor[2*p]);
+<a name="line741">741: </a>    coor_p[1] = PetscRealPart(_coor[2*p+1]);
+<a name="line742">742: </a>
+<a name="line743">743: </a>    cellidx[p] = DMLOCATEPOINT_POINT_NOT_FOUND;
+<a name="line744">744: </a>
+<a name="line745">745: </a>    <font color="#4169E1">if</font> (coor_p[0] &lt; gmin_l[0]) { <font color="#4169E1">continue</font>; }
+<a name="line746">746: </a>    <font color="#4169E1">if</font> (coor_p[0] &gt; gmax_l[0]) { <font color="#4169E1">continue</font>; }
+<a name="line747">747: </a>    <font color="#4169E1">if</font> (coor_p[1] &lt; gmin_l[1]) { <font color="#4169E1">continue</font>; }
+<a name="line748">748: </a>    <font color="#4169E1">if</font> (coor_p[1] &gt; gmax_l[1]) { <font color="#4169E1">continue</font>; }
+<a name="line749">749: </a>
+<a name="line750">750: </a>    <font color="#4169E1">for</font> (d=0; d&lt;2; d++) {
+<a name="line751">751: </a>      mi[d] = (<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>)( (coor_p[d] - gmin[d])/dx[d] );
+<a name="line752">752: </a>    }
+<a name="line753">753: </a>
+<a name="line754">754: </a>    <font color="#4169E1">if</font> (mi[0] &lt; xs)     { <font color="#4169E1">continue</font>; }
+<a name="line755">755: </a>    <font color="#4169E1">if</font> (mi[0] &gt; (xe-1)) { <font color="#4169E1">continue</font>; }
+<a name="line756">756: </a>    <font color="#4169E1">if</font> (mi[1] &lt; ys)     { <font color="#4169E1">continue</font>; }
+<a name="line757">757: </a>    <font color="#4169E1">if</font> (mi[1] &gt; (ye-1)) { <font color="#4169E1">continue</font>; }
+<a name="line758">758: </a>
+<a name="line759">759: </a>    <font color="#4169E1">if</font> (mi[0] == (xe-1)) { mi[0]--; }
+<a name="line760">760: </a>    <font color="#4169E1">if</font> (mi[1] == (ye-1)) { mi[1]--; }
+<a name="line761">761: </a>
+<a name="line762">762: </a>    cellidx[p] = (mi[0]-xs) + (mi[1]-ys) * mxlocal;
+<a name="line763">763: </a>  }
+<a name="line764">764: </a>  <a href="../../../../docs/manualpages/Vec/VecRestoreArrayRead.html#VecRestoreArrayRead">VecRestoreArrayRead</a>(pos,&amp;_coor);
+<a name="line765">765: </a>  <a href="../../../../docs/manualpages/IS/ISCreateGeneral.html#ISCreateGeneral">ISCreateGeneral</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,npoints,cellidx,<a href="../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_OWN_POINTER</a>,iscell);
+<a name="line766">766: </a>  <font color="#4169E1">return</font>(0);
+<a name="line767">767: </a>}
+
+<a name="line769">769: </a><strong><font color="#4169E1"><a name="private_DMDALocatePointsIS_3D_Regular"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> private_DMDALocatePointsIS_3D_Regular(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dmregular,<a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> pos,<a href="../../../../docs/manualpages/IS/IS.html#IS">IS</a> *iscell)</font></strong>
+<a name="line770">770: </a>{
+<a name="line771">771: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          n,bs,p,npoints;
+<a name="line772">772: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          xs,xe,Xs,Xe,mxlocal;
+<a name="line773">773: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          ys,ye,Ys,Ye,mylocal;
+<a name="line774">774: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          zs,ze,Zs,Ze,mzlocal;
+<a name="line775">775: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          d,c0,c1;
+<a name="line776">776: </a>  <a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>         gmin_l[3],gmax_l[3],dx[3];
+<a name="line777">777: </a>  <a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>         gmin[3],gmax[3];
+<a name="line778">778: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          *cellidx;
+<a name="line779">779: </a>  <a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>               coor;
+<a name="line780">780: </a>  const <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> *_coor;
+<a name="line781">781: </a>  <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+
+<a name="line784">784: </a>  <a href="../../../../docs/manualpages/DMDA/DMDAGetCorners.html#DMDAGetCorners">DMDAGetCorners</a>(dmregular,&amp;xs,&amp;ys,&amp;zs,&amp;xe,&amp;ye,&amp;ze);
+<a name="line785">785: </a>  <a href="../../../../docs/manualpages/DMDA/DMDAGetGhostCorners.html#DMDAGetGhostCorners">DMDAGetGhostCorners</a>(dmregular,&amp;Xs,&amp;Ys,&amp;Zs,&amp;Xe,&amp;Ye,&amp;Ze);
+<a name="line786">786: </a>  xe += xs; Xe += Xs; <font color="#4169E1">if</font> (xs != Xs) xs -= 1;
+<a name="line787">787: </a>  ye += ys; Ye += Ys; <font color="#4169E1">if</font> (ys != Ys) ys -= 1;
+<a name="line788">788: </a>  ze += zs; Ze += Zs; <font color="#4169E1">if</font> (zs != Zs) zs -= 1;
+<a name="line789">789: </a>
+<a name="line790">790: </a>  mxlocal = xe - xs - 1;
+<a name="line791">791: </a>  mylocal = ye - ys - 1;
+<a name="line792">792: </a>  mzlocal = ze - zs - 1;
+<a name="line793">793: </a>
+<a name="line794">794: </a>  <a href="../../../../docs/manualpages/DM/DMGetCoordinatesLocal.html#DMGetCoordinatesLocal">DMGetCoordinatesLocal</a>(dmregular,&amp;coor);
+<a name="line795">795: </a>  <a href="../../../../docs/manualpages/Vec/VecGetArrayRead.html#VecGetArrayRead">VecGetArrayRead</a>(coor,&amp;_coor);
+<a name="line796">796: </a>  c0 = (xs-Xs)     + (ys-Ys)    *(Xe-Xs) + (zs-Zs)    *(Xe-Xs)*(Ye-Ys);
+<a name="line797">797: </a>  c1 = (xe-2-Xs+1) + (ye-2-Ys+1)*(Xe-Xs) + (ze-2-Zs+1)*(Xe-Xs)*(Ye-Ys);
+<a name="line798">798: </a>
+<a name="line799">799: </a>  gmin_l[0] = PetscRealPart(_coor[3*c0+0]);
+<a name="line800">800: </a>  gmin_l[1] = PetscRealPart(_coor[3*c0+1]);
+<a name="line801">801: </a>  gmin_l[2] = PetscRealPart(_coor[3*c0+2]);
+<a name="line802">802: </a>
+<a name="line803">803: </a>  gmax_l[0] = PetscRealPart(_coor[3*c1+0]);
+<a name="line804">804: </a>  gmax_l[1] = PetscRealPart(_coor[3*c1+1]);
+<a name="line805">805: </a>  gmax_l[2] = PetscRealPart(_coor[3*c1+2]);
+<a name="line806">806: </a>
+<a name="line807">807: </a>  dx[0] = (gmax_l[0]-gmin_l[0])/((<a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>)mxlocal);
+<a name="line808">808: </a>  dx[1] = (gmax_l[1]-gmin_l[1])/((<a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>)mylocal);
+<a name="line809">809: </a>  dx[2] = (gmax_l[2]-gmin_l[2])/((<a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>)mzlocal);
+<a name="line810">810: </a>
+<a name="line811">811: </a>  <a href="../../../../docs/manualpages/Vec/VecRestoreArrayRead.html#VecRestoreArrayRead">VecRestoreArrayRead</a>(coor,&amp;_coor);
+<a name="line812">812: </a>
+<a name="line813">813: </a>  <a href="../../../../docs/manualpages/DMDA/DMDAGetBoundingBox.html#DMDAGetBoundingBox">DMDAGetBoundingBox</a>(dmregular,gmin,gmax);
+<a name="line814">814: </a>
+<a name="line815">815: </a>  <a href="../../../../docs/manualpages/Vec/VecGetLocalSize.html#VecGetLocalSize">VecGetLocalSize</a>(pos,&amp;n);
+<a name="line816">816: </a>  <a href="../../../../docs/manualpages/Vec/VecGetBlockSize.html#VecGetBlockSize">VecGetBlockSize</a>(pos,&amp;bs);
+<a name="line817">817: </a>  npoints = n/bs;
+<a name="line818">818: </a>
+<a name="line819">819: </a>  <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(npoints,&amp;cellidx);
+<a name="line820">820: </a>  <a href="../../../../docs/manualpages/Vec/VecGetArrayRead.html#VecGetArrayRead">VecGetArrayRead</a>(pos,&amp;_coor);
+<a name="line821">821: </a>  <font color="#4169E1">for</font> (p=0; p&lt;npoints; p++) {
+<a name="line822">822: </a>    <a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> coor_p[3];
+<a name="line823">823: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>  mi[3];
+<a name="line824">824: </a>
+<a name="line825">825: </a>    coor_p[0] = PetscRealPart(_coor[3*p]);
+<a name="line826">826: </a>    coor_p[1] = PetscRealPart(_coor[3*p+1]);
+<a name="line827">827: </a>    coor_p[2] = PetscRealPart(_coor[3*p+2]);
+<a name="line828">828: </a>
+<a name="line829">829: </a>    cellidx[p] = DMLOCATEPOINT_POINT_NOT_FOUND;
+<a name="line830">830: </a>
+<a name="line831">831: </a>    <font color="#4169E1">if</font> (coor_p[0] &lt; gmin_l[0]) { <font color="#4169E1">continue</font>; }
+<a name="line832">832: </a>    <font color="#4169E1">if</font> (coor_p[0] &gt; gmax_l[0]) { <font color="#4169E1">continue</font>; }
+<a name="line833">833: </a>    <font color="#4169E1">if</font> (coor_p[1] &lt; gmin_l[1]) { <font color="#4169E1">continue</font>; }
+<a name="line834">834: </a>    <font color="#4169E1">if</font> (coor_p[1] &gt; gmax_l[1]) { <font color="#4169E1">continue</font>; }
+<a name="line835">835: </a>    <font color="#4169E1">if</font> (coor_p[2] &lt; gmin_l[2]) { <font color="#4169E1">continue</font>; }
+<a name="line836">836: </a>    <font color="#4169E1">if</font> (coor_p[2] &gt; gmax_l[2]) { <font color="#4169E1">continue</font>; }
+<a name="line837">837: </a>
+<a name="line838">838: </a>    <font color="#4169E1">for</font> (d=0; d&lt;3; d++) {
+<a name="line839">839: </a>      mi[d] = (<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>)( (coor_p[d] - gmin[d])/dx[d] );
+<a name="line840">840: </a>    }
+<a name="line841">841: </a>
+<a name="line842">842: </a>    <font color="#4169E1">if</font> (mi[0] &lt; xs)     { <font color="#4169E1">continue</font>; }
+<a name="line843">843: </a>    <font color="#4169E1">if</font> (mi[0] &gt; (xe-1)) { <font color="#4169E1">continue</font>; }
+<a name="line844">844: </a>    <font color="#4169E1">if</font> (mi[1] &lt; ys)     { <font color="#4169E1">continue</font>; }
+<a name="line845">845: </a>    <font color="#4169E1">if</font> (mi[1] &gt; (ye-1)) { <font color="#4169E1">continue</font>; }
+<a name="line846">846: </a>    <font color="#4169E1">if</font> (mi[2] &lt; zs)     { <font color="#4169E1">continue</font>; }
+<a name="line847">847: </a>    <font color="#4169E1">if</font> (mi[2] &gt; (ze-1)) { <font color="#4169E1">continue</font>; }
+<a name="line848">848: </a>
+<a name="line849">849: </a>    <font color="#4169E1">if</font> (mi[0] == (xe-1)) { mi[0]--; }
+<a name="line850">850: </a>    <font color="#4169E1">if</font> (mi[1] == (ye-1)) { mi[1]--; }
+<a name="line851">851: </a>    <font color="#4169E1">if</font> (mi[2] == (ze-1)) { mi[2]--; }
+<a name="line852">852: </a>
+<a name="line853">853: </a>    cellidx[p] = (mi[0]-xs) + (mi[1]-ys) * mxlocal + (mi[2]-zs) * mxlocal * mylocal;
+<a name="line854">854: </a>  }
+<a name="line855">855: </a>  <a href="../../../../docs/manualpages/Vec/VecRestoreArrayRead.html#VecRestoreArrayRead">VecRestoreArrayRead</a>(pos,&amp;_coor);
+<a name="line856">856: </a>  <a href="../../../../docs/manualpages/IS/ISCreateGeneral.html#ISCreateGeneral">ISCreateGeneral</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,npoints,cellidx,<a href="../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_OWN_POINTER</a>,iscell);
+<a name="line857">857: </a>  <font color="#4169E1">return</font>(0);
+<a name="line858">858: </a>}
+
+<a name="line860">860: </a><strong><font color="#4169E1"><a name="DMLocatePoints_DA_Regular"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMLocatePoints_DA_Regular(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> pos,<a href="../../../../docs/manualpages/DM/DMPointLocationType.html#DMPointLocationType">DMPointLocationType</a> ltype,<a href="../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> cellSF)</font></strong>
+<a name="line861">861: </a>{
+<a name="line862">862: </a>  <a href="../../../../docs/manualpages/IS/IS.html#IS">IS</a> iscell;
+<a name="line863">863: </a>  <a href="../../../../docs/manualpages/PetscSF/PetscSFNode.html#PetscSFNode">PetscSFNode</a> *cells;
+<a name="line864">864: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> p,bs,dim,npoints,nfound;
+<a name="line865">865: </a>  const <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *boxCells;
+<a name="line867">867: </a>
+<a name="line869">869: </a>  <a href="../../../../docs/manualpages/Vec/VecGetBlockSize.html#VecGetBlockSize">VecGetBlockSize</a>(pos,&amp;dim);
+<a name="line870">870: </a>  <font color="#4169E1">switch</font> (dim) {
+<a name="line871">871: </a>    <font color="#4169E1">case</font> 1:
+<a name="line872">872: </a>      <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_SUP,<font color="#666666">"Support not provided for 1D"</font>);
+<a name="line873">873: </a>      <font color="#4169E1">break</font>;
+<a name="line874">874: </a>    <font color="#4169E1">case</font> 2:
+<a name="line875">875: </a>      private_DMDALocatePointsIS_2D_Regular(dm,pos,&amp;iscell);
+<a name="line876">876: </a>      <font color="#4169E1">break</font>;
+<a name="line877">877: </a>    <font color="#4169E1">case</font> 3:
+<a name="line878">878: </a>      private_DMDALocatePointsIS_3D_Regular(dm,pos,&amp;iscell);
+<a name="line879">879: </a>      <font color="#4169E1">break</font>;
+<a name="line880">880: </a><strong><font color="#FF0000">    default:</font></strong>
+<a name="line881">881: </a>      <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)dm),PETSC_ERR_SUP,<font color="#666666">"Unsupport spatial dimension"</font>);
+<a name="line882">882: </a>      <font color="#4169E1">break</font>;
+<a name="line883">883: </a>  }
+<a name="line884">884: </a>
+<a name="line885">885: </a>  <a href="../../../../docs/manualpages/Vec/VecGetLocalSize.html#VecGetLocalSize">VecGetLocalSize</a>(pos,&amp;npoints);
+<a name="line886">886: </a>  <a href="../../../../docs/manualpages/Vec/VecGetBlockSize.html#VecGetBlockSize">VecGetBlockSize</a>(pos,&amp;bs);
+<a name="line887">887: </a>  npoints = npoints / bs;
+<a name="line888">888: </a>
+<a name="line889">889: </a>  <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(npoints, &amp;cells);
+<a name="line890">890: </a>  <a href="../../../../docs/manualpages/IS/ISGetIndices.html#ISGetIndices">ISGetIndices</a>(iscell, &amp;boxCells);
+<a name="line891">891: </a>
+<a name="line892">892: </a>  <font color="#4169E1">for</font> (p=0; p&lt;npoints; p++) {
+<a name="line893">893: </a>    cells[p].rank  = 0;
+<a name="line894">894: </a>    cells[p].index = DMLOCATEPOINT_POINT_NOT_FOUND;
+<a name="line895">895: </a>
+<a name="line896">896: </a>    cells[p].index = boxCells[p];
+<a name="line897">897: </a>  }
+<a name="line898">898: </a>  <a href="../../../../docs/manualpages/IS/ISRestoreIndices.html#ISRestoreIndices">ISRestoreIndices</a>(iscell, &amp;boxCells);
+<a name="line899">899: </a>
+<a name="line900">900: </a>  nfound = npoints;
+<a name="line901">901: </a>  <a href="../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html#PetscSFSetGraph">PetscSFSetGraph</a>(cellSF, npoints, nfound, NULL, <a href="../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_OWN_POINTER</a>, cells, <a href="../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_OWN_POINTER</a>);
+<a name="line902">902: </a>  <a href="../../../../docs/manualpages/IS/ISDestroy.html#ISDestroy">ISDestroy</a>(&amp;iscell);
+<a name="line903">903: </a>
+<a name="line904">904: </a>  <font color="#4169E1">return</font>(0);
+<a name="line905">905: </a>}
+</pre>
+</body>
+
+</html>

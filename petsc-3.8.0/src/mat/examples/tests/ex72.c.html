@@ -1,0 +1,110 @@
+<center><a href="ex72.c">Actual source code: ex72.c</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/mat/examples/tests/ex72.c.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:33:57+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/mat/examples/tests/ex72.c.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+
+<a name="line2">  2: </a> #include <A href="../../../../include/petscmat.h.html">&lt;petscmat.h&gt;</A>
+
+<a name="line4">  4: </a>static char help[] = <font color="#666666">"Read in a Symmetric matrix in MatrixMarket format (only the lower triangle). \n\</font>
+<a name="line5">  5: </a><font color="#666666">  Assemble it to a PETSc sparse SBAIJ (upper triangle) matrix. \n\</font>
+<a name="line6">  6: </a><font color="#666666">  Write it in a AIJ matrix (entire matrix) to a file. \n\</font>
+<a name="line7">  7: </a><font color="#666666">  Input parameters are:            \n\</font>
+<a name="line8">  8: </a><font color="#666666">    -fin &lt;filename&gt; : input file   \n\</font>
+<a name="line9">  9: </a><font color="#666666">    -fout &lt;filename&gt; : output file \n\n"</font>;
+
+<a name="line11"> 11: </a><strong><font color="#4169E1"><a name="main"></a>int main(int argc,char **args)</font></strong>
+<a name="line12"> 12: </a>{
+<a name="line13"> 13: </a>  <a href="../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>            A;
+<a name="line14"> 14: </a>  char           filein[PETSC_MAX_PATH_LEN],fileout[PETSC_MAX_PATH_LEN],buf[PETSC_MAX_PATH_LEN];
+<a name="line15"> 15: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       i,m,n,nnz;
+<a name="line17"> 17: </a>  <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>    size;
+<a name="line18"> 18: </a>  <a href="../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>    *val,zero=0.0;
+<a name="line19"> 19: </a>  FILE           *file;
+<a name="line20"> 20: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a>    view;
+<a name="line21"> 21: </a>  int            *row,*col,*rownz;
+<a name="line22"> 22: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>      flg;
+
+<a name="line24"> 24: </a>  <a href="../../../../docs/manualpages/Sys/PetscInitialize.html#PetscInitialize">PetscInitialize</a>(&amp;argc,&amp;args,(char*)0,help);<font color="#4169E1">if</font> (ierr) <font color="#4169E1">return</font> ierr;
+<a name="line25"> 25: </a><font color="#A020F0">#if defined(PETSC_USE_COMPLEX)</font>
+<a name="line26"> 26: </a>  <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,1,<font color="#666666">"This example does not work with complex numbers"</font>);
+<a name="line27"> 27: </a>  <a href="../../../../docs/manualpages/Sys/PetscFinalize.html#PetscFinalize">PetscFinalize</a>();
+<a name="line28"> 28: </a>  <font color="#4169E1">return</font> 0;
+<a name="line29"> 29: </a><font color="#A020F0">#endif</font>
+
+<a name="line31"> 31: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,&amp;size);
+<a name="line32"> 32: </a>  <font color="#4169E1">if</font> (size &gt; 1) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,PETSC_ERR_USER,<font color="#666666">"Uniprocessor Example only\n"</font>);
+
+<a name="line34"> 34: </a>  <font color="#B22222">/* Read in matrix and RHS */</font>
+<a name="line35"> 35: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsGetString.html#PetscOptionsGetString">PetscOptionsGetString</a>(NULL,NULL,<font color="#666666">"-fin"</font>,filein,PETSC_MAX_PATH_LEN,&amp;flg);
+<a name="line36"> 36: </a>  <font color="#4169E1">if</font> (!flg) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,1,<font color="#666666">"Must indicate input file with -fin option"</font>);
+<a name="line37"> 37: </a>  <a href="../../../../docs/manualpages/Sys/PetscFOpen.html#PetscFOpen">PetscFOpen</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,filein,<font color="#666666">"r"</font>,&amp;file);
+
+<a name="line39"> 39: </a>  <font color="#B22222">/* process header with comments */</font>
+<a name="line40"> 40: </a>  <font color="#4169E1">do</font> {
+<a name="line41"> 41: </a>    char *str = fgets(buf,PETSC_MAX_PATH_LEN-1,file);
+<a name="line42"> 42: </a>    <font color="#4169E1">if</font> (!str) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,1,<font color="#666666">"Incorrect format in file"</font>);
+<a name="line43"> 43: </a>  }<font color="#4169E1">while</font> (buf[0] == '%');
+
+<a name="line45"> 45: </a>  <font color="#B22222">/* The first non-comment line has the matrix dimensions */</font>
+<a name="line46"> 46: </a>  sscanf(buf,<font color="#666666">"%d %d %d\n"</font>,&amp;m,&amp;n,&amp;nnz);
+<a name="line47"> 47: </a>  <a href="../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a> (<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,<font color="#666666">"m = %d, n = %d, nnz = %d\n"</font>,m,n,nnz);
+
+<a name="line49"> 49: </a>  <font color="#B22222">/* reseve memory for matrices */</font>
+<a name="line50"> 50: </a>  <a href="../../../../docs/manualpages/Sys/PetscMalloc4.html#PetscMalloc4">PetscMalloc4</a>(nnz,&amp;row,nnz,&amp;col,nnz,&amp;val,m,&amp;rownz);
+<a name="line51"> 51: </a>  <font color="#4169E1">for</font> (i=0; i&lt;m; i++) rownz[i] = 1; <font color="#B22222">/* add 0.0 to diagonal entries */</font>
+
+<a name="line53"> 53: </a>  <font color="#4169E1">for</font> (i=0; i&lt;nnz; i++) {
+<a name="line54"> 54: </a>    fscanf(file,<font color="#666666">"%d %d %le\n"</font>,&amp;row[i],&amp;col[i],(double*)&amp;val[i]);
+<a name="line55"> 55: </a>    <font color="#4169E1">if</font> (ierr == EOF) <a href="../../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_USER,<font color="#666666">"i=%d, reach EOF\n"</font>,i);
+<a name="line56"> 56: </a>    row[i]--; col[i]--;    <font color="#B22222">/* adjust from 1-based to 0-based */</font>
+<a name="line57"> 57: </a>    rownz[col[i]]++;
+<a name="line58"> 58: </a>  }
+<a name="line59"> 59: </a>  fclose(file);
+<a name="line60"> 60: </a>  <a href="../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,<font color="#666666">"Read file completes.\n"</font>);
+
+<a name="line62"> 62: </a>  <font color="#B22222">/* Creat and asseble SBAIJ matrix */</font>
+<a name="line63"> 63: </a>  <a href="../../../../docs/manualpages/Mat/MatCreate.html#MatCreate">MatCreate</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,&amp;A);
+<a name="line64"> 64: </a>  <a href="../../../../docs/manualpages/Mat/MatSetType.html#MatSetType">MatSetType</a>(A,<a href="../../../../docs/manualpages/Mat/MATSBAIJ.html#MATSBAIJ">MATSBAIJ</a>);
+<a name="line65"> 65: </a>  <a href="../../../../docs/manualpages/Mat/MatSetSizes.html#MatSetSizes">MatSetSizes</a>(A,<a href="../../../../docs/manualpages/Sys/PETSC_DECIDE.html#PETSC_DECIDE">PETSC_DECIDE</a>,<a href="../../../../docs/manualpages/Sys/PETSC_DECIDE.html#PETSC_DECIDE">PETSC_DECIDE</a>,m,n);
+<a name="line66"> 66: </a>  <a href="../../../../docs/manualpages/Mat/MatSetFromOptions.html#MatSetFromOptions">MatSetFromOptions</a>(A);
+<a name="line67"> 67: </a>  <a href="../../../../docs/manualpages/Mat/MatSeqSBAIJSetPreallocation.html#MatSeqSBAIJSetPreallocation">MatSeqSBAIJSetPreallocation</a>(A,1,0,rownz);
+
+<a name="line69"> 69: </a>  <font color="#B22222">/* Add zero to diagonals, in case the matrix missing diagonals */</font>
+<a name="line70"> 70: </a>  <font color="#4169E1">for</font> (i=0; i&lt;m; i++){
+<a name="line71"> 71: </a>    <a href="../../../../docs/manualpages/Mat/MatSetValues.html#MatSetValues">MatSetValues</a>(A,1,&amp;i,1,&amp;i,&amp;zero,<a href="../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>);
+<a name="line72"> 72: </a>  }
+<a name="line73"> 73: </a>  <font color="#4169E1">for</font> (i=0; i&lt;nnz; i++) {
+<a name="line74"> 74: </a>    <a href="../../../../docs/manualpages/Mat/MatSetValues.html#MatSetValues">MatSetValues</a>(A,1,&amp;col[i],1,&amp;row[i],&amp;val[i],<a href="../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>);
+<a name="line75"> 75: </a>  }
+<a name="line76"> 76: </a>  <a href="../../../../docs/manualpages/Mat/MatAssemblyBegin.html#MatAssemblyBegin">MatAssemblyBegin</a>(A,<a href="../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+<a name="line77"> 77: </a>  <a href="../../../../docs/manualpages/Mat/MatAssemblyEnd.html#MatAssemblyEnd">MatAssemblyEnd</a>(A,<a href="../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>);
+<a name="line78"> 78: </a>  <a href="../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,<font color="#666666">"Assemble SBAIJ matrix completes.\n"</font>);
+
+<a name="line80"> 80: </a>  <font color="#B22222">/* Write the entire matrix in AIJ format to a file */</font>
+<a name="line81"> 81: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsGetString.html#PetscOptionsGetString">PetscOptionsGetString</a>(NULL,NULL,<font color="#666666">"-fout"</font>,fileout,PETSC_MAX_PATH_LEN,&amp;flg);
+<a name="line82"> 82: </a>  <font color="#4169E1">if</font> (flg) {
+<a name="line83"> 83: </a>    <a href="../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,<font color="#666666">"Write the entire matrix in AIJ format to file %s\n"</font>,fileout);
+<a name="line84"> 84: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerBinaryOpen.html#PetscViewerBinaryOpen">PetscViewerBinaryOpen</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,fileout,<a href="../../../../docs/manualpages/Sys/PetscFileMode.html#PetscFileMode">FILE_MODE_WRITE</a>,&amp;view);
+<a name="line85"> 85: </a>    <a href="../../../../docs/manualpages/Mat/MatView.html#MatView">MatView</a>(A,view);
+<a name="line86"> 86: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerDestroy.html#PetscViewerDestroy">PetscViewerDestroy</a>(&amp;view);
+<a name="line87"> 87: </a>  }
+
+<a name="line89"> 89: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree4.html#PetscFree4">PetscFree4</a>(row,col,val,rownz);
+<a name="line90"> 90: </a>  <a href="../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;A);
+<a name="line91"> 91: </a>  <a href="../../../../docs/manualpages/Sys/PetscFinalize.html#PetscFinalize">PetscFinalize</a>();
+<a name="line92"> 92: </a>  <font color="#4169E1">return</font> ierr;
+<a name="line93"> 93: </a>}
+
+</pre>
+</body>
+
+</html>

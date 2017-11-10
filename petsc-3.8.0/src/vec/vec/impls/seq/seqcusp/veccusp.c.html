@@ -1,0 +1,281 @@
+<center><a href="veccusp.c">Actual source code: veccusp.c</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/vec/vec/impls/seq/seqcusp/veccusp.c.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:14:06+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/vec/vec/impls/seq/seqcusp/veccusp.c.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+<a name="line1">  1: </a><font color="#B22222">/*</font>
+<a name="line2">  2: </a><font color="#B22222"> Implementation of the sequential cusp vectors.</font>
+
+<a name="line4">  4: </a><font color="#B22222"> This file contains the code that can be compiled with a C</font>
+<a name="line5">  5: </a><font color="#B22222"> compiler.  The companion file veccusp2.cu contains the code that</font>
+<a name="line6">  6: </a><font color="#B22222"> must be compiled with nvcc or a C++ compiler.</font>
+<a name="line7">  7: </a><font color="#B22222"> */</font>
+
+<a name="line9">  9: </a><strong><font color="#228B22">#define PETSC_SKIP_COMPLEX</font></strong>
+<a name="line10"> 10: </a><strong><font color="#228B22">#define PETSC_SKIP_SPINLOCK</font></strong>
+
+<a name="line12"> 12: </a><font color="#A020F0">#include &lt;petscconf.h&gt;</font>
+<a name="line13"> 13: </a><font color="#A020F0">#include &lt;petsc/private/vecimpl.h&gt;          </font><font color="#B22222">/*I &lt;petscvec.h&gt; I*/</font><font color="#A020F0"></font>
+<a name="line14"> 14: </a> #include <A href="../../../../../../include/../src/vec/vec/impls/dvecimpl.h.html">&lt;../src/vec/vec/impls/dvecimpl.h&gt;</A>
+<a name="line15"> 15: </a> #include <A href="../../../../../../include/../src/vec/vec/impls/seq/seqcusp/cuspvecimpl.h.html">&lt;../src/vec/vec/impls/seq/seqcusp/cuspvecimpl.h&gt;</A>
+
+
+<a name="line18"> 18: </a><font color="#B22222">/*</font>
+<a name="line19"> 19: </a><font color="#B22222">    Allocates space for the vector array on the Host if it does not exist.</font>
+<a name="line20"> 20: </a><font color="#B22222">    Does NOT change the <a href="../../../../../../docs/manualpages/Sys/PetscCUSPFlag.html#PetscCUSPFlag">PetscCUSPFlag</a> for the vector</font>
+<a name="line21"> 21: </a><font color="#B22222">    Does NOT zero the CUSP array</font>
+<a name="line22"> 22: </a><font color="#B22222"> */</font>
+<a name="line23"> 23: </a><strong><font color="#4169E1"><a name="VecCUSPAllocateCheckHost"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> VecCUSPAllocateCheckHost(<a href="../../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> v)</font></strong>
+<a name="line24"> 24: </a>{
+<a name="line26"> 26: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>    *array;
+<a name="line27"> 27: </a>  Vec_Seq        *s = (Vec_Seq*)v-&gt;data;
+<a name="line28"> 28: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       n = v-&gt;map-&gt;n;
+
+<a name="line31"> 31: </a>  <font color="#4169E1">if</font> (!s) {
+<a name="line32"> 32: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscNewLog.html#PetscNewLog">PetscNewLog</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)v,&amp;s);
+<a name="line33"> 33: </a>    v-&gt;data = s;
+<a name="line34"> 34: </a>  }
+<a name="line35"> 35: </a>  <font color="#4169E1">if</font> (!s-&gt;array) {
+<a name="line36"> 36: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(n,&amp;array);
+<a name="line37"> 37: </a>    <a href="../../../../../../docs/manualpages/Profiling/PetscLogObjectMemory.html#PetscLogObjectMemory">PetscLogObjectMemory</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)v,n*<font color="#4169E1">sizeof</font>(<a href="../../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>));
+<a name="line38"> 38: </a>    s-&gt;array           = array;
+<a name="line39"> 39: </a>    s-&gt;array_allocated = array;
+<a name="line40"> 40: </a>    <font color="#4169E1">if</font> (v-&gt;valid_GPU_array == <a href="../../../../../../docs/manualpages/Sys/PetscCUSPFlag.html#PetscCUSPFlag">PETSC_CUSP_UNALLOCATED</a>) {
+<a name="line41"> 41: </a>      v-&gt;valid_GPU_array = <a href="../../../../../../docs/manualpages/Sys/PetscCUSPFlag.html#PetscCUSPFlag">PETSC_CUSP_CPU</a>;
+<a name="line42"> 42: </a>    }
+<a name="line43"> 43: </a>  }
+<a name="line44"> 44: </a>  <font color="#4169E1">return</font>(0);
+<a name="line45"> 45: </a>}
+
+<a name="line47"> 47: </a><strong><font color="#4169E1"><a name="VecCopy_SeqCUSP_Private"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> VecCopy_SeqCUSP_Private(<a href="../../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> xin,<a href="../../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> yin)</font></strong>
+<a name="line48"> 48: </a>{
+<a name="line49"> 49: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>       *ya;
+<a name="line50"> 50: </a>  const <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> *xa;
+<a name="line51"> 51: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+
+<a name="line54"> 54: </a>  VecCUSPAllocateCheckHost(xin);
+<a name="line55"> 55: </a>  VecCUSPAllocateCheckHost(yin);
+<a name="line56"> 56: </a>  <font color="#4169E1">if</font> (xin != yin) {
+<a name="line57"> 57: </a>    <a href="../../../../../../docs/manualpages/Vec/VecGetArrayRead.html#VecGetArrayRead">VecGetArrayRead</a>(xin,&amp;xa);
+<a name="line58"> 58: </a>    <a href="../../../../../../docs/manualpages/Vec/VecGetArray.html#VecGetArray">VecGetArray</a>(yin,&amp;ya);
+<a name="line59"> 59: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(ya,xa,xin-&gt;map-&gt;n*<font color="#4169E1">sizeof</font>(<a href="../../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>));
+<a name="line60"> 60: </a>    <a href="../../../../../../docs/manualpages/Vec/VecRestoreArrayRead.html#VecRestoreArrayRead">VecRestoreArrayRead</a>(xin,&amp;xa);
+<a name="line61"> 61: </a>    <a href="../../../../../../docs/manualpages/Vec/VecRestoreArray.html#VecRestoreArray">VecRestoreArray</a>(yin,&amp;ya);
+<a name="line62"> 62: </a>  }
+<a name="line63"> 63: </a>  <font color="#4169E1">return</font>(0);
+<a name="line64"> 64: </a>}
+
+<a name="line66"> 66: </a><strong><font color="#4169E1"><a name="VecSetRandom_SeqCUSP_Private"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> VecSetRandom_SeqCUSP_Private(<a href="../../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> xin,<a href="../../../../../../docs/manualpages/Sys/PetscRandom.html#PetscRandom">PetscRandom</a> r)</font></strong>
+<a name="line67"> 67: </a>{
+<a name="line69"> 69: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       n = xin-&gt;map-&gt;n,i;
+<a name="line70"> 70: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>    *xx;
+
+<a name="line73"> 73: </a>  <a href="../../../../../../docs/manualpages/Vec/VecGetArray.html#VecGetArray">VecGetArray</a>(xin,&amp;xx);
+<a name="line74"> 74: </a>  <font color="#4169E1">for</font> (i=0; i&lt;n; i++) {<a href="../../../../../../docs/manualpages/Sys/PetscRandomGetValue.html#PetscRandomGetValue">PetscRandomGetValue</a>(r,&amp;xx[i]);}
+<a name="line75"> 75: </a>  <a href="../../../../../../docs/manualpages/Vec/VecRestoreArray.html#VecRestoreArray">VecRestoreArray</a>(xin,&amp;xx);
+<a name="line76"> 76: </a>  <font color="#4169E1">return</font>(0);
+<a name="line77"> 77: </a>}
+
+<a name="line79"> 79: </a><strong><font color="#4169E1"><a name="VecDestroy_SeqCUSP_Private"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> VecDestroy_SeqCUSP_Private(<a href="../../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> v)</font></strong>
+<a name="line80"> 80: </a>{
+<a name="line81"> 81: </a>  Vec_Seq        *vs = (Vec_Seq*)v-&gt;data;
+
+<a name="line85"> 85: </a>  PetscObjectSAWsViewOff(v);
+<a name="line86"> 86: </a><font color="#A020F0">#if defined(PETSC_USE_LOG)</font>
+<a name="line87"> 87: </a>  PetscLogObjectState((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)v,<font color="#666666">"Length=%D"</font>,v-&gt;map-&gt;n);
+<a name="line88"> 88: </a><font color="#A020F0">#endif</font>
+<a name="line89"> 89: </a>  <font color="#4169E1">if</font> (vs) {
+<a name="line90"> 90: </a>    <font color="#4169E1">if</font> (vs-&gt;array_allocated) <a href="../../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(vs-&gt;array_allocated);
+<a name="line91"> 91: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(vs);
+<a name="line92"> 92: </a>  }
+<a name="line93"> 93: </a>  <font color="#4169E1">return</font>(0);
+<a name="line94"> 94: </a>}
+
+<a name="line96"> 96: </a><strong><font color="#4169E1"><a name="VecResetArray_SeqCUSP_Private"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> VecResetArray_SeqCUSP_Private(<a href="../../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> vin)</font></strong>
+<a name="line97"> 97: </a>{
+<a name="line98"> 98: </a>  Vec_Seq *v = (Vec_Seq*)vin-&gt;data;
+
+<a name="line101">101: </a>  v-&gt;array         = v-&gt;unplacedarray;
+<a name="line102">102: </a>  v-&gt;unplacedarray = 0;
+<a name="line103">103: </a>  <font color="#4169E1">return</font>(0);
+<a name="line104">104: </a>}
+
+<a name="line106">106: </a><strong><font color="#4169E1"><a name="VecCUSPAllocateCheck_Public"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> VecCUSPAllocateCheck_Public(<a href="../../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> v)</font></strong>
+<a name="line107">107: </a>{
+
+<a name="line111">111: </a>  VecCUSPAllocateCheck(v);
+<a name="line112">112: </a>  <font color="#4169E1">return</font>(0);
+<a name="line113">113: </a>}
+
+<a name="line115">115: </a><strong><font color="#4169E1"><a name="VecCUSPCopyToGPU_Public"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> VecCUSPCopyToGPU_Public(<a href="../../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> v)</font></strong>
+<a name="line116">116: </a>{
+
+<a name="line120">120: </a>  VecCUSPCopyToGPU(v);
+<a name="line121">121: </a>  <font color="#4169E1">return</font>(0);
+<a name="line122">122: </a>}
+
+<a name="line124">124: </a><font color="#B22222">/*</font>
+<a name="line125">125: </a><font color="#B22222">    VecCUSPCopyToGPUSome_Public - Copies certain entries down to the GPU from the CPU of a vector</font>
+
+<a name="line127">127: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line128">128: </a><font color="#B22222">.    v - the vector</font>
+<a name="line129">129: </a><font color="#B22222">.    indices - the requested indices, this should be created with CUSPIndicesCreate()</font>
+
+<a name="line131">131: </a><font color="#B22222">*/</font>
+<a name="line132">132: </a><strong><font color="#4169E1"><a name="VecCUSPCopyToGPUSome_Public"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> VecCUSPCopyToGPUSome_Public(<a href="../../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> v,PetscCUSPIndices ci)</font></strong>
+<a name="line133">133: </a>{
+
+<a name="line137">137: </a>  VecCUSPCopyToGPUSome(v,ci);
+<a name="line138">138: </a>  <font color="#4169E1">return</font>(0);
+<a name="line139">139: </a>}
+
+<a name="line141">141: </a><font color="#B22222">/*</font>
+<a name="line142">142: </a><font color="#B22222">  VecCUSPCopyFromGPUSome_Public - Copies certain entries up to the CPU from the GPU of a vector</font>
+
+<a name="line144">144: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line145">145: </a><font color="#B22222"> +    v - the vector</font>
+<a name="line146">146: </a><font color="#B22222"> -    indices - the requested indices, this should be created with CUSPIndicesCreate()</font>
+<a name="line147">147: </a><font color="#B22222">*/</font>
+<a name="line148">148: </a><strong><font color="#4169E1"><a name="VecCUSPCopyFromGPUSome_Public"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> VecCUSPCopyFromGPUSome_Public(<a href="../../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> v,PetscCUSPIndices ci)</font></strong>
+<a name="line149">149: </a>{
+
+<a name="line153">153: </a>  VecCUSPCopyFromGPUSome(v,ci);
+<a name="line154">154: </a>  <font color="#4169E1">return</font>(0);
+<a name="line155">155: </a>}
+
+<a name="line157">157: </a><strong><font color="#4169E1"><a name="VecSetRandom_SeqCUSP"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> VecSetRandom_SeqCUSP(<a href="../../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> xin,<a href="../../../../../../docs/manualpages/Sys/PetscRandom.html#PetscRandom">PetscRandom</a> r)</font></strong>
+<a name="line158">158: </a>{
+
+<a name="line162">162: </a>  VecSetRandom_SeqCUSP_Private(xin,r);
+<a name="line163">163: </a>  xin-&gt;valid_GPU_array = <a href="../../../../../../docs/manualpages/Sys/PetscCUSPFlag.html#PetscCUSPFlag">PETSC_CUSP_CPU</a>;
+<a name="line164">164: </a>  <font color="#4169E1">return</font>(0);
+<a name="line165">165: </a>}
+
+<a name="line167">167: </a><strong><font color="#4169E1"><a name="VecResetArray_SeqCUSP"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> VecResetArray_SeqCUSP(<a href="../../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> vin)</font></strong>
+<a name="line168">168: </a>{
+
+<a name="line172">172: </a>  VecCUSPCopyFromGPU(vin);
+<a name="line173">173: </a>  VecResetArray_SeqCUSP_Private(vin);
+<a name="line174">174: </a>  vin-&gt;valid_GPU_array = <a href="../../../../../../docs/manualpages/Sys/PetscCUSPFlag.html#PetscCUSPFlag">PETSC_CUSP_CPU</a>;
+<a name="line175">175: </a>  <font color="#4169E1">return</font>(0);
+<a name="line176">176: </a>}
+
+<a name="line178">178: </a><strong><font color="#4169E1"><a name="VecPlaceArray_SeqCUSP"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> VecPlaceArray_SeqCUSP(<a href="../../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> vin,const <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> *a)</font></strong>
+<a name="line179">179: </a>{
+
+<a name="line183">183: </a>  VecCUSPCopyFromGPU(vin);
+<a name="line184">184: </a>  VecPlaceArray_Seq(vin,a);
+<a name="line185">185: </a>  vin-&gt;valid_GPU_array = <a href="../../../../../../docs/manualpages/Sys/PetscCUSPFlag.html#PetscCUSPFlag">PETSC_CUSP_CPU</a>;
+<a name="line186">186: </a>  <font color="#4169E1">return</font>(0);
+<a name="line187">187: </a>}
+
+<a name="line189">189: </a><strong><font color="#4169E1"><a name="VecReplaceArray_SeqCUSP"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> VecReplaceArray_SeqCUSP(<a href="../../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> vin,const <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> *a)</font></strong>
+<a name="line190">190: </a>{
+
+<a name="line194">194: </a>  VecCUSPCopyFromGPU(vin);
+<a name="line195">195: </a>  VecReplaceArray_Seq(vin,a);
+<a name="line196">196: </a>  vin-&gt;valid_GPU_array = <a href="../../../../../../docs/manualpages/Sys/PetscCUSPFlag.html#PetscCUSPFlag">PETSC_CUSP_CPU</a>;
+<a name="line197">197: </a>  <font color="#4169E1">return</font>(0);
+<a name="line198">198: </a>}
+
+<a name="line200">200: </a><font color="#B22222">/*@</font>
+<a name="line201">201: </a><font color="#B22222"> <a href="../../../../../../docs/manualpages/Vec/VecCreateSeqCUSP.html#VecCreateSeqCUSP">VecCreateSeqCUSP</a> - Creates a standard, sequential array-style vector.</font>
+
+<a name="line203">203: </a><font color="#B22222"> Collective on <a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a></font>
+
+<a name="line205">205: </a><font color="#B22222"> Input Parameter:</font>
+<a name="line206">206: </a><font color="#B22222"> .  comm - the communicator, should be <a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a></font>
+<a name="line207">207: </a><font color="#B22222"> .  n - the vector length</font>
+
+<a name="line209">209: </a><font color="#B22222"> Output Parameter:</font>
+<a name="line210">210: </a><font color="#B22222"> .  V - the vector</font>
+
+<a name="line212">212: </a><font color="#B22222"> Notes:</font>
+<a name="line213">213: </a><font color="#B22222"> Use <a href="../../../../../../docs/manualpages/Vec/VecDuplicate.html#VecDuplicate">VecDuplicate</a>() or <a href="../../../../../../docs/manualpages/Vec/VecDuplicateVecs.html#VecDuplicateVecs">VecDuplicateVecs</a>() to form additional vectors of the</font>
+<a name="line214">214: </a><font color="#B22222"> same type as an existing vector.</font>
+
+<a name="line216">216: </a><font color="#B22222"> Level: intermediate</font>
+
+<a name="line218">218: </a><font color="#B22222"> Concepts: vectors^creating sequential</font>
+
+<a name="line220">220: </a><font color="#B22222"> .seealso: <a href="../../../../../../docs/manualpages/Vec/VecCreateMPI.html#VecCreateMPI">VecCreateMPI</a>(), <a href="../../../../../../docs/manualpages/Vec/VecCreate.html#VecCreate">VecCreate</a>(), <a href="../../../../../../docs/manualpages/Vec/VecDuplicate.html#VecDuplicate">VecDuplicate</a>(), <a href="../../../../../../docs/manualpages/Vec/VecDuplicateVecs.html#VecDuplicateVecs">VecDuplicateVecs</a>(), <a href="../../../../../../docs/manualpages/Vec/VecCreateGhost.html#VecCreateGhost">VecCreateGhost</a>()</font>
+<a name="line221">221: </a><font color="#B22222"> @*/</font>
+<a name="line222">222: </a><strong><font color="#4169E1"><a name="VecCreateSeqCUSP"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../../docs/manualpages/Vec/VecCreateSeqCUSP.html#VecCreateSeqCUSP">VecCreateSeqCUSP</a>(<a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a> comm,<a href="../../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> n,<a href="../../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> *v)</font></strong>
+<a name="line223">223: </a>{
+
+<a name="line227">227: </a>  <a href="../../../../../../docs/manualpages/Vec/VecCreate.html#VecCreate">VecCreate</a>(comm,v);
+<a name="line228">228: </a>  <a href="../../../../../../docs/manualpages/Vec/VecSetSizes.html#VecSetSizes">VecSetSizes</a>(*v,n,n);
+<a name="line229">229: </a>  <a href="../../../../../../docs/manualpages/Vec/VecSetType.html#VecSetType">VecSetType</a>(*v,<a href="../../../../../../docs/manualpages/Vec/VECSEQCUSP.html#VECSEQCUSP">VECSEQCUSP</a>);
+<a name="line230">230: </a>  <font color="#4169E1">return</font>(0);
+<a name="line231">231: </a>}
+
+<a name="line233">233: </a><strong><font color="#4169E1"><a name="VecDuplicate_SeqCUSP"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> VecDuplicate_SeqCUSP(<a href="../../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> win,<a href="../../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> *V)</font></strong>
+<a name="line234">234: </a>{
+
+<a name="line238">238: </a>  <a href="../../../../../../docs/manualpages/Vec/VecCreateSeqCUSP.html#VecCreateSeqCUSP">VecCreateSeqCUSP</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)win),win-&gt;map-&gt;n,V);
+<a name="line239">239: </a>  <a href="../../../../../../docs/manualpages/IS/PetscLayoutReference.html#PetscLayoutReference">PetscLayoutReference</a>(win-&gt;map,&amp;(*V)-&gt;map);
+<a name="line240">240: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectListDuplicate.html#PetscObjectListDuplicate">PetscObjectListDuplicate</a>(((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)win)-&gt;olist,&amp;((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)(*V))-&gt;olist);
+<a name="line241">241: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFunctionListDuplicate.html#PetscFunctionListDuplicate">PetscFunctionListDuplicate</a>(((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)win)-&gt;qlist,&amp;((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)(*V))-&gt;qlist);
+<a name="line242">242: </a>  (*V)-&gt;stash.ignorenegidx = win-&gt;stash.ignorenegidx;
+<a name="line243">243: </a>  <font color="#4169E1">return</font>(0);
+<a name="line244">244: </a>}
+
+<a name="line246">246: </a><strong><font color="#4169E1"><a name="VecCreate_SeqCUSP"></a>PETSC_EXTERN <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> VecCreate_SeqCUSP(<a href="../../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> V)</font></strong>
+<a name="line247">247: </a>{
+<a name="line249">249: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>    size;
+
+<a name="line252">252: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)V),&amp;size);
+<a name="line253">253: </a>  <font color="#4169E1">if</font> (size &gt; 1) <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_WRONG,<font color="#666666">"Cannot create <a href="../../../../../../docs/manualpages/Vec/VECSEQCUSP.html#VECSEQCUSP">VECSEQCUSP</a> on more than one process"</font>);
+<a name="line254">254: </a>  VecCreate_Seq_Private(V,0);
+<a name="line255">255: </a>  PetscObjectChangeTypeName((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)V,<a href="../../../../../../docs/manualpages/Vec/VECSEQCUSP.html#VECSEQCUSP">VECSEQCUSP</a>);
+
+<a name="line257">257: </a>  V-&gt;ops-&gt;dot                    = VecDot_SeqCUSP;
+<a name="line258">258: </a>  V-&gt;ops-&gt;norm                   = VecNorm_SeqCUSP;
+<a name="line259">259: </a>  V-&gt;ops-&gt;tdot                   = VecTDot_SeqCUSP;
+<a name="line260">260: </a>  V-&gt;ops-&gt;scale                  = VecScale_SeqCUSP;
+<a name="line261">261: </a>  V-&gt;ops-&gt;copy                   = VecCopy_SeqCUSP;
+<a name="line262">262: </a>  V-&gt;ops-&gt;set                    = VecSet_SeqCUSP;
+<a name="line263">263: </a>  V-&gt;ops-&gt;swap                   = VecSwap_SeqCUSP;
+<a name="line264">264: </a>  V-&gt;ops-&gt;axpy                   = VecAXPY_SeqCUSP;
+<a name="line265">265: </a>  V-&gt;ops-&gt;axpby                  = VecAXPBY_SeqCUSP;
+<a name="line266">266: </a>  V-&gt;ops-&gt;axpbypcz               = VecAXPBYPCZ_SeqCUSP;
+<a name="line267">267: </a>  V-&gt;ops-&gt;pointwisemult          = VecPointwiseMult_SeqCUSP;
+<a name="line268">268: </a>  V-&gt;ops-&gt;pointwisedivide        = VecPointwiseDivide_SeqCUSP;
+<a name="line269">269: </a>  V-&gt;ops-&gt;setrandom              = VecSetRandom_SeqCUSP;
+<a name="line270">270: </a>  V-&gt;ops-&gt;dot_local              = VecDot_SeqCUSP;
+<a name="line271">271: </a>  V-&gt;ops-&gt;tdot_local             = VecTDot_SeqCUSP;
+<a name="line272">272: </a>  V-&gt;ops-&gt;norm_local             = VecNorm_SeqCUSP;
+<a name="line273">273: </a>  V-&gt;ops-&gt;mdot_local             = VecMDot_SeqCUSP;
+<a name="line274">274: </a>  V-&gt;ops-&gt;maxpy                  = VecMAXPY_SeqCUSP;
+<a name="line275">275: </a>  V-&gt;ops-&gt;mdot                   = VecMDot_SeqCUSP;
+<a name="line276">276: </a>  V-&gt;ops-&gt;aypx                   = VecAYPX_SeqCUSP;
+<a name="line277">277: </a>  V-&gt;ops-&gt;waxpy                  = VecWAXPY_SeqCUSP;
+<a name="line278">278: </a>  V-&gt;ops-&gt;dotnorm2               = VecDotNorm2_SeqCUSP;
+<a name="line279">279: </a>  V-&gt;ops-&gt;placearray             = VecPlaceArray_SeqCUSP;
+<a name="line280">280: </a>  V-&gt;ops-&gt;replacearray           = VecReplaceArray_SeqCUSP;
+<a name="line281">281: </a>  V-&gt;ops-&gt;resetarray             = VecResetArray_SeqCUSP;
+<a name="line282">282: </a>  V-&gt;ops-&gt;destroy                = VecDestroy_SeqCUSP;
+<a name="line283">283: </a>  V-&gt;ops-&gt;duplicate              = VecDuplicate_SeqCUSP;
+<a name="line284">284: </a>  V-&gt;ops-&gt;conjugate              = VecConjugate_SeqCUSP;
+<a name="line285">285: </a>  V-&gt;ops-&gt;getlocalvector         = VecGetLocalVector_SeqCUSP;
+<a name="line286">286: </a>  V-&gt;ops-&gt;restorelocalvector     = VecRestoreLocalVector_SeqCUSP;
+<a name="line287">287: </a>  V-&gt;ops-&gt;getlocalvectorread     = VecGetLocalVector_SeqCUSP;
+<a name="line288">288: </a>  V-&gt;ops-&gt;restorelocalvectorread = VecRestoreLocalVector_SeqCUSP;
+
+<a name="line290">290: </a>  VecCUSPAllocateCheck(V);
+<a name="line291">291: </a>  V-&gt;valid_GPU_array = <a href="../../../../../../docs/manualpages/Sys/PetscCUSPFlag.html#PetscCUSPFlag">PETSC_CUSP_GPU</a>;
+<a name="line292">292: </a>  <a href="../../../../../../docs/manualpages/Vec/VecSet.html#VecSet">VecSet</a>(V,0.0);
+<a name="line293">293: </a>  <font color="#4169E1">return</font>(0);
+<a name="line294">294: </a>}
+</pre>
+</body>
+
+</html>

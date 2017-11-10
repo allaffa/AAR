@@ -1,0 +1,84 @@
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/sys/webclient/examples/tutorials/makefile.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:11:24+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/sys/webclient/examples/tutorials/makefile.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+<strong><font color="#FF0000">ALL:</font></strong> lib
+
+CFLAGS    =
+FFLAGS    =
+CPPFLAGS  =
+EXAMPLESC = googledriveupload.c urlshorten.c googleobtainrefreshtoken.c boxobtainrefreshtoken.c boxupload.c
+MANSEC	  = Sys
+LIBBASE	  = libpetscsys
+DIRS	  =
+LOCDIR	  = src/sys/webclient/examples/tutorials
+
+include ${PETSC_DIR}/lib/petsc/conf/variables
+include ${PETSC_DIR}/lib/petsc/conf/rules
+
+<strong><font color="#FF0000">urlshorten:</font></strong> urlshorten.o  chkopts
+	${CLINKER} -o urlshorten urlshorten.o ${PETSC_SYS_LIB}
+	${RM} -f urlshorten.o
+
+<strong><font color="#FF0000">googleobtainrefreshtoken:</font></strong> googleobtainrefreshtoken.o  chkopts
+	${CLINKER} -o googleobtainrefreshtoken googleobtainrefreshtoken.o ${PETSC_SYS_LIB}
+	${RM} -f googleobtainrefreshtoken.o
+
+<strong><font color="#FF0000">googledriveupload:</font></strong> googledriveupload.o  chkopts
+	${CLINKER} -o googledriveupload googledriveupload.o ${PETSC_SYS_LIB}
+	${RM} -f googledriveupload.o
+
+<strong><font color="#FF0000">boxobtainrefreshtoken:</font></strong> boxobtainrefreshtoken.o  chkopts
+	${CLINKER} -o boxobtainrefreshtoken boxobtainrefreshtoken.o ${PETSC_SYS_LIB}
+	${RM} -f boxobtainrefreshtoken.o
+
+<strong><font color="#FF0000">boxupload:</font></strong> boxupload.o  chkopts
+	${CLINKER} -o boxupload boxupload.o ${PETSC_SYS_LIB}
+	${RM} -f boxupload.o
+
+<strong><font color="#FF0000">globusobtaintransfers:</font></strong> globusobtaintransfers.o  chkopts
+	${CLINKER} -o globusobtaintransfers globusobtaintransfers.o ${PETSC_SYS_LIB}
+	${RM} -f globusobtaintransfers.o
+
+<font color="#A020F0"># the next two files don't exist in the repository; did I forget to git add them when I wrote them?</font>
+<strong><font color="#FF0000">globusobtainaccesstoken:</font></strong> globusobtainaccesstoken.o  chkopts
+	${CLINKER} -o globusobtainaccesstoken globusobtainaccesstoken.o ${PETSC_SYS_LIB}
+	${RM} -f globusobtainaccesstoken.o
+
+<strong><font color="#FF0000">globusupload:</font></strong> globusupload.o  chkopts
+	${CLINKER} -o globusupload globusupload.o ${PETSC_SYS_LIB}
+	${RM} -f globusupload.o
+
+<strong><font color="#FF0000">runurlshorten:</font></strong>
+	-@${MPIEXEC} -n 1 ./urlshorten &gt; urlshorten_1.tmp 2&gt;&amp;1;   \
+	   <font color="#4169E1">if</font> (${DIFF} output/urlshorten_1.out urlshorten_1.tmp) then true; \
+	   <font color="#4169E1">else</font> printf <font color="#666666">"${PWD}\nPossible problem with urlshorten_1, diffs above\n=========================================\n"</font>; fi; \
+	   ${RM} -f urlshorten_1.tmp
+
+<font color="#A020F0"># we need a test for -textbelt but I don't want to hardwire Matt's cellphone number in the repository</font>
+
+<font color="#A020F0"># we need to run this test regularly but I don't want to hardwire Matt's Google refresh token in the repository</font>
+<strong><font color="#FF0000">rungoogledriveupload:</font></strong>
+	-@${MPIEXEC} -n 1 ./googledriveupload -google_refresh_token XXX
+
+<font color="#A020F0"># We currently have no tests for the Globus file management</font>
+
+TESTEXAMPLES_C	          = urlshorten.PETSc runurlshorten urlshorten.rm googleobtainrefreshtoken.PETSc googleobtainrefreshtoken.rm \
+                            googledriveupload.PETSc googledriveupload.rm 
+
+TESTEXAMPLES_SAWS	   = boxobtainrefreshtoken.PETSc boxobtainrefreshtoken.rm \
+                             boxupload.PETSc boxupload.rm
+
+include ${PETSC_DIR}/lib/petsc/conf/test
+</pre>
+</body>
+
+</html>

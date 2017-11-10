@@ -1,0 +1,552 @@
+<center><a href="swarm_ex1.c">Actual source code: swarm_ex1.c</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/dm/examples/tutorials/swarm_ex1.c.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:49:07+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/dm/examples/tutorials/swarm_ex1.c.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+
+<a name="line2">  2: </a>static char help[] = <font color="#666666">"Tests DMSwarm\n\n"</font>;
+
+<a name="line4">  4: </a> #include <A href="../../../../include/petscdm.h.html">&lt;petscdm.h&gt;</A>
+<a name="line5">  5: </a> #include <A href="../../../../include/petscdmda.h.html">&lt;petscdmda.h&gt;</A>
+<a name="line6">  6: </a> #include <A href="../../../../include/petscdmswarm.h.html">&lt;petscdmswarm.h&gt;</A>
+
+<a name="line8">  8: </a><strong><font color="#4169E1"><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMSwarmCollect_General(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> (*collect)(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a>,void*,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>*,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>**),size_t ctx_size,void *ctx,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *globalsize)</font></strong>;
+<a name="line9">  9: </a><strong><font color="#4169E1"><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> DMSwarmCollect_DMDABoundingBox(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *globalsize)</font></strong>;
+
+<a name="line11"> 11: </a><strong><font color="#4169E1"><a name="ex1_1"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ex1_1(void)</font></strong>
+<a name="line12"> 12: </a>{
+<a name="line13"> 13: </a>  <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dms;
+<a name="line15"> 15: </a>  <a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> x;
+<a name="line16"> 16: </a>  <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> rank,commsize;
+<a name="line17"> 17: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> p;
+<a name="line18"> 18: </a>
+<a name="line19"> 19: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,&amp;commsize);
+<a name="line20"> 20: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,&amp;rank);
+
+<a name="line22"> 22: </a>  <font color="#4169E1">if</font> ((commsize &gt; 1) &amp;&amp; (commsize != 4)) <a href="../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,PETSC_ERR_SUP,<font color="#666666">"Must be run wuth 4 MPI ranks"</font>);
+<a name="line23"> 23: </a>
+<a name="line24"> 24: </a>  <a href="../../../../docs/manualpages/DM/DMCreate.html#DMCreate">DMCreate</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,&amp;dms);
+<a name="line25"> 25: </a>  <a href="../../../../docs/manualpages/DM/DMSetType.html#DMSetType">DMSetType</a>(dms,<a href="../../../../docs/manualpages/DMSWARM/DMSWARM.html#DMSWARM">DMSWARM</a>);
+
+<a name="line27"> 27: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmInitializeFieldRegister.html#DMSwarmInitializeFieldRegister">DMSwarmInitializeFieldRegister</a>(dms);
+<a name="line28"> 28: </a>
+<a name="line29"> 29: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterPetscDatatypeField.html#DMSwarmRegisterPetscDatatypeField">DMSwarmRegisterPetscDatatypeField</a>(dms,<font color="#666666">"viscosity"</font>,1,PETSC_REAL);
+<a name="line30"> 30: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterPetscDatatypeField.html#DMSwarmRegisterPetscDatatypeField">DMSwarmRegisterPetscDatatypeField</a>(dms,<font color="#666666">"strain"</font>,1,PETSC_REAL);
+<a name="line31"> 31: </a>
+<a name="line32"> 32: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmFinalizeFieldRegister.html#DMSwarmFinalizeFieldRegister">DMSwarmFinalizeFieldRegister</a>(dms);
+<a name="line33"> 33: </a>
+<a name="line34"> 34: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmSetLocalSizes.html#DMSwarmSetLocalSizes">DMSwarmSetLocalSizes</a>(dms,5+rank,4);
+<a name="line35"> 35: </a>  <a href="../../../../docs/manualpages/DM/DMView.html#DMView">DMView</a>(dms,<a href="../../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html#PETSC_VIEWER_STDOUT_WORLD">PETSC_VIEWER_STDOUT_WORLD</a>);
+<a name="line36"> 36: </a>
+<a name="line37"> 37: </a>  {
+<a name="line38"> 38: </a>    <a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> *array;
+<a name="line39"> 39: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetField.html#DMSwarmGetField">DMSwarmGetField</a>(dms,<font color="#666666">"viscosity"</font>,NULL,NULL,(void**)&amp;array);
+<a name="line40"> 40: </a>    <font color="#4169E1">for</font> (p=0; p&lt;5+rank; p++) {
+<a name="line41"> 41: </a>      array[p] = 11.1 + p*0.1 + rank*100.0;
+<a name="line42"> 42: </a>    }
+<a name="line43"> 43: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRestoreField.html#DMSwarmRestoreField">DMSwarmRestoreField</a>(dms,<font color="#666666">"viscosity"</font>,NULL,NULL,(void**)&amp;array);
+<a name="line44"> 44: </a>  }
+
+<a name="line46"> 46: </a>  {
+<a name="line47"> 47: </a>    <a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> *array;
+<a name="line48"> 48: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetField.html#DMSwarmGetField">DMSwarmGetField</a>(dms,<font color="#666666">"strain"</font>,NULL,NULL,(void**)&amp;array);
+<a name="line49"> 49: </a>    <font color="#4169E1">for</font> (p=0; p&lt;5+rank; p++) {
+<a name="line50"> 50: </a>      array[p] = 2.0e-2 + p*0.001 + rank*1.0;
+<a name="line51"> 51: </a>    }
+<a name="line52"> 52: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRestoreField.html#DMSwarmRestoreField">DMSwarmRestoreField</a>(dms,<font color="#666666">"strain"</font>,NULL,NULL,(void**)&amp;array);
+<a name="line53"> 53: </a>  }
+
+<a name="line55"> 55: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmCreateGlobalVectorFromField.html#DMSwarmCreateGlobalVectorFromField">DMSwarmCreateGlobalVectorFromField</a>(dms,<font color="#666666">"viscosity"</font>,&amp;x);
+<a name="line56"> 56: </a>  <font color="#B22222">/*<a href="../../../../docs/manualpages/Vec/VecView.html#VecView">VecView</a>(x,<a href="../../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html#PETSC_VIEWER_STDOUT_WORLD">PETSC_VIEWER_STDOUT_WORLD</a>);*/</font>
+<a name="line57"> 57: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmDestroyGlobalVectorFromField.html#DMSwarmDestroyGlobalVectorFromField">DMSwarmDestroyGlobalVectorFromField</a>(dms,<font color="#666666">"viscosity"</font>,&amp;x);
+<a name="line58"> 58: </a>
+<a name="line59"> 59: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmVectorDefineField.html#DMSwarmVectorDefineField">DMSwarmVectorDefineField</a>(dms,<font color="#666666">"strain"</font>);
+<a name="line60"> 60: </a>  <a href="../../../../docs/manualpages/DM/DMCreateGlobalVector.html#DMCreateGlobalVector">DMCreateGlobalVector</a>(dms,&amp;x);
+<a name="line61"> 61: </a>  <font color="#B22222">/*<a href="../../../../docs/manualpages/Vec/VecView.html#VecView">VecView</a>(x,<a href="../../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html#PETSC_VIEWER_STDOUT_WORLD">PETSC_VIEWER_STDOUT_WORLD</a>);*/</font>
+<a name="line62"> 62: </a>  <a href="../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;x);
+<a name="line63"> 63: </a>
+<a name="line64"> 64: </a>  {
+<a name="line65"> 65: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *rankval;
+<a name="line66"> 66: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> npoints[2],npoints_orig[2];
+<a name="line67"> 67: </a>
+<a name="line68"> 68: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetLocalSize.html#DMSwarmGetLocalSize">DMSwarmGetLocalSize</a>(dms,&amp;npoints_orig[0]);
+<a name="line69"> 69: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetSize.html#DMSwarmGetSize">DMSwarmGetSize</a>(dms,&amp;npoints_orig[1]);
+<a name="line70"> 70: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetField.html#DMSwarmGetField">DMSwarmGetField</a>(dms,<font color="#666666">"DMSwarm_rank"</font>,NULL,NULL,(void**)&amp;rankval);
+<a name="line71"> 71: </a>    <font color="#4169E1">if</font> ((rank == 0) &amp;&amp; (commsize &gt; 1)) {
+<a name="line72"> 72: </a>      rankval[0] = 1;
+<a name="line73"> 73: </a>      rankval[3] = 1;
+<a name="line74"> 74: </a>    }
+<a name="line75"> 75: </a>    <font color="#4169E1">if</font> (rank == 3) {
+<a name="line76"> 76: </a>      rankval[2] = 1;
+<a name="line77"> 77: </a>    }
+<a name="line78"> 78: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRestoreField.html#DMSwarmRestoreField">DMSwarmRestoreField</a>(dms,<font color="#666666">"DMSwarm_rank"</font>,NULL,NULL,(void**)&amp;rankval);
+<a name="line79"> 79: </a>
+<a name="line80"> 80: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmMigrate.html#DMSwarmMigrate">DMSwarmMigrate</a>(dms,<a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>);
+<a name="line81"> 81: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetLocalSize.html#DMSwarmGetLocalSize">DMSwarmGetLocalSize</a>(dms,&amp;npoints[0]);
+<a name="line82"> 82: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetSize.html#DMSwarmGetSize">DMSwarmGetSize</a>(dms,&amp;npoints[1]);
+
+<a name="line84"> 84: </a>    <a href="../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,<font color="#666666">"rank[%d] before(%D,%D) after(%D,%D)\n"</font>,rank,npoints_orig[0],npoints_orig[1],npoints[0],npoints[1]);
+<a name="line85"> 85: </a>  }
+<a name="line86"> 86: </a>
+<a name="line87"> 87: </a>  {
+<a name="line88"> 88: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmCreateGlobalVectorFromField.html#DMSwarmCreateGlobalVectorFromField">DMSwarmCreateGlobalVectorFromField</a>(dms,<font color="#666666">"viscosity"</font>,&amp;x);
+<a name="line89"> 89: </a>    <a href="../../../../docs/manualpages/Vec/VecView.html#VecView">VecView</a>(x,<a href="../../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html#PETSC_VIEWER_STDOUT_WORLD">PETSC_VIEWER_STDOUT_WORLD</a>);
+<a name="line90"> 90: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmDestroyGlobalVectorFromField.html#DMSwarmDestroyGlobalVectorFromField">DMSwarmDestroyGlobalVectorFromField</a>(dms,<font color="#666666">"viscosity"</font>,&amp;x);
+<a name="line91"> 91: </a>  }
+<a name="line92"> 92: </a>  {
+<a name="line93"> 93: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmCreateGlobalVectorFromField.html#DMSwarmCreateGlobalVectorFromField">DMSwarmCreateGlobalVectorFromField</a>(dms,<font color="#666666">"strain"</font>,&amp;x);
+<a name="line94"> 94: </a>    <a href="../../../../docs/manualpages/Vec/VecView.html#VecView">VecView</a>(x,<a href="../../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html#PETSC_VIEWER_STDOUT_WORLD">PETSC_VIEWER_STDOUT_WORLD</a>);
+<a name="line95"> 95: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmDestroyGlobalVectorFromField.html#DMSwarmDestroyGlobalVectorFromField">DMSwarmDestroyGlobalVectorFromField</a>(dms,<font color="#666666">"strain"</font>,&amp;x);
+<a name="line96"> 96: </a>  }
+
+<a name="line98"> 98: </a>  <a href="../../../../docs/manualpages/DM/DMDestroy.html#DMDestroy">DMDestroy</a>(&amp;dms);
+<a name="line99"> 99: </a>
+<a name="line100">100: </a>  <font color="#4169E1">return</font>(0);
+<a name="line101">101: </a>}
+
+<a name="line103">103: </a><strong><font color="#4169E1"><a name="ex1_2"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ex1_2(void)</font></strong>
+<a name="line104">104: </a>{
+<a name="line105">105: </a>  <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dms;
+<a name="line107">107: </a>  <a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> x;
+<a name="line108">108: </a>  <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> rank,commsize;
+<a name="line109">109: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> p;
+<a name="line110">110: </a>
+<a name="line111">111: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,&amp;commsize);
+<a name="line112">112: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,&amp;rank);
+<a name="line113">113: </a>
+<a name="line114">114: </a>  <a href="../../../../docs/manualpages/DM/DMCreate.html#DMCreate">DMCreate</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,&amp;dms);
+<a name="line115">115: </a>  <a href="../../../../docs/manualpages/DM/DMSetType.html#DMSetType">DMSetType</a>(dms,<a href="../../../../docs/manualpages/DMSWARM/DMSWARM.html#DMSWARM">DMSWARM</a>);
+<a name="line116">116: </a>
+<a name="line117">117: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmInitializeFieldRegister.html#DMSwarmInitializeFieldRegister">DMSwarmInitializeFieldRegister</a>(dms);
+<a name="line118">118: </a>
+<a name="line119">119: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterPetscDatatypeField.html#DMSwarmRegisterPetscDatatypeField">DMSwarmRegisterPetscDatatypeField</a>(dms,<font color="#666666">"viscosity"</font>,1,PETSC_REAL);
+<a name="line120">120: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterPetscDatatypeField.html#DMSwarmRegisterPetscDatatypeField">DMSwarmRegisterPetscDatatypeField</a>(dms,<font color="#666666">"strain"</font>,1,PETSC_REAL);
+<a name="line121">121: </a>
+<a name="line122">122: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmFinalizeFieldRegister.html#DMSwarmFinalizeFieldRegister">DMSwarmFinalizeFieldRegister</a>(dms);
+<a name="line123">123: </a>
+<a name="line124">124: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmSetLocalSizes.html#DMSwarmSetLocalSizes">DMSwarmSetLocalSizes</a>(dms,5+rank,4);
+<a name="line125">125: </a>  <a href="../../../../docs/manualpages/DM/DMView.html#DMView">DMView</a>(dms,<a href="../../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html#PETSC_VIEWER_STDOUT_WORLD">PETSC_VIEWER_STDOUT_WORLD</a>);
+<a name="line126">126: </a>
+<a name="line127">127: </a>  {
+<a name="line128">128: </a>    <a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> *array;
+<a name="line129">129: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetField.html#DMSwarmGetField">DMSwarmGetField</a>(dms,<font color="#666666">"viscosity"</font>,NULL,NULL,(void**)&amp;array);
+<a name="line130">130: </a>    <font color="#4169E1">for</font> (p=0; p&lt;5+rank; p++) {
+<a name="line131">131: </a>      array[p] = 11.1 + p*0.1 + rank*100.0;
+<a name="line132">132: </a>    }
+<a name="line133">133: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRestoreField.html#DMSwarmRestoreField">DMSwarmRestoreField</a>(dms,<font color="#666666">"viscosity"</font>,NULL,NULL,(void**)&amp;array);
+<a name="line134">134: </a>  }
+<a name="line135">135: </a>
+<a name="line136">136: </a>  {
+<a name="line137">137: </a>    <a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> *array;
+<a name="line138">138: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetField.html#DMSwarmGetField">DMSwarmGetField</a>(dms,<font color="#666666">"strain"</font>,NULL,NULL,(void**)&amp;array);
+<a name="line139">139: </a>    <font color="#4169E1">for</font> (p=0; p&lt;5+rank; p++) {
+<a name="line140">140: </a>      array[p] = 2.0e-2 + p*0.001 + rank*1.0;
+<a name="line141">141: </a>    }
+<a name="line142">142: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRestoreField.html#DMSwarmRestoreField">DMSwarmRestoreField</a>(dms,<font color="#666666">"strain"</font>,NULL,NULL,(void**)&amp;array);
+<a name="line143">143: </a>  }
+<a name="line144">144: </a>
+<a name="line145">145: </a>  {
+<a name="line146">146: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *rankval;
+<a name="line147">147: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> npoints[2],npoints_orig[2];
+<a name="line148">148: </a>
+<a name="line149">149: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetLocalSize.html#DMSwarmGetLocalSize">DMSwarmGetLocalSize</a>(dms,&amp;npoints_orig[0]);
+<a name="line150">150: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetSize.html#DMSwarmGetSize">DMSwarmGetSize</a>(dms,&amp;npoints_orig[1]);
+<a name="line151">151: </a>    <a href="../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,<font color="#666666">"rank[%d] before(%D,%D)\n"</font>,rank,npoints_orig[0],npoints_orig[1]);
+
+<a name="line153">153: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetField.html#DMSwarmGetField">DMSwarmGetField</a>(dms,<font color="#666666">"DMSwarm_rank"</font>,NULL,NULL,(void**)&amp;rankval);
+
+<a name="line155">155: </a>    <font color="#4169E1">if</font> (rank == 1) {
+<a name="line156">156: </a>      rankval[0] = -1;
+<a name="line157">157: </a>    }
+<a name="line158">158: </a>    <font color="#4169E1">if</font> (rank == 2) {
+<a name="line159">159: </a>      rankval[1] = -1;
+<a name="line160">160: </a>    }
+<a name="line161">161: </a>    <font color="#4169E1">if</font> (rank == 3) {
+<a name="line162">162: </a>      rankval[3] = -1;
+<a name="line163">163: </a>      rankval[4] = -1;
+<a name="line164">164: </a>    }
+<a name="line165">165: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRestoreField.html#DMSwarmRestoreField">DMSwarmRestoreField</a>(dms,<font color="#666666">"DMSwarm_rank"</font>,NULL,NULL,(void**)&amp;rankval);
+<a name="line166">166: </a>
+<a name="line167">167: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmCollectViewCreate.html#DMSwarmCollectViewCreate">DMSwarmCollectViewCreate</a>(dms);
+<a name="line168">168: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetLocalSize.html#DMSwarmGetLocalSize">DMSwarmGetLocalSize</a>(dms,&amp;npoints[0]);
+<a name="line169">169: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetSize.html#DMSwarmGetSize">DMSwarmGetSize</a>(dms,&amp;npoints[1]);
+<a name="line170">170: </a>    <a href="../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,<font color="#666666">"rank[%d] after(%D,%D)\n"</font>,rank,npoints[0],npoints[1]);
+
+<a name="line172">172: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmCreateGlobalVectorFromField.html#DMSwarmCreateGlobalVectorFromField">DMSwarmCreateGlobalVectorFromField</a>(dms,<font color="#666666">"viscosity"</font>,&amp;x);
+<a name="line173">173: </a>    <a href="../../../../docs/manualpages/Vec/VecView.html#VecView">VecView</a>(x,<a href="../../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html#PETSC_VIEWER_STDOUT_WORLD">PETSC_VIEWER_STDOUT_WORLD</a>);
+<a name="line174">174: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmDestroyGlobalVectorFromField.html#DMSwarmDestroyGlobalVectorFromField">DMSwarmDestroyGlobalVectorFromField</a>(dms,<font color="#666666">"viscosity"</font>,&amp;x);
+
+<a name="line176">176: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmCollectViewDestroy.html#DMSwarmCollectViewDestroy">DMSwarmCollectViewDestroy</a>(dms);
+<a name="line177">177: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetLocalSize.html#DMSwarmGetLocalSize">DMSwarmGetLocalSize</a>(dms,&amp;npoints[0]);
+<a name="line178">178: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetSize.html#DMSwarmGetSize">DMSwarmGetSize</a>(dms,&amp;npoints[1]);
+<a name="line179">179: </a>    <a href="../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,<font color="#666666">"rank[%d] after_v(%D,%D)\n"</font>,rank,npoints[0],npoints[1]);
+
+<a name="line181">181: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmCreateGlobalVectorFromField.html#DMSwarmCreateGlobalVectorFromField">DMSwarmCreateGlobalVectorFromField</a>(dms,<font color="#666666">"viscosity"</font>,&amp;x);
+<a name="line182">182: </a>    <a href="../../../../docs/manualpages/Vec/VecView.html#VecView">VecView</a>(x,<a href="../../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html#PETSC_VIEWER_STDOUT_WORLD">PETSC_VIEWER_STDOUT_WORLD</a>);
+<a name="line183">183: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmDestroyGlobalVectorFromField.html#DMSwarmDestroyGlobalVectorFromField">DMSwarmDestroyGlobalVectorFromField</a>(dms,<font color="#666666">"viscosity"</font>,&amp;x);
+<a name="line184">184: </a>  }
+<a name="line185">185: </a>  <a href="../../../../docs/manualpages/DM/DMDestroy.html#DMDestroy">DMDestroy</a>(&amp;dms);
+<a name="line186">186: </a>
+<a name="line187">187: </a>  <font color="#4169E1">return</font>(0);
+<a name="line188">188: </a>}
+
+<a name="line190">190: </a><font color="#B22222">/*</font>
+<a name="line191">191: </a><font color="#B22222"> splot "c-rank0.gp","c-rank1.gp","c-rank2.gp","c-rank3.gp"</font>
+<a name="line192">192: </a><font color="#B22222">*/</font>
+<a name="line193">193: </a><strong><font color="#4169E1"><a name="ex1_3"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ex1_3(void)</font></strong>
+<a name="line194">194: </a>{
+<a name="line195">195: </a>  <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dms;
+<a name="line197">197: </a>  <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> rank,commsize;
+<a name="line198">198: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> is,js,ni,nj,overlap;
+<a name="line199">199: </a>  <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dmcell;
+<a name="line200">200: </a>
+<a name="line201">201: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,&amp;commsize);
+<a name="line202">202: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,&amp;rank);
+<a name="line203">203: </a>
+<a name="line204">204: </a>  overlap = 2;
+<a name="line205">205: </a>  <a href="../../../../docs/manualpages/DMDA/DMDACreate2d.html#DMDACreate2d">DMDACreate2d</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_NONE</a>,<a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_NONE</a>,<a href="../../../../docs/manualpages/DMDA/DMDAStencilType.html#DMDAStencilType">DMDA_STENCIL_BOX</a>,13,13,<a href="../../../../docs/manualpages/Sys/PETSC_DECIDE.html#PETSC_DECIDE">PETSC_DECIDE</a>,<a href="../../../../docs/manualpages/Sys/PETSC_DECIDE.html#PETSC_DECIDE">PETSC_DECIDE</a>,1,overlap,NULL,NULL,&amp;dmcell);
+<a name="line206">206: </a>  <a href="../../../../docs/manualpages/DM/DMSetFromOptions.html#DMSetFromOptions">DMSetFromOptions</a>(dmcell);
+<a name="line207">207: </a>  <a href="../../../../docs/manualpages/DM/DMSetUp.html#DMSetUp">DMSetUp</a>(dmcell);
+<a name="line208">208: </a>  <a href="../../../../docs/manualpages/DMDA/DMDASetUniformCoordinates.html#DMDASetUniformCoordinates">DMDASetUniformCoordinates</a>(dmcell,-1.0,1.0,-1.0,1.0,-1.0,1.0);
+<a name="line209">209: </a>
+<a name="line210">210: </a>  <a href="../../../../docs/manualpages/DMDA/DMDAGetCorners.html#DMDAGetCorners">DMDAGetCorners</a>(dmcell,&amp;is,&amp;js,NULL,&amp;ni,&amp;nj,NULL);
+<a name="line211">211: </a>
+<a name="line212">212: </a>  <a href="../../../../docs/manualpages/DM/DMCreate.html#DMCreate">DMCreate</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,&amp;dms);
+<a name="line213">213: </a>  <a href="../../../../docs/manualpages/DM/DMSetType.html#DMSetType">DMSetType</a>(dms,<a href="../../../../docs/manualpages/DMSWARM/DMSWARM.html#DMSWARM">DMSWARM</a>);
+<a name="line214">214: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmSetCellDM.html#DMSwarmSetCellDM">DMSwarmSetCellDM</a>(dms,dmcell);
+<a name="line215">215: </a>
+<a name="line216">216: </a>  <font color="#B22222">/* load in data types */</font>
+<a name="line217">217: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmInitializeFieldRegister.html#DMSwarmInitializeFieldRegister">DMSwarmInitializeFieldRegister</a>(dms);
+<a name="line218">218: </a>
+<a name="line219">219: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterPetscDatatypeField.html#DMSwarmRegisterPetscDatatypeField">DMSwarmRegisterPetscDatatypeField</a>(dms,<font color="#666666">"viscosity"</font>,1,PETSC_REAL);
+<a name="line220">220: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterPetscDatatypeField.html#DMSwarmRegisterPetscDatatypeField">DMSwarmRegisterPetscDatatypeField</a>(dms,<font color="#666666">"coorx"</font>,1,PETSC_REAL);
+<a name="line221">221: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterPetscDatatypeField.html#DMSwarmRegisterPetscDatatypeField">DMSwarmRegisterPetscDatatypeField</a>(dms,<font color="#666666">"coory"</font>,1,PETSC_REAL);
+<a name="line222">222: </a>
+<a name="line223">223: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmFinalizeFieldRegister.html#DMSwarmFinalizeFieldRegister">DMSwarmFinalizeFieldRegister</a>(dms);
+<a name="line224">224: </a>
+<a name="line225">225: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmSetLocalSizes.html#DMSwarmSetLocalSizes">DMSwarmSetLocalSizes</a>(dms,ni*nj*4,4);
+<a name="line226">226: </a>  <a href="../../../../docs/manualpages/DM/DMView.html#DMView">DMView</a>(dms,<a href="../../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html#PETSC_VIEWER_STDOUT_WORLD">PETSC_VIEWER_STDOUT_WORLD</a>);
+<a name="line227">227: </a>
+<a name="line228">228: </a>  <font color="#B22222">/* set values within the swarm */</font>
+<a name="line229">229: </a>  {
+<a name="line230">230: </a>    <a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> *array_x,*array_y;
+<a name="line231">231: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> npoints,i,j,cnt;
+<a name="line232">232: </a>    <a href="../../../../docs/manualpages/DMDA/DMDACoor2d.html#DMDACoor2d">DMDACoor2d</a> **LA_coor;
+<a name="line233">233: </a>    <a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> coor;
+<a name="line234">234: </a>    <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dmcellcdm;
+<a name="line235">235: </a>
+<a name="line236">236: </a>    <a href="../../../../docs/manualpages/DM/DMGetCoordinateDM.html#DMGetCoordinateDM">DMGetCoordinateDM</a>(dmcell,&amp;dmcellcdm);
+<a name="line237">237: </a>    <a href="../../../../docs/manualpages/DM/DMGetCoordinates.html#DMGetCoordinates">DMGetCoordinates</a>(dmcell,&amp;coor);
+<a name="line238">238: </a>    <a href="../../../../docs/manualpages/DMDA/DMDAVecGetArray.html#DMDAVecGetArray">DMDAVecGetArray</a>(dmcellcdm,coor,&amp;LA_coor);
+<a name="line239">239: </a>
+<a name="line240">240: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetLocalSize.html#DMSwarmGetLocalSize">DMSwarmGetLocalSize</a>(dms,&amp;npoints);
+<a name="line241">241: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetField.html#DMSwarmGetField">DMSwarmGetField</a>(dms,<font color="#666666">"coorx"</font>,NULL,NULL,(void**)&amp;array_x);
+<a name="line242">242: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetField.html#DMSwarmGetField">DMSwarmGetField</a>(dms,<font color="#666666">"coory"</font>,NULL,NULL,(void**)&amp;array_y);
+<a name="line243">243: </a>    cnt = 0;
+<a name="line244">244: </a>    <font color="#4169E1">for</font> (j=js; j&lt;js+nj; j++) {
+<a name="line245">245: </a>      <font color="#4169E1">for</font> (i=is; i&lt;is+ni; i++) {
+<a name="line246">246: </a>        <a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> xp,yp;
+<a name="line247">247: </a>
+<a name="line248">248: </a>        xp = LA_coor[j][i].x;
+<a name="line249">249: </a>        yp = LA_coor[j][i].y;
+<a name="line250">250: </a>
+<a name="line251">251: </a>        array_x[4*cnt+0] = xp - 0.05; <font color="#4169E1">if</font> (array_x[4*cnt+0] &lt; -1.0) { array_x[4*cnt+0] = -1.0+1.0e-12; }
+<a name="line252">252: </a>        array_x[4*cnt+1] = xp + 0.05; <font color="#4169E1">if</font> (array_x[4*cnt+1] &gt; 1.0)  { array_x[4*cnt+1] =  1.0-1.0e-12; }
+<a name="line253">253: </a>        array_x[4*cnt+2] = xp - 0.05; <font color="#4169E1">if</font> (array_x[4*cnt+2] &lt; -1.0) { array_x[4*cnt+2] = -1.0+1.0e-12; }
+<a name="line254">254: </a>        array_x[4*cnt+3] = xp + 0.05; <font color="#4169E1">if</font> (array_x[4*cnt+3] &gt; 1.0)  { array_x[4*cnt+3] =  1.0-1.0e-12; }
+
+<a name="line256">256: </a>        array_y[4*cnt+0] = yp - 0.05; <font color="#4169E1">if</font> (array_y[4*cnt+0] &lt; -1.0) { array_y[4*cnt+0] = -1.0+1.0e-12; }
+<a name="line257">257: </a>        array_y[4*cnt+1] = yp - 0.05; <font color="#4169E1">if</font> (array_y[4*cnt+1] &lt; -1.0) { array_y[4*cnt+1] = -1.0+1.0e-12; }
+<a name="line258">258: </a>        array_y[4*cnt+2] = yp + 0.05; <font color="#4169E1">if</font> (array_y[4*cnt+2] &gt; 1.0)  { array_y[4*cnt+2] =  1.0-1.0e-12; }
+<a name="line259">259: </a>        array_y[4*cnt+3] = yp + 0.05; <font color="#4169E1">if</font> (array_y[4*cnt+3] &gt; 1.0)  { array_y[4*cnt+3] =  1.0-1.0e-12; }
+
+<a name="line261">261: </a>        cnt++;
+<a name="line262">262: </a>      }
+<a name="line263">263: </a>    }
+<a name="line264">264: </a>
+<a name="line265">265: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRestoreField.html#DMSwarmRestoreField">DMSwarmRestoreField</a>(dms,<font color="#666666">"coory"</font>,NULL,NULL,(void**)&amp;array_y);
+<a name="line266">266: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRestoreField.html#DMSwarmRestoreField">DMSwarmRestoreField</a>(dms,<font color="#666666">"coorx"</font>,NULL,NULL,(void**)&amp;array_x);
+<a name="line267">267: </a>    <a href="../../../../docs/manualpages/DMDA/DMDAVecRestoreArray.html#DMDAVecRestoreArray">DMDAVecRestoreArray</a>(dmcellcdm,coor,&amp;LA_coor);
+<a name="line268">268: </a>  }
+<a name="line269">269: </a>
+<a name="line270">270: </a>  {
+<a name="line271">271: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> npoints[2],npoints_orig[2],ng;
+<a name="line272">272: </a>
+<a name="line273">273: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetLocalSize.html#DMSwarmGetLocalSize">DMSwarmGetLocalSize</a>(dms,&amp;npoints_orig[0]);
+<a name="line274">274: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetSize.html#DMSwarmGetSize">DMSwarmGetSize</a>(dms,&amp;npoints_orig[1]);
+<a name="line275">275: </a>    <a href="../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,<font color="#666666">"rank[%d] before(%D,%D)\n"</font>,rank,npoints_orig[0],npoints_orig[1]);
+<a name="line276">276: </a>
+<a name="line277">277: </a>    DMSwarmCollect_DMDABoundingBox(dms,&amp;ng);
+<a name="line278">278: </a>
+<a name="line279">279: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetLocalSize.html#DMSwarmGetLocalSize">DMSwarmGetLocalSize</a>(dms,&amp;npoints[0]);
+<a name="line280">280: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetSize.html#DMSwarmGetSize">DMSwarmGetSize</a>(dms,&amp;npoints[1]);
+<a name="line281">281: </a>    <a href="../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,<font color="#666666">"rank[%d] after(%D,%D)\n"</font>,rank,npoints[0],npoints[1]);
+<a name="line282">282: </a>  }
+<a name="line283">283: </a>
+<a name="line284">284: </a>  {
+<a name="line285">285: </a>    <a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> *array_x,*array_y;
+<a name="line286">286: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> npoints,p;
+<a name="line287">287: </a>    FILE *fp = NULL;
+<a name="line288">288: </a>    char name[PETSC_MAX_PATH_LEN];
+<a name="line289">289: </a>
+<a name="line290">290: </a>    <a href="../../../../docs/manualpages/Sys/PetscSNPrintf.html#PetscSNPrintf">PetscSNPrintf</a>(name,PETSC_MAX_PATH_LEN-1,<font color="#666666">"c-rank%d.gp"</font>,rank);
+<a name="line291">291: </a>    fp = fopen(name,<font color="#666666">"w"</font>);
+<a name="line292">292: </a>    <font color="#4169E1">if</font> (!fp) <a href="../../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_FILE_OPEN,<font color="#666666">"Cannot open file %s"</font>,name);
+<a name="line293">293: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetLocalSize.html#DMSwarmGetLocalSize">DMSwarmGetLocalSize</a>(dms,&amp;npoints);
+<a name="line294">294: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetField.html#DMSwarmGetField">DMSwarmGetField</a>(dms,<font color="#666666">"coorx"</font>,NULL,NULL,(void**)&amp;array_x);
+<a name="line295">295: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetField.html#DMSwarmGetField">DMSwarmGetField</a>(dms,<font color="#666666">"coory"</font>,NULL,NULL,(void**)&amp;array_y);
+<a name="line296">296: </a>    <font color="#4169E1">for</font> (p=0; p&lt;npoints; p++) {
+<a name="line297">297: </a>      fprintf(fp,<font color="#666666">"%+1.4e %+1.4e %1.4e\n"</font>,array_x[p],array_y[p],(double)rank);
+<a name="line298">298: </a>    }
+<a name="line299">299: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRestoreField.html#DMSwarmRestoreField">DMSwarmRestoreField</a>(dms,<font color="#666666">"coory"</font>,NULL,NULL,(void**)&amp;array_y);
+<a name="line300">300: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRestoreField.html#DMSwarmRestoreField">DMSwarmRestoreField</a>(dms,<font color="#666666">"coorx"</font>,NULL,NULL,(void**)&amp;array_x);
+<a name="line301">301: </a>    fclose(fp);
+<a name="line302">302: </a>  }
+<a name="line303">303: </a>
+<a name="line304">304: </a>  <a href="../../../../docs/manualpages/DM/DMDestroy.html#DMDestroy">DMDestroy</a>(&amp;dmcell);
+<a name="line305">305: </a>  <a href="../../../../docs/manualpages/DM/DMDestroy.html#DMDestroy">DMDestroy</a>(&amp;dms);
+<a name="line306">306: </a>
+<a name="line307">307: </a>  <font color="#4169E1">return</font>(0);
+<a name="line308">308: </a>}
+
+<a name="line310">310: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line311">311: </a>  <a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> cx[2];
+<a name="line312">312: </a>  <a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> radius;
+<a name="line313">313: </a>} CollectZoneCtx;
+
+<a name="line315">315: </a><strong><font color="#4169E1"><a name="collect_zone"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> collect_zone(<a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dm,void *ctx,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *nfound,<a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> **foundlist)</font></strong>
+<a name="line316">316: </a>{
+<a name="line317">317: </a>  CollectZoneCtx *zone = (CollectZoneCtx*)ctx;
+<a name="line318">318: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> p,npoints;
+<a name="line319">319: </a>  <a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> *array_x,*array_y,r2;
+<a name="line320">320: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> p2collect,*plist;
+<a name="line321">321: </a>  <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> rank;
+<a name="line323">323: </a>
+<a name="line324">324: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,&amp;rank);
+
+<a name="line326">326: </a>  <font color="#B22222">/*<a href="../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,"z %1.4e,%1.4e --&gt; %1.4e\n",zone-&gt;cx[0],zone-&gt;cx[1],zone-&gt;radius);*/</font>
+<a name="line327">327: </a>
+<a name="line328">328: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetLocalSize.html#DMSwarmGetLocalSize">DMSwarmGetLocalSize</a>(dm,&amp;npoints);
+<a name="line329">329: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetField.html#DMSwarmGetField">DMSwarmGetField</a>(dm,<font color="#666666">"coorx"</font>,NULL,NULL,(void**)&amp;array_x);
+<a name="line330">330: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetField.html#DMSwarmGetField">DMSwarmGetField</a>(dm,<font color="#666666">"coory"</font>,NULL,NULL,(void**)&amp;array_y);
+
+<a name="line332">332: </a>  r2 = zone-&gt;radius * zone-&gt;radius;
+<a name="line333">333: </a>  p2collect = 0;
+<a name="line334">334: </a>  <font color="#4169E1">for</font> (p=0; p&lt;npoints; p++) {
+<a name="line335">335: </a>    <a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> sep2;
+<a name="line336">336: </a>
+<a name="line337">337: </a>    sep2  = (array_x[p] - zone-&gt;cx[0])*(array_x[p] - zone-&gt;cx[0]);
+<a name="line338">338: </a>    sep2 += (array_y[p] - zone-&gt;cx[1])*(array_y[p] - zone-&gt;cx[1]);
+<a name="line339">339: </a>    <font color="#4169E1">if</font> (sep2 &lt; r2) {
+<a name="line340">340: </a>      p2collect++;
+<a name="line341">341: </a>    }
+<a name="line342">342: </a>  }
+<a name="line343">343: </a>
+<a name="line344">344: </a>  <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(p2collect+1,&amp;plist);
+<a name="line345">345: </a>  p2collect = 0;
+<a name="line346">346: </a>  <font color="#4169E1">for</font> (p=0; p&lt;npoints; p++) {
+<a name="line347">347: </a>    <a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> sep2;
+<a name="line348">348: </a>
+<a name="line349">349: </a>    sep2  = (array_x[p] - zone-&gt;cx[0])*(array_x[p] - zone-&gt;cx[0]);
+<a name="line350">350: </a>    sep2 += (array_y[p] - zone-&gt;cx[1])*(array_y[p] - zone-&gt;cx[1]);
+<a name="line351">351: </a>    <font color="#4169E1">if</font> (sep2 &lt; r2) {
+<a name="line352">352: </a>      plist[p2collect] = p;
+<a name="line353">353: </a>      p2collect++;
+<a name="line354">354: </a>    }
+<a name="line355">355: </a>  }
+<a name="line356">356: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRestoreField.html#DMSwarmRestoreField">DMSwarmRestoreField</a>(dm,<font color="#666666">"coory"</font>,NULL,NULL,(void**)&amp;array_y);
+<a name="line357">357: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRestoreField.html#DMSwarmRestoreField">DMSwarmRestoreField</a>(dm,<font color="#666666">"coorx"</font>,NULL,NULL,(void**)&amp;array_x);
+<a name="line358">358: </a>
+<a name="line359">359: </a>  <font color="#B22222">/*<a href="../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,"rank[%d]: p2collect = %d\n",rank,p2collect);*/</font>
+
+<a name="line361">361: </a>  *nfound = p2collect;
+<a name="line362">362: </a>  *foundlist = plist;
+<a name="line363">363: </a>  <font color="#4169E1">return</font>(0);
+<a name="line364">364: </a>}
+
+<a name="line366">366: </a><strong><font color="#4169E1"><a name="ex1_4"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ex1_4(void)</font></strong>
+<a name="line367">367: </a>{
+<a name="line368">368: </a>  <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dms;
+<a name="line370">370: </a>  <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> rank,commsize;
+<a name="line371">371: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> is,js,ni,nj,overlap,nn;
+<a name="line372">372: </a>  <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dmcell;
+<a name="line373">373: </a>  CollectZoneCtx *zone;
+<a name="line374">374: </a>  <a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> dx;
+<a name="line375">375: </a>
+<a name="line376">376: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,&amp;commsize);
+<a name="line377">377: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,&amp;rank);
+<a name="line378">378: </a>
+<a name="line379">379: </a>  nn = 101;
+<a name="line380">380: </a>  dx = 2.0/ (<a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>)(nn-1);
+<a name="line381">381: </a>  overlap = 0;
+<a name="line382">382: </a>  <a href="../../../../docs/manualpages/DMDA/DMDACreate2d.html#DMDACreate2d">DMDACreate2d</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_NONE</a>,<a href="../../../../docs/manualpages/DM/DMBoundaryType.html#DMBoundaryType">DM_BOUNDARY_NONE</a>,<a href="../../../../docs/manualpages/DMDA/DMDAStencilType.html#DMDAStencilType">DMDA_STENCIL_BOX</a>,nn,nn,<a href="../../../../docs/manualpages/Sys/PETSC_DECIDE.html#PETSC_DECIDE">PETSC_DECIDE</a>,<a href="../../../../docs/manualpages/Sys/PETSC_DECIDE.html#PETSC_DECIDE">PETSC_DECIDE</a>,1,overlap,NULL,NULL,&amp;dmcell);
+<a name="line383">383: </a>  <a href="../../../../docs/manualpages/DM/DMSetFromOptions.html#DMSetFromOptions">DMSetFromOptions</a>(dmcell);
+<a name="line384">384: </a>  <a href="../../../../docs/manualpages/DM/DMSetUp.html#DMSetUp">DMSetUp</a>(dmcell);
+<a name="line385">385: </a>  <a href="../../../../docs/manualpages/DMDA/DMDASetUniformCoordinates.html#DMDASetUniformCoordinates">DMDASetUniformCoordinates</a>(dmcell,-1.0,1.0,-1.0,1.0,-1.0,1.0);
+<a name="line386">386: </a>
+<a name="line387">387: </a>  <a href="../../../../docs/manualpages/DMDA/DMDAGetCorners.html#DMDAGetCorners">DMDAGetCorners</a>(dmcell,&amp;is,&amp;js,NULL,&amp;ni,&amp;nj,NULL);
+<a name="line388">388: </a>
+<a name="line389">389: </a>  <a href="../../../../docs/manualpages/DM/DMCreate.html#DMCreate">DMCreate</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,&amp;dms);
+<a name="line390">390: </a>  <a href="../../../../docs/manualpages/DM/DMSetType.html#DMSetType">DMSetType</a>(dms,<a href="../../../../docs/manualpages/DMSWARM/DMSWARM.html#DMSWARM">DMSWARM</a>);
+<a name="line391">391: </a>
+<a name="line392">392: </a>  <font color="#B22222">/* load in data types */</font>
+<a name="line393">393: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmInitializeFieldRegister.html#DMSwarmInitializeFieldRegister">DMSwarmInitializeFieldRegister</a>(dms);
+<a name="line394">394: </a>
+<a name="line395">395: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterPetscDatatypeField.html#DMSwarmRegisterPetscDatatypeField">DMSwarmRegisterPetscDatatypeField</a>(dms,<font color="#666666">"viscosity"</font>,1,PETSC_REAL);
+<a name="line396">396: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterPetscDatatypeField.html#DMSwarmRegisterPetscDatatypeField">DMSwarmRegisterPetscDatatypeField</a>(dms,<font color="#666666">"coorx"</font>,1,PETSC_REAL);
+<a name="line397">397: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRegisterPetscDatatypeField.html#DMSwarmRegisterPetscDatatypeField">DMSwarmRegisterPetscDatatypeField</a>(dms,<font color="#666666">"coory"</font>,1,PETSC_REAL);
+<a name="line398">398: </a>
+<a name="line399">399: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmFinalizeFieldRegister.html#DMSwarmFinalizeFieldRegister">DMSwarmFinalizeFieldRegister</a>(dms);
+<a name="line400">400: </a>
+<a name="line401">401: </a>  <a href="../../../../docs/manualpages/DMSWARM/DMSwarmSetLocalSizes.html#DMSwarmSetLocalSizes">DMSwarmSetLocalSizes</a>(dms,ni*nj*4,4);
+<a name="line402">402: </a>  <a href="../../../../docs/manualpages/DM/DMView.html#DMView">DMView</a>(dms,<a href="../../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html#PETSC_VIEWER_STDOUT_WORLD">PETSC_VIEWER_STDOUT_WORLD</a>);
+<a name="line403">403: </a>
+<a name="line404">404: </a>  <font color="#B22222">/* set values within the swarm */</font>
+<a name="line405">405: </a>  {
+<a name="line406">406: </a>    <a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> *array_x,*array_y;
+<a name="line407">407: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> npoints,i,j,cnt;
+<a name="line408">408: </a>    <a href="../../../../docs/manualpages/DMDA/DMDACoor2d.html#DMDACoor2d">DMDACoor2d</a> **LA_coor;
+<a name="line409">409: </a>    <a href="../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> coor;
+<a name="line410">410: </a>    <a href="../../../../docs/manualpages/DM/DM.html#DM">DM</a> dmcellcdm;
+<a name="line411">411: </a>
+<a name="line412">412: </a>    <a href="../../../../docs/manualpages/DM/DMGetCoordinateDM.html#DMGetCoordinateDM">DMGetCoordinateDM</a>(dmcell,&amp;dmcellcdm);
+<a name="line413">413: </a>    <a href="../../../../docs/manualpages/DM/DMGetCoordinates.html#DMGetCoordinates">DMGetCoordinates</a>(dmcell,&amp;coor);
+<a name="line414">414: </a>    <a href="../../../../docs/manualpages/DMDA/DMDAVecGetArray.html#DMDAVecGetArray">DMDAVecGetArray</a>(dmcellcdm,coor,&amp;LA_coor);
+<a name="line415">415: </a>
+<a name="line416">416: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetLocalSize.html#DMSwarmGetLocalSize">DMSwarmGetLocalSize</a>(dms,&amp;npoints);
+<a name="line417">417: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetField.html#DMSwarmGetField">DMSwarmGetField</a>(dms,<font color="#666666">"coorx"</font>,NULL,NULL,(void**)&amp;array_x);
+<a name="line418">418: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetField.html#DMSwarmGetField">DMSwarmGetField</a>(dms,<font color="#666666">"coory"</font>,NULL,NULL,(void**)&amp;array_y);
+<a name="line419">419: </a>    cnt = 0;
+<a name="line420">420: </a>    <font color="#4169E1">for</font> (j=js; j&lt;js+nj; j++) {
+<a name="line421">421: </a>      <font color="#4169E1">for</font> (i=is; i&lt;is+ni; i++) {
+<a name="line422">422: </a>        <a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> xp,yp;
+<a name="line423">423: </a>
+<a name="line424">424: </a>        xp = LA_coor[j][i].x;
+<a name="line425">425: </a>        yp = LA_coor[j][i].y;
+<a name="line426">426: </a>
+<a name="line427">427: </a>        array_x[4*cnt+0] = xp - dx*0.1; <font color="#B22222">/*if (array_x[4*cnt+0] &lt; -1.0) { array_x[4*cnt+0] = -1.0+1.0e-12; }*/</font>
+<a name="line428">428: </a>        array_x[4*cnt+1] = xp + dx*0.1; <font color="#B22222">/*if (array_x[4*cnt+1] &gt; 1.0)  { array_x[4*cnt+1] =  1.0-1.0e-12; }*/</font>
+<a name="line429">429: </a>        array_x[4*cnt+2] = xp - dx*0.1; <font color="#B22222">/*if (array_x[4*cnt+2] &lt; -1.0) { array_x[4*cnt+2] = -1.0+1.0e-12; }*/</font>
+<a name="line430">430: </a>        array_x[4*cnt+3] = xp + dx*0.1; <font color="#B22222">/*if (array_x[4*cnt+3] &gt; 1.0)  { array_x[4*cnt+3] =  1.0-1.0e-12; }*/</font>
+<a name="line431">431: </a>
+<a name="line432">432: </a>        array_y[4*cnt+0] = yp - dx*0.1; <font color="#B22222">/*if (array_y[4*cnt+0] &lt; -1.0) { array_y[4*cnt+0] = -1.0+1.0e-12; }*/</font>
+<a name="line433">433: </a>        array_y[4*cnt+1] = yp - dx*0.1; <font color="#B22222">/*if (array_y[4*cnt+1] &lt; -1.0) { array_y[4*cnt+1] = -1.0+1.0e-12; }*/</font>
+<a name="line434">434: </a>        array_y[4*cnt+2] = yp + dx*0.1; <font color="#B22222">/*if (array_y[4*cnt+2] &gt; 1.0)  { array_y[4*cnt+2] =  1.0-1.0e-12; }*/</font>
+<a name="line435">435: </a>        array_y[4*cnt+3] = yp + dx*0.1; <font color="#B22222">/*if (array_y[4*cnt+3] &gt; 1.0)  { array_y[4*cnt+3] =  1.0-1.0e-12; }*/</font>
+<a name="line436">436: </a>
+<a name="line437">437: </a>        cnt++;
+<a name="line438">438: </a>      }
+<a name="line439">439: </a>    }
+<a name="line440">440: </a>
+<a name="line441">441: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRestoreField.html#DMSwarmRestoreField">DMSwarmRestoreField</a>(dms,<font color="#666666">"coory"</font>,NULL,NULL,(void**)&amp;array_y);
+<a name="line442">442: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRestoreField.html#DMSwarmRestoreField">DMSwarmRestoreField</a>(dms,<font color="#666666">"coorx"</font>,NULL,NULL,(void**)&amp;array_x);
+<a name="line443">443: </a>    <a href="../../../../docs/manualpages/DMDA/DMDAVecRestoreArray.html#DMDAVecRestoreArray">DMDAVecRestoreArray</a>(dmcellcdm,coor,&amp;LA_coor);
+<a name="line444">444: </a>  }
+<a name="line445">445: </a>
+<a name="line446">446: </a>  <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(1,&amp;zone);
+<a name="line447">447: </a>  <font color="#4169E1">if</font> (commsize == 4) {
+<a name="line448">448: </a>    <font color="#4169E1">if</font> (rank == 0) {
+<a name="line449">449: </a>      zone-&gt;cx[0] = 0.5;
+<a name="line450">450: </a>      zone-&gt;cx[1] = 0.5;
+<a name="line451">451: </a>      zone-&gt;radius = 0.3;
+<a name="line452">452: </a>    }
+<a name="line453">453: </a>    <font color="#4169E1">if</font> (rank == 1) {
+<a name="line454">454: </a>      zone-&gt;cx[0] = -0.5;
+<a name="line455">455: </a>      zone-&gt;cx[1] = 0.5;
+<a name="line456">456: </a>      zone-&gt;radius = 0.25;
+<a name="line457">457: </a>    }
+<a name="line458">458: </a>    <font color="#4169E1">if</font> (rank == 2) {
+<a name="line459">459: </a>      zone-&gt;cx[0] = 0.5;
+<a name="line460">460: </a>      zone-&gt;cx[1] = -0.5;
+<a name="line461">461: </a>      zone-&gt;radius = 0.2;
+<a name="line462">462: </a>    }
+<a name="line463">463: </a>    <font color="#4169E1">if</font> (rank == 3) {
+<a name="line464">464: </a>      zone-&gt;cx[0] = -0.5;
+<a name="line465">465: </a>      zone-&gt;cx[1] = -0.5;
+<a name="line466">466: </a>      zone-&gt;radius = 0.1;
+<a name="line467">467: </a>    }
+<a name="line468">468: </a>  } <font color="#4169E1">else</font> {
+<a name="line469">469: </a>    <font color="#4169E1">if</font> (rank == 0) {
+<a name="line470">470: </a>      zone-&gt;cx[0] = 0.5;
+<a name="line471">471: </a>      zone-&gt;cx[1] = 0.5;
+<a name="line472">472: </a>      zone-&gt;radius = 0.8;
+<a name="line473">473: </a>    } <font color="#4169E1">else</font> {
+<a name="line474">474: </a>      zone-&gt;cx[0] = 10.0;
+<a name="line475">475: </a>      zone-&gt;cx[1] = 10.0;
+<a name="line476">476: </a>      zone-&gt;radius = 0.0;
+<a name="line477">477: </a>    }
+<a name="line478">478: </a>  }
+<a name="line479">479: </a>
+<a name="line480">480: </a>  {
+<a name="line481">481: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> npoints[2],npoints_orig[2],ng;
+<a name="line482">482: </a>
+<a name="line483">483: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetLocalSize.html#DMSwarmGetLocalSize">DMSwarmGetLocalSize</a>(dms,&amp;npoints_orig[0]);
+<a name="line484">484: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetSize.html#DMSwarmGetSize">DMSwarmGetSize</a>(dms,&amp;npoints_orig[1]);
+<a name="line485">485: </a>    <a href="../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,<font color="#666666">"rank[%d] before(%D,%D)\n"</font>,rank,npoints_orig[0],npoints_orig[1]);
+<a name="line486">486: </a>
+<a name="line487">487: </a>    DMSwarmCollect_General(dms,collect_zone,<font color="#4169E1">sizeof</font>(CollectZoneCtx),zone,&amp;ng);
+<a name="line488">488: </a>
+<a name="line489">489: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetLocalSize.html#DMSwarmGetLocalSize">DMSwarmGetLocalSize</a>(dms,&amp;npoints[0]);
+<a name="line490">490: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetSize.html#DMSwarmGetSize">DMSwarmGetSize</a>(dms,&amp;npoints[1]);
+<a name="line491">491: </a>    <a href="../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,<font color="#666666">"rank[%d] after(%D,%D)\n"</font>,rank,npoints[0],npoints[1]);
+<a name="line492">492: </a>  }
+<a name="line493">493: </a>
+<a name="line494">494: </a>  {
+<a name="line495">495: </a>    <a href="../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> *array_x,*array_y;
+<a name="line496">496: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> npoints,p;
+<a name="line497">497: </a>    FILE *fp = NULL;
+<a name="line498">498: </a>    char name[PETSC_MAX_PATH_LEN];
+<a name="line499">499: </a>
+<a name="line500">500: </a>    <a href="../../../../docs/manualpages/Sys/PetscSNPrintf.html#PetscSNPrintf">PetscSNPrintf</a>(name,PETSC_MAX_PATH_LEN-1,<font color="#666666">"c-rank%d.gp"</font>,rank);
+<a name="line501">501: </a>    fp = fopen(name,<font color="#666666">"w"</font>);
+<a name="line502">502: </a>    <font color="#4169E1">if</font> (!fp) <a href="../../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_FILE_OPEN,<font color="#666666">"Cannot open file %s"</font>,name);
+<a name="line503">503: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetLocalSize.html#DMSwarmGetLocalSize">DMSwarmGetLocalSize</a>(dms,&amp;npoints);
+<a name="line504">504: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetField.html#DMSwarmGetField">DMSwarmGetField</a>(dms,<font color="#666666">"coorx"</font>,NULL,NULL,(void**)&amp;array_x);
+<a name="line505">505: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmGetField.html#DMSwarmGetField">DMSwarmGetField</a>(dms,<font color="#666666">"coory"</font>,NULL,NULL,(void**)&amp;array_y);
+<a name="line506">506: </a>    <font color="#4169E1">for</font> (p=0; p&lt;npoints; p++) {
+<a name="line507">507: </a>      fprintf(fp,<font color="#666666">"%+1.4e %+1.4e %1.4e\n"</font>,array_x[p],array_y[p],(double)rank);
+<a name="line508">508: </a>    }
+<a name="line509">509: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRestoreField.html#DMSwarmRestoreField">DMSwarmRestoreField</a>(dms,<font color="#666666">"coory"</font>,NULL,NULL,(void**)&amp;array_y);
+<a name="line510">510: </a>    <a href="../../../../docs/manualpages/DMSWARM/DMSwarmRestoreField.html#DMSwarmRestoreField">DMSwarmRestoreField</a>(dms,<font color="#666666">"coorx"</font>,NULL,NULL,(void**)&amp;array_x);
+<a name="line511">511: </a>    fclose(fp);
+<a name="line512">512: </a>  }
+<a name="line513">513: </a>
+<a name="line514">514: </a>  <a href="../../../../docs/manualpages/DM/DMDestroy.html#DMDestroy">DMDestroy</a>(&amp;dmcell);
+<a name="line515">515: </a>  <a href="../../../../docs/manualpages/DM/DMDestroy.html#DMDestroy">DMDestroy</a>(&amp;dms);
+<a name="line516">516: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(zone);
+<a name="line517">517: </a>
+<a name="line518">518: </a>  <font color="#4169E1">return</font>(0);
+<a name="line519">519: </a>}
+
+<a name="line521">521: </a><strong><font color="#4169E1"><a name="main"></a>int main(int argc,char **argv)</font></strong>
+<a name="line522">522: </a>{
+<a name="line524">524: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> test_mode = 4;
+<a name="line525">525: </a>
+<a name="line526">526: </a>  <a href="../../../../docs/manualpages/Sys/PetscInitialize.html#PetscInitialize">PetscInitialize</a>(&amp;argc,&amp;argv,(char*)0,help);
+<a name="line527">527: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsGetInt.html#PetscOptionsGetInt">PetscOptionsGetInt</a>(NULL,NULL,<font color="#666666">"-test_mode"</font>,&amp;test_mode,NULL);
+<a name="line528">528: </a>  <font color="#4169E1">if</font> (test_mode == 1) {
+<a name="line529">529: </a>    ex1_1();
+<a name="line530">530: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (test_mode == 2) {
+<a name="line531">531: </a>    ex1_2();
+<a name="line532">532: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (test_mode == 3) {
+<a name="line533">533: </a>    ex1_3();
+<a name="line534">534: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (test_mode == 4) {
+<a name="line535">535: </a>    ex1_4();
+<a name="line536">536: </a>  } <font color="#4169E1">else</font> {
+<a name="line537">537: </a>    <a href="../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,<font color="#666666">"Unknown test_mode value, should be 1,2,3,4\n"</font>);
+<a name="line538">538: </a>  }
+<a name="line539">539: </a>  <a href="../../../../docs/manualpages/Sys/PetscFinalize.html#PetscFinalize">PetscFinalize</a>();
+<a name="line540">540: </a>  <font color="#4169E1">return</font> 0;
+<a name="line541">541: </a>}
+</pre>
+</body>
+
+</html>

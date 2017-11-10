@@ -1,0 +1,40 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML3.2 EN">
+<HTML>
+<HEAD> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/Vec/VecCUDARestoreArrayWrite.html" />
+<META NAME="GENERATOR" CONTENT="DOCTEXT">
+<TITLE>VecCUDARestoreArrayWrite</TITLE>
+</HEAD>
+<BODY BGCOLOR="FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 docs/manualpages/Vec/VecCUDARestoreArrayWrite.html "><small>Report Typos and Errors</small></a></div>
+<A NAME="VecCUDARestoreArrayWrite"><H1>VecCUDARestoreArrayWrite</H1></A>
+Restore a CUDA device pointer previously acquired with <A HREF="../Vec/VecCUDAGetArrayWrite.html#VecCUDAGetArrayWrite">VecCUDAGetArrayWrite</A>(). 
+<H3><FONT COLOR="#CC3333">Synopsis</FONT></H3>
+<PRE>
+PETSC_EXTERN <A HREF="../Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</A> <A HREF="../Vec/VecCUDARestoreArrayWrite.html#VecCUDARestoreArrayWrite">VecCUDARestoreArrayWrite</A>(<A HREF="../Vec/Vec.html#Vec">Vec</A> v, <A HREF="../Sys/PetscScalar.html#PetscScalar">PetscScalar</A> **a)
+</PRE>
+Data on the host will be marked as out of date.  Subsequent access of
+the data on the host side e.g. with <A HREF="../Vec/VecGetArray.html#VecGetArray">VecGetArray</A>() will incur a device
+to host data transfer.
+<P>
+<H3><FONT COLOR="#CC3333">Input Parameter</FONT></H3>
+<TABLE border="0" cellpadding="0" cellspacing="0">
+<TR><TD WIDTH=40></TD><TD ALIGN=LEFT VALIGN=TOP><B>v </B></TD><TD>- the vector
+</TD></TR>
+<TR><TD WIDTH=40></TD><TD ALIGN=LEFT VALIGN=TOP><B>a </B></TD><TD>- the CUDA device pointer.  This pointer is invalid after
+<A HREF="../Vec/VecCUDARestoreArrayWrite.html#VecCUDARestoreArrayWrite">VecCUDARestoreArrayWrite</A>() returns.
+</TD></TR></TABLE>
+<P>
+<H3><FONT COLOR="#CC3333">Fortran note</FONT></H3>
+This function is not currently available from Fortran.
+<P>
+
+<P>
+<H3><FONT COLOR="#CC3333">See Also</FONT></H3>
+ <A HREF="../Vec/VecCUDAGetArrayWrite.html#VecCUDAGetArrayWrite">VecCUDAGetArrayWrite</A>(), <A HREF="../Vec/VecCUDAGetArrayReadWrite.html#VecCUDAGetArrayReadWrite">VecCUDAGetArrayReadWrite</A>(), <A HREF="../Vec/VecCUDAGetArrayRead.html#VecCUDAGetArrayRead">VecCUDAGetArrayRead</A>(), <A HREF="../Vec/VecCUDAGetArrayWrite.html#VecCUDAGetArrayWrite">VecCUDAGetArrayWrite</A>(), <A HREF="../Vec/VecGetArray.html#VecGetArray">VecGetArray</A>(), <A HREF="../Vec/VecRestoreArray.html#VecRestoreArray">VecRestoreArray</A>(), <A HREF="../Vec/VecGetArrayRead.html#VecGetArrayRead">VecGetArrayRead</A>()
+<BR><P><B><P><B><FONT COLOR="#CC3333">Level:</FONT></B>intermediate
+<BR><FONT COLOR="#CC3333">Location:</FONT></B><A HREF="../../../src/vec/vec/impls/seq/seqcuda/veccuda2.cu#VecCUDARestoreArrayWrite">src/vec/vec/impls/seq/seqcuda/veccuda2.cu</A>
+<BR><A HREF="./index.html">Index of all Vec routines</A>
+<BR><A HREF="../../index.html">Table of Contents for all manual pages</A>
+<BR><A HREF="../singleindex.html">Index of all manual pages</A>
+</BODY></HTML>

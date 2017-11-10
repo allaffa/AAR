@@ -1,0 +1,42 @@
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/sys/logging/examples/tutorials/makefile.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:10:29+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/sys/logging/examples/tutorials/makefile.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+CFLAGS	        =
+FFLAGS	        =
+CPPFLAGS        =
+FPPFLAGS        =
+LOCDIR          = src/sys/logging/examples/tutorials/
+EXAMPLESC       =
+EXAMPLESF       = ex1f.F90
+MANSEC          = Sys
+SUBMANSEC       = Profiling
+
+include ${PETSC_DIR}/lib/petsc/conf/variables
+include ${PETSC_DIR}/lib/petsc/conf/rules
+
+<strong><font color="#FF0000">ex1f:</font></strong> ex1f.o  chkopts
+	-${FLINKER} -o ex1f ex1f.o  ${PETSC_LIB}
+	${RM} -f ex1f.o
+
+<strong><font color="#FF0000">runex1f:</font></strong>
+	-@${MPIEXEC} -n 2 ./ex1f -log_view ascii:filename.xml:ascii_xml  &gt; ex1_1.tmp 2&gt;&amp;1; \
+	<font color="#4169E1">if</font> (${DIFF} output/ex1f.out ex1_1.tmp) then true; \
+	<font color="#4169E1">else</font> printf <font color="#666666">"${PWD}\nPossible problem with ex1_1, diffs above\n========================= \n"</font>; fi; \
+	${RM} -f ex1_1.tmp filename.xml
+
+TESTEXAMPLES_FORTRAN	=  ex1f.PETSc runex1f ex1f.rm
+
+include ${PETSC_DIR}/lib/petsc/conf/test
+</pre>
+</body>
+
+</html>

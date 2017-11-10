@@ -1,0 +1,35 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML3.2 EN">
+<HTML>
+<HEAD> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/IS/ISLocalToGlobalMappingSetBlockSize.html" />
+<META NAME="GENERATOR" CONTENT="DOCTEXT">
+<TITLE>ISLocalToGlobalMappingSetBlockSize</TITLE>
+</HEAD>
+<BODY BGCOLOR="FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 docs/manualpages/IS/ISLocalToGlobalMappingSetBlockSize.html "><small>Report Typos and Errors</small></a></div>
+<A NAME="ISLocalToGlobalMappingSetBlockSize"><H1>ISLocalToGlobalMappingSetBlockSize</H1></A>
+Sets the blocksize of the mapping 
+<H3><FONT COLOR="#CC3333">Synopsis</FONT></H3>
+<PRE>
+#include "petscis.h"  
+<A HREF="../Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</A>  <A HREF="../IS/ISLocalToGlobalMappingSetBlockSize.html#ISLocalToGlobalMappingSetBlockSize">ISLocalToGlobalMappingSetBlockSize</A>(<A HREF="../IS/ISLocalToGlobalMapping.html#ISLocalToGlobalMapping">ISLocalToGlobalMapping</A> mapping,<A HREF="../Sys/PetscInt.html#PetscInt">PetscInt</A> bs)
+</PRE>
+Not collective
+<P>
+<H3><FONT COLOR="#CC3333">Input Parameters</FONT></H3>
+<DT><B>mapping </B> -mapping data structure
+<br>
+<DT><B>bs </B> -the blocksize
+<br>
+<P>
+
+<P>
+<P>
+<H3><FONT COLOR="#CC3333">See Also</FONT></H3>
+ <A HREF="../IS/ISLocalToGlobalMappingDestroy.html#ISLocalToGlobalMappingDestroy">ISLocalToGlobalMappingDestroy</A>(), <A HREF="../IS/ISLocalToGlobalMappingCreateIS.html#ISLocalToGlobalMappingCreateIS">ISLocalToGlobalMappingCreateIS</A>()
+<BR><P><B><P><B><FONT COLOR="#CC3333">Level:</FONT></B>advanced
+<BR><FONT COLOR="#CC3333">Location:</FONT></B><A HREF="../../../src/vec/is/utils/isltog.c.html#ISLocalToGlobalMappingSetBlockSize">src/vec/is/utils/isltog.c</A>
+<BR><A HREF="./index.html">Index of all IS routines</A>
+<BR><A HREF="../../index.html">Table of Contents for all manual pages</A>
+<BR><A HREF="../singleindex.html">Index of all manual pages</A>
+</BODY></HTML>

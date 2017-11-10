@@ -1,0 +1,70 @@
+<center><a href="petscdmcomposite.h90">Actual source code: petscdmcomposite.h90</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/dm/f90-mod/petscdmcomposite.h90.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:47:34+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/dm/f90-mod/petscdmcomposite.h90.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+
+<a name="line2">  2: </a>      Interface <a href="../..90-mod/../docs/manualpages/DM/DMCompositeGetEntries.html#DMCompositeGetEntries">DMCompositeGetEntries</a>
+<a name="line3">  3: </a>        Subroutine DMCompositeGetEntries1(dm1, d1,ierr)
+<a name="line4">  4: </a>          use petscdmdef
+<a name="line5">  5: </a>          <a href="../..90-mod/../docs/manualpages/DM/DM.html#DM">DM</a> dm1
+<a name="line6">  6: </a>          <a href="../..90-mod/../docs/manualpages/DM/DM.html#DM">DM</a> d1
+<a name="line7">  7: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line8">  8: </a>        End Subroutine
+
+<a name="line10"> 10: </a>        Subroutine DMCompositeGetEntries2(dm1, d1,d2,ierr)
+<a name="line11"> 11: </a>          use petscdmdef
+<a name="line12"> 12: </a>          <a href="../..90-mod/../docs/manualpages/DM/DM.html#DM">DM</a> dm1
+<a name="line13"> 13: </a>          <a href="../..90-mod/../docs/manualpages/DM/DM.html#DM">DM</a> d1,d2
+<a name="line14"> 14: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line15"> 15: </a>        End Subroutine
+
+<a name="line17"> 17: </a>        Subroutine DMCompositeGetEntries3(dm1, d1,d2,d3,ierr)
+<a name="line18"> 18: </a>          use petscdmdef
+<a name="line19"> 19: </a>          <a href="../..90-mod/../docs/manualpages/DM/DM.html#DM">DM</a> dm1
+<a name="line20"> 20: </a>          <a href="../..90-mod/../docs/manualpages/DM/DM.html#DM">DM</a> d1,d2,d3
+<a name="line21"> 21: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line22"> 22: </a>        End Subroutine
+
+<a name="line24"> 24: </a>        Subroutine DMCompositeGetEntries4(dm1, d1,d2,d3,d4,ierr)
+<a name="line25"> 25: </a>          use petscdmdef
+<a name="line26"> 26: </a>          <a href="../..90-mod/../docs/manualpages/DM/DM.html#DM">DM</a> dm1
+<a name="line27"> 27: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> d2,d4
+<a name="line28"> 28: </a>          <a href="../..90-mod/../docs/manualpages/DM/DM.html#DM">DM</a> d1,d3
+<a name="line29"> 29: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line30"> 30: </a>        End Subroutine
+<a name="line31"> 31: </a>      End Interface
+
+<a name="line33"> 33: </a>      Interface <a href="../..90-mod/../docs/manualpages/DM/DMCompositeGetAccess.html#DMCompositeGetAccess">DMCompositeGetAccess</a>
+<a name="line34"> 34: </a>        Subroutine DMCompositeGetAccessvpvp(dm1, v,d1,d2,d3,d4,ierr)
+<a name="line35"> 35: </a>          use petscdmdef
+<a name="line36"> 36: </a>          <a href="../..90-mod/../docs/manualpages/DM/DM.html#DM">DM</a> dm1
+<a name="line37"> 37: </a>          <a href="../..90-mod/../docs/manualpages/Vec/Vec.html#Vec">Vec</a> v,d1,d3
+<a name="line38"> 38: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>,pointer :: d2(:)
+<a name="line39"> 39: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>,pointer :: d4(:)
+<a name="line40"> 40: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line41"> 41: </a>        End Subroutine
+<a name="line42"> 42: </a>      End Interface
+
+<a name="line44"> 44: </a>      Interface <a href="../..90-mod/../docs/manualpages/DM/DMCompositeRestoreAccess.html#DMCompositeRestoreAccess">DMCompositeRestoreAccess</a>
+<a name="line45"> 45: </a>        Subroutine DMCompositeRestoreAccessvpvp(dm1, v,d1,d2,d3,d4,ierr)
+<a name="line46"> 46: </a>          use petscdmdef
+<a name="line47"> 47: </a>          <a href="../..90-mod/../docs/manualpages/DM/DM.html#DM">DM</a> dm1
+<a name="line48"> 48: </a>          <a href="../..90-mod/../docs/manualpages/Vec/Vec.html#Vec">Vec</a> v,d1,d3
+<a name="line49"> 49: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>,pointer :: d2(:)
+<a name="line50"> 50: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>,pointer :: d4(:)
+<a name="line51"> 51: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line52"> 52: </a>        End Subroutine
+<a name="line53"> 53: </a>      End Interface
+</pre>
+</body>
+
+</html>

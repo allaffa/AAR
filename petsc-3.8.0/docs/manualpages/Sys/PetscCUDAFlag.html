@@ -1,0 +1,27 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML3.2 EN">
+<HTML>
+<HEAD> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/Sys/PetscCUDAFlag.html" />
+<META NAME="GENERATOR" CONTENT="DOCTEXT">
+<TITLE>PetscCUDAFlag</TITLE>
+</HEAD>
+<BODY BGCOLOR="FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 docs/manualpages/Sys/PetscCUDAFlag.html "><small>Report Typos and Errors</small></a></div>
+<A NAME="PetscCUDAFlag"><H1>PetscCUDAFlag</H1></A>
+indicates which memory (CPU, GPU, or none contains valid vector 
+<H3><FONT COLOR="#CC3333">Synopsis</FONT></H3>
+<PRE>
+typedef enum {<A HREF="../Sys/PetscCUDAFlag.html#PetscCUDAFlag">PETSC_CUDA_UNALLOCATED</A>,<A HREF="../Sys/PetscCUDAFlag.html#PetscCUDAFlag">PETSC_CUDA_GPU</A>,<A HREF="../Sys/PetscCUDAFlag.html#PetscCUDAFlag">PETSC_CUDA_CPU</A>,<A HREF="../Sys/PetscCUDAFlag.html#PetscCUDAFlag">PETSC_CUDA_BOTH</A>} <A HREF="../Sys/PetscCUDAFlag.html#PetscCUDAFlag">PetscCUDAFlag</A>;
+</PRE>
+<A HREF="../Sys/PetscCUDAFlag.html#PetscCUDAFlag">PETSC_CUDA_UNALLOCATED</A>  - no memory contains valid matrix entries; NEVER used for vectors
+<A HREF="../Sys/PetscCUDAFlag.html#PetscCUDAFlag">PETSC_CUDA_GPU</A> - GPU has valid vector/matrix entries
+<A HREF="../Sys/PetscCUDAFlag.html#PetscCUDAFlag">PETSC_CUDA_CPU</A> - CPU has valid vector/matrix entries
+<A HREF="../Sys/PetscCUDAFlag.html#PetscCUDAFlag">PETSC_CUDA_BOTH</A> - Both GPU and CPU have valid vector/matrix entries and they match
+<P>
+
+<P><B><P><B><FONT COLOR="#CC3333">Level:</FONT></B>developer
+<BR><FONT COLOR="#CC3333">Location:</FONT></B><A HREF="../../../include/petsc/private/petscimpl.h.html#PetscCUDAFlag">include/petsc/private/petscimpl.h</A>
+<BR><A HREF="./index.html">Index of all Sys routines</A>
+<BR><A HREF="../../index.html">Table of Contents for all manual pages</A>
+<BR><A HREF="../singleindex.html">Index of all manual pages</A>
+</BODY></HTML>

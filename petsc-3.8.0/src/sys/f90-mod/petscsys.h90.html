@@ -1,0 +1,111 @@
+<center><a href="petscsys.h90">Actual source code: petscsys.h90</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/sys/f90-mod/petscsys.h90.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:03:10+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/sys/f90-mod/petscsys.h90.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+
+
+<a name="line3">  3: </a>      Interface
+<a name="line4">  4: </a>        Subroutine <a href="../..90-mod/../docs/manualpages/Sys/PetscOptionsGetInt.html#PetscOptionsGetInt">PetscOptionsGetInt</a>(o,p,n,v,s,ierr)
+<a name="line5">  5: </a>          use petscsysdef
+<a name="line6">  6: </a>          PetscOptions o
+<a name="line7">  7: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> v
+<a name="line8">  8: </a>          character(*) p,n
+<a name="line9">  9: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> s
+<a name="line10"> 10: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line11"> 11: </a>        End Subroutine
+<a name="line12"> 12: </a>        Subroutine <a href="../..90-mod/../docs/manualpages/Sys/PetscOptionsGetReal.html#PetscOptionsGetReal">PetscOptionsGetReal</a>(o,p,n,v,s,ierr)
+<a name="line13"> 13: </a>          use petscsysdef
+<a name="line14"> 14: </a>          PetscOptions o
+<a name="line15"> 15: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> v
+<a name="line16"> 16: </a>          character(*) p,n
+<a name="line17"> 17: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> s
+<a name="line18"> 18: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line19"> 19: </a>        End Subroutine
+<a name="line20"> 20: </a>        Subroutine <a href="../..90-mod/../docs/manualpages/Sys/PetscOptionsGetScalar.html#PetscOptionsGetScalar">PetscOptionsGetScalar</a>(o,p,n,v,s,ierr)
+<a name="line21"> 21: </a>          use petscsysdef
+<a name="line22"> 22: </a>          PetscOptions o
+<a name="line23"> 23: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> v
+<a name="line24"> 24: </a>          character(*) p,n
+<a name="line25"> 25: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> s
+<a name="line26"> 26: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line27"> 27: </a>        End Subroutine
+<a name="line28"> 28: </a>        Subroutine <a href="../..90-mod/../docs/manualpages/Sys/PetscOptionsGetBool.html#PetscOptionsGetBool">PetscOptionsGetBool</a>(o,p,n,v,s,ierr)
+<a name="line29"> 29: </a>          use petscsysdef
+<a name="line30"> 30: </a>          PetscOptions o
+<a name="line31"> 31: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> v
+<a name="line32"> 32: </a>          character(*) p,n
+<a name="line33"> 33: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> s
+<a name="line34"> 34: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line35"> 35: </a>        End Subroutine
+<a name="line36"> 36: </a>        Subroutine <a href="../..90-mod/../docs/manualpages/Sys/PetscOptionsGetString.html#PetscOptionsGetString">PetscOptionsGetString</a>(o,p,n,v,s,ierr)
+<a name="line37"> 37: </a>          use petscsysdef
+<a name="line38"> 38: </a>          PetscOptions o
+<a name="line39"> 39: </a>          character(*) v
+<a name="line40"> 40: </a>          character(*) p,n
+<a name="line41"> 41: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> s
+<a name="line42"> 42: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line43"> 43: </a>        End Subroutine
+<a name="line44"> 44: </a>        Subroutine <a href="../..90-mod/../docs/manualpages/Sys/PetscOptionsHasName.html#PetscOptionsHasName">PetscOptionsHasName</a>(o,p,n,s,ierr)
+<a name="line45"> 45: </a>          use petscsysdef
+<a name="line46"> 46: </a>          PetscOptions o
+<a name="line47"> 47: </a>          character(*) p,n
+<a name="line48"> 48: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> s
+<a name="line49"> 49: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line50"> 50: </a>        End Subroutine
+<a name="line51"> 51: </a>        Subroutine <a href="../..90-mod/../docs/manualpages/Sys/PetscOptionsGetIntArray.html#PetscOptionsGetIntArray">PetscOptionsGetIntArray</a>(o,p,n,v,c,s,ierr)
+<a name="line52"> 52: </a>          use petscsysdef
+<a name="line53"> 53: </a>          PetscOptions o
+<a name="line54"> 54: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> v(*),c
+<a name="line55"> 55: </a>          character(*) p,n
+<a name="line56"> 56: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> s
+<a name="line57"> 57: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line58"> 58: </a>        End Subroutine
+<a name="line59"> 59: </a>        Subroutine <a href="../..90-mod/../docs/manualpages/Sys/PetscOptionsGetScalarArray.html#PetscOptionsGetScalarArray">PetscOptionsGetScalarArray</a>(o,p,n,v,c,s,ierr)
+<a name="line60"> 60: </a>          use petscsysdef
+<a name="line61"> 61: </a>          PetscOptions o
+<a name="line62"> 62: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a> v(*)
+<a name="line63"> 63: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> c
+<a name="line64"> 64: </a>          character(*) p,n
+<a name="line65"> 65: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> s
+<a name="line66"> 66: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line67"> 67: </a>        End Subroutine
+<a name="line68"> 68: </a>        Subroutine <a href="../..90-mod/../docs/manualpages/Sys/PetscOptionsGetRealArray.html#PetscOptionsGetRealArray">PetscOptionsGetRealArray</a>(o,p,n,v,c,s,ierr)
+<a name="line69"> 69: </a>          use petscsysdef
+<a name="line70"> 70: </a>          PetscOptions o
+<a name="line71"> 71: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> v(*)
+<a name="line72"> 72: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> c
+<a name="line73"> 73: </a>          character(*) p,n
+<a name="line74"> 74: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> s
+<a name="line75"> 75: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line76"> 76: </a>        End Subroutine
+<a name="line77"> 77: </a>        Subroutine <a href="../..90-mod/../docs/manualpages/Sys/PetscOptionsSetValue.html#PetscOptionsSetValue">PetscOptionsSetValue</a>(o,n,v,ierr)
+<a name="line78"> 78: </a>          use petscsysdef
+<a name="line79"> 79: </a>          PetscOptions o
+<a name="line80"> 80: </a>          character(*) n,v
+<a name="line81"> 81: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line82"> 82: </a>        End Subroutine
+<a name="line83"> 83: </a>        Subroutine <a href="../..90-mod/../docs/manualpages/Sys/PetscOptionsClearValue.html#PetscOptionsClearValue">PetscOptionsClearValue</a>(o,n,ierr)
+<a name="line84"> 84: </a>          use petscsysdef
+<a name="line85"> 85: </a>          PetscOptions o
+<a name="line86"> 86: </a>          character(*) n
+<a name="line87"> 87: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line88"> 88: </a>        End Subroutine
+<a name="line89"> 89: </a>        Subroutine <a href="../..90-mod/../docs/manualpages/Sys/PetscOptionsClear.html#PetscOptionsClear">PetscOptionsClear</a>(o,ierr)
+<a name="line90"> 90: </a>          use petscsysdef
+<a name="line91"> 91: </a>          PetscOptions o
+<a name="line92"> 92: </a>          <a href="../..90-mod/../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr
+<a name="line93"> 93: </a>        End Subroutine
+<a name="line94"> 94: </a>      End Interface
+</pre>
+</body>
+
+</html>

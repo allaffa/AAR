@@ -1,0 +1,41 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML3.2 EN">
+<HTML>
+<HEAD> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/Sys/PetscGLL.html" />
+<META NAME="GENERATOR" CONTENT="DOCTEXT">
+<TITLE>PetscGLL</TITLE>
+</HEAD>
+<BODY BGCOLOR="FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 docs/manualpages/Sys/PetscGLL.html "><small>Report Typos and Errors</small></a></div>
+<A NAME="PetscGLL"><H1>PetscGLL</H1></A>
+the locations, from [-1,1] and weights of the Gauss-Lobatto-Legendre nodes of a given size 
+<H3><FONT COLOR="#CC3333">Synopsis</FONT></H3>
+<PRE>
+typedef struct {
+  <A HREF="../Sys/PetscInt.html#PetscInt">PetscInt</A>  n;
+  <A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A> *nodes;
+  <A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A> *weights;
+} <A HREF="../Sys/PetscGLL.html#PetscGLL">PetscGLL</A>;
+</PRE>
+
+<P>
+These values are usful in implementing spectral methods based on the Gauss-Lobatto-Legendre nodes
+<P>
+The array nodes[] contains the vertices of each node
+The array weights[] are the integration weights
+<P>
+The mass matrix for the element corresponds to the diagona matrix whose entries are the weights[]
+<P>
+Developer Notes: This may eventually get merged into a more abstract or general object for managing
+integration schemes or discretization schemes.
+<P>
+References: XXXX
+<P>
+<H3><FONT COLOR="#CC3333">See Also</FONT></H3>
+ <A HREF="../Sys/PetscGLLCreate.html#PetscGLLCreate">PetscGLLCreate</A>(), <A HREF="../Sys/PetscGLLDestroy.html#PetscGLLDestroy">PetscGLLDestroy</A>(), <A HREF="../Sys/PetscGLLView.html#PetscGLLView">PetscGLLView</A>()
+<BR><P><B><P><B><FONT COLOR="#CC3333">Level:</FONT></B>beginner
+<BR><FONT COLOR="#CC3333">Location:</FONT></B><A HREF="../../../include/petscgll.h.html#PetscGLL">include/petscgll.h</A>
+<BR><A HREF="./index.html">Index of all Sys routines</A>
+<BR><A HREF="../../index.html">Table of Contents for all manual pages</A>
+<BR><A HREF="../singleindex.html">Index of all manual pages</A>
+</BODY></HTML>

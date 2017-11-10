@@ -1,0 +1,316 @@
+<center><a href="xcolor.c">Actual source code: xcolor.c</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/sys/classes/draw/impls/x/xcolor.c.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:05:07+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/sys/classes/draw/impls/x/xcolor.c.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+
+<a name="line2">  2: </a><font color="#B22222">/*</font>
+<a name="line3">  3: </a><font color="#B22222">    Code for managing color the X implementation of the <a href="../../../../../../docs/manualpages/Draw/PetscDraw.html#PetscDraw">PetscDraw</a> routines.</font>
+
+<a name="line5">  5: </a><font color="#B22222">    Currently we default to using cmapping[0 to PETSC_DRAW_BASIC_COLORS-1] for the basic colors and</font>
+<a name="line6">  6: </a><font color="#B22222">    cmapping[DRAW_BASIC_COLORS to 255] for countour plots.</font>
+
+<a name="line8">  8: </a><font color="#B22222">*/</font>
+<a name="line9">  9: </a> #include <A href="../../../../../../include/../src/sys/classes/draw/impls/x/ximpl.h.html">&lt;../src/sys/classes/draw/impls/x/ximpl.h&gt;</A>
+<a name="line10"> 10: </a><font color="#A020F0">#include &lt;X11/Xatom.h&gt;</font>
+
+<a name="line12"> 12: </a><strong><font color="#4169E1">static const char *(colornames[PETSC_DRAW_BASIC_COLORS])</font></strong> = {<font color="#666666">"white"</font>,
+<a name="line13"> 13: </a>                                                            <font color="#666666">"black"</font>,
+<a name="line14"> 14: </a>                                                            <font color="#666666">"red"</font>,
+<a name="line15"> 15: </a>                                                            <font color="#666666">"green"</font>,
+<a name="line16"> 16: </a>                                                            <font color="#666666">"cyan"</font>,
+<a name="line17"> 17: </a>                                                            <font color="#666666">"blue"</font>,
+<a name="line18"> 18: </a>                                                            <font color="#666666">"magenta"</font>,
+<a name="line19"> 19: </a>                                                            <font color="#666666">"aquamarine"</font>,
+<a name="line20"> 20: </a>                                                            <font color="#666666">"forestgreen"</font>,
+<a name="line21"> 21: </a>                                                            <font color="#666666">"orange"</font>,
+<a name="line22"> 22: </a>                                                            <font color="#666666">"violet"</font>,
+<a name="line23"> 23: </a>                                                            <font color="#666666">"brown"</font>,
+<a name="line24"> 24: </a>                                                            <font color="#666666">"pink"</font>,
+<a name="line25"> 25: </a>                                                            <font color="#666666">"coral"</font>,
+<a name="line26"> 26: </a>                                                            <font color="#666666">"gray"</font>,
+<a name="line27"> 27: </a>                                                            <font color="#666666">"yellow"</font>,
+<a name="line28"> 28: </a>                                                            <font color="#666666">"gold"</font>,
+<a name="line29"> 29: </a>                                                            <font color="#666666">"lightpink"</font>,
+<a name="line30"> 30: </a>                                                            <font color="#666666">"mediumturquoise"</font>,
+<a name="line31"> 31: </a>                                                            <font color="#666666">"khaki"</font>,
+<a name="line32"> 32: </a>                                                            <font color="#666666">"dimgray"</font>,
+<a name="line33"> 33: </a>                                                            <font color="#666666">"yellowgreen"</font>,
+<a name="line34"> 34: </a>                                                            <font color="#666666">"skyblue"</font>,
+<a name="line35"> 35: </a>                                                            <font color="#666666">"darkgreen"</font>,
+<a name="line36"> 36: </a>                                                            <font color="#666666">"navyblue"</font>,
+<a name="line37"> 37: </a>                                                            <font color="#666666">"sandybrown"</font>,
+<a name="line38"> 38: </a>                                                            <font color="#666666">"cadetblue"</font>,
+<a name="line39"> 39: </a>                                                            <font color="#666666">"powderblue"</font>,
+<a name="line40"> 40: </a>                                                            <font color="#666666">"deeppink"</font>,
+<a name="line41"> 41: </a>                                                            <font color="#666666">"thistle"</font>,
+<a name="line42"> 42: </a>                                                            <font color="#666666">"limegreen"</font>,
+<a name="line43"> 43: </a>                                                            <font color="#666666">"lavenderblush"</font>,
+<a name="line44"> 44: </a>                                                            <font color="#666666">"plum"</font>};
+
+<a name="line46"> 46: </a><font color="#B22222">/*</font>
+<a name="line47"> 47: </a><font color="#B22222">   Sets up a color map for a display. This is shared by all the windows</font>
+<a name="line48"> 48: </a><font color="#B22222">  opened on that display; this is to save time when windows are open so</font>
+<a name="line49"> 49: </a><font color="#B22222">  each one does not have to create its own color map which can take 15 to 20 seconds</font>
+
+<a name="line51"> 51: </a><font color="#B22222">     This is new code written 2/26/1999 Barry Smith,I hope it can replace</font>
+<a name="line52"> 52: </a><font color="#B22222">  some older,rather confusing code.</font>
+
+<a name="line54"> 54: </a><font color="#B22222">     The calls to XAllocNamedColor() and XAllocColor() are very slow</font>
+<a name="line55"> 55: </a><font color="#B22222">     because we have to request from the X server for each</font>
+<a name="line56"> 56: </a><font color="#B22222">     color. Could not figure out a way to request a large number at the</font>
+<a name="line57"> 57: </a><font color="#B22222">     same time.</font>
+
+<a name="line59"> 59: </a><font color="#B22222">   IMPORTANT: this code will fail if user opens windows on two different</font>
+<a name="line60"> 60: </a><font color="#B22222">  displays: should add error checking to detect this. This is because all windows</font>
+<a name="line61"> 61: </a><font color="#B22222">  share the same gColormap and gCmapping.</font>
+
+<a name="line63"> 63: </a><font color="#B22222">*/</font>
+<a name="line64"> 64: </a>static Colormap          gColormap = 0;
+<a name="line65"> 65: </a>static PetscDrawXiPixVal gCmapping[256];
+<a name="line66"> 66: </a>static unsigned char     gCpalette[256][3];
+
+<a name="line68"> 68: </a><strong><font color="#4169E1"><a name="PetscDrawSetUpColormap_Shared"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscDrawSetUpColormap_Shared(Display *display,int screen,Visual *visual,Colormap colormap)</font></strong>
+<a name="line69"> 69: </a>{
+<a name="line70"> 70: </a>  int            i,k,ncolors = 256-PETSC_DRAW_BASIC_COLORS;
+<a name="line71"> 71: </a>  unsigned char  R[256-PETSC_DRAW_BASIC_COLORS];
+<a name="line72"> 72: </a>  unsigned char  G[256-PETSC_DRAW_BASIC_COLORS];
+<a name="line73"> 73: </a>  unsigned char  B[256-PETSC_DRAW_BASIC_COLORS];
+<a name="line74"> 74: </a>  XColor         colordef,ecolordef;
+<a name="line75"> 75: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>      fast = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+
+<a name="line79"> 79: </a>  <font color="#4169E1">if</font> (colormap) gColormap = colormap;
+<a name="line80"> 80: </a>  <font color="#4169E1">else</font>          gColormap = DefaultColormap(display,screen);
+
+
+<a name="line83"> 83: </a>  <font color="#B22222">/* set the basic colors into the color map */</font>
+<a name="line84"> 84: </a>  <font color="#4169E1">for</font> (i=0; i&lt;PETSC_DRAW_BASIC_COLORS; i++) {
+<a name="line85"> 85: </a>    XAllocNamedColor(display,gColormap,colornames[i],&amp;colordef,&amp;ecolordef);
+<a name="line86"> 86: </a>    gCmapping[i]    = colordef.pixel;
+<a name="line87"> 87: </a>    gCpalette[i][0] = (unsigned char)(colordef.red   &gt;&gt; 8);
+<a name="line88"> 88: </a>    gCpalette[i][1] = (unsigned char)(colordef.green &gt;&gt; 8);
+<a name="line89"> 89: </a>    gCpalette[i][2] = (unsigned char)(colordef.blue  &gt;&gt; 8);
+<a name="line90"> 90: </a>  }
+
+<a name="line92"> 92: </a>  <font color="#B22222">/* set the contour colors into the colormap */</font>
+<a name="line93"> 93: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscOptionsGetBool.html#PetscOptionsGetBool">PetscOptionsGetBool</a>(NULL,NULL,<font color="#666666">"-draw_fast"</font>,&amp;fast,NULL);
+<a name="line94"> 94: </a>  PetscDrawUtilitySetCmap(NULL,ncolors,R,G,B);
+<a name="line95"> 95: </a>  <font color="#4169E1">for</font> (i=0, k=PETSC_DRAW_BASIC_COLORS; i&lt;ncolors; i++, k++) {
+<a name="line96"> 96: </a>    colordef.red   = (unsigned short)(R[i] &lt;&lt; 8);
+<a name="line97"> 97: </a>    colordef.green = (unsigned short)(G[i] &lt;&lt; 8);
+<a name="line98"> 98: </a>    colordef.blue  = (unsigned short)(B[i] &lt;&lt; 8);
+<a name="line99"> 99: </a>    colordef.flags = DoRed|DoGreen|DoBlue;
+<a name="line100">100: </a>    colordef.pixel = gCmapping[PETSC_DRAW_BLACK];
+<a name="line101">101: </a>    <font color="#4169E1">if</font> (!fast) XAllocColor(display,gColormap,&amp;colordef);
+<a name="line102">102: </a>    gCmapping[k]    = colordef.pixel;
+<a name="line103">103: </a>    gCpalette[k][0] = R[i];
+<a name="line104">104: </a>    gCpalette[k][1] = G[i];
+<a name="line105">105: </a>    gCpalette[k][2] = B[i];
+<a name="line106">106: </a>  }
+
+<a name="line108">108: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscInfo.html#PetscInfo">PetscInfo</a>(0,<font color="#666666">"Successfully allocated colors\n"</font>);
+<a name="line109">109: </a>  <font color="#4169E1">return</font>(0);
+<a name="line110">110: </a>}
+
+<a name="line112">112: </a><font color="#B22222">/*</font>
+<a name="line113">113: </a><font color="#B22222">    Keep a record of which pixel numbers in the cmap have been</font>
+<a name="line114">114: </a><font color="#B22222">  used so far; this is to allow us to try to reuse as much of the current</font>
+<a name="line115">115: </a><font color="#B22222">  colormap as possible.</font>
+<a name="line116">116: </a><font color="#B22222">*/</font>
+<a name="line117">117: </a>static <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> cmap_pixvalues_used[256];
+<a name="line118">118: </a>static int       cmap_base = 0;
+
+<a name="line120">120: </a><strong><font color="#4169E1"><a name="PetscDrawSetUpColormap_Private"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscDrawSetUpColormap_Private(Display *display,int screen,Visual *visual,Colormap colormap)</font></strong>
+<a name="line121">121: </a>{
+<a name="line122">122: </a>  int            found,i,k,ncolors = 256-PETSC_DRAW_BASIC_COLORS;
+<a name="line123">123: </a>  unsigned char  R[256-PETSC_DRAW_BASIC_COLORS];
+<a name="line124">124: </a>  unsigned char  G[256-PETSC_DRAW_BASIC_COLORS];
+<a name="line125">125: </a>  unsigned char  B[256-PETSC_DRAW_BASIC_COLORS];
+<a name="line126">126: </a>  Colormap       defaultmap = DefaultColormap(display,screen);
+<a name="line127">127: </a>  XColor         colordef;
+<a name="line128">128: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>      fast = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+
+<a name="line132">132: </a>  <font color="#4169E1">if</font> (colormap) gColormap = colormap;
+<a name="line133">133: </a>  <font color="#4169E1">else</font>          gColormap = XCreateColormap(display,RootWindow(display,screen),visual,AllocAll);
+
+<a name="line135">135: </a>  cmap_base = 0;
+
+<a name="line137">137: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMemzero.html#PetscMemzero">PetscMemzero</a>(cmap_pixvalues_used,256*<font color="#4169E1">sizeof</font>(<a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>));
+
+<a name="line139">139: </a>  <font color="#B22222">/* set the basic colors into the color map */</font>
+<a name="line140">140: </a>  <font color="#4169E1">for</font> (i=0; i&lt;PETSC_DRAW_BASIC_COLORS; i++) {
+<a name="line141">141: </a>    XParseColor(display,gColormap,colornames[i],&amp;colordef);
+<a name="line142">142: </a>    <font color="#B22222">/* try to allocate the color in the default-map */</font>
+<a name="line143">143: </a>    found = XAllocColor(display,defaultmap,&amp;colordef);
+<a name="line144">144: </a>    <font color="#B22222">/* use it, if it it exists and is not already used in the new colormap */</font>
+<a name="line145">145: </a>    <font color="#4169E1">if</font> (found &amp;&amp; colordef.pixel &lt; 256  &amp;&amp; !cmap_pixvalues_used[colordef.pixel]) {
+<a name="line146">146: </a>      cmap_pixvalues_used[colordef.pixel] = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+<a name="line147">147: </a>      <font color="#B22222">/* otherwise search for the next available slot */</font>
+<a name="line148">148: </a>    } <font color="#4169E1">else</font> {
+<a name="line149">149: </a>      <font color="#4169E1">while</font> (cmap_pixvalues_used[cmap_base]) cmap_base++;
+<a name="line150">150: </a>      colordef.pixel                   = cmap_base;
+<a name="line151">151: </a>      cmap_pixvalues_used[cmap_base++] = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+<a name="line152">152: </a>    }
+<a name="line153">153: </a>    XStoreColor(display,gColormap,&amp;colordef);
+<a name="line154">154: </a>    gCmapping[i]    = colordef.pixel;
+<a name="line155">155: </a>    gCpalette[i][0] = (unsigned char)(colordef.red   &gt;&gt; 8);
+<a name="line156">156: </a>    gCpalette[i][1] = (unsigned char)(colordef.green &gt;&gt; 8);
+<a name="line157">157: </a>    gCpalette[i][2] = (unsigned char)(colordef.blue  &gt;&gt; 8);
+<a name="line158">158: </a>  }
+
+<a name="line160">160: </a>  <font color="#B22222">/* set the contour colors into the colormap */</font>
+<a name="line161">161: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscOptionsGetBool.html#PetscOptionsGetBool">PetscOptionsGetBool</a>(NULL,NULL,<font color="#666666">"-draw_fast"</font>,&amp;fast,NULL);
+<a name="line162">162: </a>  PetscDrawUtilitySetCmap(NULL,ncolors,R,G,B);
+<a name="line163">163: </a>  <font color="#4169E1">for</font> (i=0, k=PETSC_DRAW_BASIC_COLORS; i&lt;ncolors; i++, k++) {
+<a name="line164">164: </a>    colordef.red   = (unsigned short)(R[i] &lt;&lt; 8);
+<a name="line165">165: </a>    colordef.green = (unsigned short)(G[i] &lt;&lt; 8);
+<a name="line166">166: </a>    colordef.blue  = (unsigned short)(B[i] &lt;&lt; 8);
+<a name="line167">167: </a>    colordef.flags = DoRed|DoGreen|DoBlue;
+<a name="line168">168: </a>    colordef.pixel = gCmapping[PETSC_DRAW_BLACK];
+<a name="line169">169: </a>    <font color="#4169E1">if</font> (!fast) {
+<a name="line170">170: </a>      <font color="#B22222">/* try to allocate the color in the default-map */</font>
+<a name="line171">171: </a>      found = XAllocColor(display,defaultmap,&amp;colordef);
+<a name="line172">172: </a>      <font color="#B22222">/* use it, if it it exists and is not already used in the new colormap */</font>
+<a name="line173">173: </a>      <font color="#4169E1">if</font> (found &amp;&amp; colordef.pixel &lt; 256  &amp;&amp; !cmap_pixvalues_used[colordef.pixel]) {
+<a name="line174">174: </a>        cmap_pixvalues_used[colordef.pixel] = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+<a name="line175">175: </a>        <font color="#B22222">/* otherwise search for the next available slot */</font>
+<a name="line176">176: </a>      } <font color="#4169E1">else</font> {
+<a name="line177">177: </a>        <font color="#4169E1">while</font> (cmap_pixvalues_used[cmap_base]) cmap_base++;
+<a name="line178">178: </a>        colordef.pixel                   = cmap_base;
+<a name="line179">179: </a>        cmap_pixvalues_used[cmap_base++] = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+<a name="line180">180: </a>      }
+<a name="line181">181: </a>      XStoreColor(display,gColormap,&amp;colordef);
+<a name="line182">182: </a>    }
+<a name="line183">183: </a>    gCmapping[k]    = colordef.pixel;
+<a name="line184">184: </a>    gCpalette[k][0] = R[i];
+<a name="line185">185: </a>    gCpalette[k][1] = G[i];
+<a name="line186">186: </a>    gCpalette[k][2] = B[i];
+<a name="line187">187: </a>  }
+
+<a name="line189">189: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscInfo.html#PetscInfo">PetscInfo</a>(0,<font color="#666666">"Successfully allocated colors\n"</font>);
+<a name="line190">190: </a>  <font color="#4169E1">return</font>(0);
+<a name="line191">191: </a>}
+
+<a name="line193">193: </a><strong><font color="#4169E1"><a name="PetscDrawSetUpColormap_X"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscDrawSetUpColormap_X(Display *display,int screen,Visual *visual,Colormap colormap)</font></strong>
+<a name="line194">194: </a>{
+<a name="line196">196: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>      sharedcolormap = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+<a name="line197">197: </a>  XVisualInfo    vinfo;
+
+<a name="line200">200: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscOptionsGetBool.html#PetscOptionsGetBool">PetscOptionsGetBool</a>(NULL,NULL,<font color="#666666">"-draw_x_shared_colormap"</font>,&amp;sharedcolormap,NULL);
+<a name="line201">201: </a>  <font color="#B22222">/*</font>
+<a name="line202">202: </a><font color="#B22222">     Need to determine if window supports allocating a private colormap,</font>
+<a name="line203">203: </a><font color="#B22222">  */</font>
+<a name="line204">204: </a>  <font color="#4169E1">if</font> (XMatchVisualInfo(display,screen,24,StaticColor,&amp;vinfo) ||
+<a name="line205">205: </a>      XMatchVisualInfo(display,screen,24,TrueColor,&amp;vinfo)   ||
+<a name="line206">206: </a>      XMatchVisualInfo(display,screen,16,StaticColor,&amp;vinfo) ||
+<a name="line207">207: </a>      XMatchVisualInfo(display,screen,16,TrueColor,&amp;vinfo)   ||
+<a name="line208">208: </a>      XMatchVisualInfo(display,screen,15,StaticColor,&amp;vinfo) ||
+<a name="line209">209: </a>      XMatchVisualInfo(display,screen,15,TrueColor,&amp;vinfo)) sharedcolormap = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+<a name="line210">210: </a>  <font color="#B22222">/*</font>
+<a name="line211">211: </a><font color="#B22222">     Generate the X colormap object</font>
+<a name="line212">212: </a><font color="#B22222">  */</font>
+<a name="line213">213: </a>  <font color="#4169E1">if</font> (sharedcolormap) {
+<a name="line214">214: </a>    PetscDrawSetUpColormap_Shared(display,screen,visual,colormap);
+<a name="line215">215: </a>  } <font color="#4169E1">else</font> {
+<a name="line216">216: </a>    PetscDrawSetUpColormap_Private(display,screen,visual,colormap);
+<a name="line217">217: </a>  }
+<a name="line218">218: </a>  <font color="#4169E1">return</font>(0);
+<a name="line219">219: </a>}
+
+<a name="line221">221: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscDrawSetColormap_X(PetscDraw_X*,Colormap)</font></strong>;
+
+<a name="line223">223: </a><strong><font color="#4169E1"><a name="PetscDrawSetColormap_X"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscDrawSetColormap_X(PetscDraw_X *XiWin,Colormap colormap)</font></strong>
+<a name="line224">224: </a>{
+<a name="line225">225: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>      fast = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+
+<a name="line229">229: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscOptionsGetBool.html#PetscOptionsGetBool">PetscOptionsGetBool</a>(NULL,NULL,<font color="#666666">"-draw_fast"</font>,&amp;fast,NULL);
+<a name="line230">230: </a>  <font color="#4169E1">if</font> (XiWin-&gt;depth &lt; 8) <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_SUP_SYS,<font color="#666666">"PETSc Graphics require monitors with at least 8 bit color (256 colors)"</font>);
+<a name="line231">231: </a>  <font color="#4169E1">if</font> (!gColormap) {
+<a name="line232">232: </a>    PetscDrawSetUpColormap_X(XiWin-&gt;disp,XiWin-&gt;screen,XiWin-&gt;vis,colormap);
+<a name="line233">233: </a>  }
+<a name="line234">234: </a>  XiWin-&gt;cmap     = gColormap;
+<a name="line235">235: </a>  XiWin-&gt;cmapsize = fast ? PETSC_DRAW_BASIC_COLORS : 256;
+<a name="line236">236: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(XiWin-&gt;cmapping,gCmapping,<font color="#4169E1">sizeof</font>(XiWin-&gt;cmapping));
+<a name="line237">237: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(XiWin-&gt;cpalette,gCpalette,<font color="#4169E1">sizeof</font>(XiWin-&gt;cpalette));
+<a name="line238">238: </a>  XiWin-&gt;background = XiWin-&gt;cmapping[PETSC_DRAW_WHITE];
+<a name="line239">239: </a>  XiWin-&gt;foreground = XiWin-&gt;cmapping[PETSC_DRAW_BLACK];
+<a name="line240">240: </a>  <font color="#4169E1">return</font>(0);
+<a name="line241">241: </a>}
+
+<a name="line243">243: </a><strong><font color="#4169E1"><a name="PetscDrawXiColormap"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscDrawXiColormap(PetscDraw_X *XiWin)</font></strong>
+<a name="line244">244: </a>{ <font color="#4169E1">return</font> PetscDrawSetColormap_X(XiWin,(Colormap)0); }
+
+<a name="line246">246: </a><font color="#B22222">/*</font>
+<a name="line247">247: </a><font color="#B22222">    Color in X is many-layered.  The first layer is the "visual",a</font>
+<a name="line248">248: </a><font color="#B22222">    immutable attribute of a window set when the window is</font>
+<a name="line249">249: </a><font color="#B22222">    created.</font>
+
+<a name="line251">251: </a><font color="#B22222">    The next layer is the colormap.  The installation of colormaps is</font>
+<a name="line252">252: </a><font color="#B22222">    the buisness of the window manager (in some distant later release).</font>
+<a name="line253">253: </a><font color="#B22222">*/</font>
+
+<a name="line255">255: </a><font color="#B22222">/*</font>
+<a name="line256">256: </a><font color="#B22222">    This routine gets the visual class (PseudoColor, etc) and returns</font>
+<a name="line257">257: </a><font color="#B22222">    it.  It finds the default visual.  Possible returns are</font>
+<a name="line258">258: </a><font color="#B22222">        PseudoColor</font>
+<a name="line259">259: </a><font color="#B22222">        StaticColor</font>
+<a name="line260">260: </a><font color="#B22222">        DirectColor</font>
+<a name="line261">261: </a><font color="#B22222">        TrueColor</font>
+<a name="line262">262: </a><font color="#B22222">        GrayScale</font>
+<a name="line263">263: </a><font color="#B22222">        StaticGray</font>
+<a name="line264">264: </a><font color="#B22222"> */</font>
+<a name="line265">265: </a><strong><font color="#4169E1"><a name="PetscDrawXiSetVisualClass"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscDrawXiSetVisualClass(PetscDraw_X *XiWin)</font></strong>
+<a name="line266">266: </a>{
+<a name="line267">267: </a>  XVisualInfo vinfo;
+
+<a name="line270">270: </a>  <font color="#4169E1">if</font> (XMatchVisualInfo(XiWin-&gt;disp,XiWin-&gt;screen,24,DirectColor,&amp;vinfo)) {
+<a name="line271">271: </a>    XiWin-&gt;vis = vinfo.visual;
+<a name="line272">272: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (XMatchVisualInfo(XiWin-&gt;disp,XiWin-&gt;screen,8,PseudoColor,&amp;vinfo)) {
+<a name="line273">273: </a>    XiWin-&gt;vis = vinfo.visual;
+<a name="line274">274: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (XMatchVisualInfo(XiWin-&gt;disp,XiWin-&gt;screen,DefaultDepth(XiWin-&gt;disp,XiWin-&gt;screen),PseudoColor,&amp;vinfo)) {
+<a name="line275">275: </a>    XiWin-&gt;vis = vinfo.visual;
+<a name="line276">276: </a>  } <font color="#4169E1">else</font> {
+<a name="line277">277: </a>    XiWin-&gt;vis = DefaultVisual(XiWin-&gt;disp,XiWin-&gt;screen);
+<a name="line278">278: </a>  }
+<a name="line279">279: </a>  <font color="#4169E1">return</font>(0);
+<a name="line280">280: </a>}
+
+<a name="line282">282: </a><strong><font color="#4169E1"><a name="PetscDrawXiSetColormap"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscDrawXiSetColormap(PetscDraw_X *XiWin)</font></strong>
+<a name="line283">283: </a>{
+<a name="line285">285: </a>  XSetWindowColormap(XiWin-&gt;disp,XiWin-&gt;win,XiWin-&gt;cmap);
+<a name="line286">286: </a>  <font color="#4169E1">return</font>(0);
+<a name="line287">287: </a>}
+
+<a name="line289">289: </a><font color="#B22222">/*</font>
+<a name="line290">290: </a><font color="#B22222">   Get RGB color entries out of the X colormap</font>
+<a name="line291">291: </a><font color="#B22222">*/</font>
+<a name="line292">292: </a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> PetscDrawXiGetPalette(PetscDraw_X *XiWin,unsigned char palette[256][3])
+<a name="line293">293: </a>{
+<a name="line294">294: </a>  int    k;
+<a name="line295">295: </a>  XColor colordef[256];
+
+<a name="line298">298: </a>  <font color="#4169E1">for</font> (k=0; k&lt;256; k++) {
+<a name="line299">299: </a>    colordef[k].pixel = XiWin-&gt;cmapping[k];
+<a name="line300">300: </a>    colordef[k].flags = DoRed|DoGreen|DoBlue;
+<a name="line301">301: </a>  }
+<a name="line302">302: </a>  XQueryColors(XiWin-&gt;disp,XiWin-&gt;cmap,colordef,256);
+<a name="line303">303: </a>  <font color="#4169E1">for</font> (k=0; k&lt;256; k++) {
+<a name="line304">304: </a>    palette[k][0] = (unsigned char)(colordef[k].red   &gt;&gt; 8);
+<a name="line305">305: </a>    palette[k][1] = (unsigned char)(colordef[k].green &gt;&gt; 8);
+<a name="line306">306: </a>    palette[k][2] = (unsigned char)(colordef[k].blue  &gt;&gt; 8);
+<a name="line307">307: </a>  }
+<a name="line308">308: </a>  <font color="#4169E1">return</font>(0);
+<a name="line309">309: </a>}
+
+</pre>
+</body>
+
+</html>

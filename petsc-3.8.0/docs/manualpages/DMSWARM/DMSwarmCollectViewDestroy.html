@@ -1,0 +1,37 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML3.2 EN">
+<HTML>
+<HEAD> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/DMSWARM/DMSwarmCollectViewDestroy.html" />
+<META NAME="GENERATOR" CONTENT="DOCTEXT">
+<TITLE>DMSwarmCollectViewDestroy</TITLE>
+</HEAD>
+<BODY BGCOLOR="FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 docs/manualpages/DMSWARM/DMSwarmCollectViewDestroy.html "><small>Report Typos and Errors</small></a></div>
+<A NAME="DMSwarmCollectViewDestroy"><H1>DMSwarmCollectViewDestroy</H1></A>
+Resets the DMSwarm to the size prior to calling <A HREF="../DMSWARM/DMSwarmCollectViewCreate.html#DMSwarmCollectViewCreate">DMSwarmCollectViewCreate</A>() 
+<H3><FONT COLOR="#CC3333">Synopsis</FONT></H3>
+<PRE>
+#include "petscdmswarm.h"   
+PETSC_EXTERN <A HREF="../Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</A> <A HREF="../DMSWARM/DMSwarmCollectViewDestroy.html#DMSwarmCollectViewDestroy">DMSwarmCollectViewDestroy</A>(<A HREF="../DM/DM.html#DM">DM</A> dm)
+</PRE>
+Collective on <A HREF="../DM/DM.html#DM">DM</A>
+<P>
+<H3><FONT COLOR="#CC3333">Input parameters</FONT></H3>
+<DT><B>dm </B> -the DMSwarm
+<br>
+<P>
+<H3><FONT COLOR="#CC3333">Notes</FONT></H3>
+Users should call <A HREF="../DMSWARM/DMSwarmCollectViewCreate.html#DMSwarmCollectViewCreate">DMSwarmCollectViewCreate</A>() before this function is called.
+<P>
+
+<P>
+<H3><FONT COLOR="#CC3333">See Also</FONT></H3>
+ <A HREF="../DMSWARM/DMSwarmCollectViewCreate.html#DMSwarmCollectViewCreate">DMSwarmCollectViewCreate</A>(), DMSwarmSetCollectType()
+<BR><P><B><P><B><FONT COLOR="#CC3333">Level:</FONT></B>advanced
+<BR><FONT COLOR="#CC3333">Location:</FONT></B><A HREF="../../../src/dm/impls/swarm/swarm.c.html#DMSwarmCollectViewDestroy">src/dm/impls/swarm/swarm.c</A>
+<BR><A HREF="./index.html">Index of all DMSWARM routines</A>
+<BR><A HREF="../../index.html">Table of Contents for all manual pages</A>
+<BR><A HREF="../singleindex.html">Index of all manual pages</A>
+<P><H3><FONT COLOR="#CC3333">Examples</FONT></H3>
+<A HREF="../../../src/dm/examples/tutorials/swarm_ex1.c.html">src/dm/examples/tutorials/swarm_ex1.c.html</A><BR>
+</BODY></HTML>

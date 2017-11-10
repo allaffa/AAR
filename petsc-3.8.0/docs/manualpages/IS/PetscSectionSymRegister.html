@@ -1,0 +1,38 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML3.2 EN">
+<HTML>
+<HEAD> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/IS/PetscSectionSymRegister.html" />
+<META NAME="GENERATOR" CONTENT="DOCTEXT">
+<TITLE>PetscSectionSymRegister</TITLE>
+</HEAD>
+<BODY BGCOLOR="FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 docs/manualpages/IS/PetscSectionSymRegister.html "><small>Report Typos and Errors</small></a></div>
+<A NAME="PetscSectionSymRegister"><H1>PetscSectionSymRegister</H1></A>
+Adds a new section symmetry implementation 
+<H3><FONT COLOR="#CC3333">Synopsis</FONT></H3>
+<PRE>
+#include "petscvec.h"   
+<A HREF="../Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</A> <A HREF="../IS/PetscSectionSymRegister.html#PetscSectionSymRegister">PetscSectionSymRegister</A>(const char sname[], <A HREF="../Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</A> (*function)(<A HREF="../IS/PetscSectionSym.html#PetscSectionSym">PetscSectionSym</A>))
+</PRE>
+Not Collective
+<P>
+<H3><FONT COLOR="#CC3333">Input Parameters</FONT></H3>
+<TABLE border="0" cellpadding="0" cellspacing="0">
+<TR><TD WIDTH=40></TD><TD ALIGN=LEFT VALIGN=TOP><B>name        </B></TD><TD>- The name of a new user-defined creation routine
+</TD></TR>
+<TR><TD WIDTH=40></TD><TD ALIGN=LEFT VALIGN=TOP><B>create_func </B></TD><TD>- The creation routine itself
+</TD></TR></TABLE>
+<P>
+<H3><FONT COLOR="#CC3333">Notes</FONT></H3>
+<A HREF="../IS/PetscSectionSymRegister.html#PetscSectionSymRegister">PetscSectionSymRegister</A>() may be called multiple times to add several user-defined vectors
+<P>
+
+<P>
+<H3><FONT COLOR="#CC3333">See Also</FONT></H3>
+ <A HREF="../IS/PetscSectionSymCreate.html#PetscSectionSymCreate">PetscSectionSymCreate</A>(), <A HREF="../IS/PetscSectionSymSetType.html#PetscSectionSymSetType">PetscSectionSymSetType</A>()
+<BR><P><B><P><B><FONT COLOR="#CC3333">Level:</FONT></B>developer
+<BR><FONT COLOR="#CC3333">Location:</FONT></B><A HREF="../../../src/vec/is/utils/vsectionis.c.html#PetscSectionSymRegister">src/vec/is/utils/vsectionis.c</A>
+<BR><A HREF="./index.html">Index of all IS routines</A>
+<BR><A HREF="../../index.html">Table of Contents for all manual pages</A>
+<BR><A HREF="../singleindex.html">Index of all manual pages</A>
+</BODY></HTML>

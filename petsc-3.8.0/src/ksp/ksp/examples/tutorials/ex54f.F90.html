@@ -1,0 +1,471 @@
+<center><a href="ex54f.F90">Actual source code: ex54f.F90</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/ksp/ksp/examples/tutorials/ex54f.F90.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-27T00:04:34+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/ksp/ksp/examples/tutorials/ex54f.F90.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+<a name="line1">  1: </a>!
+<a name="line2">  2: </a>!   Description: Solve Ax=b.  A comes from an anisotropic 2D thermal problem with Q1 FEM on domain (-1,1)^2.
+<a name="line3">  3: </a>!       Material conductivity given by tensor:
+<a name="line4">  4: </a>!
+<a name="line5">  5: </a>!       D = | 1 0       |
+<a name="line6">  6: </a>!           | 0 epsilon |
+<a name="line7">  7: </a>!
+<a name="line8">  8: </a>!    rotated by angle 'theta' (-theta &lt;90&gt; in degrees) with anisotropic parameter 'epsilon' (-epsilon &lt;0.0&gt;).
+<a name="line9">  9: </a>!    Blob right hand side centered at C (-blob_center C(1),C(2) &lt;0,0&gt;)
+<a name="line10"> 10: </a>!    Dirichlet BCs on y=-1 face.
+<a name="line11"> 11: </a>!
+<a name="line12"> 12: </a>!    -out_matlab will generate binary files <font color="#4169E1">for</font> A,x,b and a ex54f.m file that reads them and plots them in matlab.
+<a name="line13"> 13: </a>!
+<a name="line14"> 14: </a>!    User can change anisotropic shape with function ex54_psi().  Negative theta will <font color="#4169E1">switch</font> to a circular anisotropy.
+<a name="line15"> 15: </a>!
+<a name="line16"> 16: </a>!<font color="#B22222">/*T</font>
+<a name="line17"> 17: </a><font color="#B22222">!   Concepts: <a href="../../../../../docs/manualpages/KSP/KSP.html#KSP">KSP</a>^solving a system of linear equations</font>
+<a name="line18"> 18: </a><font color="#B22222">!T*/</font>
+<a name="line19"> 19: </a>! -----------------------------------------------------------------------
+<a name="line20"> 20: </a>      program main
+<a name="line21"> 21: </a> #include <A href="../../../../../include/petsc/finclude/petscksp.h.html">&lt;petsc/finclude/petscksp.h&gt;</A>
+<a name="line22"> 22: </a>      use petscksp
+<a name="line23"> 23: </a>      implicit none
+
+<a name="line25"> 25: </a>      <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>              xvec,bvec,uvec
+<a name="line26"> 26: </a>      <a href="../../../../../docs/manualpages/Mat/Mat.html#Mat">Mat</a>              Amat
+<a name="line27"> 27: </a>      <a href="../../../../../docs/manualpages/KSP/KSP.html#KSP">KSP</a>              ksp
+<a name="line28"> 28: </a>      <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr
+<a name="line29"> 29: </a>      <a href="../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer
+<a name="line30"> 30: </a>      <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> qj,qi,ne,M,Istart,Iend,geq,ix
+<a name="line31"> 31: </a>      <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> ki,kj,lint,nel,ll,j1,i1,ndf,f4
+<a name="line32"> 32: </a>      <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> f2,f9,f6, one
+<a name="line33"> 33: </a>      <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> :: idx(4)
+<a name="line34"> 34: </a>      <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>  flg,out_matlab
+<a name="line35"> 35: </a>      <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> size,rank
+<a name="line36"> 36: </a><strong><font color="#FF0000">      <a href="../../../../../docs/manualpages/Sys/PetscScalar.html#PetscScalar">PetscScalar</a>:</font></strong>:ss(4,4),val
+<a name="line37"> 37: </a><strong><font color="#FF0000">      <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>:</font></strong>:shp(3,9),sg(3,9)
+<a name="line38"> 38: </a><strong><font color="#FF0000">      <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>:</font></strong>:thk,a1,a2
+<a name="line39"> 39: </a>      <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>, external :: ex54_psi
+<a name="line40"> 40: </a><strong><font color="#FF0000">      <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>:</font></strong>:theta,eps,h,x,y,xsj
+<a name="line41"> 41: </a><strong><font color="#FF0000">      <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>:</font></strong>:coord(2,4),dd(2,2),ev(3),blb(2)
+
+<a name="line43"> 43: </a>      common /ex54_theta/ theta
+<a name="line44"> 44: </a>! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+<a name="line45"> 45: </a>!                 Beginning of program
+<a name="line46"> 46: </a>! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+<a name="line47"> 47: </a>      call <a href="../../../../../docs/manualpages/Sys/PetscInitialize.html#PetscInitialize">PetscInitialize</a>(PETSC_NULL_CHARACTER,ierr)
+<a name="line48"> 48: </a>      <font color="#4169E1">if</font> (ierr .ne. 0) then
+<a name="line49"> 49: </a>        print*,'Unable to initialize PETSc'
+<a name="line50"> 50: </a>        stop
+<a name="line51"> 51: </a>      endif
+<a name="line52"> 52: </a>      call <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,size,ierr)
+<a name="line53"> 53: </a>      call <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,rank,ierr)
+<a name="line54"> 54: </a>! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+<a name="line55"> 55: </a>!                 set parameters
+<a name="line56"> 56: </a>!     - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+<a name="line57"> 57: </a>      f4 = 4
+<a name="line58"> 58: </a>      f2 = 2
+<a name="line59"> 59: </a>      f9 = 9
+<a name="line60"> 60: </a>      f6 = 6
+<a name="line61"> 61: </a>      ne = 9
+<a name="line62"> 62: </a>      call <a href="../../../../../docs/manualpages/Sys/PetscOptionsGetInt.html#PetscOptionsGetInt">PetscOptionsGetInt</a>(PETSC_NULL_OPTIONS,PETSC_NULL_CHARACTER,      &amp;
+<a name="line63"> 63: </a>     &amp;                        '-ne',ne,flg,ierr)
+<a name="line64"> 64: </a>      h = 2.0/real(ne)
+<a name="line65"> 65: </a>      M = (ne+1)*(ne+1)
+<a name="line66"> 66: </a>      theta = 90.0
+<a name="line67"> 67: </a>!     theta is input in degrees
+<a name="line68"> 68: </a>      call <a href="../../../../../docs/manualpages/Sys/PetscOptionsGetReal.html#PetscOptionsGetReal">PetscOptionsGetReal</a>(PETSC_NULL_OPTIONS,PETSC_NULL_CHARACTER,     &amp;
+<a name="line69"> 69: </a>     &amp;                         '-theta',theta,flg,ierr)
+<a name="line70"> 70: </a>      theta = theta / 57.2957795
+<a name="line71"> 71: </a>      eps = 1.0
+<a name="line72"> 72: </a>      call <a href="../../../../../docs/manualpages/Sys/PetscOptionsGetReal.html#PetscOptionsGetReal">PetscOptionsGetReal</a>(PETSC_NULL_OPTIONS,PETSC_NULL_CHARACTER,     &amp;
+<a name="line73"> 73: </a>     &amp;                         '-epsilon',eps,flg,ierr)
+<a name="line74"> 74: </a>      ki = 2
+<a name="line75"> 75: </a>      call <a href="../../../../../docs/manualpages/Sys/PetscOptionsGetRealArray.html#PetscOptionsGetRealArray">PetscOptionsGetRealArray</a>(PETSC_NULL_OPTIONS,                     &amp;
+<a name="line76"> 76: </a>     &amp;           PETSC_NULL_CHARACTER,'-blob_center',blb,ki,flg,ierr)
+<a name="line77"> 77: </a>      <font color="#4169E1">if</font> ( .not. flg ) then
+<a name="line78"> 78: </a>         blb(1) = 0.0
+<a name="line79"> 79: </a>         blb(2) = 0.0
+<a name="line80"> 80: </a>      <font color="#4169E1">else</font> <font color="#4169E1">if</font> ( ki .ne. 2 ) then
+<a name="line81"> 81: </a>         print *, 'error: ', ki,                                            &amp;
+<a name="line82"> 82: </a>     &amp;        ' arguments read for -blob_center.  Needs to be two.'
+<a name="line83"> 83: </a>      endif
+<a name="line84"> 84: </a>      call <a href="../../../../../docs/manualpages/Sys/PetscOptionsGetBool.html#PetscOptionsGetBool">PetscOptionsGetBool</a>(PETSC_NULL_OPTIONS,PETSC_NULL_CHARACTER,      &amp;
+<a name="line85"> 85: </a>     &amp;                         '-out_matlab',out_matlab,flg,ierr)
+<a name="line86"> 86: </a>      <font color="#4169E1">if</font> (.not.flg) out_matlab = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+
+<a name="line88"> 88: </a>      ev(1) = 1.0
+<a name="line89"> 89: </a>      ev(2) = eps*ev(1)
+<a name="line90"> 90: </a>!     - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+<a name="line91"> 91: </a>!     Compute the matrix and right-hand-side vector that define
+<a name="line92"> 92: </a>!     the linear system, Ax = b.
+<a name="line93"> 93: </a>!     - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+<a name="line94"> 94: </a>!  Create matrix.  When using <a href="../../../../../docs/manualpages/Mat/MatCreate.html#MatCreate">MatCreate</a>(), the matrix format can
+<a name="line95"> 95: </a>!  be specified at runtime.
+<a name="line96"> 96: </a>      call <a href="../../../../../docs/manualpages/Mat/MatCreate.html#MatCreate">MatCreate</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,Amat,ierr)
+<a name="line97"> 97: </a>      call <a href="../../../../../docs/manualpages/Mat/MatSetSizes.html#MatSetSizes">MatSetSizes</a>( Amat,<a href="../../../../../docs/manualpages/Sys/PETSC_DECIDE.html#PETSC_DECIDE">PETSC_DECIDE</a>, <a href="../../../../../docs/manualpages/Sys/PETSC_DECIDE.html#PETSC_DECIDE">PETSC_DECIDE</a>, M, M, ierr )
+<a name="line98"> 98: </a>      <font color="#4169E1">if</font> ( size == 1 ) then
+<a name="line99"> 99: </a>         call <a href="../../../../../docs/manualpages/Mat/MatSetType.html#MatSetType">MatSetType</a>( Amat, <a href="../../../../../docs/manualpages/Mat/MATAIJ.html#MATAIJ">MATAIJ</a>, ierr )
+<a name="line100">100: </a>      <font color="#4169E1">else</font>
+<a name="line101">101: </a>         call <a href="../../../../../docs/manualpages/Mat/MatSetType.html#MatSetType">MatSetType</a>( Amat, <a href="../../../../../docs/manualpages/Mat/MATMPIAIJ.html#MATMPIAIJ">MATMPIAIJ</a>, ierr )
+<a name="line102">102: </a>      endif
+<a name="line103">103: </a>      call <a href="../../../../../docs/manualpages/Mat/MatMPIAIJSetPreallocation.html#MatMPIAIJSetPreallocation">MatMPIAIJSetPreallocation</a>(Amat,f9,PETSC_NULL_INTEGER,f6,                   &amp;
+<a name="line104">104: </a>     &amp;     PETSC_NULL_INTEGER, ierr)
+<a name="line105">105: </a>      call <a href="../../../../../docs/manualpages/Mat/MatSetFromOptions.html#MatSetFromOptions">MatSetFromOptions</a>( Amat, ierr )
+<a name="line106">106: </a>      call <a href="../../../../../docs/manualpages/Mat/MatSetUp.html#MatSetUp">MatSetUp</a>( Amat, ierr )
+<a name="line107">107: </a>      call <a href="../../../../../docs/manualpages/Mat/MatGetOwnershipRange.html#MatGetOwnershipRange">MatGetOwnershipRange</a>( Amat, Istart, Iend, ierr )
+<a name="line108">108: </a>!  Create vectors.  Note that we form 1 vector from scratch and
+<a name="line109">109: </a>!  then duplicate as needed.
+<a name="line110">110: </a>      xvec = tVec(0)
+<a name="line111">111: </a>      call <a href="../../../../../docs/manualpages/Mat/MatCreateVecs.html#MatCreateVecs">MatCreateVecs</a>( Amat, PETSC_NULL_VEC, xvec, ierr )
+<a name="line112">112: </a>      call <a href="../../../../../docs/manualpages/Vec/VecSetFromOptions.html#VecSetFromOptions">VecSetFromOptions</a>( xvec, ierr )
+<a name="line113">113: </a>      call <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html#VecDuplicate">VecDuplicate</a>( xvec, bvec, ierr )
+<a name="line114">114: </a>      call <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html#VecDuplicate">VecDuplicate</a>( xvec, uvec, ierr )
+<a name="line115">115: </a>!  Assemble matrix.
+<a name="line116">116: </a>!   - Note that <a href="../../../../../docs/manualpages/Mat/MatSetValues.html#MatSetValues">MatSetValues</a>() uses 0-based row and column numbers
+<a name="line117">117: </a>!     in Fortran as well as in C (as set here in the array <font color="#666666">"col"</font>).
+<a name="line118">118: </a>      thk = 1.0              ! thickness
+<a name="line119">119: </a>      nel = 4                   ! nodes per element (quad)
+<a name="line120">120: </a>      ndf = 1
+<a name="line121">121: </a>      call int2d(f2,sg)
+<a name="line122">122: </a>      lint = 4
+<a name="line123">123: </a>      ix = 0
+<a name="line124">124: </a>      <font color="#4169E1">do</font> geq=Istart,Iend-1,1
+<a name="line125">125: </a>         qj = geq/(ne+1); qi = mod(geq,(ne+1))
+<a name="line126">126: </a>         x = h*qi - 1.0; y = h*qj - 1.0 ! lower left corner (-1,-1)
+<a name="line127">127: </a>         <font color="#4169E1">if</font> ( qi &lt; ne .and. qj &lt; ne ) then
+<a name="line128">128: </a>            coord(1,1) = x;   coord(2,1) = y
+<a name="line129">129: </a>            coord(1,2) = x+h; coord(2,2) = y
+<a name="line130">130: </a>            coord(1,3) = x+h; coord(2,3) = y+h
+<a name="line131">131: </a>            coord(1,4) = x;   coord(2,4) = y+h
+<a name="line132">132: </a>! form stiff
+<a name="line133">133: </a>            ss = 0.0
+<a name="line134">134: </a>            <font color="#4169E1">do</font> ll = 1,lint
+<a name="line135">135: </a>               call shp2dquad(sg(1,ll),sg(2,ll),coord,shp,xsj,f2)
+<a name="line136">136: </a>               xsj = xsj*sg(3,ll)*thk
+<a name="line137">137: </a>               call thfx2d(ev,coord,shp,dd,f2,f2,f4,ex54_psi)
+<a name="line138">138: </a>               j1 = 1
+<a name="line139">139: </a>               <font color="#4169E1">do</font> kj = 1,nel
+<a name="line140">140: </a>                  a1 = (dd(1,1)*shp(1,kj) + dd(1,2)*shp(2,kj))*xsj
+<a name="line141">141: </a>                  a2 = (dd(2,1)*shp(1,kj) + dd(2,2)*shp(2,kj))*xsj
+<a name="line142">142: </a>!     Compute residual
+<a name="line143">143: </a>!                  p(j1) = p(j1) - a1*gradt(1) - a2*gradt(2)
+<a name="line144">144: </a>!     Compute tangent
+<a name="line145">145: </a>                  i1 = 1
+<a name="line146">146: </a>                  <font color="#4169E1">do</font> ki = 1,nel
+<a name="line147">147: </a>                     ss(i1,j1) = ss(i1,j1) + a1*shp(1,ki) + a2*shp(2,ki)
+<a name="line148">148: </a>                     i1 = i1 + ndf
+<a name="line149">149: </a>                  end <font color="#4169E1">do</font>
+<a name="line150">150: </a>                  j1 = j1 + ndf
+<a name="line151">151: </a>               end <font color="#4169E1">do</font>
+<a name="line152">152: </a>            enddo
+
+<a name="line154">154: </a>            idx(1) = geq; idx(2) = geq+1; idx(3) = geq+(ne+1)+1
+<a name="line155">155: </a>            idx(4) = geq+(ne+1)
+<a name="line156">156: </a>            <font color="#4169E1">if</font> ( qj &gt; 0 ) then
+<a name="line157">157: </a>               call <a href="../../../../../docs/manualpages/Mat/MatSetValues.html#MatSetValues">MatSetValues</a>(Amat,f4,idx,f4,idx,ss,<a href="../../../../../docs/manualpages/Sys/ADD_VALUES.html#ADD_VALUES">ADD_VALUES</a>,ierr)
+<a name="line158">158: </a>            <font color="#4169E1">else</font>                !     a BC
+<a name="line159">159: </a>               <font color="#4169E1">do</font> ki=1,4,1
+<a name="line160">160: </a>                  <font color="#4169E1">do</font> kj=1,4,1
+<a name="line161">161: </a>                     <font color="#4169E1">if</font> (ki&lt;3 .or. kj&lt;3 ) then
+<a name="line162">162: </a>                        <font color="#4169E1">if</font> ( ki==kj ) then
+<a name="line163">163: </a>                           ss(ki,kj) = .1*ss(ki,kj)
+<a name="line164">164: </a>                        <font color="#4169E1">else</font>
+<a name="line165">165: </a>                           ss(ki,kj) = 0.0
+<a name="line166">166: </a>                        endif
+<a name="line167">167: </a>                     endif
+<a name="line168">168: </a>                  enddo
+<a name="line169">169: </a>               enddo
+<a name="line170">170: </a>               call <a href="../../../../../docs/manualpages/Mat/MatSetValues.html#MatSetValues">MatSetValues</a>(Amat,f4,idx,f4,idx,ss,<a href="../../../../../docs/manualpages/Sys/ADD_VALUES.html#ADD_VALUES">ADD_VALUES</a>,ierr)
+<a name="line171">171: </a>            endif               ! BC
+<a name="line172">172: </a>         endif                  ! add element
+<a name="line173">173: </a>         <font color="#4169E1">if</font> ( qj &gt; 0 ) then      ! set rhs
+
+<a name="line175">175: </a>            val = h*h*exp(-100.*((x+h/2)-blb(1))**2)*                            &amp;
+<a name="line176">176: </a>     &amp;           exp(-100*((y+h/2)-blb(2))**2)
+<a name="line177">177: </a>            one = 1
+<a name="line178">178: </a>            call <a href="../../../../../docs/manualpages/Vec/VecSetValues.html#VecSetValues">VecSetValues</a>(bvec,one,geq,val,<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html#INSERT_VALUES">INSERT_VALUES</a>,ierr)
+<a name="line179">179: </a>         endif
+<a name="line180">180: </a>      enddo
+<a name="line181">181: </a>      call <a href="../../../../../docs/manualpages/Mat/MatAssemblyBegin.html#MatAssemblyBegin">MatAssemblyBegin</a>(Amat,<a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>,ierr)
+<a name="line182">182: </a>      call <a href="../../../../../docs/manualpages/Mat/MatAssemblyEnd.html#MatAssemblyEnd">MatAssemblyEnd</a>(Amat,<a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html#MatAssemblyType">MAT_FINAL_ASSEMBLY</a>,ierr)
+<a name="line183">183: </a>      call <a href="../../../../../docs/manualpages/Vec/VecAssemblyBegin.html#VecAssemblyBegin">VecAssemblyBegin</a>(bvec,ierr)
+<a name="line184">184: </a>      call <a href="../../../../../docs/manualpages/Vec/VecAssemblyEnd.html#VecAssemblyEnd">VecAssemblyEnd</a>(bvec,ierr)
+
+<a name="line186">186: </a>! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+<a name="line187">187: </a>!          Create the linear solver and set various options
+<a name="line188">188: </a>! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+<a name="line190">190: </a>!  Create linear solver context
+
+<a name="line192">192: </a>      call <a href="../../../../../docs/manualpages/KSP/KSPCreate.html#KSPCreate">KSPCreate</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,ksp,ierr)
+
+<a name="line194">194: </a>!  Set operators. Here the matrix that defines the linear system
+<a name="line195">195: </a>!  also serves as the preconditioning matrix.
+
+<a name="line197">197: </a>      call <a href="../../../../../docs/manualpages/KSP/KSPSetOperators.html#KSPSetOperators">KSPSetOperators</a>(ksp,Amat,Amat,ierr)
+
+<a name="line199">199: </a>!  Set runtime options, e.g.,
+<a name="line200">200: </a>!      -ksp_type &lt;type&gt; -pc_type &lt;type&gt; -ksp_monitor -ksp_rtol &lt;rtol&gt;
+<a name="line201">201: </a>!  These options will override those specified above as long as
+<a name="line202">202: </a>!  <a href="../../../../../docs/manualpages/KSP/KSPSetFromOptions.html#KSPSetFromOptions">KSPSetFromOptions</a>() is called _after_ any other customization
+<a name="line203">203: </a>!  routines.
+
+<a name="line205">205: </a>      call <a href="../../../../../docs/manualpages/KSP/KSPSetFromOptions.html#KSPSetFromOptions">KSPSetFromOptions</a>(ksp,ierr)
+
+<a name="line207">207: </a>! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+<a name="line208">208: </a>!                      Solve the linear system
+<a name="line209">209: </a>! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+<a name="line211">211: </a>      call <a href="../../../../../docs/manualpages/KSP/KSPSolve.html#KSPSolve">KSPSolve</a>(ksp,bvec,xvec,ierr)
+<a name="line212">212: </a>      CHKERRA(ierr)
+
+
+<a name="line215">215: </a>! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+<a name="line216">216: </a>!                      output
+<a name="line217">217: </a>! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+<a name="line218">218: </a>      <font color="#4169E1">if</font> ( out_matlab ) then
+<a name="line219">219: </a>         call <a href="../../../../../docs/manualpages/Viewer/PetscViewerBinaryOpen.html#PetscViewerBinaryOpen">PetscViewerBinaryOpen</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,'Amat',                &amp;
+<a name="line220">220: </a>     &amp;        <a href="../../../../../docs/manualpages/Sys/PetscFileMode.html#PetscFileMode">FILE_MODE_WRITE</a>,viewer,ierr)
+<a name="line221">221: </a>         call <a href="../../../../../docs/manualpages/Mat/MatView.html#MatView">MatView</a>(Amat,viewer,ierr)
+<a name="line222">222: </a>         call <a href="../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html#PetscViewerDestroy">PetscViewerDestroy</a>(viewer,ierr)
+
+<a name="line224">224: </a>         call <a href="../../../../../docs/manualpages/Viewer/PetscViewerBinaryOpen.html#PetscViewerBinaryOpen">PetscViewerBinaryOpen</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,'Bvec',                &amp;
+<a name="line225">225: </a>     &amp;        <a href="../../../../../docs/manualpages/Sys/PetscFileMode.html#PetscFileMode">FILE_MODE_WRITE</a>,viewer,ierr)
+<a name="line226">226: </a>         call <a href="../../../../../docs/manualpages/Vec/VecView.html#VecView">VecView</a>(bvec,viewer,ierr)
+<a name="line227">227: </a>         call <a href="../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html#PetscViewerDestroy">PetscViewerDestroy</a>(viewer,ierr)
+
+<a name="line229">229: </a>         call <a href="../../../../../docs/manualpages/Viewer/PetscViewerBinaryOpen.html#PetscViewerBinaryOpen">PetscViewerBinaryOpen</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,'Xvec',                &amp;
+<a name="line230">230: </a>     &amp;        <a href="../../../../../docs/manualpages/Sys/PetscFileMode.html#PetscFileMode">FILE_MODE_WRITE</a>,viewer,ierr)
+<a name="line231">231: </a>         call <a href="../../../../../docs/manualpages/Vec/VecView.html#VecView">VecView</a>(xvec,viewer,ierr)
+<a name="line232">232: </a>         call <a href="../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html#PetscViewerDestroy">PetscViewerDestroy</a>(viewer,ierr)
+
+<a name="line234">234: </a>         call <a href="../../../../../docs/manualpages/Mat/MatMult.html#MatMult">MatMult</a>(Amat,xvec,uvec,ierr)
+<a name="line235">235: </a>         val = -1.0
+<a name="line236">236: </a>         call <a href="../../../../../docs/manualpages/Vec/VecAXPY.html#VecAXPY">VecAXPY</a>(uvec,val,bvec,ierr)
+<a name="line237">237: </a>         call <a href="../../../../../docs/manualpages/Viewer/PetscViewerBinaryOpen.html#PetscViewerBinaryOpen">PetscViewerBinaryOpen</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>,'Rvec',                &amp;
+<a name="line238">238: </a>     &amp;        <a href="../../../../../docs/manualpages/Sys/PetscFileMode.html#PetscFileMode">FILE_MODE_WRITE</a>,viewer,ierr)
+<a name="line239">239: </a>         call <a href="../../../../../docs/manualpages/Vec/VecView.html#VecView">VecView</a>(uvec,viewer,ierr)
+<a name="line240">240: </a>         call <a href="../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html#PetscViewerDestroy">PetscViewerDestroy</a>(viewer,ierr)
+
+<a name="line242">242: </a>         <font color="#4169E1">if</font> ( rank == 0 ) then
+<a name="line243">243: </a>            open(1,file='ex54f.m', FORM='formatted')
+<a name="line244">244: </a>            write (1,*) 'A = <a href="../../../../../docs/manualpages/Sys/PetscBinaryRead.html#PetscBinaryRead">PetscBinaryRead</a>(''Amat'');'
+<a name="line245">245: </a>            write (1,*) '[m n] = size(A);'
+<a name="line246">246: </a>            write (1,*) 'mm = sqrt(m);'
+<a name="line247">247: </a>            write (1,*) 'b = <a href="../../../../../docs/manualpages/Sys/PetscBinaryRead.html#PetscBinaryRead">PetscBinaryRead</a>(''Bvec'');'
+<a name="line248">248: </a>            write (1,*) 'x = <a href="../../../../../docs/manualpages/Sys/PetscBinaryRead.html#PetscBinaryRead">PetscBinaryRead</a>(''Xvec'');'
+<a name="line249">249: </a>            write (1,*) 'r = <a href="../../../../../docs/manualpages/Sys/PetscBinaryRead.html#PetscBinaryRead">PetscBinaryRead</a>(''Rvec'');'
+<a name="line250">250: </a>            write (1,*) 'bb = reshape(b,mm,mm);'
+<a name="line251">251: </a>            write (1,*) 'xx = reshape(x,mm,mm);'
+<a name="line252">252: </a>            write (1,*) 'rr = reshape(r,mm,mm);'
+<a name="line253">253: </a>!            write (1,*) 'imagesc(bb')'
+<a name="line254">254: </a>!            write (1,*) 'title('RHS'),'
+<a name="line255">255: </a>            write (1,*) 'figure,'
+<a name="line256">256: </a>            write (1,*) 'imagesc(xx'')'
+<a name="line257">257: </a>            write (1,2002) eps,theta*57.2957795
+<a name="line258">258: </a>            write (1,*) 'figure,'
+<a name="line259">259: </a>            write (1,*) 'imagesc(rr'')'
+<a name="line260">260: </a>            write (1,*) 'title(''Residual''),'
+<a name="line261">261: </a>            close(1)
+<a name="line262">262: </a>         endif
+<a name="line263">263: </a>      endif
+<a name="line264">264: </a> 2002 format('title(''Solution: esp='',d9.3,'', theta='',g8.3,''),')
+<a name="line265">265: </a>!  Free work space.  All PETSc objects should be destroyed when they
+<a name="line266">266: </a>!  are no longer needed.
+
+<a name="line268">268: </a>      call <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(xvec,ierr)
+<a name="line269">269: </a>      call <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(bvec,ierr)
+<a name="line270">270: </a>      call <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(uvec,ierr)
+<a name="line271">271: </a>      call <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(Amat,ierr)
+<a name="line272">272: </a>      call <a href="../../../../../docs/manualpages/KSP/KSPDestroy.html#KSPDestroy">KSPDestroy</a>(ksp,ierr)
+<a name="line273">273: </a>      call <a href="../../../../../docs/manualpages/Sys/PetscFinalize.html#PetscFinalize">PetscFinalize</a>(ierr)
+
+<a name="line275">275: </a>      end
+
+<a name="line277">277: </a>! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+<a name="line278">278: </a>!     thfx2d - compute material tensor
+<a name="line279">279: </a>! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+<a name="line280">280: </a>!     Compute thermal gradient and flux
+
+<a name="line282">282: </a>      subroutine thfx2d(ev,xl,shp,dd,ndm,ndf,nel,dir)
+<a name="line283">283: </a>      implicit  none
+
+<a name="line285">285: </a>      <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>   ndm,ndf,nel,i
+<a name="line286">286: </a>      <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> ev(2),xl(ndm,nel),shp(3,*),dir
+<a name="line287">287: </a>      <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> xx,yy,psi,cs,sn,c2,s2,dd(2,2)
+
+<a name="line289">289: </a>      xx       = 0.0
+<a name="line290">290: </a>      yy       = 0.0
+<a name="line291">291: </a>      <font color="#4169E1">do</font> i = 1,nel
+<a name="line292">292: </a>        xx       = xx       + shp(3,i)*xl(1,i)
+<a name="line293">293: </a>        yy       = yy       + shp(3,i)*xl(2,i)
+<a name="line294">294: </a>      end <font color="#4169E1">do</font>
+<a name="line295">295: </a>      psi = dir(xx,yy)
+<a name="line296">296: </a>!     Compute thermal flux
+<a name="line297">297: </a>      cs  = cos(psi)
+<a name="line298">298: </a>      sn  = sin(psi)
+<a name="line299">299: </a>      c2  = cs*cs
+<a name="line300">300: </a>      s2  = sn*sn
+<a name="line301">301: </a>      cs  = cs*sn
+
+<a name="line303">303: </a>      dd(1,1) = c2*ev(1) + s2*ev(2)
+<a name="line304">304: </a>      dd(2,2) = s2*ev(1) + c2*ev(2)
+<a name="line305">305: </a>      dd(1,2) = cs*(ev(1) - ev(2))
+<a name="line306">306: </a>      dd(2,1) = dd(1,2)
+
+<a name="line308">308: </a>!      flux(1) = -dd(1,1)*gradt(1) - dd(1,2)*gradt(2)
+<a name="line309">309: </a>!      flux(2) = -dd(2,1)*gradt(1) - dd(2,2)*gradt(2)
+
+<a name="line311">311: </a>      end
+
+<a name="line313">313: </a>!     - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+<a name="line314">314: </a>!     shp2dquad - shape functions - compute derivatives w/r natural coords.
+<a name="line315">315: </a>!     - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+<a name="line316">316: </a>       subroutine shp2dquad(s,t,xl,shp,xsj,ndm)
+<a name="line317">317: </a>!-----[--.----+----.----+----.-----------------------------------------]
+<a name="line318">318: </a>!      Purpose: Shape function routine <font color="#4169E1">for</font> 4-node isoparametric quads
+<a name="line319">319: </a>!
+<a name="line320">320: </a>!      Inputs:
+<a name="line321">321: </a>!         s,t       - Natural coordinates of point
+<a name="line322">322: </a>!         xl(ndm,*) - Nodal coordinates <font color="#4169E1">for</font> element
+<a name="line323">323: </a>!         ndm       - Spatial dimension of mesh
+
+<a name="line325">325: </a>!      Outputs:
+<a name="line326">326: </a>!         shp(3,*)  - Shape functions and derivatives at point
+<a name="line327">327: </a>!                     shp(1,i) = dN_i/dx  or dN_i/dxi_1
+<a name="line328">328: </a>!                     shp(2,i) = dN_i/dy  or dN_i/dxi_2
+<a name="line329">329: </a>!                     shp(3,i) = N_i
+<a name="line330">330: </a>!         xsj       - Jacobian determinant at point
+<a name="line331">331: </a>!-----[--.----+----.----+----.-----------------------------------------]
+<a name="line332">332: </a>      implicit  none
+<a name="line333">333: </a>      <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>  ndm
+<a name="line334">334: </a>      <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> xo,xs,xt, yo,ys,yt, xsm,xsp,xtm
+<a name="line335">335: </a>      <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> xtp, ysm,ysp,ytm,ytp
+<a name="line336">336: </a>      <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> s,t, xsj,xsj1, sh,th,sp,tp,sm
+<a name="line337">337: </a>      <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> tm, xl(ndm,4),shp(3,4)
+
+<a name="line339">339: </a>!     Set up interpolations
+
+<a name="line341">341: </a>      sh = 0.5*s
+<a name="line342">342: </a>      th = 0.5*t
+<a name="line343">343: </a>      sp = 0.5 + sh
+<a name="line344">344: </a>      tp = 0.5 + th
+<a name="line345">345: </a>      sm = 0.5 - sh
+<a name="line346">346: </a>      tm = 0.5 - th
+<a name="line347">347: </a>      shp(3,1) =   sm*tm
+<a name="line348">348: </a>      shp(3,2) =   sp*tm
+<a name="line349">349: </a>      shp(3,3) =   sp*tp
+<a name="line350">350: </a>      shp(3,4) =   sm*tp
+
+<a name="line352">352: </a>!     Set up natural coordinate functions (times 4)
+
+<a name="line354">354: </a>      xo =  xl(1,1)-xl(1,2)+xl(1,3)-xl(1,4)
+<a name="line355">355: </a>      xs = -xl(1,1)+xl(1,2)+xl(1,3)-xl(1,4) + xo*t
+<a name="line356">356: </a>      xt = -xl(1,1)-xl(1,2)+xl(1,3)+xl(1,4) + xo*s
+<a name="line357">357: </a>      yo =  xl(2,1)-xl(2,2)+xl(2,3)-xl(2,4)
+<a name="line358">358: </a>      ys = -xl(2,1)+xl(2,2)+xl(2,3)-xl(2,4) + yo*t
+<a name="line359">359: </a>      yt = -xl(2,1)-xl(2,2)+xl(2,3)+xl(2,4) + yo*s
+
+<a name="line361">361: </a>!     Compute jacobian (times 16)
+
+<a name="line363">363: </a>      xsj1 = xs*yt - xt*ys
+
+<a name="line365">365: </a>!     Divide jacobian by 16 (multiply by .0625)
+
+<a name="line367">367: </a>      xsj = 0.0625*xsj1
+<a name="line368">368: </a>      <font color="#4169E1">if</font> (xsj1.eq.0.0) then
+<a name="line369">369: </a>         xsj1 = 1.0
+<a name="line370">370: </a>      <font color="#4169E1">else</font>
+<a name="line371">371: </a>         xsj1 = 1.0/xsj1
+<a name="line372">372: </a>      endif
+
+<a name="line374">374: </a>!     Divide functions by jacobian
+
+<a name="line376">376: </a>      xs  = (xs+xs)*xsj1
+<a name="line377">377: </a>      xt  = (xt+xt)*xsj1
+<a name="line378">378: </a>      ys  = (ys+ys)*xsj1
+<a name="line379">379: </a>      yt  = (yt+yt)*xsj1
+
+<a name="line381">381: </a>!     Multiply by interpolations
+
+<a name="line383">383: </a>      ytm =  yt*tm
+<a name="line384">384: </a>      ysm =  ys*sm
+<a name="line385">385: </a>      ytp =  yt*tp
+<a name="line386">386: </a>      ysp =  ys*sp
+<a name="line387">387: </a>      xtm =  xt*tm
+<a name="line388">388: </a>      xsm =  xs*sm
+<a name="line389">389: </a>      xtp =  xt*tp
+<a name="line390">390: </a>      xsp =  xs*sp
+
+<a name="line392">392: </a>!     Compute shape functions
+
+<a name="line394">394: </a>      shp(1,1) = - ytm+ysm
+<a name="line395">395: </a>      shp(1,2) =   ytm+ysp
+<a name="line396">396: </a>      shp(1,3) =   ytp-ysp
+<a name="line397">397: </a>      shp(1,4) = - ytp-ysm
+<a name="line398">398: </a>      shp(2,1) =   xtm-xsm
+<a name="line399">399: </a>      shp(2,2) = - xtm-xsp
+<a name="line400">400: </a>      shp(2,3) = - xtp+xsp
+<a name="line401">401: </a>      shp(2,4) =   xtp+xsm
+
+<a name="line403">403: </a>      end
+
+<a name="line405">405: </a>!     - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+<a name="line406">406: </a>!     int2d
+<a name="line407">407: </a>!     - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+<a name="line408">408: </a>      subroutine int2d(l,sg)
+<a name="line409">409: </a>!-----[--.----+----.----+----.-----------------------------------------]
+<a name="line410">410: </a>!     Purpose: Form Gauss points and weights <font color="#4169E1">for</font> two dimensions
+
+<a name="line412">412: </a>!     Inputs:
+<a name="line413">413: </a>!     l       - Number of points/direction
+
+<a name="line415">415: </a>!     Outputs:
+<a name="line416">416: </a>!     lint    - Total number of points
+<a name="line417">417: </a>!     sg(3,*) - Array of points and weights
+<a name="line418">418: </a>!-----[--.----+----.----+----.-----------------------------------------]
+<a name="line419">419: </a>      implicit  none
+<a name="line420">420: </a>      <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>   l,i,lint,lr(9),lz(9)
+<a name="line421">421: </a>      <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>    g,third,sg(3,*)
+<a name="line422">422: </a>      data      lr/-1,1,1,-1,0,1,0,-1,0/,lz/-1,-1,1,1,-1,0,1,0,0/
+<a name="line423">423: </a>      data      third / 0.3333333333333333 /
+
+<a name="line425">425: </a>!     Set number of total points
+
+<a name="line427">427: </a>      lint = l*l
+
+<a name="line429">429: </a>!     2x2 integration
+<a name="line430">430: </a>      g = sqrt(third)
+<a name="line431">431: </a>      <font color="#4169E1">do</font> i = 1,4
+<a name="line432">432: </a>         sg(1,i) = g*lr(i)
+<a name="line433">433: </a>         sg(2,i) = g*lz(i)
+<a name="line434">434: </a>         sg(3,i) = 1.0
+<a name="line435">435: </a>      end <font color="#4169E1">do</font>
+
+<a name="line437">437: </a>      end
+
+<a name="line439">439: </a>!     - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+<a name="line440">440: </a>!     ex54_psi - anusotropic material direction
+<a name="line441">441: </a>!     - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+<a name="line442">442: </a>      <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> function ex54_psi(x,y)
+<a name="line443">443: </a>      implicit  none
+<a name="line444">444: </a>      <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> x,y,theta
+<a name="line445">445: </a>      common /ex54_theta/ theta
+<a name="line446">446: </a>      ex54_psi = theta
+<a name="line447">447: </a>      <font color="#4169E1">if</font> ( theta &lt; 0. ) then     ! circular
+<a name="line448">448: </a>         <font color="#4169E1">if</font> (y==0) then
+<a name="line449">449: </a>            ex54_psi = 2.0*atan(1.0)
+<a name="line450">450: </a>         <font color="#4169E1">else</font>
+<a name="line451">451: </a>            ex54_psi = atan(-x/y)
+<a name="line452">452: </a>         endif
+<a name="line453">453: </a>      endif
+<a name="line454">454: </a>      end
+</pre>
+</body>
+
+</html>

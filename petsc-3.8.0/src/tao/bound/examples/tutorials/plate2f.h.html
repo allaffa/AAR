@@ -1,0 +1,63 @@
+<center><a href="plate2f.h">Actual source code: plate2f.h</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/tao/bound/examples/tutorials/plate2f.h.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-27T00:22:39+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/tao/bound/examples/tutorials/plate2f.h.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+<a name="line1">  1: </a>! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+<a name="line2">  2: </a>!             Include file <font color="#4169E1">for</font> program plate.f
+<a name="line3">  3: </a>! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+<a name="line4">  4: </a>!
+<a name="line5">  5: </a><font color="#A020F0">#include </font><font color="#666666">"petsc/finclude/petscdmda.h"</font><font color="#A020F0"></font>
+<a name="line6">  6: </a><font color="#A020F0">#include </font><font color="#666666">"petsc/finclude/petsctao.h"</font><font color="#A020F0"></font>
+<a name="line7">  7: </a>      use petscdmda
+<a name="line8">  8: </a>      use petsctao
+<a name="line9">  9: </a>      implicit none
+
+<a name="line11"> 11: </a>!  Common blocks:
+<a name="line12"> 12: </a>!  In this example we use common blocks to store data needed by the
+<a name="line13"> 13: </a>!  application-provided call-back routines, FormFunction(), FormGradient(),
+<a name="line14"> 14: </a>!  and FormHessian().  Note that we can store (pointers to) TAO objects
+<a name="line15"> 15: </a>!  within these common blocks.
+<a name="line16"> 16: </a>!
+<a name="line17"> 17: </a>!  common /params/ - contains parameters <font color="#4169E1">for</font> the global application
+<a name="line18"> 18: </a>!     mx, my     - global discretization in x- and y-directions
+<a name="line19"> 19: </a>!     hx, hy     - mesh spacing in x- and y-directions
+<a name="line20"> 20: </a>!     N          - dimension of global vectorn
+<a name="line21"> 21: </a>!     bheight    - height of plate
+<a name="line22"> 22: </a>!     bmx,bmy    - grid dimensions under plate
+<a name="line23"> 23: </a>!
+<a name="line24"> 24: </a>!  common /pdata/ - contains some parallel data
+<a name="line25"> 25: </a>!     localX     - local work vector (including ghost points)
+<a name="line26"> 26: </a>!     localV     - local work vector (including ghost points)
+<a name="line27"> 27: </a>!     Top, Bottom, Left, Right - boundary vectors
+<a name="line28"> 28: </a>!     Nx, Ny     - number of processes in x- and y- directions
+<a name="line29"> 29: </a>!     dm         - distributed array
+
+<a name="line31"> 31: </a>      <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>              localX, localV
+<a name="line32"> 32: </a>      <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>              Top, Left
+<a name="line33"> 33: </a>      <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a>              Right, Bottom
+<a name="line34"> 34: </a>      <a href="../../../../../docs/manualpages/DM/DM.html#DM">DM</a>               dm
+<a name="line35"> 35: </a>      <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>      bheight
+<a name="line36"> 36: </a>      <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>         bmx, bmy
+<a name="line37"> 37: </a>      <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>         mx, my, Nx, Ny, N
+
+
+<a name="line40"> 40: </a>      common /params/ mx,my,bmx,bmy,bheight,N
+<a name="line41"> 41: </a>      common /pdata/  dm,localX,localV,Nx,Ny
+<a name="line42"> 42: </a>      common /pdata/  Left, Top, Right, Bottom
+
+<a name="line44"> 44: </a>! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+
+</pre>
+</body>
+
+</html>

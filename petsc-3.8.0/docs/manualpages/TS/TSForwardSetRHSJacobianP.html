@@ -1,0 +1,55 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML3.2 EN">
+<HTML>
+<HEAD> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/TS/TSForwardSetRHSJacobianP.html" />
+<META NAME="GENERATOR" CONTENT="DOCTEXT">
+<TITLE>TSForwardSetRHSJacobianP</TITLE>
+</HEAD>
+<BODY BGCOLOR="FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 docs/manualpages/TS/TSForwardSetRHSJacobianP.html "><small>Report Typos and Errors</small></a></div>
+<A NAME="TSForwardSetRHSJacobianP"><H1>TSForwardSetRHSJacobianP</H1></A>
+Sets the function that computes the Jacobian of G w.r.t. the parameters p where y_t = G(y,p,t), as well as the location to store the vector array. 
+<H3><FONT COLOR="#CC3333">Synopsis</FONT></H3>
+<PRE>
+#include "petscts.h"  
+<A HREF="../Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</A>  <A HREF="../TS/TSForwardSetRHSJacobianP.html#TSForwardSetRHSJacobianP">TSForwardSetRHSJacobianP</A>(<A HREF="../TS/TS.html#TS">TS</A> ts,<A HREF="../Vec/Vec.html#Vec">Vec</A>* a,<A HREF="../Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</A> (*func)(<A HREF="../TS/TS.html#TS">TS</A>,<A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A>,<A HREF="../Vec/Vec.html#Vec">Vec</A>,<A HREF="../Vec/Vec.html#Vec">Vec</A>*,void*),void *ctx)
+</PRE>
+Logically Collective on <A HREF="../TS/TS.html#TS">TS</A>
+<P>
+<H3><FONT COLOR="#CC3333">Input Parameters</FONT></H3>
+<TABLE border="0" cellpadding="0" cellspacing="0">
+<TR><TD WIDTH=40></TD><TD ALIGN=LEFT VALIGN=TOP><B>ts   </B></TD><TD>- The <A HREF="../TS/TS.html#TS">TS</A> context obtained from <A HREF="../TS/TSCreate.html#TSCreate">TSCreate</A>()
+</TD></TR>
+<TR><TD WIDTH=40></TD><TD ALIGN=LEFT VALIGN=TOP><B>func </B></TD><TD>- The function
+</TD></TR></TABLE>
+<P>
+<H3><FONT COLOR="#CC3333">Calling sequence of func</FONT></H3>
+<pre>
+func (<A HREF="../TS/TS.html#TS">TS</A> ts,<A HREF="../Sys/PetscReal.html#PetscReal">PetscReal</A> t,<A HREF="../Vec/Vec.html#Vec">Vec</A> y,<A HREF="../Vec/Vec.html#Vec">Vec</A>* a,void *ctx);
+</pre>
+<TABLE border="0" cellpadding="0" cellspacing="0">
+<TR><TD WIDTH=40></TD><TD ALIGN=LEFT VALIGN=TOP><B>t </B></TD><TD>- current timestep
+</TD></TR>
+<TR><TD WIDTH=40></TD><TD ALIGN=LEFT VALIGN=TOP><B>y </B></TD><TD>- input vector (current ODE solution)
+</TD></TR>
+<TR><TD WIDTH=40></TD><TD ALIGN=LEFT VALIGN=TOP><B>a </B></TD><TD>- output vector array
+</TD></TR>
+<TR><TD WIDTH=40></TD><TD ALIGN=LEFT VALIGN=TOP><B>ctx </B></TD><TD>- [optional] user-defined function context
+</TD></TR></TABLE>
+<P>
+
+<P>
+Notes: the number of vectors in a is the same as the number of parameters and each vector is of the same size as the system dimension.
+<P>
+<H3><FONT COLOR="#CC3333">Keywords</FONT></H3>
+ <A HREF="../TS/TS.html#TS">TS</A>, forward sensitivity
+<BR>
+<P>
+<H3><FONT COLOR="#CC3333">See Also</FONT></H3>
+ <A HREF="../TS/TSForwardSetSensitivities.html#TSForwardSetSensitivities">TSForwardSetSensitivities</A>(), <A HREF="../TS/TSForwardGetSensitivities.html#TSForwardGetSensitivities">TSForwardGetSensitivities</A>(), <A HREF="../TS/TSForwardSetIntegralGradients.html#TSForwardSetIntegralGradients">TSForwardSetIntegralGradients</A>(), <A HREF="../TS/TSForwardGetIntegralGradients.html#TSForwardGetIntegralGradients">TSForwardGetIntegralGradients</A>(), <A HREF="../TS/TSForwardStep.html#TSForwardStep">TSForwardStep</A>()
+<BR><P><B><P><B><FONT COLOR="#CC3333">Level:</FONT></B>intermediate
+<BR><FONT COLOR="#CC3333">Location:</FONT></B><A HREF="../../../src/ts/interface/tsfwdsen.c.html#TSForwardSetRHSJacobianP">src/ts/interface/tsfwdsen.c</A>
+<BR><A HREF="./index.html">Index of all TS routines</A>
+<BR><A HREF="../../index.html">Table of Contents for all manual pages</A>
+<BR><A HREF="../singleindex.html">Index of all manual pages</A>
+</BODY></HTML>

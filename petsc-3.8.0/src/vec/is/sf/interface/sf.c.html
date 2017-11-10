@@ -1,0 +1,1294 @@
+<center><a href="sf.c">Actual source code: sf.c</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/vec/is/sf/interface/sf.c.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:17:00+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/vec/is/sf/interface/sf.c.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+<a name="line1">  1: </a> #include <A href="../../../../../include/petsc/private/sfimpl.h.html">&lt;petsc/private/sfimpl.h&gt;</A>
+<a name="line2">  2: </a> #include <A href="../../../../../include/petscctable.h.html">&lt;petscctable.h&gt;</A>
+
+<a name="line4">  4: </a><font color="#B22222">/* Logging support */</font>
+<a name="line5">  5: </a><a href="../../../../../docs/manualpages/Profiling/PetscLogEvent.html#PetscLogEvent">PetscLogEvent</a> PETSCSF_SetGraph, PETSCSF_BcastBegin, PETSCSF_BcastEnd, PETSCSF_ReduceBegin, PETSCSF_ReduceEnd, PETSCSF_FetchAndOpBegin, PETSCSF_FetchAndOpEnd;
+
+<a name="line7">  7: </a><font color="#A020F0">#if defined(PETSC_USE_DEBUG)</font>
+<a name="line8">  8: </a><font color="#A020F0">#  define PetscSFCheckGraphSet(sf,arg) do {                          \</font>
+<a name="line9">  9: </a>    <font color="#4169E1">if</font> (<a href="../../../../../docs/manualpages/Sys/PetscUnlikely.html#PetscUnlikely">PetscUnlikely</a>(!(sf)-&gt;graphset))                              \
+<a name="line10"> 10: </a>      <a href="../../../../../docs/manualpages/Sys/SETERRQ3.html#SETERRQ3">SETERRQ3</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_WRONGSTATE,<font color="#666666">"Must call <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html#PetscSFSetGraph">PetscSFSetGraph</a>() on argument %D \"%s\" before %s()"</font>,(arg),#sf,PETSC_FUNCTION_NAME); \
+<a name="line11"> 11: </a>  } <font color="#4169E1">while</font> (0)
+<a name="line12"> 12: </a><font color="#A020F0">#else</font>
+<a name="line13"> 13: </a><font color="#A020F0">#  define PetscSFCheckGraphSet(sf,arg) do {} while (0)</font>
+<a name="line14"> 14: </a><font color="#A020F0">#endif</font>
+
+<a name="line16"> 16: </a>const char *const PetscSFDuplicateOptions[] = {<font color="#666666">"CONFONLY"</font>,<font color="#666666">"RANKS"</font>,<font color="#666666">"GRAPH"</font>,<font color="#666666">"<a href="../../../../../docs/manualpages/PetscSF/PetscSFDuplicateOption.html#PetscSFDuplicateOption">PetscSFDuplicateOption</a>"</font>,<font color="#666666">"PETSCSF_DUPLICATE_"</font>,0};
+
+<a name="line18"> 18: </a><font color="#B22222">/*@C</font>
+<a name="line19"> 19: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/PetscSF/PetscSFCreate.html#PetscSFCreate">PetscSFCreate</a> - create a star forest communication context</font>
+
+<a name="line21"> 21: </a><font color="#B22222">   Not Collective</font>
+
+<a name="line23"> 23: </a><font color="#B22222">   Input Arguments:</font>
+<a name="line24"> 24: </a><font color="#B22222">.  comm - communicator on which the star forest will operate</font>
+
+<a name="line26"> 26: </a><font color="#B22222">   Output Arguments:</font>
+<a name="line27"> 27: </a><font color="#B22222">.  sf - new star forest context</font>
+
+<a name="line29"> 29: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line31"> 31: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html#PetscSFSetGraph">PetscSFSetGraph</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFDestroy.html#PetscSFDestroy">PetscSFDestroy</a>()</font>
+<a name="line32"> 32: </a><font color="#B22222">@*/</font>
+<a name="line33"> 33: </a><strong><font color="#4169E1"><a name="PetscSFCreate"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PetscSF/PetscSFCreate.html#PetscSFCreate">PetscSFCreate</a>(<a href="../../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a> comm,<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> *sf)</font></strong>
+<a name="line34"> 34: </a>{
+<a name="line36"> 36: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a>        b;
+
+<a name="line40"> 40: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFInitializePackage.html#PetscSFInitializePackage">PetscSFInitializePackage</a>();
+
+<a name="line42"> 42: </a>  <a href="../../../../../docs/manualpages/Sys/PetscHeaderCreate.html#PetscHeaderCreate">PetscHeaderCreate</a>(b,PETSCSF_CLASSID,<font color="#666666">"<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a>"</font>,<font color="#666666">"Star Forest"</font>,<font color="#666666">"<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a>"</font>,comm,<a href="../../../../../docs/manualpages/PetscSF/PetscSFDestroy.html#PetscSFDestroy">PetscSFDestroy</a>,<a href="../../../../../docs/manualpages/PetscSF/PetscSFView.html#PetscSFView">PetscSFView</a>);
+
+<a name="line44"> 44: </a>  b-&gt;nroots    = -1;
+<a name="line45"> 45: </a>  b-&gt;nleaves   = -1;
+<a name="line46"> 46: </a>  b-&gt;nranks    = -1;
+<a name="line47"> 47: </a>  b-&gt;rankorder = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+<a name="line48"> 48: </a>  b-&gt;ingroup   = MPI_GROUP_NULL;
+<a name="line49"> 49: </a>  b-&gt;outgroup  = MPI_GROUP_NULL;
+<a name="line50"> 50: </a>  b-&gt;graphset  = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+
+<a name="line52"> 52: </a>  *sf = b;
+<a name="line53"> 53: </a>  <font color="#4169E1">return</font>(0);
+<a name="line54"> 54: </a>}
+
+<a name="line56"> 56: </a><font color="#B22222">/*@C</font>
+<a name="line57"> 57: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/PetscSF/PetscSFReset.html#PetscSFReset">PetscSFReset</a> - Reset a star forest so that different sizes or neighbors can be used</font>
+
+<a name="line59"> 59: </a><font color="#B22222">   Collective</font>
+
+<a name="line61"> 61: </a><font color="#B22222">   Input Arguments:</font>
+<a name="line62"> 62: </a><font color="#B22222">.  sf - star forest</font>
+
+<a name="line64"> 64: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line66"> 66: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/PetscSF/PetscSFCreate.html#PetscSFCreate">PetscSFCreate</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html#PetscSFSetGraph">PetscSFSetGraph</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFDestroy.html#PetscSFDestroy">PetscSFDestroy</a>()</font>
+<a name="line67"> 67: </a><font color="#B22222">@*/</font>
+<a name="line68"> 68: </a><strong><font color="#4169E1"><a name="PetscSFReset"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PetscSF/PetscSFReset.html#PetscSFReset">PetscSFReset</a>(<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf)</font></strong>
+<a name="line69"> 69: </a>{
+
+<a name="line74"> 74: </a>  <font color="#4169E1">if</font> (sf-&gt;ops-&gt;Reset) {(*sf-&gt;ops-&gt;Reset)(sf);}
+<a name="line75"> 75: </a>  sf-&gt;mine   = NULL;
+<a name="line76"> 76: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(sf-&gt;mine_alloc);
+<a name="line77"> 77: </a>  sf-&gt;remote = NULL;
+<a name="line78"> 78: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(sf-&gt;remote_alloc);
+<a name="line79"> 79: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree4.html#PetscFree4">PetscFree4</a>(sf-&gt;ranks,sf-&gt;roffset,sf-&gt;rmine,sf-&gt;rremote);
+<a name="line80"> 80: </a>  sf-&gt;nranks = -1;
+<a name="line81"> 81: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(sf-&gt;degree);
+<a name="line82"> 82: </a>  <font color="#4169E1">if</font> (sf-&gt;ingroup  != MPI_GROUP_NULL) {<a href="http://www.mpich.org/static/docs/latest/www3/MPI_Group_free.html#MPI_Group_free">MPI_Group_free</a>(&amp;sf-&gt;ingroup);}
+<a name="line83"> 83: </a>  <font color="#4169E1">if</font> (sf-&gt;outgroup != MPI_GROUP_NULL) {<a href="http://www.mpich.org/static/docs/latest/www3/MPI_Group_free.html#MPI_Group_free">MPI_Group_free</a>(&amp;sf-&gt;outgroup);}
+<a name="line84"> 84: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFDestroy.html#PetscSFDestroy">PetscSFDestroy</a>(&amp;sf-&gt;multi);
+<a name="line85"> 85: </a>  sf-&gt;graphset = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+<a name="line86"> 86: </a>  sf-&gt;setupcalled = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+<a name="line87"> 87: </a>  <font color="#4169E1">return</font>(0);
+<a name="line88"> 88: </a>}
+
+<a name="line90"> 90: </a><font color="#B22222">/*@C</font>
+<a name="line91"> 91: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetType.html#PetscSFSetType">PetscSFSetType</a> - set the <a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> communication implementation</font>
+
+<a name="line93"> 93: </a><font color="#B22222">   Collective on <a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a></font>
+
+<a name="line95"> 95: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line96"> 96: </a><font color="#B22222">+  sf - the <a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> context</font>
+<a name="line97"> 97: </a><font color="#B22222">-  type - a known method</font>
+
+<a name="line99"> 99: </a><font color="#B22222">   Options Database Key:</font>
+<a name="line100">100: </a><font color="#B22222">.  -sf_type &lt;type&gt; - Sets the method; use -help for a list</font>
+<a name="line101">101: </a><font color="#B22222">   of available methods (for instance, window, pt2pt, neighbor)</font>
+
+<a name="line103">103: </a><font color="#B22222">   Notes:</font>
+<a name="line104">104: </a><font color="#B22222">   See "include/petscsf.h" for available methods (for instance)</font>
+<a name="line105">105: </a><font color="#B22222">+    PETSCSFWINDOW - MPI-2/3 one-sided</font>
+<a name="line106">106: </a><font color="#B22222">-    PETSCSFBASIC - basic implementation using MPI-1 two-sided</font>
+
+<a name="line108">108: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line110">110: </a><font color="#B22222">.keywords: <a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a>, set, type</font>
+
+<a name="line112">112: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/PetscSF/PetscSFType.html#PetscSFType">PetscSFType</a>, <a href="../../../../../docs/manualpages/PetscSF/PetscSFCreate.html#PetscSFCreate">PetscSFCreate</a>()</font>
+<a name="line113">113: </a><font color="#B22222">@*/</font>
+<a name="line114">114: </a><strong><font color="#4169E1"><a name="PetscSFSetType"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetType.html#PetscSFSetType">PetscSFSetType</a>(<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,<a href="../../../../../docs/manualpages/PetscSF/PetscSFType.html#PetscSFType">PetscSFType</a> type)</font></strong>
+<a name="line115">115: </a>{
+<a name="line116">116: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> ierr,(*r)(<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a>);
+<a name="line117">117: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>      match;
+
+
+<a name="line123">123: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sf,type,&amp;match);
+<a name="line124">124: </a>  <font color="#4169E1">if</font> (match) <font color="#4169E1">return</font>(0);
+
+<a name="line126">126: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFunctionListFind.html#PetscFunctionListFind">PetscFunctionListFind</a>(PetscSFList,type,&amp;r);
+<a name="line127">127: </a>  <font color="#4169E1">if</font> (!r) <a href="../../../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_UNKNOWN_TYPE,<font color="#666666">"Unable to find requested <a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> type %s"</font>,type);
+<a name="line128">128: </a>  <font color="#B22222">/* Destroy the previous private <a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> context */</font>
+<a name="line129">129: </a>  <font color="#4169E1">if</font> (sf-&gt;ops-&gt;Destroy) {
+<a name="line130">130: </a>    (*(sf)-&gt;ops-&gt;Destroy)(sf);
+<a name="line131">131: </a>  }
+<a name="line132">132: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMemzero.html#PetscMemzero">PetscMemzero</a>(sf-&gt;ops,<font color="#4169E1">sizeof</font>(*sf-&gt;ops));
+<a name="line133">133: </a>  PetscObjectChangeTypeName((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sf,type);
+<a name="line134">134: </a>  (*r)(sf);
+<a name="line135">135: </a>  <font color="#4169E1">return</font>(0);
+<a name="line136">136: </a>}
+
+<a name="line138">138: </a><font color="#B22222">/*@</font>
+<a name="line139">139: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/PetscSF/PetscSFDestroy.html#PetscSFDestroy">PetscSFDestroy</a> - destroy star forest</font>
+
+<a name="line141">141: </a><font color="#B22222">   Collective</font>
+
+<a name="line143">143: </a><font color="#B22222">   Input Arguments:</font>
+<a name="line144">144: </a><font color="#B22222">.  sf - address of star forest</font>
+
+<a name="line146">146: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line148">148: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/PetscSF/PetscSFCreate.html#PetscSFCreate">PetscSFCreate</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFReset.html#PetscSFReset">PetscSFReset</a>()</font>
+<a name="line149">149: </a><font color="#B22222">@*/</font>
+<a name="line150">150: </a><strong><font color="#4169E1"><a name="PetscSFDestroy"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PetscSF/PetscSFDestroy.html#PetscSFDestroy">PetscSFDestroy</a>(<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> *sf)</font></strong>
+<a name="line151">151: </a>{
+
+<a name="line155">155: </a>  <font color="#4169E1">if</font> (!*sf) <font color="#4169E1">return</font>(0);
+<a name="line157">157: </a>  <font color="#4169E1">if</font> (--((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)(*sf))-&gt;refct &gt; 0) {*sf = 0; <font color="#4169E1">return</font>(0);}
+<a name="line158">158: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFReset.html#PetscSFReset">PetscSFReset</a>(*sf);
+<a name="line159">159: </a>  <font color="#4169E1">if</font> ((*sf)-&gt;ops-&gt;Destroy) {(*(*sf)-&gt;ops-&gt;Destroy)(*sf);}
+<a name="line160">160: </a>  <a href="../../../../../docs/manualpages/Sys/PetscHeaderDestroy.html#PetscHeaderDestroy">PetscHeaderDestroy</a>(sf);
+<a name="line161">161: </a>  <font color="#4169E1">return</font>(0);
+<a name="line162">162: </a>}
+
+<a name="line164">164: </a><font color="#B22222">/*@</font>
+<a name="line165">165: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetUp.html#PetscSFSetUp">PetscSFSetUp</a> - set up communication structures</font>
+
+<a name="line167">167: </a><font color="#B22222">   Collective</font>
+
+<a name="line169">169: </a><font color="#B22222">   Input Arguments:</font>
+<a name="line170">170: </a><font color="#B22222">.  sf - star forest communication object</font>
+
+<a name="line172">172: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line174">174: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetFromOptions.html#PetscSFSetFromOptions">PetscSFSetFromOptions</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetType.html#PetscSFSetType">PetscSFSetType</a>()</font>
+<a name="line175">175: </a><font color="#B22222">@*/</font>
+<a name="line176">176: </a><strong><font color="#4169E1"><a name="PetscSFSetUp"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetUp.html#PetscSFSetUp">PetscSFSetUp</a>(<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf)</font></strong>
+<a name="line177">177: </a>{
+
+<a name="line181">181: </a>  <font color="#4169E1">if</font> (sf-&gt;setupcalled) <font color="#4169E1">return</font>(0);
+<a name="line182">182: </a>  <font color="#4169E1">if</font> (!((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sf)-&gt;type_name) {<a href="../../../../../docs/manualpages/PetscSF/PetscSFSetType.html#PetscSFSetType">PetscSFSetType</a>(sf,PETSCSFBASIC);}
+<a name="line183">183: </a>  <font color="#4169E1">if</font> (sf-&gt;ops-&gt;SetUp) {(*sf-&gt;ops-&gt;SetUp)(sf);}
+<a name="line184">184: </a>  sf-&gt;setupcalled = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+<a name="line185">185: </a>  <font color="#4169E1">return</font>(0);
+<a name="line186">186: </a>}
+
+<a name="line188">188: </a><font color="#B22222">/*@C</font>
+<a name="line189">189: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetFromOptions.html#PetscSFSetFromOptions">PetscSFSetFromOptions</a> - set <a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> options using the options database</font>
+
+<a name="line191">191: </a><font color="#B22222">   Logically Collective</font>
+
+<a name="line193">193: </a><font color="#B22222">   Input Arguments:</font>
+<a name="line194">194: </a><font color="#B22222">.  sf - star forest</font>
+
+<a name="line196">196: </a><font color="#B22222">   Options Database Keys:</font>
+<a name="line197">197: </a><font color="#B22222">+  -sf_type - implementation type, see <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetType.html#PetscSFSetType">PetscSFSetType</a>()</font>
+<a name="line198">198: </a><font color="#B22222">-  -sf_rank_order - sort composite points for gathers and scatters in rank order, gathers are non-deterministic otherwise</font>
+
+<a name="line200">200: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line202">202: </a><font color="#B22222">.keywords: <a href="../../../../../docs/manualpages/KSP/KSP.html#KSP">KSP</a>, set, from, options, database</font>
+
+<a name="line204">204: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/PetscSF/PetscSFWindowSetSyncType.html#PetscSFWindowSetSyncType">PetscSFWindowSetSyncType</a>()</font>
+<a name="line205">205: </a><font color="#B22222">@*/</font>
+<a name="line206">206: </a><strong><font color="#4169E1"><a name="PetscSFSetFromOptions"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetFromOptions.html#PetscSFSetFromOptions">PetscSFSetFromOptions</a>(<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf)</font></strong>
+<a name="line207">207: </a>{
+<a name="line208">208: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFType.html#PetscSFType">PetscSFType</a>    deft;
+<a name="line209">209: </a>  char           type[256];
+<a name="line211">211: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>      flg;
+
+<a name="line215">215: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectOptionsBegin.html#PetscObjectOptionsBegin">PetscObjectOptionsBegin</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sf);
+<a name="line216">216: </a>  deft = ((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sf)-&gt;type_name ? ((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sf)-&gt;type_name : PETSCSFBASIC;
+<a name="line217">217: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsFList.html#PetscOptionsFList">PetscOptionsFList</a>(<font color="#666666">"-sf_type"</font>,<font color="#666666">"<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> implementation type"</font>,<font color="#666666">"<a href="../../../../../docs/manualpages/PetscSF/PetscSFSetType.html#PetscSFSetType">PetscSFSetType</a>"</font>,PetscSFList,deft,type,256,&amp;flg);
+<a name="line218">218: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetType.html#PetscSFSetType">PetscSFSetType</a>(sf,flg ? type : deft);
+<a name="line219">219: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsBool.html#PetscOptionsBool">PetscOptionsBool</a>(<font color="#666666">"-sf_rank_order"</font>,<font color="#666666">"sort composite points for gathers and scatters in rank order, gathers are non-deterministic otherwise"</font>,<font color="#666666">"<a href="../../../../../docs/manualpages/PetscSF/PetscSFSetRankOrder.html#PetscSFSetRankOrder">PetscSFSetRankOrder</a>"</font>,sf-&gt;rankorder,&amp;sf-&gt;rankorder,NULL);
+<a name="line220">220: </a>  <font color="#4169E1">if</font> (sf-&gt;ops-&gt;SetFromOptions) {(*sf-&gt;ops-&gt;SetFromOptions)(PetscOptionsObject,sf);}
+<a name="line221">221: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsEnd.html#PetscOptionsEnd">PetscOptionsEnd</a>();
+<a name="line222">222: </a>  <font color="#4169E1">return</font>(0);
+<a name="line223">223: </a>}
+
+<a name="line225">225: </a><font color="#B22222">/*@C</font>
+<a name="line226">226: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetRankOrder.html#PetscSFSetRankOrder">PetscSFSetRankOrder</a> - sort multi-points for gathers and scatters by rank order</font>
+
+<a name="line228">228: </a><font color="#B22222">   Logically Collective</font>
+
+<a name="line230">230: </a><font color="#B22222">   Input Arguments:</font>
+<a name="line231">231: </a><font color="#B22222">+  sf - star forest</font>
+<a name="line232">232: </a><font color="#B22222">-  flg - <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a> to sort, <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a> to skip sorting (lower setup cost, but non-deterministic)</font>
+
+<a name="line234">234: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line236">236: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/PetscSF/PetscSFGatherBegin.html#PetscSFGatherBegin">PetscSFGatherBegin</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFScatterBegin.html#PetscSFScatterBegin">PetscSFScatterBegin</a>()</font>
+<a name="line237">237: </a><font color="#B22222">@*/</font>
+<a name="line238">238: </a><strong><font color="#4169E1"><a name="PetscSFSetRankOrder"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetRankOrder.html#PetscSFSetRankOrder">PetscSFSetRankOrder</a>(<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,<a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> flg)</font></strong>
+<a name="line239">239: </a>{
+
+<a name="line244">244: </a>  <font color="#4169E1">if</font> (sf-&gt;multi) <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sf),PETSC_ERR_ARG_WRONGSTATE,<font color="#666666">"Rank ordering must be set before first call to <a href="../../../../../docs/manualpages/PetscSF/PetscSFGatherBegin.html#PetscSFGatherBegin">PetscSFGatherBegin</a>() or <a href="../../../../../docs/manualpages/PetscSF/PetscSFScatterBegin.html#PetscSFScatterBegin">PetscSFScatterBegin</a>()"</font>);
+<a name="line245">245: </a>  sf-&gt;rankorder = flg;
+<a name="line246">246: </a>  <font color="#4169E1">return</font>(0);
+<a name="line247">247: </a>}
+
+<a name="line249">249: </a><font color="#B22222">/*@C</font>
+<a name="line250">250: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html#PetscSFSetGraph">PetscSFSetGraph</a> - Set a parallel star forest</font>
+
+<a name="line252">252: </a><font color="#B22222">   Collective</font>
+
+<a name="line254">254: </a><font color="#B22222">   Input Arguments:</font>
+<a name="line255">255: </a><font color="#B22222">+  sf - star forest</font>
+<a name="line256">256: </a><font color="#B22222">.  nroots - number of root vertices on the current process (these are possible targets for other process to attach leaves)</font>
+<a name="line257">257: </a><font color="#B22222">.  nleaves - number of leaf vertices on the current process, each of these references a root on any process</font>
+<a name="line258">258: </a><font color="#B22222">.  ilocal - locations of leaves in leafdata buffers, pass NULL for contiguous storage</font>
+<a name="line259">259: </a><font color="#B22222">.  localmode - copy mode for ilocal</font>
+<a name="line260">260: </a><font color="#B22222">.  iremote - remote locations of root vertices for each leaf on the current process</font>
+<a name="line261">261: </a><font color="#B22222">-  remotemode - copy mode for iremote</font>
+
+<a name="line263">263: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line265">265: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/PetscSF/PetscSFCreate.html#PetscSFCreate">PetscSFCreate</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFView.html#PetscSFView">PetscSFView</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFGetGraph.html#PetscSFGetGraph">PetscSFGetGraph</a>()</font>
+<a name="line266">266: </a><font color="#B22222">@*/</font>
+<a name="line267">267: </a><strong><font color="#4169E1"><a name="PetscSFSetGraph"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html#PetscSFSetGraph">PetscSFSetGraph</a>(<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,<a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> nroots,<a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> nleaves,const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *ilocal,<a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PetscCopyMode</a> localmode,const <a href="../../../../../docs/manualpages/PetscSF/PetscSFNode.html#PetscSFNode">PetscSFNode</a> *iremote,<a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PetscCopyMode</a> remotemode)</font></strong>
+<a name="line268">268: </a>{
+<a name="line269">269: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>     ierr;
+
+<a name="line273">273: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscLogEventBegin.html#PetscLogEventBegin">PetscLogEventBegin</a>(PETSCSF_SetGraph,sf,0,0,0);
+<a name="line276">276: </a>  <font color="#4169E1">if</font> (nroots &lt; 0) <a href="../../../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_OUTOFRANGE,<font color="#666666">"roots %D, cannot be negative"</font>,nroots);
+<a name="line277">277: </a>  <font color="#4169E1">if</font> (nleaves &lt; 0) <a href="../../../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_OUTOFRANGE,<font color="#666666">"nleaves %D, cannot be negative"</font>,nleaves);
+<a name="line278">278: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFReset.html#PetscSFReset">PetscSFReset</a>(sf);
+<a name="line279">279: </a>  sf-&gt;nroots  = nroots;
+<a name="line280">280: </a>  sf-&gt;nleaves = nleaves;
+<a name="line281">281: </a>  <font color="#4169E1">if</font> (ilocal) {
+<a name="line282">282: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i;
+<a name="line283">283: </a>    <font color="#4169E1">switch</font> (localmode) {
+<a name="line284">284: </a>    <font color="#4169E1">case</font> <a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_COPY_VALUES</a>:
+<a name="line285">285: </a>      <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(nleaves,&amp;sf-&gt;mine_alloc);
+<a name="line286">286: </a>      sf-&gt;mine    = sf-&gt;mine_alloc;
+<a name="line287">287: </a>      <a href="../../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(sf-&gt;mine,ilocal,nleaves*<font color="#4169E1">sizeof</font>(*sf-&gt;mine));
+<a name="line288">288: </a>      sf-&gt;minleaf = PETSC_MAX_INT;
+<a name="line289">289: </a>      sf-&gt;maxleaf = PETSC_MIN_INT;
+<a name="line290">290: </a>      <font color="#4169E1">for</font> (i=0; i&lt;nleaves; i++) {
+<a name="line291">291: </a>        sf-&gt;minleaf = <a href="../../../../../docs/manualpages/Sys/PetscMin.html#PetscMin">PetscMin</a>(sf-&gt;minleaf,ilocal[i]);
+<a name="line292">292: </a>        sf-&gt;maxleaf = <a href="../../../../../docs/manualpages/Sys/PetscMax.html#PetscMax">PetscMax</a>(sf-&gt;maxleaf,ilocal[i]);
+<a name="line293">293: </a>      }
+<a name="line294">294: </a>      <font color="#4169E1">break</font>;
+<a name="line295">295: </a>    <font color="#4169E1">case</font> <a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_OWN_POINTER</a>:
+<a name="line296">296: </a>      sf-&gt;mine_alloc = (<a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>*)ilocal;
+<a name="line297">297: </a>      sf-&gt;mine       = sf-&gt;mine_alloc;
+<a name="line298">298: </a>      <font color="#4169E1">break</font>;
+<a name="line299">299: </a>    <font color="#4169E1">case</font> <a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_USE_POINTER</a>:
+<a name="line300">300: </a>      sf-&gt;mine = (<a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>*)ilocal;
+<a name="line301">301: </a>      <font color="#4169E1">break</font>;
+<a name="line302">302: </a><strong><font color="#FF0000">    default:</font></strong> <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sf),PETSC_ERR_ARG_OUTOFRANGE,<font color="#666666">"Unknown localmode"</font>);
+<a name="line303">303: </a>    }
+<a name="line304">304: </a>  }
+<a name="line305">305: </a>  <font color="#4169E1">if</font> (!ilocal || nleaves &gt; 0) {
+<a name="line306">306: </a>    sf-&gt;minleaf = 0;
+<a name="line307">307: </a>    sf-&gt;maxleaf = nleaves - 1;
+<a name="line308">308: </a>  }
+<a name="line309">309: </a>  <font color="#4169E1">switch</font> (remotemode) {
+<a name="line310">310: </a>  <font color="#4169E1">case</font> <a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_COPY_VALUES</a>:
+<a name="line311">311: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(nleaves,&amp;sf-&gt;remote_alloc);
+<a name="line312">312: </a>    sf-&gt;remote = sf-&gt;remote_alloc;
+<a name="line313">313: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(sf-&gt;remote,iremote,nleaves*<font color="#4169E1">sizeof</font>(*sf-&gt;remote));
+<a name="line314">314: </a>    <font color="#4169E1">break</font>;
+<a name="line315">315: </a>  <font color="#4169E1">case</font> <a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_OWN_POINTER</a>:
+<a name="line316">316: </a>    sf-&gt;remote_alloc = (<a href="../../../../../docs/manualpages/PetscSF/PetscSFNode.html#PetscSFNode">PetscSFNode</a>*)iremote;
+<a name="line317">317: </a>    sf-&gt;remote       = sf-&gt;remote_alloc;
+<a name="line318">318: </a>    <font color="#4169E1">break</font>;
+<a name="line319">319: </a>  <font color="#4169E1">case</font> <a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_USE_POINTER</a>:
+<a name="line320">320: </a>    sf-&gt;remote = (<a href="../../../../../docs/manualpages/PetscSF/PetscSFNode.html#PetscSFNode">PetscSFNode</a>*)iremote;
+<a name="line321">321: </a>    <font color="#4169E1">break</font>;
+<a name="line322">322: </a><strong><font color="#FF0000">  default:</font></strong> <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sf),PETSC_ERR_ARG_OUTOFRANGE,<font color="#666666">"Unknown remotemode"</font>);
+<a name="line323">323: </a>  }
+
+<a name="line325">325: </a>  sf-&gt;graphset = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+<a name="line326">326: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscLogEventEnd.html#PetscLogEventEnd">PetscLogEventEnd</a>(PETSCSF_SetGraph,sf,0,0,0);
+<a name="line327">327: </a>  <font color="#4169E1">return</font>(0);
+<a name="line328">328: </a>}
+
+<a name="line330">330: </a><font color="#B22222">/*@C</font>
+<a name="line331">331: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/PetscSF/PetscSFCreateInverseSF.html#PetscSFCreateInverseSF">PetscSFCreateInverseSF</a> - given a <a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> in which all vertices have degree 1, creates the inverse map</font>
+
+<a name="line333">333: </a><font color="#B22222">   Collective</font>
+
+<a name="line335">335: </a><font color="#B22222">   Input Arguments:</font>
+<a name="line336">336: </a><font color="#B22222">.  sf - star forest to invert</font>
+
+<a name="line338">338: </a><font color="#B22222">   Output Arguments:</font>
+<a name="line339">339: </a><font color="#B22222">.  isf - inverse of sf</font>
+
+<a name="line341">341: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line343">343: </a><font color="#B22222">   Notes:</font>
+<a name="line344">344: </a><font color="#B22222">   All roots must have degree 1.</font>
+
+<a name="line346">346: </a><font color="#B22222">   The local space may be a permutation, but cannot be sparse.</font>
+
+<a name="line348">348: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html#PetscSFSetGraph">PetscSFSetGraph</a>()</font>
+<a name="line349">349: </a><font color="#B22222">@*/</font>
+<a name="line350">350: </a><strong><font color="#4169E1"><a name="PetscSFCreateInverseSF"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PetscSF/PetscSFCreateInverseSF.html#PetscSFCreateInverseSF">PetscSFCreateInverseSF</a>(<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> *isf)</font></strong>
+<a name="line351">351: </a>{
+<a name="line353">353: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>    rank;
+<a name="line354">354: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       i,nroots,nleaves,maxlocal,count,*newilocal;
+<a name="line355">355: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *ilocal;
+<a name="line356">356: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFNode.html#PetscSFNode">PetscSFNode</a>    *roots,*leaves;
+
+<a name="line359">359: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sf),&amp;rank);
+<a name="line360">360: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFGetGraph.html#PetscSFGetGraph">PetscSFGetGraph</a>(sf,&amp;nroots,&amp;nleaves,&amp;ilocal,NULL);
+<a name="line361">361: </a>  <font color="#4169E1">for</font> (i=0,maxlocal=0; i&lt;nleaves; i++) maxlocal = <a href="../../../../../docs/manualpages/Sys/PetscMax.html#PetscMax">PetscMax</a>(maxlocal,(ilocal ? ilocal[i] : i)+1);
+<a name="line362">362: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc2.html#PetscMalloc2">PetscMalloc2</a>(nroots,&amp;roots,maxlocal,&amp;leaves);
+<a name="line363">363: </a>  <font color="#4169E1">for</font> (i=0; i&lt;maxlocal; i++) {
+<a name="line364">364: </a>    leaves[i].rank  = rank;
+<a name="line365">365: </a>    leaves[i].index = i;
+<a name="line366">366: </a>  }
+<a name="line367">367: </a>  <font color="#4169E1">for</font> (i=0; i &lt;nroots; i++) {
+<a name="line368">368: </a>    roots[i].rank  = -1;
+<a name="line369">369: </a>    roots[i].index = -1;
+<a name="line370">370: </a>  }
+<a name="line371">371: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFReduceBegin.html#PetscSFReduceBegin">PetscSFReduceBegin</a>(sf,MPIU_2INT,leaves,roots,MPIU_REPLACE);
+<a name="line372">372: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFReduceEnd.html#PetscSFReduceEnd">PetscSFReduceEnd</a>(sf,MPIU_2INT,leaves,roots,MPIU_REPLACE);
+
+<a name="line374">374: </a>  <font color="#B22222">/* Check whether our leaves are sparse */</font>
+<a name="line375">375: </a>  <font color="#4169E1">for</font> (i=0,count=0; i&lt;nroots; i++) <font color="#4169E1">if</font> (roots[i].rank &gt;= 0) count++;
+<a name="line376">376: </a>  <font color="#4169E1">if</font> (count == nroots) newilocal = NULL;
+<a name="line377">377: </a>  <font color="#4169E1">else</font> {                        <font color="#B22222">/* Index for sparse leaves and compact "roots" array (which is to become our leaves). */</font>
+<a name="line378">378: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(count,&amp;newilocal);
+<a name="line379">379: </a>    <font color="#4169E1">for</font> (i=0,count=0; i&lt;nroots; i++) {
+<a name="line380">380: </a>      <font color="#4169E1">if</font> (roots[i].rank &gt;= 0) {
+<a name="line381">381: </a>        newilocal[count]   = i;
+<a name="line382">382: </a>        roots[count].rank  = roots[i].rank;
+<a name="line383">383: </a>        roots[count].index = roots[i].index;
+<a name="line384">384: </a>        count++;
+<a name="line385">385: </a>      }
+<a name="line386">386: </a>    }
+<a name="line387">387: </a>  }
+
+<a name="line389">389: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFDuplicate.html#PetscSFDuplicate">PetscSFDuplicate</a>(sf,<a href="../../../../../docs/manualpages/PetscSF/PetscSFDuplicateOption.html#PetscSFDuplicateOption">PETSCSF_DUPLICATE_CONFONLY</a>,isf);
+<a name="line390">390: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html#PetscSFSetGraph">PetscSFSetGraph</a>(*isf,maxlocal,count,newilocal,<a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_OWN_POINTER</a>,roots,<a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_COPY_VALUES</a>);
+<a name="line391">391: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree2.html#PetscFree2">PetscFree2</a>(roots,leaves);
+<a name="line392">392: </a>  <font color="#4169E1">return</font>(0);
+<a name="line393">393: </a>}
+
+<a name="line395">395: </a><font color="#B22222">/*@</font>
+<a name="line396">396: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/PetscSF/PetscSFDuplicate.html#PetscSFDuplicate">PetscSFDuplicate</a> - duplicate a <a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a>, optionally preserving rank connectivity and graph</font>
+
+<a name="line398">398: </a><font color="#B22222">   Collective</font>
+
+<a name="line400">400: </a><font color="#B22222">   Input Arguments:</font>
+<a name="line401">401: </a><font color="#B22222">+  sf - communication object to duplicate</font>
+<a name="line402">402: </a><font color="#B22222">-  opt - <a href="../../../../../docs/manualpages/PetscSF/PetscSFDuplicateOption.html#PetscSFDuplicateOption">PETSCSF_DUPLICATE_CONFONLY</a>, <a href="../../../../../docs/manualpages/PetscSF/PetscSFDuplicateOption.html#PetscSFDuplicateOption">PETSCSF_DUPLICATE_RANKS</a>, or <a href="../../../../../docs/manualpages/PetscSF/PetscSFDuplicateOption.html#PetscSFDuplicateOption">PETSCSF_DUPLICATE_GRAPH</a> (see <a href="../../../../../docs/manualpages/PetscSF/PetscSFDuplicateOption.html#PetscSFDuplicateOption">PetscSFDuplicateOption</a>)</font>
+
+<a name="line404">404: </a><font color="#B22222">   Output Arguments:</font>
+<a name="line405">405: </a><font color="#B22222">.  newsf - new communication object</font>
+
+<a name="line407">407: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line409">409: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/PetscSF/PetscSFCreate.html#PetscSFCreate">PetscSFCreate</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetType.html#PetscSFSetType">PetscSFSetType</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html#PetscSFSetGraph">PetscSFSetGraph</a>()</font>
+<a name="line410">410: </a><font color="#B22222">@*/</font>
+<a name="line411">411: </a><strong><font color="#4169E1"><a name="PetscSFDuplicate"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PetscSF/PetscSFDuplicate.html#PetscSFDuplicate">PetscSFDuplicate</a>(<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,<a href="../../../../../docs/manualpages/PetscSF/PetscSFDuplicateOption.html#PetscSFDuplicateOption">PetscSFDuplicateOption</a> opt,<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> *newsf)</font></strong>
+<a name="line412">412: </a>{
+
+<a name="line416">416: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFCreate.html#PetscSFCreate">PetscSFCreate</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sf),newsf);
+<a name="line417">417: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetType.html#PetscSFSetType">PetscSFSetType</a>(*newsf,((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sf)-&gt;type_name);
+<a name="line418">418: </a>  <font color="#4169E1">if</font> (sf-&gt;ops-&gt;Duplicate) {(*sf-&gt;ops-&gt;Duplicate)(sf,opt,*newsf);}
+<a name="line419">419: </a>  <font color="#4169E1">if</font> (opt == <a href="../../../../../docs/manualpages/PetscSF/PetscSFDuplicateOption.html#PetscSFDuplicateOption">PETSCSF_DUPLICATE_GRAPH</a>) {
+<a name="line420">420: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>          nroots,nleaves;
+<a name="line421">421: </a>    const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>    *ilocal;
+<a name="line422">422: </a>    const <a href="../../../../../docs/manualpages/PetscSF/PetscSFNode.html#PetscSFNode">PetscSFNode</a> *iremote;
+<a name="line423">423: </a>    <a href="../../../../../docs/manualpages/PetscSF/PetscSFGetGraph.html#PetscSFGetGraph">PetscSFGetGraph</a>(sf,&amp;nroots,&amp;nleaves,&amp;ilocal,&amp;iremote);
+<a name="line424">424: </a>    <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html#PetscSFSetGraph">PetscSFSetGraph</a>(*newsf,nroots,nleaves,ilocal,<a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_COPY_VALUES</a>,iremote,<a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_COPY_VALUES</a>);
+<a name="line425">425: </a>  }
+<a name="line426">426: </a>  <font color="#4169E1">return</font>(0);
+<a name="line427">427: </a>}
+
+<a name="line429">429: </a><font color="#B22222">/*@C</font>
+<a name="line430">430: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/PetscSF/PetscSFGetGraph.html#PetscSFGetGraph">PetscSFGetGraph</a> - Get the graph specifying a parallel star forest</font>
+
+<a name="line432">432: </a><font color="#B22222">   Not Collective</font>
+
+<a name="line434">434: </a><font color="#B22222">   Input Arguments:</font>
+<a name="line435">435: </a><font color="#B22222">.  sf - star forest</font>
+
+<a name="line437">437: </a><font color="#B22222">   Output Arguments:</font>
+<a name="line438">438: </a><font color="#B22222">+  nroots - number of root vertices on the current process (these are possible targets for other process to attach leaves)</font>
+<a name="line439">439: </a><font color="#B22222">.  nleaves - number of leaf vertices on the current process, each of these references a root on any process</font>
+<a name="line440">440: </a><font color="#B22222">.  ilocal - locations of leaves in leafdata buffers</font>
+<a name="line441">441: </a><font color="#B22222">-  iremote - remote locations of root vertices for each leaf on the current process</font>
+
+<a name="line443">443: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line445">445: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/PetscSF/PetscSFCreate.html#PetscSFCreate">PetscSFCreate</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFView.html#PetscSFView">PetscSFView</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html#PetscSFSetGraph">PetscSFSetGraph</a>()</font>
+<a name="line446">446: </a><font color="#B22222">@*/</font>
+<a name="line447">447: </a><strong><font color="#4169E1"><a name="PetscSFGetGraph"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PetscSF/PetscSFGetGraph.html#PetscSFGetGraph">PetscSFGetGraph</a>(<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,<a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *nroots,<a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *nleaves,const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> **ilocal,const <a href="../../../../../docs/manualpages/PetscSF/PetscSFNode.html#PetscSFNode">PetscSFNode</a> **iremote)</font></strong>
+<a name="line448">448: </a>{
+
+<a name="line452">452: </a>  <font color="#B22222">/* We are not currently requiring that the graph is set, thus returning nroots=-1 if it has not been set */</font>
+<a name="line453">453: </a>  <font color="#B22222">/* if (!sf-&gt;graphset) <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sf),PETSC_ERR_ARG_WRONGSTATE,"Graph has not been set, must call <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html#PetscSFSetGraph">PetscSFSetGraph</a>()"); */</font>
+<a name="line454">454: </a>  <font color="#4169E1">if</font> (nroots) *nroots = sf-&gt;nroots;
+<a name="line455">455: </a>  <font color="#4169E1">if</font> (nleaves) *nleaves = sf-&gt;nleaves;
+<a name="line456">456: </a>  <font color="#4169E1">if</font> (ilocal) *ilocal = sf-&gt;mine;
+<a name="line457">457: </a>  <font color="#4169E1">if</font> (iremote) *iremote = sf-&gt;remote;
+<a name="line458">458: </a>  <font color="#4169E1">return</font>(0);
+<a name="line459">459: </a>}
+
+<a name="line461">461: </a><font color="#B22222">/*@C</font>
+<a name="line462">462: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/PetscSF/PetscSFGetLeafRange.html#PetscSFGetLeafRange">PetscSFGetLeafRange</a> - Get the active leaf ranges</font>
+
+<a name="line464">464: </a><font color="#B22222">   Not Collective</font>
+
+<a name="line466">466: </a><font color="#B22222">   Input Arguments:</font>
+<a name="line467">467: </a><font color="#B22222">.  sf - star forest</font>
+
+<a name="line469">469: </a><font color="#B22222">   Output Arguments:</font>
+<a name="line470">470: </a><font color="#B22222">+  minleaf - minimum active leaf on this process</font>
+<a name="line471">471: </a><font color="#B22222">-  maxleaf - maximum active leaf on this process</font>
+
+<a name="line473">473: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line475">475: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/PetscSF/PetscSFCreate.html#PetscSFCreate">PetscSFCreate</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFView.html#PetscSFView">PetscSFView</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html#PetscSFSetGraph">PetscSFSetGraph</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFGetGraph.html#PetscSFGetGraph">PetscSFGetGraph</a>()</font>
+<a name="line476">476: </a><font color="#B22222">@*/</font>
+<a name="line477">477: </a><strong><font color="#4169E1"><a name="PetscSFGetLeafRange"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PetscSF/PetscSFGetLeafRange.html#PetscSFGetLeafRange">PetscSFGetLeafRange</a>(<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,<a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *minleaf,<a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *maxleaf)</font></strong>
+<a name="line478">478: </a>{
+
+<a name="line482">482: </a>  <font color="#4169E1">if</font> (minleaf) *minleaf = sf-&gt;minleaf;
+<a name="line483">483: </a>  <font color="#4169E1">if</font> (maxleaf) *maxleaf = sf-&gt;maxleaf;
+<a name="line484">484: </a>  <font color="#4169E1">return</font>(0);
+<a name="line485">485: </a>}
+
+<a name="line487">487: </a><font color="#B22222">/*@C</font>
+<a name="line488">488: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/PetscSF/PetscSFView.html#PetscSFView">PetscSFView</a> - view a star forest</font>
+
+<a name="line490">490: </a><font color="#B22222">   Collective</font>
+
+<a name="line492">492: </a><font color="#B22222">   Input Arguments:</font>
+<a name="line493">493: </a><font color="#B22222">+  sf - star forest</font>
+<a name="line494">494: </a><font color="#B22222">-  viewer - viewer to display graph, for example <a href="../../../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html#PETSC_VIEWER_STDOUT_WORLD">PETSC_VIEWER_STDOUT_WORLD</a></font>
+
+<a name="line496">496: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line498">498: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/PetscSF/PetscSFCreate.html#PetscSFCreate">PetscSFCreate</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html#PetscSFSetGraph">PetscSFSetGraph</a>()</font>
+<a name="line499">499: </a><font color="#B22222">@*/</font>
+<a name="line500">500: </a><strong><font color="#4169E1"><a name="PetscSFView"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PetscSF/PetscSFView.html#PetscSFView">PetscSFView</a>(<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,<a href="../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer)</font></strong>
+<a name="line501">501: </a>{
+<a name="line502">502: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>    ierr;
+<a name="line503">503: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>         iascii;
+<a name="line504">504: </a>  <a href="../../../../../docs/manualpages/Viewer/PetscViewerFormat.html#PetscViewerFormat">PetscViewerFormat</a> format;
+
+<a name="line508">508: </a>  <font color="#4169E1">if</font> (!viewer) {<a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIGetStdout.html#PetscViewerASCIIGetStdout">PetscViewerASCIIGetStdout</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sf),&amp;viewer);}
+<a name="line511">511: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetUp.html#PetscSFSetUp">PetscSFSetUp</a>(sf);
+<a name="line512">512: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<a href="../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html#PETSCVIEWERASCII">PETSCVIEWERASCII</a>,&amp;iascii);
+<a name="line513">513: </a>  <font color="#4169E1">if</font> (iascii) {
+<a name="line514">514: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> rank;
+<a name="line515">515: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>    ii,i,j;
+
+<a name="line517">517: </a>    PetscObjectPrintClassNamePrefixType((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sf,viewer);
+<a name="line518">518: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPushTab.html#PetscViewerASCIIPushTab">PetscViewerASCIIPushTab</a>(viewer);
+<a name="line519">519: </a>    <font color="#4169E1">if</font> (sf-&gt;ops-&gt;View) {(*sf-&gt;ops-&gt;View)(sf,viewer);}
+<a name="line520">520: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sf),&amp;rank);
+<a name="line521">521: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPushSynchronized.html#PetscViewerASCIIPushSynchronized">PetscViewerASCIIPushSynchronized</a>(viewer);
+<a name="line522">522: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIISynchronizedPrintf.html#PetscViewerASCIISynchronizedPrintf">PetscViewerASCIISynchronizedPrintf</a>(viewer,<font color="#666666">"[%d] Number of roots=%D, leaves=%D, remote ranks=%D\n"</font>,rank,sf-&gt;nroots,sf-&gt;nleaves,sf-&gt;nranks);
+<a name="line523">523: </a>    <font color="#4169E1">for</font> (i=0; i&lt;sf-&gt;nleaves; i++) {
+<a name="line524">524: </a>      <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIISynchronizedPrintf.html#PetscViewerASCIISynchronizedPrintf">PetscViewerASCIISynchronizedPrintf</a>(viewer,<font color="#666666">"[%d] %D &lt;- (%D,%D)\n"</font>,rank,sf-&gt;mine ? sf-&gt;mine[i] : i,sf-&gt;remote[i].rank,sf-&gt;remote[i].index);
+<a name="line525">525: </a>    }
+<a name="line526">526: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerFlush.html#PetscViewerFlush">PetscViewerFlush</a>(viewer);
+<a name="line527">527: </a>    PetscViewerGetFormat(viewer,&amp;format);
+<a name="line528">528: </a>    <font color="#4169E1">if</font> (format == <a href="../../../../../docs/manualpages/Viewer/PetscViewerFormat.html#PetscViewerFormat">PETSC_VIEWER_ASCII_INFO_DETAIL</a>) {
+<a name="line529">529: </a>      <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> *tmpranks,*perm;
+<a name="line530">530: </a>      <a href="../../../../../docs/manualpages/Sys/PetscMalloc2.html#PetscMalloc2">PetscMalloc2</a>(sf-&gt;nranks,&amp;tmpranks,sf-&gt;nranks,&amp;perm);
+<a name="line531">531: </a>      <a href="../../../../../docs/manualpages/Sys/PetscMemcpy.html#PetscMemcpy">PetscMemcpy</a>(tmpranks,sf-&gt;ranks,sf-&gt;nranks*<font color="#4169E1">sizeof</font>(tmpranks[0]));
+<a name="line532">532: </a>      <font color="#4169E1">for</font> (i=0; i&lt;sf-&gt;nranks; i++) perm[i] = i;
+<a name="line533">533: </a>      <a href="../../../../../docs/manualpages/Sys/PetscSortMPIIntWithArray.html#PetscSortMPIIntWithArray">PetscSortMPIIntWithArray</a>(sf-&gt;nranks,tmpranks,perm);
+<a name="line534">534: </a>      <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIISynchronizedPrintf.html#PetscViewerASCIISynchronizedPrintf">PetscViewerASCIISynchronizedPrintf</a>(viewer,<font color="#666666">"[%d] Roots referenced by my leaves, by rank\n"</font>,rank);
+<a name="line535">535: </a>      <font color="#4169E1">for</font> (ii=0; ii&lt;sf-&gt;nranks; ii++) {
+<a name="line536">536: </a>        i = perm[ii];
+<a name="line537">537: </a>        <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIISynchronizedPrintf.html#PetscViewerASCIISynchronizedPrintf">PetscViewerASCIISynchronizedPrintf</a>(viewer,<font color="#666666">"[%d] %d: %D edges\n"</font>,rank,sf-&gt;ranks[i],sf-&gt;roffset[i+1]-sf-&gt;roffset[i]);
+<a name="line538">538: </a>        <font color="#4169E1">for</font> (j=sf-&gt;roffset[i]; j&lt;sf-&gt;roffset[i+1]; j++) {
+<a name="line539">539: </a>          <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIISynchronizedPrintf.html#PetscViewerASCIISynchronizedPrintf">PetscViewerASCIISynchronizedPrintf</a>(viewer,<font color="#666666">"[%d]    %D &lt;- %D\n"</font>,rank,sf-&gt;rmine[j],sf-&gt;rremote[j]);
+<a name="line540">540: </a>        }
+<a name="line541">541: </a>      }
+<a name="line542">542: </a>      <a href="../../../../../docs/manualpages/Sys/PetscFree2.html#PetscFree2">PetscFree2</a>(tmpranks,perm);
+<a name="line543">543: </a>    }
+<a name="line544">544: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerFlush.html#PetscViewerFlush">PetscViewerFlush</a>(viewer);
+<a name="line545">545: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPopSynchronized.html#PetscViewerASCIIPopSynchronized">PetscViewerASCIIPopSynchronized</a>(viewer);
+<a name="line546">546: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPopTab.html#PetscViewerASCIIPopTab">PetscViewerASCIIPopTab</a>(viewer);
+<a name="line547">547: </a>  }
+<a name="line548">548: </a>  <font color="#4169E1">return</font>(0);
+<a name="line549">549: </a>}
+
+<a name="line551">551: </a><font color="#B22222">/*@C</font>
+<a name="line552">552: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/PetscSF/PetscSFGetRanks.html#PetscSFGetRanks">PetscSFGetRanks</a> - Get ranks and number of vertices referenced by leaves on this process</font>
+
+<a name="line554">554: </a><font color="#B22222">   Not Collective</font>
+
+<a name="line556">556: </a><font color="#B22222">   Input Arguments:</font>
+<a name="line557">557: </a><font color="#B22222">.  sf - star forest</font>
+
+<a name="line559">559: </a><font color="#B22222">   Output Arguments:</font>
+<a name="line560">560: </a><font color="#B22222">+  nranks - number of ranks referenced by local part</font>
+<a name="line561">561: </a><font color="#B22222">.  ranks - array of ranks</font>
+<a name="line562">562: </a><font color="#B22222">.  roffset - offset in rmine/rremote for each rank (length nranks+1)</font>
+<a name="line563">563: </a><font color="#B22222">.  rmine - concatenated array holding local indices referencing each remote rank</font>
+<a name="line564">564: </a><font color="#B22222">-  rremote - concatenated array holding remote indices referenced for each remote rank</font>
+
+<a name="line566">566: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line568">568: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html#PetscSFSetGraph">PetscSFSetGraph</a>()</font>
+<a name="line569">569: </a><font color="#B22222">@*/</font>
+<a name="line570">570: </a><strong><font color="#4169E1"><a name="PetscSFGetRanks"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PetscSF/PetscSFGetRanks.html#PetscSFGetRanks">PetscSFGetRanks</a>(<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,<a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *nranks,const <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> **ranks,const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> **roffset,const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> **rmine,const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> **rremote)</font></strong>
+<a name="line571">571: </a>{
+
+<a name="line575">575: </a>  <font color="#4169E1">if</font> (!sf-&gt;setupcalled) <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ARG_WRONGSTATE,<font color="#666666">"Must call <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetUp.html#PetscSFSetUp">PetscSFSetUp</a> before obtaining ranks"</font>);
+<a name="line576">576: </a>  <font color="#4169E1">if</font> (nranks)  *nranks  = sf-&gt;nranks;
+<a name="line577">577: </a>  <font color="#4169E1">if</font> (ranks)   *ranks   = sf-&gt;ranks;
+<a name="line578">578: </a>  <font color="#4169E1">if</font> (roffset) *roffset = sf-&gt;roffset;
+<a name="line579">579: </a>  <font color="#4169E1">if</font> (rmine)   *rmine   = sf-&gt;rmine;
+<a name="line580">580: </a>  <font color="#4169E1">if</font> (rremote) *rremote = sf-&gt;rremote;
+<a name="line581">581: </a>  <font color="#4169E1">return</font>(0);
+<a name="line582">582: </a>}
+
+<a name="line584">584: </a><strong><font color="#4169E1"><a name="InList"></a>static <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a> InList(<a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> needle,<a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> n,const <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> *list)</font></strong> {
+<a name="line585">585: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i;
+<a name="line586">586: </a>  <font color="#4169E1">for</font> (i=0; i&lt;n; i++) {
+<a name="line587">587: </a>    <font color="#4169E1">if</font> (needle == list[i]) <font color="#4169E1">return</font> <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+<a name="line588">588: </a>  }
+<a name="line589">589: </a>  <font color="#4169E1">return</font> <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html#PETSC_FALSE">PETSC_FALSE</a>;
+<a name="line590">590: </a>}
+
+<a name="line592">592: </a><font color="#B22222">/*@C</font>
+<a name="line593">593: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetUpRanks.html#PetscSFSetUpRanks">PetscSFSetUpRanks</a> - Set up data structures associated with ranks; this is for internal use by <a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> implementations.</font>
+
+<a name="line595">595: </a><font color="#B22222">   Collective</font>
+
+<a name="line597">597: </a><font color="#B22222">   Input Arguments:</font>
+<a name="line598">598: </a><font color="#B22222">+  sf - <a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> to set up; <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html#PetscSFSetGraph">PetscSFSetGraph</a>() must have been called</font>
+<a name="line599">599: </a><font color="#B22222">-  dgroup - MPI_Group of ranks to be distinguished (e.g., for self or shared memory exchange)</font>
+
+<a name="line601">601: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line603">603: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/PetscSF/PetscSFGetRanks.html#PetscSFGetRanks">PetscSFGetRanks</a>()</font>
+<a name="line604">604: </a><font color="#B22222">@*/</font>
+<a name="line605">605: </a><strong><font color="#4169E1"><a name="PetscSFSetUpRanks"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetUpRanks.html#PetscSFSetUpRanks">PetscSFSetUpRanks</a>(<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,MPI_Group dgroup)</font></strong>
+<a name="line606">606: </a>{
+<a name="line607">607: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>     ierr;
+<a name="line608">608: </a>  PetscTable         table;
+<a name="line609">609: </a>  PetscTablePosition pos;
+<a name="line610">610: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>        size,groupsize,*groupranks;
+<a name="line611">611: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>           i,*rcount,*ranks;
+
+<a name="line615">615: </a>  <font color="#4169E1">if</font> (!sf-&gt;graphset) <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sf),PETSC_ERR_ARG_WRONGSTATE,<font color="#666666">"<a href="../../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html#PetscSFSetGraph">PetscSFSetGraph</a>() has not been called yet"</font>);
+<a name="line616">616: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sf),&amp;size);
+<a name="line617">617: </a>  PetscTableCreate(10,size,&amp;table);
+<a name="line618">618: </a>  <font color="#4169E1">for</font> (i=0; i&lt;sf-&gt;nleaves; i++) {
+<a name="line619">619: </a>    <font color="#B22222">/* Log 1-based rank */</font>
+<a name="line620">620: </a>    PetscTableAdd(table,sf-&gt;remote[i].rank+1,1,<a href="../../../../../docs/manualpages/Sys/ADD_VALUES.html#ADD_VALUES">ADD_VALUES</a>);
+<a name="line621">621: </a>  }
+<a name="line622">622: </a>  PetscTableGetCount(table,&amp;sf-&gt;nranks);
+<a name="line623">623: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc4.html#PetscMalloc4">PetscMalloc4</a>(sf-&gt;nranks,&amp;sf-&gt;ranks,sf-&gt;nranks+1,&amp;sf-&gt;roffset,sf-&gt;nleaves,&amp;sf-&gt;rmine,sf-&gt;nleaves,&amp;sf-&gt;rremote);
+<a name="line624">624: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc2.html#PetscMalloc2">PetscMalloc2</a>(sf-&gt;nranks,&amp;rcount,sf-&gt;nranks,&amp;ranks);
+<a name="line625">625: </a>  PetscTableGetHeadPosition(table,&amp;pos);
+<a name="line626">626: </a>  <font color="#4169E1">for</font> (i=0; i&lt;sf-&gt;nranks; i++) {
+<a name="line627">627: </a>    PetscTableGetNext(table,&amp;pos,&amp;ranks[i],&amp;rcount[i]);
+<a name="line628">628: </a>    ranks[i]--;             <font color="#B22222">/* Convert back to 0-based */</font>
+<a name="line629">629: </a>  }
+<a name="line630">630: </a>  PetscTableDestroy(&amp;table);
+
+<a name="line632">632: </a>  <font color="#B22222">/* We expect that dgroup is reliably "small" while nranks could be large */</font>
+<a name="line633">633: </a>  {
+<a name="line634">634: </a>    MPI_Group group;
+<a name="line635">635: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> *dgroupranks;
+<a name="line636">636: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_group.html#MPI_Comm_group">MPI_Comm_group</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sf),&amp;group);
+<a name="line637">637: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Group_size.html#MPI_Group_size">MPI_Group_size</a>(dgroup,&amp;groupsize);
+<a name="line638">638: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(groupsize,&amp;dgroupranks);
+<a name="line639">639: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(groupsize,&amp;groupranks);
+<a name="line640">640: </a>    <font color="#4169E1">for</font> (i=0; i&lt;groupsize; i++) dgroupranks[i] = i;
+<a name="line641">641: </a>    <font color="#4169E1">if</font> (groupsize) {<a href="http://www.mpich.org/static/docs/latest/www3/MPI_Group_translate_ranks.html#MPI_Group_translate_ranks">MPI_Group_translate_ranks</a>(dgroup,groupsize,dgroupranks,group,groupranks);}
+<a name="line642">642: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Group_free.html#MPI_Group_free">MPI_Group_free</a>(&amp;group);
+<a name="line643">643: </a>    <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(dgroupranks);
+<a name="line644">644: </a>  }
+
+<a name="line646">646: </a>  <font color="#B22222">/* Partition ranks[] into distinguished (first sf-&gt;ndranks) followed by non-distinguished */</font>
+<a name="line647">647: </a>  <font color="#4169E1">for</font> (sf-&gt;ndranks=0,i=sf-&gt;nranks; sf-&gt;ndranks&lt;i; ) {
+<a name="line648">648: </a>    <font color="#4169E1">for</font> (i--; sf-&gt;ndranks&lt;i; i--) { <font color="#B22222">/* Scan i backward looking for distinguished rank */</font>
+<a name="line649">649: </a>      <font color="#4169E1">if</font> (InList(ranks[i],groupsize,groupranks)) <font color="#4169E1">break</font>;
+<a name="line650">650: </a>    }
+<a name="line651">651: </a>    <font color="#4169E1">for</font> ( ; sf-&gt;ndranks&lt;=i; sf-&gt;ndranks++) { <font color="#B22222">/* Scan sf-&gt;ndranks forward looking for non-distinguished rank */</font>
+<a name="line652">652: </a>      <font color="#4169E1">if</font> (!InList(ranks[sf-&gt;ndranks],groupsize,groupranks)) <font color="#4169E1">break</font>;
+<a name="line653">653: </a>    }
+<a name="line654">654: </a>    <font color="#4169E1">if</font> (sf-&gt;ndranks &lt; i) {                         <font color="#B22222">/* Swap ranks[sf-&gt;ndranks] with ranks[i] */</font>
+<a name="line655">655: </a>      <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>    tmprank,tmpcount;
+<a name="line656">656: </a>      tmprank = ranks[i];
+<a name="line657">657: </a>      tmpcount = rcount[i];
+<a name="line658">658: </a>      ranks[i] = ranks[sf-&gt;ndranks];
+<a name="line659">659: </a>      rcount[i] = rcount[sf-&gt;ndranks];
+<a name="line660">660: </a>      ranks[sf-&gt;ndranks] = tmprank;
+<a name="line661">661: </a>      rcount[sf-&gt;ndranks] = tmpcount;
+<a name="line662">662: </a>      sf-&gt;ndranks++;
+<a name="line663">663: </a>    }
+<a name="line664">664: </a>  }
+<a name="line665">665: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(groupranks);
+<a name="line666">666: </a>  <a href="../../../../../docs/manualpages/Sys/PetscSortIntWithArray.html#PetscSortIntWithArray">PetscSortIntWithArray</a>(sf-&gt;ndranks,ranks,rcount);
+<a name="line667">667: </a>  <a href="../../../../../docs/manualpages/Sys/PetscSortIntWithArray.html#PetscSortIntWithArray">PetscSortIntWithArray</a>(sf-&gt;nranks-sf-&gt;ndranks,ranks+sf-&gt;ndranks,rcount+sf-&gt;ndranks);
+<a name="line668">668: </a>  sf-&gt;roffset[0] = 0;
+<a name="line669">669: </a>  <font color="#4169E1">for</font> (i=0; i&lt;sf-&gt;nranks; i++) {
+<a name="line670">670: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMPIIntCast.html#PetscMPIIntCast">PetscMPIIntCast</a>(ranks[i],sf-&gt;ranks+i);
+<a name="line671">671: </a>    sf-&gt;roffset[i+1] = sf-&gt;roffset[i] + rcount[i];
+<a name="line672">672: </a>    rcount[i]        = 0;
+<a name="line673">673: </a>  }
+<a name="line674">674: </a>  <font color="#4169E1">for</font> (i=0; i&lt;sf-&gt;nleaves; i++) {
+<a name="line675">675: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> irank;
+<a name="line676">676: </a>    <font color="#B22222">/* Search for index of iremote[i].rank in sf-&gt;ranks */</font>
+<a name="line677">677: </a>    <a href="../../../../../docs/manualpages/Sys/PetscFindMPIInt.html#PetscFindMPIInt">PetscFindMPIInt</a>(sf-&gt;remote[i].rank,sf-&gt;ndranks,sf-&gt;ranks,&amp;irank);
+<a name="line678">678: </a>    <font color="#4169E1">if</font> (irank &lt; 0) {
+<a name="line679">679: </a>      <a href="../../../../../docs/manualpages/Sys/PetscFindMPIInt.html#PetscFindMPIInt">PetscFindMPIInt</a>(sf-&gt;remote[i].rank,sf-&gt;nranks-sf-&gt;ndranks,sf-&gt;ranks+sf-&gt;ndranks,&amp;irank);
+<a name="line680">680: </a>      <font color="#4169E1">if</font> (irank &gt;= 0) irank += sf-&gt;ndranks;
+<a name="line681">681: </a>    }
+<a name="line682">682: </a>    <font color="#4169E1">if</font> (irank &lt; 0) <a href="../../../../../docs/manualpages/Sys/SETERRQ1.html#SETERRQ1">SETERRQ1</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_PLIB,<font color="#666666">"Could not find rank %D in array"</font>,sf-&gt;remote[i].rank);
+<a name="line683">683: </a>    sf-&gt;rmine[sf-&gt;roffset[irank] + rcount[irank]]   = sf-&gt;mine ? sf-&gt;mine[i] : i;
+<a name="line684">684: </a>    sf-&gt;rremote[sf-&gt;roffset[irank] + rcount[irank]] = sf-&gt;remote[i].index;
+<a name="line685">685: </a>    rcount[irank]++;
+<a name="line686">686: </a>  }
+<a name="line687">687: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree2.html#PetscFree2">PetscFree2</a>(rcount,ranks);
+<a name="line688">688: </a>  <font color="#4169E1">return</font>(0);
+<a name="line689">689: </a>}
+
+<a name="line691">691: </a><font color="#B22222">/*@C</font>
+<a name="line692">692: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/PetscSF/PetscSFGetGroups.html#PetscSFGetGroups">PetscSFGetGroups</a> - gets incoming and outgoing process groups</font>
+
+<a name="line694">694: </a><font color="#B22222">   Collective</font>
+
+<a name="line696">696: </a><font color="#B22222">   Input Argument:</font>
+<a name="line697">697: </a><font color="#B22222">.  sf - star forest</font>
+
+<a name="line699">699: </a><font color="#B22222">   Output Arguments:</font>
+<a name="line700">700: </a><font color="#B22222">+  incoming - group of origin processes for incoming edges (leaves that reference my roots)</font>
+<a name="line701">701: </a><font color="#B22222">-  outgoing - group of destination processes for outgoing edges (roots that I reference)</font>
+
+<a name="line703">703: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line705">705: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/PetscSF/PetscSFGetWindow.html#PetscSFGetWindow">PetscSFGetWindow</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFRestoreWindow.html#PetscSFRestoreWindow">PetscSFRestoreWindow</a>()</font>
+<a name="line706">706: </a><font color="#B22222">@*/</font>
+<a name="line707">707: </a><strong><font color="#4169E1"><a name="PetscSFGetGroups"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PetscSF/PetscSFGetGroups.html#PetscSFGetGroups">PetscSFGetGroups</a>(<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,MPI_Group *incoming,MPI_Group *outgoing)</font></strong>
+<a name="line708">708: </a>{
+<a name="line710">710: </a>  MPI_Group      group;
+
+<a name="line713">713: </a>  <font color="#4169E1">if</font> (sf-&gt;ingroup == MPI_GROUP_NULL) {
+<a name="line714">714: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       i;
+<a name="line715">715: </a>    const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *indegree;
+<a name="line716">716: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a>    rank,*outranks,*inranks;
+<a name="line717">717: </a>    <a href="../../../../../docs/manualpages/PetscSF/PetscSFNode.html#PetscSFNode">PetscSFNode</a>    *remote;
+<a name="line718">718: </a>    <a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a>        bgcount;
+
+<a name="line720">720: </a>    <font color="#B22222">/* Compute the number of incoming ranks */</font>
+<a name="line721">721: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(sf-&gt;nranks,&amp;remote);
+<a name="line722">722: </a>    <font color="#4169E1">for</font> (i=0; i&lt;sf-&gt;nranks; i++) {
+<a name="line723">723: </a>      remote[i].rank  = sf-&gt;ranks[i];
+<a name="line724">724: </a>      remote[i].index = 0;
+<a name="line725">725: </a>    }
+<a name="line726">726: </a>    <a href="../../../../../docs/manualpages/PetscSF/PetscSFDuplicate.html#PetscSFDuplicate">PetscSFDuplicate</a>(sf,<a href="../../../../../docs/manualpages/PetscSF/PetscSFDuplicateOption.html#PetscSFDuplicateOption">PETSCSF_DUPLICATE_CONFONLY</a>,&amp;bgcount);
+<a name="line727">727: </a>    <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html#PetscSFSetGraph">PetscSFSetGraph</a>(bgcount,1,sf-&gt;nranks,NULL,<a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_COPY_VALUES</a>,remote,<a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_OWN_POINTER</a>);
+<a name="line728">728: </a>    <a href="../../../../../docs/manualpages/PetscSF/PetscSFComputeDegreeBegin.html#PetscSFComputeDegreeBegin">PetscSFComputeDegreeBegin</a>(bgcount,&amp;indegree);
+<a name="line729">729: </a>    <a href="../../../../../docs/manualpages/PetscSF/PetscSFComputeDegreeEnd.html#PetscSFComputeDegreeEnd">PetscSFComputeDegreeEnd</a>(bgcount,&amp;indegree);
+
+<a name="line731">731: </a>    <font color="#B22222">/* Enumerate the incoming ranks */</font>
+<a name="line732">732: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMalloc2.html#PetscMalloc2">PetscMalloc2</a>(indegree[0],&amp;inranks,sf-&gt;nranks,&amp;outranks);
+<a name="line733">733: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sf),&amp;rank);
+<a name="line734">734: </a>    <font color="#4169E1">for</font> (i=0; i&lt;sf-&gt;nranks; i++) outranks[i] = rank;
+<a name="line735">735: </a>    <a href="../../../../../docs/manualpages/PetscSF/PetscSFGatherBegin.html#PetscSFGatherBegin">PetscSFGatherBegin</a>(bgcount,MPI_INT,outranks,inranks);
+<a name="line736">736: </a>    <a href="../../../../../docs/manualpages/PetscSF/PetscSFGatherEnd.html#PetscSFGatherEnd">PetscSFGatherEnd</a>(bgcount,MPI_INT,outranks,inranks);
+<a name="line737">737: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_group.html#MPI_Comm_group">MPI_Comm_group</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sf),&amp;group);
+<a name="line738">738: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Group_incl.html#MPI_Group_incl">MPI_Group_incl</a>(group,indegree[0],inranks,&amp;sf-&gt;ingroup);
+<a name="line739">739: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Group_free.html#MPI_Group_free">MPI_Group_free</a>(&amp;group);
+<a name="line740">740: </a>    <a href="../../../../../docs/manualpages/Sys/PetscFree2.html#PetscFree2">PetscFree2</a>(inranks,outranks);
+<a name="line741">741: </a>    <a href="../../../../../docs/manualpages/PetscSF/PetscSFDestroy.html#PetscSFDestroy">PetscSFDestroy</a>(&amp;bgcount);
+<a name="line742">742: </a>  }
+<a name="line743">743: </a>  *incoming = sf-&gt;ingroup;
+
+<a name="line745">745: </a>  <font color="#4169E1">if</font> (sf-&gt;outgroup == MPI_GROUP_NULL) {
+<a name="line746">746: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_group.html#MPI_Comm_group">MPI_Comm_group</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sf),&amp;group);
+<a name="line747">747: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Group_incl.html#MPI_Group_incl">MPI_Group_incl</a>(group,sf-&gt;nranks,sf-&gt;ranks,&amp;sf-&gt;outgroup);
+<a name="line748">748: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Group_free.html#MPI_Group_free">MPI_Group_free</a>(&amp;group);
+<a name="line749">749: </a>  }
+<a name="line750">750: </a>  *outgoing = sf-&gt;outgroup;
+<a name="line751">751: </a>  <font color="#4169E1">return</font>(0);
+<a name="line752">752: </a>}
+
+<a name="line754">754: </a><font color="#B22222">/*@C</font>
+<a name="line755">755: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/PetscSF/PetscSFGetMultiSF.html#PetscSFGetMultiSF">PetscSFGetMultiSF</a> - gets the inner SF implemeting gathers and scatters</font>
+
+<a name="line757">757: </a><font color="#B22222">   Collective</font>
+
+<a name="line759">759: </a><font color="#B22222">   Input Argument:</font>
+<a name="line760">760: </a><font color="#B22222">.  sf - star forest that may contain roots with 0 or with more than 1 vertex</font>
+
+<a name="line762">762: </a><font color="#B22222">   Output Arguments:</font>
+<a name="line763">763: </a><font color="#B22222">.  multi - star forest with split roots, such that each root has degree exactly 1</font>
+
+<a name="line765">765: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line767">767: </a><font color="#B22222">   Notes:</font>
+
+<a name="line769">769: </a><font color="#B22222">   In most cases, users should use <a href="../../../../../docs/manualpages/PetscSF/PetscSFGatherBegin.html#PetscSFGatherBegin">PetscSFGatherBegin</a>() and <a href="../../../../../docs/manualpages/PetscSF/PetscSFScatterBegin.html#PetscSFScatterBegin">PetscSFScatterBegin</a>() instead of manipulating multi</font>
+<a name="line770">770: </a><font color="#B22222">   directly. Since multi satisfies the stronger condition that each entry in the global space has exactly one incoming</font>
+<a name="line771">771: </a><font color="#B22222">   edge, it is a candidate for future optimization that might involve its removal.</font>
+
+<a name="line773">773: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html#PetscSFSetGraph">PetscSFSetGraph</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFGatherBegin.html#PetscSFGatherBegin">PetscSFGatherBegin</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFScatterBegin.html#PetscSFScatterBegin">PetscSFScatterBegin</a>()</font>
+<a name="line774">774: </a><font color="#B22222">@*/</font>
+<a name="line775">775: </a><strong><font color="#4169E1"><a name="PetscSFGetMultiSF"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PetscSF/PetscSFGetMultiSF.html#PetscSFGetMultiSF">PetscSFGetMultiSF</a>(<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> *multi)</font></strong>
+<a name="line776">776: </a>{
+
+<a name="line782">782: </a>  <font color="#4169E1">if</font> (sf-&gt;nroots &lt; 0) {         <font color="#B22222">/* Graph has not been set yet; why do we need this? */</font>
+<a name="line783">783: </a>    <a href="../../../../../docs/manualpages/PetscSF/PetscSFDuplicate.html#PetscSFDuplicate">PetscSFDuplicate</a>(sf,<a href="../../../../../docs/manualpages/PetscSF/PetscSFDuplicateOption.html#PetscSFDuplicateOption">PETSCSF_DUPLICATE_RANKS</a>,&amp;sf-&gt;multi);
+<a name="line784">784: </a>    *multi = sf-&gt;multi;
+<a name="line785">785: </a>    <font color="#4169E1">return</font>(0);
+<a name="line786">786: </a>  }
+<a name="line787">787: </a>  <font color="#4169E1">if</font> (!sf-&gt;multi) {
+<a name="line788">788: </a>    const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *indegree;
+<a name="line789">789: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       i,*inoffset,*outones,*outoffset,maxlocal;
+<a name="line790">790: </a>    <a href="../../../../../docs/manualpages/PetscSF/PetscSFNode.html#PetscSFNode">PetscSFNode</a>    *remote;
+<a name="line791">791: </a>    <a href="../../../../../docs/manualpages/PetscSF/PetscSFComputeDegreeBegin.html#PetscSFComputeDegreeBegin">PetscSFComputeDegreeBegin</a>(sf,&amp;indegree);
+<a name="line792">792: </a>    <a href="../../../../../docs/manualpages/PetscSF/PetscSFComputeDegreeEnd.html#PetscSFComputeDegreeEnd">PetscSFComputeDegreeEnd</a>(sf,&amp;indegree);
+<a name="line793">793: </a>    <font color="#4169E1">for</font> (i=0,maxlocal=0; i&lt;sf-&gt;nleaves; i++) maxlocal = <a href="../../../../../docs/manualpages/Sys/PetscMax.html#PetscMax">PetscMax</a>(maxlocal,(sf-&gt;mine ? sf-&gt;mine[i] : i)+1);
+<a name="line794">794: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMalloc3.html#PetscMalloc3">PetscMalloc3</a>(sf-&gt;nroots+1,&amp;inoffset,maxlocal,&amp;outones,maxlocal,&amp;outoffset);
+<a name="line795">795: </a>    inoffset[0] = 0;
+<a name="line796">796: </a>    <font color="#4169E1">for</font> (i=0; i&lt;sf-&gt;nroots; i++) inoffset[i+1] = inoffset[i] + indegree[i];
+<a name="line797">797: </a>    <font color="#4169E1">for</font> (i=0; i&lt;maxlocal; i++) outones[i] = 1;
+<a name="line798">798: </a>    <a href="../../../../../docs/manualpages/PetscSF/PetscSFFetchAndOpBegin.html#PetscSFFetchAndOpBegin">PetscSFFetchAndOpBegin</a>(sf,MPIU_INT,inoffset,outones,outoffset,MPI_SUM);
+<a name="line799">799: </a>    <a href="../../../../../docs/manualpages/PetscSF/PetscSFFetchAndOpEnd.html#PetscSFFetchAndOpEnd">PetscSFFetchAndOpEnd</a>(sf,MPIU_INT,inoffset,outones,outoffset,MPI_SUM);
+<a name="line800">800: </a>    <font color="#4169E1">for</font> (i=0; i&lt;sf-&gt;nroots; i++) inoffset[i] -= indegree[i]; <font color="#B22222">/* Undo the increment */</font>
+<a name="line801">801: </a><font color="#A020F0">#if 0</font>
+<a name="line802">802: </a><font color="#A020F0">#if defined(PETSC_USE_DEBUG)                                 </font><font color="#B22222">/* Check that the expected number of increments occurred */</font><font color="#A020F0"></font>
+<a name="line803">803: </a>    <font color="#4169E1">for</font> (i=0; i&lt;sf-&gt;nroots; i++) {
+<a name="line804">804: </a>      <font color="#4169E1">if</font> (inoffset[i] + indegree[i] != inoffset[i+1]) <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_PLIB,<font color="#666666">"Incorrect result after PetscSFFetchAndOp"</font>);
+<a name="line805">805: </a>    }
+<a name="line806">806: </a><font color="#A020F0">#endif</font>
+<a name="line807">807: </a><font color="#A020F0">#endif</font>
+<a name="line808">808: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(sf-&gt;nleaves,&amp;remote);
+<a name="line809">809: </a>    <font color="#4169E1">for</font> (i=0; i&lt;sf-&gt;nleaves; i++) {
+<a name="line810">810: </a>      remote[i].rank  = sf-&gt;remote[i].rank;
+<a name="line811">811: </a>      remote[i].index = outoffset[sf-&gt;mine ? sf-&gt;mine[i] : i];
+<a name="line812">812: </a>    }
+<a name="line813">813: </a>    <a href="../../../../../docs/manualpages/PetscSF/PetscSFDuplicate.html#PetscSFDuplicate">PetscSFDuplicate</a>(sf,<a href="../../../../../docs/manualpages/PetscSF/PetscSFDuplicateOption.html#PetscSFDuplicateOption">PETSCSF_DUPLICATE_RANKS</a>,&amp;sf-&gt;multi);
+<a name="line814">814: </a>    <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html#PetscSFSetGraph">PetscSFSetGraph</a>(sf-&gt;multi,inoffset[sf-&gt;nroots],sf-&gt;nleaves,sf-&gt;mine,<a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_COPY_VALUES</a>,remote,<a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_OWN_POINTER</a>);
+<a name="line815">815: </a>    <font color="#4169E1">if</font> (sf-&gt;rankorder) {        <font color="#B22222">/* Sort the ranks */</font>
+<a name="line816">816: </a>      <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html#PetscMPIInt">PetscMPIInt</a> rank;
+<a name="line817">817: </a>      <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>    *inranks,*newoffset,*outranks,*newoutoffset,*tmpoffset,maxdegree;
+<a name="line818">818: </a>      <a href="../../../../../docs/manualpages/PetscSF/PetscSFNode.html#PetscSFNode">PetscSFNode</a> *newremote;
+<a name="line819">819: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html#PetscObjectComm">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)sf),&amp;rank);
+<a name="line820">820: </a>      <font color="#4169E1">for</font> (i=0,maxdegree=0; i&lt;sf-&gt;nroots; i++) maxdegree = <a href="../../../../../docs/manualpages/Sys/PetscMax.html#PetscMax">PetscMax</a>(maxdegree,indegree[i]);
+<a name="line821">821: </a>      <a href="../../../../../docs/manualpages/Sys/PetscMalloc5.html#PetscMalloc5">PetscMalloc5</a>(sf-&gt;multi-&gt;nroots,&amp;inranks,sf-&gt;multi-&gt;nroots,&amp;newoffset,maxlocal,&amp;outranks,maxlocal,&amp;newoutoffset,maxdegree,&amp;tmpoffset);
+<a name="line822">822: </a>      <font color="#4169E1">for</font> (i=0; i&lt;maxlocal; i++) outranks[i] = rank;
+<a name="line823">823: </a>      <a href="../../../../../docs/manualpages/PetscSF/PetscSFReduceBegin.html#PetscSFReduceBegin">PetscSFReduceBegin</a>(sf-&gt;multi,MPIU_INT,outranks,inranks,MPIU_REPLACE);
+<a name="line824">824: </a>      <a href="../../../../../docs/manualpages/PetscSF/PetscSFReduceEnd.html#PetscSFReduceEnd">PetscSFReduceEnd</a>(sf-&gt;multi,MPIU_INT,outranks,inranks,MPIU_REPLACE);
+<a name="line825">825: </a>      <font color="#B22222">/* Sort the incoming ranks at each vertex, build the inverse map */</font>
+<a name="line826">826: </a>      <font color="#4169E1">for</font> (i=0; i&lt;sf-&gt;nroots; i++) {
+<a name="line827">827: </a>        <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> j;
+<a name="line828">828: </a>        <font color="#4169E1">for</font> (j=0; j&lt;indegree[i]; j++) tmpoffset[j] = j;
+<a name="line829">829: </a>        <a href="../../../../../docs/manualpages/Sys/PetscSortIntWithArray.html#PetscSortIntWithArray">PetscSortIntWithArray</a>(indegree[i],inranks+inoffset[i],tmpoffset);
+<a name="line830">830: </a>        <font color="#4169E1">for</font> (j=0; j&lt;indegree[i]; j++) newoffset[inoffset[i] + tmpoffset[j]] = inoffset[i] + j;
+<a name="line831">831: </a>      }
+<a name="line832">832: </a>      <a href="../../../../../docs/manualpages/PetscSF/PetscSFBcastBegin.html#PetscSFBcastBegin">PetscSFBcastBegin</a>(sf-&gt;multi,MPIU_INT,newoffset,newoutoffset);
+<a name="line833">833: </a>      <a href="../../../../../docs/manualpages/PetscSF/PetscSFBcastEnd.html#PetscSFBcastEnd">PetscSFBcastEnd</a>(sf-&gt;multi,MPIU_INT,newoffset,newoutoffset);
+<a name="line834">834: </a>      <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(sf-&gt;nleaves,&amp;newremote);
+<a name="line835">835: </a>      <font color="#4169E1">for</font> (i=0; i&lt;sf-&gt;nleaves; i++) {
+<a name="line836">836: </a>        newremote[i].rank  = sf-&gt;remote[i].rank;
+<a name="line837">837: </a>        newremote[i].index = newoutoffset[sf-&gt;mine ? sf-&gt;mine[i] : i];
+<a name="line838">838: </a>      }
+<a name="line839">839: </a>      <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html#PetscSFSetGraph">PetscSFSetGraph</a>(sf-&gt;multi,inoffset[sf-&gt;nroots],sf-&gt;nleaves,sf-&gt;mine,<a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_COPY_VALUES</a>,newremote,<a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_OWN_POINTER</a>);
+<a name="line840">840: </a>      <a href="../../../../../docs/manualpages/Sys/PetscFree5.html#PetscFree5">PetscFree5</a>(inranks,newoffset,outranks,newoutoffset,tmpoffset);
+<a name="line841">841: </a>    }
+<a name="line842">842: </a>    <a href="../../../../../docs/manualpages/Sys/PetscFree3.html#PetscFree3">PetscFree3</a>(inoffset,outones,outoffset);
+<a name="line843">843: </a>  }
+<a name="line844">844: </a>  *multi = sf-&gt;multi;
+<a name="line845">845: </a>  <font color="#4169E1">return</font>(0);
+<a name="line846">846: </a>}
+
+<a name="line848">848: </a><font color="#B22222">/*@C</font>
+<a name="line849">849: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/PetscSF/PetscSFCreateEmbeddedSF.html#PetscSFCreateEmbeddedSF">PetscSFCreateEmbeddedSF</a> - removes edges from all but the selected roots, does not remap indices</font>
+
+<a name="line851">851: </a><font color="#B22222">   Collective</font>
+
+<a name="line853">853: </a><font color="#B22222">   Input Arguments:</font>
+<a name="line854">854: </a><font color="#B22222">+  sf - original star forest</font>
+<a name="line855">855: </a><font color="#B22222">.  nroots - number of roots to select on this process</font>
+<a name="line856">856: </a><font color="#B22222">-  selected - selected roots on this process</font>
+
+<a name="line858">858: </a><font color="#B22222">   Output Arguments:</font>
+<a name="line859">859: </a><font color="#B22222">.  newsf - new star forest</font>
+
+<a name="line861">861: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line863">863: </a><font color="#B22222">   Note:</font>
+<a name="line864">864: </a><font color="#B22222">   To use the new <a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a>, it may be necessary to know the indices of the leaves that are still participating. This can</font>
+<a name="line865">865: </a><font color="#B22222">   be done by calling <a href="../../../../../docs/manualpages/PetscSF/PetscSFGetGraph.html#PetscSFGetGraph">PetscSFGetGraph</a>().</font>
+
+<a name="line867">867: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html#PetscSFSetGraph">PetscSFSetGraph</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFGetGraph.html#PetscSFGetGraph">PetscSFGetGraph</a>()</font>
+<a name="line868">868: </a><font color="#B22222">@*/</font>
+<a name="line869">869: </a><strong><font color="#4169E1"><a name="PetscSFCreateEmbeddedSF"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PetscSF/PetscSFCreateEmbeddedSF.html#PetscSFCreateEmbeddedSF">PetscSFCreateEmbeddedSF</a>(<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,<a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> nroots,const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *selected,<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> *newsf)</font></strong>
+<a name="line870">870: </a>{
+<a name="line871">871: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>      *rootdata, *leafdata, *ilocal;
+<a name="line872">872: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFNode.html#PetscSFNode">PetscSFNode</a>   *iremote;
+<a name="line873">873: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       leafsize = 0, nleaves = 0, n, i;
+
+<a name="line880">880: </a>  <font color="#4169E1">if</font> (sf-&gt;mine) <font color="#4169E1">for</font> (i = 0; i &lt; sf-&gt;nleaves; ++i) {leafsize = <a href="../../../../../docs/manualpages/Sys/PetscMax.html#PetscMax">PetscMax</a>(leafsize, sf-&gt;mine[i]+1);}
+<a name="line881">881: </a>  <font color="#4169E1">else</font> leafsize = sf-&gt;nleaves;
+<a name="line882">882: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCalloc2.html#PetscCalloc2">PetscCalloc2</a>(sf-&gt;nroots,&amp;rootdata,leafsize,&amp;leafdata);
+<a name="line883">883: </a>  <font color="#4169E1">for</font> (i=0; i&lt;nroots; ++i) rootdata[selected[i]] = 1;
+<a name="line884">884: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFBcastBegin.html#PetscSFBcastBegin">PetscSFBcastBegin</a>(sf,MPIU_INT,rootdata,leafdata);
+<a name="line885">885: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFBcastEnd.html#PetscSFBcastEnd">PetscSFBcastEnd</a>(sf,MPIU_INT,rootdata,leafdata);
+
+<a name="line887">887: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; leafsize; ++i) nleaves += leafdata[i];
+<a name="line888">888: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(nleaves,&amp;ilocal);
+<a name="line889">889: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(nleaves,&amp;iremote);
+<a name="line890">890: </a>  <font color="#4169E1">for</font> (i = 0, n = 0; i &lt; sf-&gt;nleaves; ++i) {
+<a name="line891">891: </a>    const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> lidx = sf-&gt;mine ? sf-&gt;mine[i] : i;
+
+<a name="line893">893: </a>    <font color="#4169E1">if</font> (leafdata[lidx]) {
+<a name="line894">894: </a>      ilocal[n]        = lidx;
+<a name="line895">895: </a>      iremote[n].rank  = sf-&gt;remote[i].rank;
+<a name="line896">896: </a>      iremote[n].index = sf-&gt;remote[i].index;
+<a name="line897">897: </a>      ++n;
+<a name="line898">898: </a>    }
+<a name="line899">899: </a>  }
+<a name="line900">900: </a>  <font color="#4169E1">if</font> (n != nleaves) <a href="../../../../../docs/manualpages/Sys/SETERRQ2.html#SETERRQ2">SETERRQ2</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>, PETSC_ERR_PLIB, <font color="#666666">"There is a size mismatch in the SF embedding, %d != %d"</font>, n, nleaves);
+<a name="line901">901: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFDuplicate.html#PetscSFDuplicate">PetscSFDuplicate</a>(sf,<a href="../../../../../docs/manualpages/PetscSF/PetscSFDuplicateOption.html#PetscSFDuplicateOption">PETSCSF_DUPLICATE_RANKS</a>,newsf);
+<a name="line902">902: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html#PetscSFSetGraph">PetscSFSetGraph</a>(*newsf,sf-&gt;nroots,nleaves,ilocal,<a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_OWN_POINTER</a>,iremote,<a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_OWN_POINTER</a>);
+<a name="line903">903: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree2.html#PetscFree2">PetscFree2</a>(rootdata,leafdata);
+<a name="line904">904: </a>  <font color="#4169E1">return</font>(0);
+<a name="line905">905: </a>}
+
+<a name="line907">907: </a><font color="#B22222">/*@C</font>
+<a name="line908">908: </a><font color="#B22222">  <a href="../../../../../docs/manualpages/PetscSF/PetscSFCreateEmbeddedLeafSF.html#PetscSFCreateEmbeddedLeafSF">PetscSFCreateEmbeddedLeafSF</a> - removes edges from all but the selected leaves, does not remap indices</font>
+
+<a name="line910">910: </a><font color="#B22222">  Collective</font>
+
+<a name="line912">912: </a><font color="#B22222">  Input Arguments:</font>
+<a name="line913">913: </a><font color="#B22222">+ sf - original star forest</font>
+<a name="line914">914: </a><font color="#B22222">. nleaves - number of leaves to select on this process</font>
+<a name="line915">915: </a><font color="#B22222">- selected - selected leaves on this process</font>
+
+<a name="line917">917: </a><font color="#B22222">  Output Arguments:</font>
+<a name="line918">918: </a><font color="#B22222">.  newsf - new star forest</font>
+
+<a name="line920">920: </a><font color="#B22222">  Level: advanced</font>
+
+<a name="line922">922: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/PetscSF/PetscSFCreateEmbeddedSF.html#PetscSFCreateEmbeddedSF">PetscSFCreateEmbeddedSF</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html#PetscSFSetGraph">PetscSFSetGraph</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFGetGraph.html#PetscSFGetGraph">PetscSFGetGraph</a>()</font>
+<a name="line923">923: </a><font color="#B22222">@*/</font>
+<a name="line924">924: </a><strong><font color="#4169E1"><a name="PetscSFCreateEmbeddedLeafSF"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PetscSF/PetscSFCreateEmbeddedLeafSF.html#PetscSFCreateEmbeddedLeafSF">PetscSFCreateEmbeddedLeafSF</a>(<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf, <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> nleaves, const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> *selected, <a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> *newsf)</font></strong>
+<a name="line925">925: </a>{
+<a name="line926">926: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFNode.html#PetscSFNode">PetscSFNode</a>   *iremote;
+<a name="line927">927: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>      *ilocal;
+<a name="line928">928: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       i;
+
+<a name="line935">935: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(nleaves, &amp;ilocal);
+<a name="line936">936: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(nleaves, &amp;iremote);
+<a name="line937">937: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; nleaves; ++i) {
+<a name="line938">938: </a>    const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> l = selected[i];
+
+<a name="line940">940: </a>    ilocal[i]        = sf-&gt;mine ? sf-&gt;mine[l] : l;
+<a name="line941">941: </a>    iremote[i].rank  = sf-&gt;remote[l].rank;
+<a name="line942">942: </a>    iremote[i].index = sf-&gt;remote[l].index;
+<a name="line943">943: </a>  }
+<a name="line944">944: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFDuplicate.html#PetscSFDuplicate">PetscSFDuplicate</a>(sf, <a href="../../../../../docs/manualpages/PetscSF/PetscSFDuplicateOption.html#PetscSFDuplicateOption">PETSCSF_DUPLICATE_RANKS</a>, newsf);
+<a name="line945">945: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html#PetscSFSetGraph">PetscSFSetGraph</a>(*newsf, sf-&gt;nroots, nleaves, ilocal, <a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_OWN_POINTER</a>, iremote, <a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_OWN_POINTER</a>);
+<a name="line946">946: </a>  <font color="#4169E1">return</font>(0);
+<a name="line947">947: </a>}
+
+<a name="line949">949: </a><font color="#B22222">/*@C</font>
+<a name="line950">950: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/PetscSF/PetscSFBcastBegin.html#PetscSFBcastBegin">PetscSFBcastBegin</a> - begin pointwise broadcast to be concluded with call to <a href="../../../../../docs/manualpages/PetscSF/PetscSFBcastEnd.html#PetscSFBcastEnd">PetscSFBcastEnd</a>()</font>
+
+<a name="line952">952: </a><font color="#B22222">   Collective on <a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a></font>
+
+<a name="line954">954: </a><font color="#B22222">   Input Arguments:</font>
+<a name="line955">955: </a><font color="#B22222">+  sf - star forest on which to communicate</font>
+<a name="line956">956: </a><font color="#B22222">.  unit - data type associated with each node</font>
+<a name="line957">957: </a><font color="#B22222">-  rootdata - buffer to broadcast</font>
+
+<a name="line959">959: </a><font color="#B22222">   Output Arguments:</font>
+<a name="line960">960: </a><font color="#B22222">.  leafdata - buffer to update with values from each leaf's respective root</font>
+
+<a name="line962">962: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line964">964: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/PetscSF/PetscSFCreate.html#PetscSFCreate">PetscSFCreate</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html#PetscSFSetGraph">PetscSFSetGraph</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFView.html#PetscSFView">PetscSFView</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFBcastEnd.html#PetscSFBcastEnd">PetscSFBcastEnd</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFReduceBegin.html#PetscSFReduceBegin">PetscSFReduceBegin</a>()</font>
+<a name="line965">965: </a><font color="#B22222">@*/</font>
+<a name="line966">966: </a><strong><font color="#4169E1"><a name="PetscSFBcastBegin"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PetscSF/PetscSFBcastBegin.html#PetscSFBcastBegin">PetscSFBcastBegin</a>(<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,MPI_Datatype unit,const void *rootdata,void *leafdata)</font></strong>
+<a name="line967">967: </a>{
+
+<a name="line972">972: </a>  PetscSFCheckGraphSet(sf,1);
+<a name="line973">973: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscLogEventBegin.html#PetscLogEventBegin">PetscLogEventBegin</a>(PETSCSF_BcastBegin,sf,0,0,0);
+<a name="line974">974: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetUp.html#PetscSFSetUp">PetscSFSetUp</a>(sf);
+<a name="line975">975: </a>  (*sf-&gt;ops-&gt;BcastBegin)(sf,unit,rootdata,leafdata);
+<a name="line976">976: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscLogEventEnd.html#PetscLogEventEnd">PetscLogEventEnd</a>(PETSCSF_BcastBegin,sf,0,0,0);
+<a name="line977">977: </a>  <font color="#4169E1">return</font>(0);
+<a name="line978">978: </a>}
+
+<a name="line980">980: </a><font color="#B22222">/*@C</font>
+<a name="line981">981: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/PetscSF/PetscSFBcastEnd.html#PetscSFBcastEnd">PetscSFBcastEnd</a> - end a broadcast operation started with <a href="../../../../../docs/manualpages/PetscSF/PetscSFBcastBegin.html#PetscSFBcastBegin">PetscSFBcastBegin</a>()</font>
+
+<a name="line983">983: </a><font color="#B22222">   Collective</font>
+
+<a name="line985">985: </a><font color="#B22222">   Input Arguments:</font>
+<a name="line986">986: </a><font color="#B22222">+  sf - star forest</font>
+<a name="line987">987: </a><font color="#B22222">.  unit - data type</font>
+<a name="line988">988: </a><font color="#B22222">-  rootdata - buffer to broadcast</font>
+
+<a name="line990">990: </a><font color="#B22222">   Output Arguments:</font>
+<a name="line991">991: </a><font color="#B22222">.  leafdata - buffer to update with values from each leaf's respective root</font>
+
+<a name="line993">993: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line995">995: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html#PetscSFSetGraph">PetscSFSetGraph</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFReduceEnd.html#PetscSFReduceEnd">PetscSFReduceEnd</a>()</font>
+<a name="line996">996: </a><font color="#B22222">@*/</font>
+<a name="line997">997: </a><strong><font color="#4169E1"><a name="PetscSFBcastEnd"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PetscSF/PetscSFBcastEnd.html#PetscSFBcastEnd">PetscSFBcastEnd</a>(<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,MPI_Datatype unit,const void *rootdata,void *leafdata)</font></strong>
+<a name="line998">998: </a>{
+
+<a name="line1003">1003: </a>  PetscSFCheckGraphSet(sf,1);
+<a name="line1004">1004: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscLogEventBegin.html#PetscLogEventBegin">PetscLogEventBegin</a>(PETSCSF_BcastEnd,sf,0,0,0);
+<a name="line1005">1005: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetUp.html#PetscSFSetUp">PetscSFSetUp</a>(sf);
+<a name="line1006">1006: </a>  (*sf-&gt;ops-&gt;BcastEnd)(sf,unit,rootdata,leafdata);
+<a name="line1007">1007: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscLogEventEnd.html#PetscLogEventEnd">PetscLogEventEnd</a>(PETSCSF_BcastEnd,sf,0,0,0);
+<a name="line1008">1008: </a>  <font color="#4169E1">return</font>(0);
+<a name="line1009">1009: </a>}
+
+<a name="line1011">1011: </a><font color="#B22222">/*@C</font>
+<a name="line1012">1012: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/PetscSF/PetscSFReduceBegin.html#PetscSFReduceBegin">PetscSFReduceBegin</a> - begin reduction of leafdata into rootdata, to be completed with call to <a href="../../../../../docs/manualpages/PetscSF/PetscSFReduceEnd.html#PetscSFReduceEnd">PetscSFReduceEnd</a>()</font>
+
+<a name="line1014">1014: </a><font color="#B22222">   Collective</font>
+
+<a name="line1016">1016: </a><font color="#B22222">   Input Arguments:</font>
+<a name="line1017">1017: </a><font color="#B22222">+  sf - star forest</font>
+<a name="line1018">1018: </a><font color="#B22222">.  unit - data type</font>
+<a name="line1019">1019: </a><font color="#B22222">.  leafdata - values to reduce</font>
+<a name="line1020">1020: </a><font color="#B22222">-  op - reduction operation</font>
+
+<a name="line1022">1022: </a><font color="#B22222">   Output Arguments:</font>
+<a name="line1023">1023: </a><font color="#B22222">.  rootdata - result of reduction of values from all leaves of each root</font>
+
+<a name="line1025">1025: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line1027">1027: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/PetscSF/PetscSFBcastBegin.html#PetscSFBcastBegin">PetscSFBcastBegin</a>()</font>
+<a name="line1028">1028: </a><font color="#B22222">@*/</font>
+<a name="line1029">1029: </a><strong><font color="#4169E1"><a name="PetscSFReduceBegin"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PetscSF/PetscSFReduceBegin.html#PetscSFReduceBegin">PetscSFReduceBegin</a>(<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,MPI_Datatype unit,const void *leafdata,void *rootdata,MPI_Op op)</font></strong>
+<a name="line1030">1030: </a>{
+
+<a name="line1035">1035: </a>  PetscSFCheckGraphSet(sf,1);
+<a name="line1036">1036: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscLogEventBegin.html#PetscLogEventBegin">PetscLogEventBegin</a>(PETSCSF_ReduceBegin,sf,0,0,0);
+<a name="line1037">1037: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetUp.html#PetscSFSetUp">PetscSFSetUp</a>(sf);
+<a name="line1038">1038: </a>  (sf-&gt;ops-&gt;ReduceBegin)(sf,unit,leafdata,rootdata,op);
+<a name="line1039">1039: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscLogEventEnd.html#PetscLogEventEnd">PetscLogEventEnd</a>(PETSCSF_ReduceBegin,sf,0,0,0);
+<a name="line1040">1040: </a>  <font color="#4169E1">return</font>(0);
+<a name="line1041">1041: </a>}
+
+<a name="line1043">1043: </a><font color="#B22222">/*@C</font>
+<a name="line1044">1044: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/PetscSF/PetscSFReduceEnd.html#PetscSFReduceEnd">PetscSFReduceEnd</a> - end a reduction operation started with <a href="../../../../../docs/manualpages/PetscSF/PetscSFReduceBegin.html#PetscSFReduceBegin">PetscSFReduceBegin</a>()</font>
+
+<a name="line1046">1046: </a><font color="#B22222">   Collective</font>
+
+<a name="line1048">1048: </a><font color="#B22222">   Input Arguments:</font>
+<a name="line1049">1049: </a><font color="#B22222">+  sf - star forest</font>
+<a name="line1050">1050: </a><font color="#B22222">.  unit - data type</font>
+<a name="line1051">1051: </a><font color="#B22222">.  leafdata - values to reduce</font>
+<a name="line1052">1052: </a><font color="#B22222">-  op - reduction operation</font>
+
+<a name="line1054">1054: </a><font color="#B22222">   Output Arguments:</font>
+<a name="line1055">1055: </a><font color="#B22222">.  rootdata - result of reduction of values from all leaves of each root</font>
+
+<a name="line1057">1057: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line1059">1059: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html#PetscSFSetGraph">PetscSFSetGraph</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFBcastEnd.html#PetscSFBcastEnd">PetscSFBcastEnd</a>()</font>
+<a name="line1060">1060: </a><font color="#B22222">@*/</font>
+<a name="line1061">1061: </a><strong><font color="#4169E1"><a name="PetscSFReduceEnd"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PetscSF/PetscSFReduceEnd.html#PetscSFReduceEnd">PetscSFReduceEnd</a>(<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,MPI_Datatype unit,const void *leafdata,void *rootdata,MPI_Op op)</font></strong>
+<a name="line1062">1062: </a>{
+
+<a name="line1067">1067: </a>  PetscSFCheckGraphSet(sf,1);
+<a name="line1068">1068: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscLogEventBegin.html#PetscLogEventBegin">PetscLogEventBegin</a>(PETSCSF_ReduceEnd,sf,0,0,0);
+<a name="line1069">1069: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetUp.html#PetscSFSetUp">PetscSFSetUp</a>(sf);
+<a name="line1070">1070: </a>  (*sf-&gt;ops-&gt;ReduceEnd)(sf,unit,leafdata,rootdata,op);
+<a name="line1071">1071: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscLogEventEnd.html#PetscLogEventEnd">PetscLogEventEnd</a>(PETSCSF_ReduceEnd,sf,0,0,0);
+<a name="line1072">1072: </a>  <font color="#4169E1">return</font>(0);
+<a name="line1073">1073: </a>}
+
+<a name="line1075">1075: </a><font color="#B22222">/*@C</font>
+<a name="line1076">1076: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/PetscSF/PetscSFComputeDegreeBegin.html#PetscSFComputeDegreeBegin">PetscSFComputeDegreeBegin</a> - begin computation of degree for each root vertex, to be completed with <a href="../../../../../docs/manualpages/PetscSF/PetscSFComputeDegreeEnd.html#PetscSFComputeDegreeEnd">PetscSFComputeDegreeEnd</a>()</font>
+
+<a name="line1078">1078: </a><font color="#B22222">   Collective</font>
+
+<a name="line1080">1080: </a><font color="#B22222">   Input Arguments:</font>
+<a name="line1081">1081: </a><font color="#B22222">.  sf - star forest</font>
+
+<a name="line1083">1083: </a><font color="#B22222">   Output Arguments:</font>
+<a name="line1084">1084: </a><font color="#B22222">.  degree - degree of each root vertex</font>
+
+<a name="line1086">1086: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line1088">1088: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/PetscSF/PetscSFGatherBegin.html#PetscSFGatherBegin">PetscSFGatherBegin</a>()</font>
+<a name="line1089">1089: </a><font color="#B22222">@*/</font>
+<a name="line1090">1090: </a><strong><font color="#4169E1"><a name="PetscSFComputeDegreeBegin"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PetscSF/PetscSFComputeDegreeBegin.html#PetscSFComputeDegreeBegin">PetscSFComputeDegreeBegin</a>(<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> **degree)</font></strong>
+<a name="line1091">1091: </a>{
+
+<a name="line1096">1096: </a>  PetscSFCheckGraphSet(sf,1);
+<a name="line1098">1098: </a>  <font color="#4169E1">if</font> (!sf-&gt;degreeknown) {
+<a name="line1099">1099: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> i,maxlocal;
+<a name="line1100">1100: </a>    <font color="#4169E1">if</font> (sf-&gt;degree) <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>, PETSC_ERR_ARG_WRONGSTATE, <font color="#666666">"Calls to <a href="../../../../../docs/manualpages/PetscSF/PetscSFComputeDegreeBegin.html#PetscSFComputeDegreeBegin">PetscSFComputeDegreeBegin</a>() cannot be nested."</font>);
+<a name="line1101">1101: </a>    <font color="#4169E1">for</font> (i=0,maxlocal=0; i&lt;sf-&gt;nleaves; i++) maxlocal = <a href="../../../../../docs/manualpages/Sys/PetscMax.html#PetscMax">PetscMax</a>(maxlocal,(sf-&gt;mine ? sf-&gt;mine[i] : i)+1);
+<a name="line1102">1102: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(sf-&gt;nroots,&amp;sf-&gt;degree);
+<a name="line1103">1103: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(maxlocal,&amp;sf-&gt;degreetmp);
+<a name="line1104">1104: </a>    <font color="#4169E1">for</font> (i=0; i&lt;sf-&gt;nroots; i++) sf-&gt;degree[i] = 0;
+<a name="line1105">1105: </a>    <font color="#4169E1">for</font> (i=0; i&lt;maxlocal; i++) sf-&gt;degreetmp[i] = 1;
+<a name="line1106">1106: </a>    <a href="../../../../../docs/manualpages/PetscSF/PetscSFReduceBegin.html#PetscSFReduceBegin">PetscSFReduceBegin</a>(sf,MPIU_INT,sf-&gt;degreetmp,sf-&gt;degree,MPI_SUM);
+<a name="line1107">1107: </a>  }
+<a name="line1108">1108: </a>  *degree = NULL;
+<a name="line1109">1109: </a>  <font color="#4169E1">return</font>(0);
+<a name="line1110">1110: </a>}
+
+<a name="line1112">1112: </a><font color="#B22222">/*@C</font>
+<a name="line1113">1113: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/PetscSF/PetscSFComputeDegreeEnd.html#PetscSFComputeDegreeEnd">PetscSFComputeDegreeEnd</a> - complete computation of degree for each root vertex, started with <a href="../../../../../docs/manualpages/PetscSF/PetscSFComputeDegreeBegin.html#PetscSFComputeDegreeBegin">PetscSFComputeDegreeBegin</a>()</font>
+
+<a name="line1115">1115: </a><font color="#B22222">   Collective</font>
+
+<a name="line1117">1117: </a><font color="#B22222">   Input Arguments:</font>
+<a name="line1118">1118: </a><font color="#B22222">.  sf - star forest</font>
+
+<a name="line1120">1120: </a><font color="#B22222">   Output Arguments:</font>
+<a name="line1121">1121: </a><font color="#B22222">.  degree - degree of each root vertex</font>
+
+<a name="line1123">1123: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line1125">1125: </a><font color="#B22222">.seealso:</font>
+<a name="line1126">1126: </a><font color="#B22222">@*/</font>
+<a name="line1127">1127: </a><strong><font color="#4169E1"><a name="PetscSFComputeDegreeEnd"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PetscSF/PetscSFComputeDegreeEnd.html#PetscSFComputeDegreeEnd">PetscSFComputeDegreeEnd</a>(<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a> **degree)</font></strong>
+<a name="line1128">1128: </a>{
+
+<a name="line1133">1133: </a>  PetscSFCheckGraphSet(sf,1);
+<a name="line1134">1134: </a>  <font color="#4169E1">if</font> (!sf-&gt;degreeknown) {
+<a name="line1135">1135: </a>    <a href="../../../../../docs/manualpages/PetscSF/PetscSFReduceEnd.html#PetscSFReduceEnd">PetscSFReduceEnd</a>(sf,MPIU_INT,sf-&gt;degreetmp,sf-&gt;degree,MPI_SUM);
+<a name="line1136">1136: </a>    <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(sf-&gt;degreetmp);
+
+<a name="line1138">1138: </a>    sf-&gt;degreeknown = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html#PETSC_TRUE">PETSC_TRUE</a>;
+<a name="line1139">1139: </a>  }
+<a name="line1140">1140: </a>  *degree = sf-&gt;degree;
+<a name="line1141">1141: </a>  <font color="#4169E1">return</font>(0);
+<a name="line1142">1142: </a>}
+
+<a name="line1144">1144: </a><font color="#B22222">/*@C</font>
+<a name="line1145">1145: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/PetscSF/PetscSFFetchAndOpBegin.html#PetscSFFetchAndOpBegin">PetscSFFetchAndOpBegin</a> - begin operation that fetches values from root and updates atomically by applying operation using my leaf value, to be completed with <a href="../../../../../docs/manualpages/PetscSF/PetscSFFetchAndOpEnd.html#PetscSFFetchAndOpEnd">PetscSFFetchAndOpEnd</a>()</font>
+
+<a name="line1147">1147: </a><font color="#B22222">   Collective</font>
+
+<a name="line1149">1149: </a><font color="#B22222">   Input Arguments:</font>
+<a name="line1150">1150: </a><font color="#B22222">+  sf - star forest</font>
+<a name="line1151">1151: </a><font color="#B22222">.  unit - data type</font>
+<a name="line1152">1152: </a><font color="#B22222">.  leafdata - leaf values to use in reduction</font>
+<a name="line1153">1153: </a><font color="#B22222">-  op - operation to use for reduction</font>
+
+<a name="line1155">1155: </a><font color="#B22222">   Output Arguments:</font>
+<a name="line1156">1156: </a><font color="#B22222">+  rootdata - root values to be updated, input state is seen by first process to perform an update</font>
+<a name="line1157">1157: </a><font color="#B22222">-  leafupdate - state at each leaf's respective root immediately prior to my atomic update</font>
+
+<a name="line1159">1159: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line1161">1161: </a><font color="#B22222">   Note:</font>
+<a name="line1162">1162: </a><font color="#B22222">   The update is only atomic at the granularity provided by the hardware. Different roots referenced by the same process</font>
+<a name="line1163">1163: </a><font color="#B22222">   might be updated in a different order. Furthermore, if a composite type is used for the unit datatype, atomicity is</font>
+<a name="line1164">1164: </a><font color="#B22222">   not guaranteed across the whole vertex. Therefore, this function is mostly only used with primitive types such as</font>
+<a name="line1165">1165: </a><font color="#B22222">   integers.</font>
+
+<a name="line1167">1167: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/PetscSF/PetscSFComputeDegreeBegin.html#PetscSFComputeDegreeBegin">PetscSFComputeDegreeBegin</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFReduceBegin.html#PetscSFReduceBegin">PetscSFReduceBegin</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html#PetscSFSetGraph">PetscSFSetGraph</a>()</font>
+<a name="line1168">1168: </a><font color="#B22222">@*/</font>
+<a name="line1169">1169: </a><strong><font color="#4169E1"><a name="PetscSFFetchAndOpBegin"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PetscSF/PetscSFFetchAndOpBegin.html#PetscSFFetchAndOpBegin">PetscSFFetchAndOpBegin</a>(<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,MPI_Datatype unit,void *rootdata,const void *leafdata,void *leafupdate,MPI_Op op)</font></strong>
+<a name="line1170">1170: </a>{
+
+<a name="line1175">1175: </a>  PetscSFCheckGraphSet(sf,1);
+<a name="line1176">1176: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscLogEventBegin.html#PetscLogEventBegin">PetscLogEventBegin</a>(PETSCSF_FetchAndOpBegin,sf,0,0,0);
+<a name="line1177">1177: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetUp.html#PetscSFSetUp">PetscSFSetUp</a>(sf);
+<a name="line1178">1178: </a>  (*sf-&gt;ops-&gt;FetchAndOpBegin)(sf,unit,rootdata,leafdata,leafupdate,op);
+<a name="line1179">1179: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscLogEventEnd.html#PetscLogEventEnd">PetscLogEventEnd</a>(PETSCSF_FetchAndOpBegin,sf,0,0,0);
+<a name="line1180">1180: </a>  <font color="#4169E1">return</font>(0);
+<a name="line1181">1181: </a>}
+
+<a name="line1183">1183: </a><font color="#B22222">/*@C</font>
+<a name="line1184">1184: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/PetscSF/PetscSFFetchAndOpEnd.html#PetscSFFetchAndOpEnd">PetscSFFetchAndOpEnd</a> - end operation started in matching call to <a href="../../../../../docs/manualpages/PetscSF/PetscSFFetchAndOpBegin.html#PetscSFFetchAndOpBegin">PetscSFFetchAndOpBegin</a>() to fetch values from roots and update atomically by applying operation using my leaf value</font>
+
+<a name="line1186">1186: </a><font color="#B22222">   Collective</font>
+
+<a name="line1188">1188: </a><font color="#B22222">   Input Arguments:</font>
+<a name="line1189">1189: </a><font color="#B22222">+  sf - star forest</font>
+<a name="line1190">1190: </a><font color="#B22222">.  unit - data type</font>
+<a name="line1191">1191: </a><font color="#B22222">.  leafdata - leaf values to use in reduction</font>
+<a name="line1192">1192: </a><font color="#B22222">-  op - operation to use for reduction</font>
+
+<a name="line1194">1194: </a><font color="#B22222">   Output Arguments:</font>
+<a name="line1195">1195: </a><font color="#B22222">+  rootdata - root values to be updated, input state is seen by first process to perform an update</font>
+<a name="line1196">1196: </a><font color="#B22222">-  leafupdate - state at each leaf's respective root immediately prior to my atomic update</font>
+
+<a name="line1198">1198: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line1200">1200: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/PetscSF/PetscSFComputeDegreeEnd.html#PetscSFComputeDegreeEnd">PetscSFComputeDegreeEnd</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFReduceEnd.html#PetscSFReduceEnd">PetscSFReduceEnd</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html#PetscSFSetGraph">PetscSFSetGraph</a>()</font>
+<a name="line1201">1201: </a><font color="#B22222">@*/</font>
+<a name="line1202">1202: </a><strong><font color="#4169E1"><a name="PetscSFFetchAndOpEnd"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PetscSF/PetscSFFetchAndOpEnd.html#PetscSFFetchAndOpEnd">PetscSFFetchAndOpEnd</a>(<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,MPI_Datatype unit,void *rootdata,const void *leafdata,void *leafupdate,MPI_Op op)</font></strong>
+<a name="line1203">1203: </a>{
+
+<a name="line1208">1208: </a>  PetscSFCheckGraphSet(sf,1);
+<a name="line1209">1209: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscLogEventBegin.html#PetscLogEventBegin">PetscLogEventBegin</a>(PETSCSF_FetchAndOpEnd,sf,0,0,0);
+<a name="line1210">1210: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetUp.html#PetscSFSetUp">PetscSFSetUp</a>(sf);
+<a name="line1211">1211: </a>  (*sf-&gt;ops-&gt;FetchAndOpEnd)(sf,unit,rootdata,leafdata,leafupdate,op);
+<a name="line1212">1212: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscLogEventEnd.html#PetscLogEventEnd">PetscLogEventEnd</a>(PETSCSF_FetchAndOpEnd,sf,0,0,0);
+<a name="line1213">1213: </a>  <font color="#4169E1">return</font>(0);
+<a name="line1214">1214: </a>}
+
+<a name="line1216">1216: </a><font color="#B22222">/*@C</font>
+<a name="line1217">1217: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/PetscSF/PetscSFGatherBegin.html#PetscSFGatherBegin">PetscSFGatherBegin</a> - begin pointwise gather of all leaves into multi-roots, to be completed with <a href="../../../../../docs/manualpages/PetscSF/PetscSFGatherEnd.html#PetscSFGatherEnd">PetscSFGatherEnd</a>()</font>
+
+<a name="line1219">1219: </a><font color="#B22222">   Collective</font>
+
+<a name="line1221">1221: </a><font color="#B22222">   Input Arguments:</font>
+<a name="line1222">1222: </a><font color="#B22222">+  sf - star forest</font>
+<a name="line1223">1223: </a><font color="#B22222">.  unit - data type</font>
+<a name="line1224">1224: </a><font color="#B22222">-  leafdata - leaf data to gather to roots</font>
+
+<a name="line1226">1226: </a><font color="#B22222">   Output Argument:</font>
+<a name="line1227">1227: </a><font color="#B22222">.  multirootdata - root buffer to gather into, amount of space per root is equal to its degree</font>
+
+<a name="line1229">1229: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line1231">1231: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/PetscSF/PetscSFComputeDegreeBegin.html#PetscSFComputeDegreeBegin">PetscSFComputeDegreeBegin</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFScatterBegin.html#PetscSFScatterBegin">PetscSFScatterBegin</a>()</font>
+<a name="line1232">1232: </a><font color="#B22222">@*/</font>
+<a name="line1233">1233: </a><strong><font color="#4169E1"><a name="PetscSFGatherBegin"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PetscSF/PetscSFGatherBegin.html#PetscSFGatherBegin">PetscSFGatherBegin</a>(<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,MPI_Datatype unit,const void *leafdata,void *multirootdata)</font></strong>
+<a name="line1234">1234: </a>{
+<a name="line1236">1236: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a>        multi;
+
+<a name="line1240">1240: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFGetMultiSF.html#PetscSFGetMultiSF">PetscSFGetMultiSF</a>(sf,&amp;multi);
+<a name="line1241">1241: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFReduceBegin.html#PetscSFReduceBegin">PetscSFReduceBegin</a>(multi,unit,leafdata,multirootdata,MPIU_REPLACE);
+<a name="line1242">1242: </a>  <font color="#4169E1">return</font>(0);
+<a name="line1243">1243: </a>}
+
+<a name="line1245">1245: </a><font color="#B22222">/*@C</font>
+<a name="line1246">1246: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/PetscSF/PetscSFGatherEnd.html#PetscSFGatherEnd">PetscSFGatherEnd</a> - ends pointwise gather operation that was started with <a href="../../../../../docs/manualpages/PetscSF/PetscSFGatherBegin.html#PetscSFGatherBegin">PetscSFGatherBegin</a>()</font>
+
+<a name="line1248">1248: </a><font color="#B22222">   Collective</font>
+
+<a name="line1250">1250: </a><font color="#B22222">   Input Arguments:</font>
+<a name="line1251">1251: </a><font color="#B22222">+  sf - star forest</font>
+<a name="line1252">1252: </a><font color="#B22222">.  unit - data type</font>
+<a name="line1253">1253: </a><font color="#B22222">-  leafdata - leaf data to gather to roots</font>
+
+<a name="line1255">1255: </a><font color="#B22222">   Output Argument:</font>
+<a name="line1256">1256: </a><font color="#B22222">.  multirootdata - root buffer to gather into, amount of space per root is equal to its degree</font>
+
+<a name="line1258">1258: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line1260">1260: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/PetscSF/PetscSFComputeDegreeEnd.html#PetscSFComputeDegreeEnd">PetscSFComputeDegreeEnd</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFScatterEnd.html#PetscSFScatterEnd">PetscSFScatterEnd</a>()</font>
+<a name="line1261">1261: </a><font color="#B22222">@*/</font>
+<a name="line1262">1262: </a><strong><font color="#4169E1"><a name="PetscSFGatherEnd"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PetscSF/PetscSFGatherEnd.html#PetscSFGatherEnd">PetscSFGatherEnd</a>(<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,MPI_Datatype unit,const void *leafdata,void *multirootdata)</font></strong>
+<a name="line1263">1263: </a>{
+<a name="line1265">1265: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a>        multi;
+
+<a name="line1269">1269: </a>  PetscSFCheckGraphSet(sf,1);
+<a name="line1270">1270: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetUp.html#PetscSFSetUp">PetscSFSetUp</a>(sf);
+<a name="line1271">1271: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFGetMultiSF.html#PetscSFGetMultiSF">PetscSFGetMultiSF</a>(sf,&amp;multi);
+<a name="line1272">1272: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFReduceEnd.html#PetscSFReduceEnd">PetscSFReduceEnd</a>(multi,unit,leafdata,multirootdata,MPIU_REPLACE);
+<a name="line1273">1273: </a>  <font color="#4169E1">return</font>(0);
+<a name="line1274">1274: </a>}
+
+<a name="line1276">1276: </a><font color="#B22222">/*@C</font>
+<a name="line1277">1277: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/PetscSF/PetscSFScatterBegin.html#PetscSFScatterBegin">PetscSFScatterBegin</a> - begin pointwise scatter operation from multi-roots to leaves, to be completed with <a href="../../../../../docs/manualpages/PetscSF/PetscSFScatterEnd.html#PetscSFScatterEnd">PetscSFScatterEnd</a>()</font>
+
+<a name="line1279">1279: </a><font color="#B22222">   Collective</font>
+
+<a name="line1281">1281: </a><font color="#B22222">   Input Arguments:</font>
+<a name="line1282">1282: </a><font color="#B22222">+  sf - star forest</font>
+<a name="line1283">1283: </a><font color="#B22222">.  unit - data type</font>
+<a name="line1284">1284: </a><font color="#B22222">-  multirootdata - root buffer to send to each leaf, one unit of data per leaf</font>
+
+<a name="line1286">1286: </a><font color="#B22222">   Output Argument:</font>
+<a name="line1287">1287: </a><font color="#B22222">.  leafdata - leaf data to be update with personal data from each respective root</font>
+
+<a name="line1289">1289: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line1291">1291: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/PetscSF/PetscSFComputeDegreeBegin.html#PetscSFComputeDegreeBegin">PetscSFComputeDegreeBegin</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFScatterBegin.html#PetscSFScatterBegin">PetscSFScatterBegin</a>()</font>
+<a name="line1292">1292: </a><font color="#B22222">@*/</font>
+<a name="line1293">1293: </a><strong><font color="#4169E1"><a name="PetscSFScatterBegin"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PetscSF/PetscSFScatterBegin.html#PetscSFScatterBegin">PetscSFScatterBegin</a>(<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,MPI_Datatype unit,const void *multirootdata,void *leafdata)</font></strong>
+<a name="line1294">1294: </a>{
+<a name="line1296">1296: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a>        multi;
+
+<a name="line1300">1300: </a>  PetscSFCheckGraphSet(sf,1);
+<a name="line1301">1301: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetUp.html#PetscSFSetUp">PetscSFSetUp</a>(sf);
+<a name="line1302">1302: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFGetMultiSF.html#PetscSFGetMultiSF">PetscSFGetMultiSF</a>(sf,&amp;multi);
+<a name="line1303">1303: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFBcastBegin.html#PetscSFBcastBegin">PetscSFBcastBegin</a>(multi,unit,multirootdata,leafdata);
+<a name="line1304">1304: </a>  <font color="#4169E1">return</font>(0);
+<a name="line1305">1305: </a>}
+
+<a name="line1307">1307: </a><font color="#B22222">/*@C</font>
+<a name="line1308">1308: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/PetscSF/PetscSFScatterEnd.html#PetscSFScatterEnd">PetscSFScatterEnd</a> - ends pointwise scatter operation that was started with <a href="../../../../../docs/manualpages/PetscSF/PetscSFScatterBegin.html#PetscSFScatterBegin">PetscSFScatterBegin</a>()</font>
+
+<a name="line1310">1310: </a><font color="#B22222">   Collective</font>
+
+<a name="line1312">1312: </a><font color="#B22222">   Input Arguments:</font>
+<a name="line1313">1313: </a><font color="#B22222">+  sf - star forest</font>
+<a name="line1314">1314: </a><font color="#B22222">.  unit - data type</font>
+<a name="line1315">1315: </a><font color="#B22222">-  multirootdata - root buffer to send to each leaf, one unit of data per leaf</font>
+
+<a name="line1317">1317: </a><font color="#B22222">   Output Argument:</font>
+<a name="line1318">1318: </a><font color="#B22222">.  leafdata - leaf data to be update with personal data from each respective root</font>
+
+<a name="line1320">1320: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line1322">1322: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/PetscSF/PetscSFComputeDegreeEnd.html#PetscSFComputeDegreeEnd">PetscSFComputeDegreeEnd</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFScatterEnd.html#PetscSFScatterEnd">PetscSFScatterEnd</a>()</font>
+<a name="line1323">1323: </a><font color="#B22222">@*/</font>
+<a name="line1324">1324: </a><strong><font color="#4169E1"><a name="PetscSFScatterEnd"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PetscSF/PetscSFScatterEnd.html#PetscSFScatterEnd">PetscSFScatterEnd</a>(<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sf,MPI_Datatype unit,const void *multirootdata,void *leafdata)</font></strong>
+<a name="line1325">1325: </a>{
+<a name="line1327">1327: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a>        multi;
+
+<a name="line1331">1331: </a>  PetscSFCheckGraphSet(sf,1);
+<a name="line1332">1332: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetUp.html#PetscSFSetUp">PetscSFSetUp</a>(sf);
+<a name="line1333">1333: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFGetMultiSF.html#PetscSFGetMultiSF">PetscSFGetMultiSF</a>(sf,&amp;multi);
+<a name="line1334">1334: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFBcastEnd.html#PetscSFBcastEnd">PetscSFBcastEnd</a>(multi,unit,multirootdata,leafdata);
+<a name="line1335">1335: </a>  <font color="#4169E1">return</font>(0);
+<a name="line1336">1336: </a>}
+
+<a name="line1338">1338: </a><font color="#B22222">/*@</font>
+<a name="line1339">1339: </a><font color="#B22222">  <a href="../../../../../docs/manualpages/PetscSF/PetscSFCompose.html#PetscSFCompose">PetscSFCompose</a> - Compose a new <a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> equivalent to action to PetscSFs</font>
+
+<a name="line1341">1341: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line1342">1342: </a><font color="#B22222">+ sfA - The first <a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a></font>
+<a name="line1343">1343: </a><font color="#B22222">- sfB - The second <a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a></font>
+
+<a name="line1345">1345: </a><font color="#B22222">  Output Parameters:</font>
+<a name="line1346">1346: </a><font color="#B22222">. sfBA - equvalent <a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> for applying A then B</font>
+
+<a name="line1348">1348: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line1350">1350: </a><font color="#B22222">.seealso: <a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a>, <a href="../../../../../docs/manualpages/PetscSF/PetscSFGetGraph.html#PetscSFGetGraph">PetscSFGetGraph</a>(), <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html#PetscSFSetGraph">PetscSFSetGraph</a>()</font>
+<a name="line1351">1351: </a><font color="#B22222">@*/</font>
+<a name="line1352">1352: </a><strong><font color="#4169E1"><a name="PetscSFCompose"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PetscSF/PetscSFCompose.html#PetscSFCompose">PetscSFCompose</a>(<a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sfA, <a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> sfB, <a href="../../../../../docs/manualpages/PetscSF/PetscSF.html#PetscSF">PetscSF</a> *sfBA)</font></strong>
+<a name="line1353">1353: </a>{
+<a name="line1354">1354: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a>           comm;
+<a name="line1355">1355: </a>  const <a href="../../../../../docs/manualpages/PetscSF/PetscSFNode.html#PetscSFNode">PetscSFNode</a> *remotePointsA, *remotePointsB;
+<a name="line1356">1356: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFNode.html#PetscSFNode">PetscSFNode</a>       *remotePointsBA;
+<a name="line1357">1357: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>    *localPointsA, *localPointsB;
+<a name="line1358">1358: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>           numRootsA, numLeavesA, numRootsB, numLeavesB;
+<a name="line1359">1359: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>     ierr;
+
+<a name="line1364">1364: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectGetComm.html#PetscObjectGetComm">PetscObjectGetComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>) sfA, &amp;comm);
+<a name="line1365">1365: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFGetGraph.html#PetscSFGetGraph">PetscSFGetGraph</a>(sfA, &amp;numRootsA, &amp;numLeavesA, &amp;localPointsA, &amp;remotePointsA);
+<a name="line1366">1366: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFGetGraph.html#PetscSFGetGraph">PetscSFGetGraph</a>(sfB, &amp;numRootsB, &amp;numLeavesB, &amp;localPointsB, &amp;remotePointsB);
+<a name="line1367">1367: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html#PetscMalloc1">PetscMalloc1</a>(numLeavesB, &amp;remotePointsBA);
+<a name="line1368">1368: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFBcastBegin.html#PetscSFBcastBegin">PetscSFBcastBegin</a>(sfB, MPIU_2INT, remotePointsA, remotePointsBA);
+<a name="line1369">1369: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFBcastEnd.html#PetscSFBcastEnd">PetscSFBcastEnd</a>(sfB, MPIU_2INT, remotePointsA, remotePointsBA);
+<a name="line1370">1370: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFCreate.html#PetscSFCreate">PetscSFCreate</a>(comm, sfBA);
+<a name="line1371">1371: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html#PetscSFSetGraph">PetscSFSetGraph</a>(*sfBA, numRootsA, numLeavesB, localPointsB, <a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_COPY_VALUES</a>, remotePointsBA, <a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html#PetscCopyMode">PETSC_OWN_POINTER</a>);
+<a name="line1372">1372: </a>  <font color="#4169E1">return</font>(0);
+<a name="line1373">1373: </a>}
+</pre>
+</body>
+
+</html>

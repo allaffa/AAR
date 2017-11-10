@@ -1,0 +1,377 @@
+<center><a href="tron.c">Actual source code: tron.c</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/tao/bound/impls/tron/tron.c.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-27T00:22:19+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/tao/bound/impls/tron/tron.c.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+<a name="line1">  1: </a> #include <A href="../../../../../include/../src/tao/bound/impls/tron/tron.h.html">&lt;../src/tao/bound/impls/tron/tron.h&gt;</A>
+<a name="line2">  2: </a> #include <A href="../../../../../include/../src/tao/matrix/submatfree.h.html">&lt;../src/tao/matrix/submatfree.h&gt;</A>
+
+
+<a name="line5">  5: </a><font color="#B22222">/* TRON Routines */</font>
+<a name="line6">  6: </a><strong><font color="#4169E1">static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> TronGradientProjections(<a href="../../../../../docs/manualpages/Tao/Tao.html#Tao">Tao</a>,TAO_TRON*)</font></strong>;
+<a name="line7">  7: </a><font color="#B22222">/*------------------------------------------------------------*/</font>
+<a name="line8">  8: </a><strong><font color="#4169E1"><a name="TaoDestroy_TRON"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> TaoDestroy_TRON(<a href="../../../../../docs/manualpages/Tao/Tao.html#Tao">Tao</a> tao)</font></strong>
+<a name="line9">  9: </a>{
+<a name="line10"> 10: </a>  TAO_TRON       *tron = (TAO_TRON *)tao-&gt;data;
+
+<a name="line14"> 14: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;tron-&gt;X_New);
+<a name="line15"> 15: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;tron-&gt;G_New);
+<a name="line16"> 16: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;tron-&gt;Work);
+<a name="line17"> 17: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;tron-&gt;DXFree);
+<a name="line18"> 18: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;tron-&gt;R);
+<a name="line19"> 19: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;tron-&gt;diag);
+<a name="line20"> 20: </a>  <a href="../../../../../docs/manualpages/Vec/VecScatterDestroy.html#VecScatterDestroy">VecScatterDestroy</a>(&amp;tron-&gt;scatter);
+<a name="line21"> 21: </a>  <a href="../../../../../docs/manualpages/IS/ISDestroy.html#ISDestroy">ISDestroy</a>(&amp;tron-&gt;Free_Local);
+<a name="line22"> 22: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;tron-&gt;H_sub);
+<a name="line23"> 23: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;tron-&gt;Hpre_sub);
+<a name="line24"> 24: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(tao-&gt;data);
+<a name="line25"> 25: </a>  <font color="#4169E1">return</font>(0);
+<a name="line26"> 26: </a>}
+
+<a name="line28"> 28: </a><font color="#B22222">/*------------------------------------------------------------*/</font>
+<a name="line29"> 29: </a><strong><font color="#4169E1"><a name="TaoSetFromOptions_TRON"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> TaoSetFromOptions_TRON(PetscOptionItems *PetscOptionsObject,<a href="../../../../../docs/manualpages/Tao/Tao.html#Tao">Tao</a> tao)</font></strong>
+<a name="line30"> 30: </a>{
+<a name="line31"> 31: </a>  TAO_TRON       *tron = (TAO_TRON *)tao-&gt;data;
+<a name="line33"> 33: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>      flg;
+
+<a name="line36"> 36: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsHead.html#PetscOptionsHead">PetscOptionsHead</a>(PetscOptionsObject,<font color="#666666">"Newton Trust Region Method for bound constrained optimization"</font>);
+<a name="line37"> 37: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsInt.html#PetscOptionsInt">PetscOptionsInt</a>(<font color="#666666">"-tao_tron_maxgpits"</font>,<font color="#666666">"maximum number of gradient projections per TRON iterate"</font>,<font color="#666666">"TaoSetMaxGPIts"</font>,tron-&gt;maxgpits,&amp;tron-&gt;maxgpits,&amp;flg);
+<a name="line38"> 38: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsTail.html#PetscOptionsTail">PetscOptionsTail</a>();
+<a name="line39"> 39: </a>  <a href="../../../../../docs/manualpages/TaoLineSearch/TaoLineSearchSetFromOptions.html#TaoLineSearchSetFromOptions">TaoLineSearchSetFromOptions</a>(tao-&gt;linesearch);
+<a name="line40"> 40: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSetFromOptions.html#KSPSetFromOptions">KSPSetFromOptions</a>(tao-&gt;ksp);
+<a name="line41"> 41: </a>  <font color="#4169E1">return</font>(0);
+<a name="line42"> 42: </a>}
+
+<a name="line44"> 44: </a><font color="#B22222">/*------------------------------------------------------------*/</font>
+<a name="line45"> 45: </a><strong><font color="#4169E1"><a name="TaoView_TRON"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> TaoView_TRON(<a href="../../../../../docs/manualpages/Tao/Tao.html#Tao">Tao</a> tao, <a href="../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer)</font></strong>
+<a name="line46"> 46: </a>{
+<a name="line47"> 47: </a>  TAO_TRON         *tron = (TAO_TRON *)tao-&gt;data;
+<a name="line48"> 48: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>        isascii;
+<a name="line49"> 49: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>   ierr;
+
+<a name="line52"> 52: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer,<a href="../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html#PETSCVIEWERASCII">PETSCVIEWERASCII</a>,&amp;isascii);
+<a name="line53"> 53: </a>  <font color="#4169E1">if</font> (isascii) {
+<a name="line54"> 54: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPushTab.html#PetscViewerASCIIPushTab">PetscViewerASCIIPushTab</a>(viewer);
+<a name="line55"> 55: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"Total PG its: %D,"</font>,tron-&gt;total_gp_its);
+<a name="line56"> 56: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer,<font color="#666666">"PG tolerance: %g \n"</font>,(double)tron-&gt;pg_ftol);
+<a name="line57"> 57: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPopTab.html#PetscViewerASCIIPopTab">PetscViewerASCIIPopTab</a>(viewer);
+<a name="line58"> 58: </a>  }
+<a name="line59"> 59: </a>  <font color="#4169E1">return</font>(0);
+<a name="line60"> 60: </a>}
+
+
+<a name="line63"> 63: </a><font color="#B22222">/* ---------------------------------------------------------- */</font>
+<a name="line64"> 64: </a><strong><font color="#4169E1"><a name="TaoSetup_TRON"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> TaoSetup_TRON(<a href="../../../../../docs/manualpages/Tao/Tao.html#Tao">Tao</a> tao)</font></strong>
+<a name="line65"> 65: </a>{
+<a name="line67"> 67: </a>  TAO_TRON       *tron = (TAO_TRON *)tao-&gt;data;
+
+
+<a name="line71"> 71: </a>  <font color="#B22222">/* Allocate some arrays */</font>
+<a name="line72"> 72: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html#VecDuplicate">VecDuplicate</a>(tao-&gt;solution, &amp;tron-&gt;diag);
+<a name="line73"> 73: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html#VecDuplicate">VecDuplicate</a>(tao-&gt;solution, &amp;tron-&gt;X_New);
+<a name="line74"> 74: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html#VecDuplicate">VecDuplicate</a>(tao-&gt;solution, &amp;tron-&gt;G_New);
+<a name="line75"> 75: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html#VecDuplicate">VecDuplicate</a>(tao-&gt;solution, &amp;tron-&gt;Work);
+<a name="line76"> 76: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html#VecDuplicate">VecDuplicate</a>(tao-&gt;solution, &amp;tao-&gt;gradient);
+<a name="line77"> 77: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html#VecDuplicate">VecDuplicate</a>(tao-&gt;solution, &amp;tao-&gt;stepdirection);
+<a name="line78"> 78: </a>  <font color="#4169E1">if</font> (!tao-&gt;XL) {
+<a name="line79"> 79: </a>      <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html#VecDuplicate">VecDuplicate</a>(tao-&gt;solution, &amp;tao-&gt;XL);
+<a name="line80"> 80: </a>      <a href="../../../../../docs/manualpages/Vec/VecSet.html#VecSet">VecSet</a>(tao-&gt;XL, PETSC_NINFINITY);
+<a name="line81"> 81: </a>  }
+<a name="line82"> 82: </a>  <font color="#4169E1">if</font> (!tao-&gt;XU) {
+<a name="line83"> 83: </a>      <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html#VecDuplicate">VecDuplicate</a>(tao-&gt;solution, &amp;tao-&gt;XU);
+<a name="line84"> 84: </a>      <a href="../../../../../docs/manualpages/Vec/VecSet.html#VecSet">VecSet</a>(tao-&gt;XU, PETSC_INFINITY);
+<a name="line85"> 85: </a>  }
+<a name="line86"> 86: </a>  <font color="#4169E1">return</font>(0);
+<a name="line87"> 87: </a>}
+
+
+
+<a name="line91"> 91: </a><strong><font color="#4169E1"><a name="TaoSolve_TRON"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> TaoSolve_TRON(<a href="../../../../../docs/manualpages/Tao/Tao.html#Tao">Tao</a> tao)</font></strong>
+<a name="line92"> 92: </a>{
+<a name="line93"> 93: </a>  TAO_TRON                     *tron = (TAO_TRON *)tao-&gt;data;
+<a name="line94"> 94: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>               ierr;
+<a name="line95"> 95: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>                     its;
+<a name="line96"> 96: </a>  <a href="../../../../../docs/manualpages/Tao/TaoConvergedReason.html#TaoConvergedReason">TaoConvergedReason</a>           reason = <a href="../../../../../docs/manualpages/Tao/TaoConvergedReason.html#TaoConvergedReason">TAO_CONTINUE_ITERATING</a>;
+<a name="line97"> 97: </a>  TaoLineSearchConvergedReason ls_reason = TAOLINESEARCH_CONTINUE_ITERATING;
+<a name="line98"> 98: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>                    prered,actred,delta,f,f_new,rhok,gdx,xdiff,stepsize;
+
+<a name="line101">101: </a>  tron-&gt;pgstepsize=1.0;
+<a name="line102">102: </a>  tao-&gt;trust = tao-&gt;trust0;
+<a name="line103">103: </a>  <font color="#B22222">/*   Project the current point onto the feasible set */</font>
+<a name="line104">104: </a>  <a href="../../../../../docs/manualpages/Tao/TaoComputeVariableBounds.html#TaoComputeVariableBounds">TaoComputeVariableBounds</a>(tao);
+<a name="line105">105: </a>  <a href="../../../../../docs/manualpages/Vec/VecMedian.html#VecMedian">VecMedian</a>(tao-&gt;XL,tao-&gt;solution,tao-&gt;XU,tao-&gt;solution);
+<a name="line106">106: </a>  <a href="../../../../../docs/manualpages/TaoLineSearch/TaoLineSearchSetVariableBounds.html#TaoLineSearchSetVariableBounds">TaoLineSearchSetVariableBounds</a>(tao-&gt;linesearch,tao-&gt;XL,tao-&gt;XU);
+
+<a name="line108">108: </a>  <a href="../../../../../docs/manualpages/Tao/TaoComputeObjectiveAndGradient.html#TaoComputeObjectiveAndGradient">TaoComputeObjectiveAndGradient</a>(tao,tao-&gt;solution,&amp;tron-&gt;f,tao-&gt;gradient);
+<a name="line109">109: </a>  <a href="../../../../../docs/manualpages/IS/ISDestroy.html#ISDestroy">ISDestroy</a>(&amp;tron-&gt;Free_Local);
+
+<a name="line111">111: </a>  <a href="../../../../../docs/manualpages/Vec/VecWhichBetween.html#VecWhichBetween">VecWhichBetween</a>(tao-&gt;XL,tao-&gt;solution,tao-&gt;XU,&amp;tron-&gt;Free_Local);
+
+<a name="line113">113: </a>  <font color="#B22222">/* Project the gradient and calculate the norm */</font>
+<a name="line114">114: </a>  <a href="../../../../../docs/manualpages/Vec/VecBoundGradientProjection.html#VecBoundGradientProjection">VecBoundGradientProjection</a>(tao-&gt;gradient,tao-&gt;solution, tao-&gt;XL, tao-&gt;XU, tao-&gt;gradient);
+<a name="line115">115: </a>  <a href="../../../../../docs/manualpages/Vec/VecNorm.html#VecNorm">VecNorm</a>(tao-&gt;gradient,<a href="../../../../../docs/manualpages/Vec/NORM_2.html#NORM_2">NORM_2</a>,&amp;tron-&gt;gnorm);
+
+<a name="line117">117: </a>  <font color="#4169E1">if</font> (PetscIsInfOrNanReal(tron-&gt;f) || PetscIsInfOrNanReal(tron-&gt;gnorm)) <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,1, <font color="#666666">"User provided compute function generated Inf pr NaN"</font>);
+<a name="line118">118: </a>  <font color="#4169E1">if</font> (tao-&gt;trust &lt;= 0) {
+<a name="line119">119: </a>    tao-&gt;trust=<a href="../../../../../docs/manualpages/Sys/PetscMax.html#PetscMax">PetscMax</a>(tron-&gt;gnorm*tron-&gt;gnorm,1.0);
+<a name="line120">120: </a>  }
+
+<a name="line122">122: </a>  tron-&gt;stepsize=tao-&gt;trust;
+<a name="line123">123: </a>  <a href="../../../../../docs/manualpages/Tao/TaoMonitor.html#TaoMonitor">TaoMonitor</a>(tao, tao-&gt;niter, tron-&gt;f, tron-&gt;gnorm, 0.0, tron-&gt;stepsize, &amp;reason);
+<a name="line124">124: </a>  <font color="#4169E1">while</font> (reason==<a href="../../../../../docs/manualpages/Tao/TaoConvergedReason.html#TaoConvergedReason">TAO_CONTINUE_ITERATING</a>){
+<a name="line125">125: </a>    tao-&gt;ksp_its=0;
+<a name="line126">126: </a>    TronGradientProjections(tao,tron);
+<a name="line127">127: </a>    f=tron-&gt;f; delta=tao-&gt;trust;
+<a name="line128">128: </a>    tron-&gt;n_free_last = tron-&gt;n_free;
+<a name="line129">129: </a>    <a href="../../../../../docs/manualpages/Tao/TaoComputeHessian.html#TaoComputeHessian">TaoComputeHessian</a>(tao,tao-&gt;solution,tao-&gt;hessian,tao-&gt;hessian_pre);
+
+<a name="line131">131: </a>    <a href="../../../../../docs/manualpages/IS/ISGetSize.html#ISGetSize">ISGetSize</a>(tron-&gt;Free_Local, &amp;tron-&gt;n_free);
+
+<a name="line133">133: </a>    <font color="#B22222">/* If no free variables */</font>
+<a name="line134">134: </a>    <font color="#4169E1">if</font> (tron-&gt;n_free == 0) {
+<a name="line135">135: </a>      <a href="../../../../../docs/manualpages/Profiling/PetscInfo.html#PetscInfo">PetscInfo</a>(tao,<font color="#666666">"No free variables in tron iteration.\n"</font>);
+<a name="line136">136: </a>      <a href="../../../../../docs/manualpages/Vec/VecNorm.html#VecNorm">VecNorm</a>(tao-&gt;gradient,<a href="../../../../../docs/manualpages/Vec/NORM_2.html#NORM_2">NORM_2</a>,&amp;tron-&gt;gnorm);
+<a name="line137">137: </a>      <a href="../../../../../docs/manualpages/Tao/TaoMonitor.html#TaoMonitor">TaoMonitor</a>(tao, tao-&gt;niter, tron-&gt;f, tron-&gt;gnorm, 0.0, delta, &amp;reason);
+<a name="line138">138: </a>      <font color="#4169E1">if</font> (!reason) {
+<a name="line139">139: </a>        reason = <a href="../../../../../docs/manualpages/Tao/TaoConvergedReason.html#TaoConvergedReason">TAO_CONVERGED_STEPTOL</a>;
+<a name="line140">140: </a>        <a href="../../../../../docs/manualpages/Tao/TaoSetConvergedReason.html#TaoSetConvergedReason">TaoSetConvergedReason</a>(tao,reason);
+<a name="line141">141: </a>      }
+<a name="line142">142: </a>      <font color="#4169E1">break</font>;
+<a name="line143">143: </a>    }
+<a name="line144">144: </a>    <font color="#B22222">/* use free_local to mask/submat gradient, hessian, stepdirection */</font>
+<a name="line145">145: </a>    TaoVecGetSubVec(tao-&gt;gradient,tron-&gt;Free_Local,tao-&gt;subset_type,0.0,&amp;tron-&gt;R);
+<a name="line146">146: </a>    TaoVecGetSubVec(tao-&gt;gradient,tron-&gt;Free_Local,tao-&gt;subset_type,0.0,&amp;tron-&gt;DXFree);
+<a name="line147">147: </a>    <a href="../../../../../docs/manualpages/Vec/VecSet.html#VecSet">VecSet</a>(tron-&gt;DXFree,0.0);
+<a name="line148">148: </a>    <a href="../../../../../docs/manualpages/Vec/VecScale.html#VecScale">VecScale</a>(tron-&gt;R, -1.0);
+<a name="line149">149: </a>    TaoMatGetSubMat(tao-&gt;hessian, tron-&gt;Free_Local, tron-&gt;diag, tao-&gt;subset_type, &amp;tron-&gt;H_sub);
+<a name="line150">150: </a>    <font color="#4169E1">if</font> (tao-&gt;hessian == tao-&gt;hessian_pre) {
+<a name="line151">151: </a>      <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;tron-&gt;Hpre_sub);
+<a name="line152">152: </a>      <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html#PetscObjectReference">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)(tron-&gt;H_sub));
+<a name="line153">153: </a>      tron-&gt;Hpre_sub = tron-&gt;H_sub;
+<a name="line154">154: </a>    } <font color="#4169E1">else</font> {
+<a name="line155">155: </a>      TaoMatGetSubMat(tao-&gt;hessian_pre, tron-&gt;Free_Local, tron-&gt;diag, tao-&gt;subset_type,&amp;tron-&gt;Hpre_sub);
+<a name="line156">156: </a>    }
+<a name="line157">157: </a>    <a href="../../../../../docs/manualpages/KSP/KSPReset.html#KSPReset">KSPReset</a>(tao-&gt;ksp);
+<a name="line158">158: </a>    <a href="../../../../../docs/manualpages/KSP/KSPSetOperators.html#KSPSetOperators">KSPSetOperators</a>(tao-&gt;ksp, tron-&gt;H_sub, tron-&gt;Hpre_sub);
+<a name="line159">159: </a>    <font color="#4169E1">while</font> (1) {
+
+<a name="line161">161: </a>      <font color="#B22222">/* Approximately solve the reduced linear system */</font>
+<a name="line162">162: </a>      <a href="../../../../../docs/manualpages/KSP/KSPCGSetRadius.html#KSPCGSetRadius">KSPCGSetRadius</a>(tao-&gt;ksp,delta);
+
+<a name="line164">164: </a>      <a href="../../../../../docs/manualpages/KSP/KSPSolve.html#KSPSolve">KSPSolve</a>(tao-&gt;ksp, tron-&gt;R, tron-&gt;DXFree);
+<a name="line165">165: </a>      <a href="../../../../../docs/manualpages/KSP/KSPGetIterationNumber.html#KSPGetIterationNumber">KSPGetIterationNumber</a>(tao-&gt;ksp,&amp;its);
+<a name="line166">166: </a>      tao-&gt;ksp_its+=its;
+<a name="line167">167: </a>      tao-&gt;ksp_tot_its+=its;
+<a name="line168">168: </a>      <a href="../../../../../docs/manualpages/Vec/VecSet.html#VecSet">VecSet</a>(tao-&gt;stepdirection,0.0);
+
+<a name="line170">170: </a>      <font color="#B22222">/* Add dxfree matrix to compute step direction vector */</font>
+<a name="line171">171: </a>      <a href="../../../../../docs/manualpages/Vec/VecISAXPY.html#VecISAXPY">VecISAXPY</a>(tao-&gt;stepdirection,tron-&gt;Free_Local,1.0,tron-&gt;DXFree);
+
+<a name="line173">173: </a>      <a href="../../../../../docs/manualpages/Vec/VecDot.html#VecDot">VecDot</a>(tao-&gt;gradient, tao-&gt;stepdirection, &amp;gdx);
+<a name="line174">174: </a>      PetscInfo1(tao,<font color="#666666">"Expected decrease in function value: %14.12e\n"</font>,(double)gdx);
+
+<a name="line176">176: </a>      <a href="../../../../../docs/manualpages/Vec/VecCopy.html#VecCopy">VecCopy</a>(tao-&gt;solution, tron-&gt;X_New);
+<a name="line177">177: </a>      <a href="../../../../../docs/manualpages/Vec/VecCopy.html#VecCopy">VecCopy</a>(tao-&gt;gradient, tron-&gt;G_New);
+
+<a name="line179">179: </a>      stepsize=1.0;f_new=f;
+
+<a name="line181">181: </a>      <a href="../../../../../docs/manualpages/TaoLineSearch/TaoLineSearchSetInitialStepLength.html#TaoLineSearchSetInitialStepLength">TaoLineSearchSetInitialStepLength</a>(tao-&gt;linesearch,1.0);
+<a name="line182">182: </a>      <a href="../../../../../docs/manualpages/TaoLineSearch/TaoLineSearchApply.html#TaoLineSearchApply">TaoLineSearchApply</a>(tao-&gt;linesearch, tron-&gt;X_New, &amp;f_new, tron-&gt;G_New, tao-&gt;stepdirection,&amp;stepsize,&amp;ls_reason);
+<a name="line183">183: </a>      <a href="../../../../../docs/manualpages/Tao/TaoAddLineSearchCounts.html#TaoAddLineSearchCounts">TaoAddLineSearchCounts</a>(tao);
+
+<a name="line185">185: </a>      <a href="../../../../../docs/manualpages/Mat/MatMult.html#MatMult">MatMult</a>(tao-&gt;hessian, tao-&gt;stepdirection, tron-&gt;Work);
+<a name="line186">186: </a>      <a href="../../../../../docs/manualpages/Vec/VecAYPX.html#VecAYPX">VecAYPX</a>(tron-&gt;Work, 0.5, tao-&gt;gradient);
+<a name="line187">187: </a>      <a href="../../../../../docs/manualpages/Vec/VecDot.html#VecDot">VecDot</a>(tao-&gt;stepdirection, tron-&gt;Work, &amp;prered);
+<a name="line188">188: </a>      actred = f_new - f;
+<a name="line189">189: </a>      <font color="#4169E1">if</font> (actred&lt;0) {
+<a name="line190">190: </a>        rhok=PetscAbs(-actred/prered);
+<a name="line191">191: </a>      } <font color="#4169E1">else</font> {
+<a name="line192">192: </a>        rhok=0.0;
+<a name="line193">193: </a>      }
+
+<a name="line195">195: </a>      <font color="#B22222">/* Compare actual improvement to the quadratic model */</font>
+<a name="line196">196: </a>      <font color="#4169E1">if</font> (rhok &gt; tron-&gt;eta1) { <font color="#B22222">/* Accept the point */</font>
+<a name="line197">197: </a>        <font color="#B22222">/* d = x_new - x */</font>
+<a name="line198">198: </a>        <a href="../../../../../docs/manualpages/Vec/VecCopy.html#VecCopy">VecCopy</a>(tron-&gt;X_New, tao-&gt;stepdirection);
+<a name="line199">199: </a>        <a href="../../../../../docs/manualpages/Vec/VecAXPY.html#VecAXPY">VecAXPY</a>(tao-&gt;stepdirection, -1.0, tao-&gt;solution);
+
+<a name="line201">201: </a>        <a href="../../../../../docs/manualpages/Vec/VecNorm.html#VecNorm">VecNorm</a>(tao-&gt;stepdirection, <a href="../../../../../docs/manualpages/Vec/NORM_2.html#NORM_2">NORM_2</a>, &amp;xdiff);
+<a name="line202">202: </a>        xdiff *= stepsize;
+
+<a name="line204">204: </a>        <font color="#B22222">/* Adjust trust region size */</font>
+<a name="line205">205: </a>        <font color="#4169E1">if</font> (rhok &lt; tron-&gt;eta2 ){
+<a name="line206">206: </a>          delta = <a href="../../../../../docs/manualpages/Sys/PetscMin.html#PetscMin">PetscMin</a>(xdiff,delta)*tron-&gt;sigma1;
+<a name="line207">207: </a>        } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (rhok &gt; tron-&gt;eta4 ){
+<a name="line208">208: </a>          delta= <a href="../../../../../docs/manualpages/Sys/PetscMin.html#PetscMin">PetscMin</a>(xdiff,delta)*tron-&gt;sigma3;
+<a name="line209">209: </a>        } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (rhok &gt; tron-&gt;eta3 ){
+<a name="line210">210: </a>          delta=<a href="../../../../../docs/manualpages/Sys/PetscMin.html#PetscMin">PetscMin</a>(xdiff,delta)*tron-&gt;sigma2;
+<a name="line211">211: </a>        }
+<a name="line212">212: </a>        <a href="../../../../../docs/manualpages/Vec/VecBoundGradientProjection.html#VecBoundGradientProjection">VecBoundGradientProjection</a>(tron-&gt;G_New,tron-&gt;X_New, tao-&gt;XL, tao-&gt;XU, tao-&gt;gradient);
+<a name="line213">213: </a>        <a href="../../../../../docs/manualpages/IS/ISDestroy.html#ISDestroy">ISDestroy</a>(&amp;tron-&gt;Free_Local);
+<a name="line214">214: </a>        <a href="../../../../../docs/manualpages/Vec/VecWhichBetween.html#VecWhichBetween">VecWhichBetween</a>(tao-&gt;XL, tron-&gt;X_New, tao-&gt;XU, &amp;tron-&gt;Free_Local);
+<a name="line215">215: </a>        f=f_new;
+<a name="line216">216: </a>        <a href="../../../../../docs/manualpages/Vec/VecNorm.html#VecNorm">VecNorm</a>(tao-&gt;gradient,<a href="../../../../../docs/manualpages/Vec/NORM_2.html#NORM_2">NORM_2</a>,&amp;tron-&gt;gnorm);
+<a name="line217">217: </a>        <a href="../../../../../docs/manualpages/Vec/VecCopy.html#VecCopy">VecCopy</a>(tron-&gt;X_New, tao-&gt;solution);
+<a name="line218">218: </a>        <a href="../../../../../docs/manualpages/Vec/VecCopy.html#VecCopy">VecCopy</a>(tron-&gt;G_New, tao-&gt;gradient);
+<a name="line219">219: </a>        <font color="#4169E1">break</font>;
+<a name="line220">220: </a>      }
+<a name="line221">221: </a>      <font color="#4169E1">else</font> <font color="#4169E1">if</font> (delta &lt;= 1e-30) {
+<a name="line222">222: </a>        <font color="#4169E1">break</font>;
+<a name="line223">223: </a>      }
+<a name="line224">224: </a>      <font color="#4169E1">else</font> {
+<a name="line225">225: </a>        delta /= 4.0;
+<a name="line226">226: </a>      }
+<a name="line227">227: </a>    } <font color="#B22222">/* end linear solve loop */</font>
+
+<a name="line229">229: </a>    tron-&gt;f=f; tron-&gt;actred=actred; tao-&gt;trust=delta;
+<a name="line230">230: </a>    tao-&gt;niter++;
+<a name="line231">231: </a>    <a href="../../../../../docs/manualpages/Tao/TaoMonitor.html#TaoMonitor">TaoMonitor</a>(tao, tao-&gt;niter, tron-&gt;f, tron-&gt;gnorm, 0.0, delta, &amp;reason);
+<a name="line232">232: </a>  }  <font color="#B22222">/* END MAIN LOOP  */</font>
+
+<a name="line234">234: </a>  <font color="#4169E1">return</font>(0);
+<a name="line235">235: </a>}
+
+
+<a name="line238">238: </a><strong><font color="#4169E1"><a name="TronGradientProjections"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> TronGradientProjections(<a href="../../../../../docs/manualpages/Tao/Tao.html#Tao">Tao</a> tao,TAO_TRON *tron)</font></strong>
+<a name="line239">239: </a>{
+<a name="line240">240: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>                 ierr;
+<a name="line241">241: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>                       i;
+<a name="line242">242: </a>  TaoLineSearchConvergedReason ls_reason;
+<a name="line243">243: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>                      actred=-1.0,actred_max=0.0;
+<a name="line244">244: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>                      f_new;
+<a name="line245">245: </a>  <font color="#B22222">/*</font>
+<a name="line246">246: </a><font color="#B22222">     The gradient and function value passed into and out of this</font>
+<a name="line247">247: </a><font color="#B22222">     routine should be current and correct.</font>
+
+<a name="line249">249: </a><font color="#B22222">     The free, active, and binding variables should be already identified</font>
+<a name="line250">250: </a><font color="#B22222">  */</font>
+<a name="line252">252: </a>  <a href="../../../../../docs/manualpages/IS/ISDestroy.html#ISDestroy">ISDestroy</a>(&amp;tron-&gt;Free_Local);
+<a name="line253">253: </a>  <a href="../../../../../docs/manualpages/Vec/VecWhichBetween.html#VecWhichBetween">VecWhichBetween</a>(tao-&gt;XL,tao-&gt;solution,tao-&gt;XU,&amp;tron-&gt;Free_Local);
+
+<a name="line255">255: </a>  <font color="#4169E1">for</font> (i=0;i&lt;tron-&gt;maxgpits;i++){
+
+<a name="line257">257: </a>    <font color="#4169E1">if</font> ( -actred &lt;= (tron-&gt;pg_ftol)*actred_max) <font color="#4169E1">break</font>;
+
+<a name="line259">259: </a>    tron-&gt;gp_iterates++; tron-&gt;total_gp_its++;
+<a name="line260">260: </a>    f_new=tron-&gt;f;
+
+<a name="line262">262: </a>    <a href="../../../../../docs/manualpages/Vec/VecCopy.html#VecCopy">VecCopy</a>(tao-&gt;gradient, tao-&gt;stepdirection);
+<a name="line263">263: </a>    <a href="../../../../../docs/manualpages/Vec/VecScale.html#VecScale">VecScale</a>(tao-&gt;stepdirection, -1.0);
+<a name="line264">264: </a>    <a href="../../../../../docs/manualpages/TaoLineSearch/TaoLineSearchSetInitialStepLength.html#TaoLineSearchSetInitialStepLength">TaoLineSearchSetInitialStepLength</a>(tao-&gt;linesearch,tron-&gt;pgstepsize);
+<a name="line265">265: </a>    <a href="../../../../../docs/manualpages/TaoLineSearch/TaoLineSearchApply.html#TaoLineSearchApply">TaoLineSearchApply</a>(tao-&gt;linesearch, tao-&gt;solution, &amp;f_new, tao-&gt;gradient, tao-&gt;stepdirection,
+<a name="line266">266: </a>                              &amp;tron-&gt;pgstepsize, &amp;ls_reason);
+<a name="line267">267: </a>    <a href="../../../../../docs/manualpages/Tao/TaoAddLineSearchCounts.html#TaoAddLineSearchCounts">TaoAddLineSearchCounts</a>(tao);
+
+
+<a name="line270">270: </a>    <font color="#B22222">/* Update the iterate */</font>
+<a name="line271">271: </a>    actred = f_new - tron-&gt;f;
+<a name="line272">272: </a>    actred_max = <a href="../../../../../docs/manualpages/Sys/PetscMax.html#PetscMax">PetscMax</a>(actred_max,-(f_new - tron-&gt;f));
+<a name="line273">273: </a>    tron-&gt;f = f_new;
+<a name="line274">274: </a>    <a href="../../../../../docs/manualpages/IS/ISDestroy.html#ISDestroy">ISDestroy</a>(&amp;tron-&gt;Free_Local);
+<a name="line275">275: </a>    <a href="../../../../../docs/manualpages/Vec/VecWhichBetween.html#VecWhichBetween">VecWhichBetween</a>(tao-&gt;XL,tao-&gt;solution,tao-&gt;XU,&amp;tron-&gt;Free_Local);
+<a name="line276">276: </a>  }
+
+<a name="line278">278: </a>  <font color="#4169E1">return</font>(0);
+<a name="line279">279: </a>}
+
+<a name="line281">281: </a><strong><font color="#4169E1"><a name="TaoComputeDual_TRON"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> TaoComputeDual_TRON(<a href="../../../../../docs/manualpages/Tao/Tao.html#Tao">Tao</a> tao, <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> DXL, <a href="../../../../../docs/manualpages/Vec/Vec.html#Vec">Vec</a> DXU)</font></strong> {
+
+<a name="line283">283: </a>  TAO_TRON       *tron = (TAO_TRON *)tao-&gt;data;
+
+<a name="line290">290: </a>  <font color="#4169E1">if</font> (!tron-&gt;Work || !tao-&gt;gradient) <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,PETSC_ERR_ORDER,<font color="#666666">"Dual variables don't exist yet or no longer exist.\n"</font>);
+
+<a name="line292">292: </a>  <a href="../../../../../docs/manualpages/Vec/VecBoundGradientProjection.html#VecBoundGradientProjection">VecBoundGradientProjection</a>(tao-&gt;gradient,tao-&gt;solution,tao-&gt;XL,tao-&gt;XU,tron-&gt;Work);
+<a name="line293">293: </a>  <a href="../../../../../docs/manualpages/Vec/VecCopy.html#VecCopy">VecCopy</a>(tron-&gt;Work,DXL);
+<a name="line294">294: </a>  <a href="../../../../../docs/manualpages/Vec/VecAXPY.html#VecAXPY">VecAXPY</a>(DXL,-1.0,tao-&gt;gradient);
+<a name="line295">295: </a>  <a href="../../../../../docs/manualpages/Vec/VecSet.html#VecSet">VecSet</a>(DXU,0.0);
+<a name="line296">296: </a>  <a href="../../../../../docs/manualpages/Vec/VecPointwiseMax.html#VecPointwiseMax">VecPointwiseMax</a>(DXL,DXL,DXU);
+
+<a name="line298">298: </a>  <a href="../../../../../docs/manualpages/Vec/VecCopy.html#VecCopy">VecCopy</a>(tao-&gt;gradient,DXU);
+<a name="line299">299: </a>  <a href="../../../../../docs/manualpages/Vec/VecAXPY.html#VecAXPY">VecAXPY</a>(DXU,-1.0,tron-&gt;Work);
+<a name="line300">300: </a>  <a href="../../../../../docs/manualpages/Vec/VecSet.html#VecSet">VecSet</a>(tron-&gt;Work,0.0);
+<a name="line301">301: </a>  <a href="../../../../../docs/manualpages/Vec/VecPointwiseMin.html#VecPointwiseMin">VecPointwiseMin</a>(DXU,tron-&gt;Work,DXU);
+<a name="line302">302: </a>  <font color="#4169E1">return</font>(0);
+<a name="line303">303: </a>}
+
+<a name="line305">305: </a><font color="#B22222">/*------------------------------------------------------------*/</font>
+<a name="line306">306: </a><font color="#B22222">/*MC</font>
+<a name="line307">307: </a><font color="#B22222">  <a href="../../../../../docs/manualpages/Tao/TAOTRON.html#TAOTRON">TAOTRON</a> - The TRON algorithm is an active-set Newton trust region method</font>
+<a name="line308">308: </a><font color="#B22222">  for bound-constrained minimization.</font>
+
+<a name="line310">310: </a><font color="#B22222">  Options Database Keys:</font>
+<a name="line311">311: </a><font color="#B22222">+ -tao_tron_maxgpits - maximum number of gradient projections per TRON iterate</font>
+<a name="line312">312: </a><font color="#B22222">- -tao_subset_type - "subvec","mask","matrix-free", strategies for handling active-sets</font>
+
+<a name="line314">314: </a><font color="#B22222">  Level: beginner</font>
+<a name="line315">315: </a><font color="#B22222">M*/</font>
+<a name="line316">316: </a><strong><font color="#4169E1"><a name="TaoCreate_TRON"></a>PETSC_EXTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> TaoCreate_TRON(<a href="../../../../../docs/manualpages/Tao/Tao.html#Tao">Tao</a> tao)</font></strong>
+<a name="line317">317: </a>{
+<a name="line318">318: </a>  TAO_TRON       *tron;
+<a name="line320">320: </a>  const char     *morethuente_type = TAOLINESEARCHMT;
+
+<a name="line323">323: </a>  tao-&gt;ops-&gt;setup          = TaoSetup_TRON;
+<a name="line324">324: </a>  tao-&gt;ops-&gt;solve          = TaoSolve_TRON;
+<a name="line325">325: </a>  tao-&gt;ops-&gt;view           = TaoView_TRON;
+<a name="line326">326: </a>  tao-&gt;ops-&gt;setfromoptions = TaoSetFromOptions_TRON;
+<a name="line327">327: </a>  tao-&gt;ops-&gt;destroy        = TaoDestroy_TRON;
+<a name="line328">328: </a>  tao-&gt;ops-&gt;computedual    = TaoComputeDual_TRON;
+
+<a name="line330">330: </a>  <a href="../../../../../docs/manualpages/Sys/PetscNewLog.html#PetscNewLog">PetscNewLog</a>(tao,&amp;tron);
+<a name="line331">331: </a>  tao-&gt;data = (void*)tron;
+
+<a name="line333">333: </a>  <font color="#B22222">/* Override default settings (unless already changed) */</font>
+<a name="line334">334: </a>  <font color="#4169E1">if</font> (!tao-&gt;max_it_changed) tao-&gt;max_it = 50;
+<a name="line335">335: </a>  <font color="#4169E1">if</font> (!tao-&gt;trust0_changed) tao-&gt;trust0 = 1.0;
+<a name="line336">336: </a>  <font color="#4169E1">if</font> (!tao-&gt;steptol_changed) tao-&gt;steptol = 0.0;
+
+<a name="line338">338: </a>  <font color="#B22222">/* Initialize pointers and variables */</font>
+<a name="line339">339: </a>  tron-&gt;n            = 0;
+<a name="line340">340: </a>  tron-&gt;maxgpits     = 3;
+<a name="line341">341: </a>  tron-&gt;pg_ftol      = 0.001;
+
+<a name="line343">343: </a>  tron-&gt;eta1         = 1.0e-4;
+<a name="line344">344: </a>  tron-&gt;eta2         = 0.25;
+<a name="line345">345: </a>  tron-&gt;eta3         = 0.50;
+<a name="line346">346: </a>  tron-&gt;eta4         = 0.90;
+
+<a name="line348">348: </a>  tron-&gt;sigma1       = 0.5;
+<a name="line349">349: </a>  tron-&gt;sigma2       = 2.0;
+<a name="line350">350: </a>  tron-&gt;sigma3       = 4.0;
+
+<a name="line352">352: </a>  tron-&gt;gp_iterates  = 0; <font color="#B22222">/* Cumulative number */</font>
+<a name="line353">353: </a>  tron-&gt;total_gp_its = 0;
+<a name="line354">354: </a>  tron-&gt;n_free       = 0;
+
+<a name="line356">356: </a>  tron-&gt;DXFree=NULL;
+<a name="line357">357: </a>  tron-&gt;R=NULL;
+<a name="line358">358: </a>  tron-&gt;X_New=NULL;
+<a name="line359">359: </a>  tron-&gt;G_New=NULL;
+<a name="line360">360: </a>  tron-&gt;Work=NULL;
+<a name="line361">361: </a>  tron-&gt;Free_Local=NULL;
+<a name="line362">362: </a>  tron-&gt;H_sub=NULL;
+<a name="line363">363: </a>  tron-&gt;Hpre_sub=NULL;
+<a name="line364">364: </a>  tao-&gt;subset_type = <a href="../../../../../docs/manualpages/Tao/TaoSubsetType.html#TaoSubsetType">TAO_SUBSET_SUBVEC</a>;
+
+<a name="line366">366: </a>  <a href="../../../../../docs/manualpages/TaoLineSearch/TaoLineSearchCreate.html#TaoLineSearchCreate">TaoLineSearchCreate</a>(((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)tao)-&gt;comm, &amp;tao-&gt;linesearch);
+<a name="line367">367: </a>  <a href="../../../../../docs/manualpages/TaoLineSearch/TaoLineSearchSetType.html#TaoLineSearchSetType">TaoLineSearchSetType</a>(tao-&gt;linesearch,morethuente_type);
+<a name="line368">368: </a>  <a href="../../../../../docs/manualpages/TaoLineSearch/TaoLineSearchUseTaoRoutines.html#TaoLineSearchUseTaoRoutines">TaoLineSearchUseTaoRoutines</a>(tao-&gt;linesearch,tao);
+<a name="line369">369: </a>  <a href="../../../../../docs/manualpages/TaoLineSearch/TaoLineSearchSetOptionsPrefix.html#TaoLineSearchSetOptionsPrefix">TaoLineSearchSetOptionsPrefix</a>(tao-&gt;linesearch,tao-&gt;hdr.prefix);
+
+<a name="line371">371: </a>  <a href="../../../../../docs/manualpages/KSP/KSPCreate.html#KSPCreate">KSPCreate</a>(((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)tao)-&gt;comm, &amp;tao-&gt;ksp);
+<a name="line372">372: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSetOptionsPrefix.html#KSPSetOptionsPrefix">KSPSetOptionsPrefix</a>(tao-&gt;ksp, tao-&gt;hdr.prefix);
+<a name="line373">373: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSetType.html#KSPSetType">KSPSetType</a>(tao-&gt;ksp,<a href="../../../../../docs/manualpages/KSP/KSPCGSTCG.html#KSPCGSTCG">KSPCGSTCG</a>);
+<a name="line374">374: </a>  <font color="#4169E1">return</font>(0);
+<a name="line375">375: </a>}
+
+</pre>
+</body>
+
+</html>

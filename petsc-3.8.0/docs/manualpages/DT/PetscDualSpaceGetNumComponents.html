@@ -1,0 +1,36 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML3.2 EN">
+<HTML>
+<HEAD> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/DT/PetscDualSpaceGetNumComponents.html" />
+<META NAME="GENERATOR" CONTENT="DOCTEXT">
+<TITLE>PetscDualSpaceGetNumComponents</TITLE>
+</HEAD>
+<BODY BGCOLOR="FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 docs/manualpages/DT/PetscDualSpaceGetNumComponents.html "><small>Report Typos and Errors</small></a></div>
+<A NAME="PetscDualSpaceGetNumComponents"><H1>PetscDualSpaceGetNumComponents</H1></A>
+Return the number of components for this space 
+<H3><FONT COLOR="#CC3333">Synopsis</FONT></H3>
+<PRE>
+#include "petscfe.h" 
+<A HREF="../Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</A> <A HREF="../DT/PetscDualSpaceGetNumComponents.html#PetscDualSpaceGetNumComponents">PetscDualSpaceGetNumComponents</A>(<A HREF="../DM/PetscDualSpace.html#PetscDualSpace">PetscDualSpace</A> sp, <A HREF="../Sys/PetscInt.html#PetscInt">PetscInt</A> *Nc)
+</PRE>
+<H3><FONT COLOR="#CC3333">Input Parameter</FONT></H3>
+<DT><B>sp </B> -The <A HREF="../DM/PetscDualSpace.html#PetscDualSpace">PetscDualSpace</A>
+<br>
+<P>
+<H3><FONT COLOR="#CC3333">Output Parameter</FONT></H3>
+<DT><B>Nc </B> -The number of components
+<br>
+<P>
+Note: A vector space, for example, will have d components, where d is the spatial dimension
+<P>
+
+<P>
+<H3><FONT COLOR="#CC3333">See Also</FONT></H3>
+ <A HREF="../DT/PetscDualSpaceSetNumComponents.html#PetscDualSpaceSetNumComponents">PetscDualSpaceSetNumComponents</A>(), <A HREF="../DT/PetscDualSpaceGetDimension.html#PetscDualSpaceGetDimension">PetscDualSpaceGetDimension</A>(), <A HREF="../DT/PetscDualSpaceCreate.html#PetscDualSpaceCreate">PetscDualSpaceCreate</A>(), <A HREF="../DM/PetscDualSpace.html#PetscDualSpace">PetscDualSpace</A>
+<BR><P><B><P><B><FONT COLOR="#CC3333">Level:</FONT></B>intermediate
+<BR><FONT COLOR="#CC3333">Location:</FONT></B><A HREF="../../../src/dm/dt/interface/dtfe.c.html#PetscDualSpaceGetNumComponents">src/dm/dt/interface/dtfe.c</A>
+<BR><A HREF="./index.html">Index of all DT routines</A>
+<BR><A HREF="../../index.html">Table of Contents for all manual pages</A>
+<BR><A HREF="../singleindex.html">Index of all manual pages</A>
+</BODY></HTML>

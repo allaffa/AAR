@@ -1,0 +1,67 @@
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/dm/impls/plex/examples/tutorials/makefile.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:45:37+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/dm/impls/plex/examples/tutorials/makefile.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">CFLAGS	        =
+FFLAGS	        =
+CPPFLAGS        =
+FPPFLAGS        =
+LOCDIR          = src/dm/impls/plex/examples/tutorials/
+EXAMPLESC       = ex1.c ex2.c ex5.c
+EXAMPLESF       = ex1f90.F90
+MANSEC          = <a href="ROOT/docs/manualpages/DM/DM.html#DM">DM</a>
+
+include ${PETSC_DIR}/lib/petsc/conf/variables
+include ${PETSC_DIR}/lib/petsc/conf/rules
+
+<strong><font color="#FF0000">ex1:</font></strong> ex1.o  chkopts
+	-${CLINKER} -o ex1 ex1.o ${PETSC_DM_LIB}
+	${RM} -f ex1.o
+
+<strong><font color="#FF0000">ex1f90:</font></strong> ex1f90.o  chkopts
+	-${FLINKER} -o ex1f90 ex1f90.o  ${PETSC_DM_LIB}
+	${RM} -f ex1f90.o
+
+<strong><font color="#FF0000">ex2:</font></strong> ex2.o  chkopts
+	-${CLINKER} -o ex2 ex2.o ${PETSC_DM_LIB}
+	${RM} -f ex2.o
+
+<strong><font color="#FF0000">ex5:</font></strong> ex5.o  chkopts
+	-${CLINKER} -o ex5 ex5.o ${PETSC_DM_LIB}
+	${RM} -f ex5.o
+
+<strong><font color="#FF0000">ex6:</font></strong> ex6.o  chkopts
+	-${CLINKER} -o ex6 ex6.o ${PETSC_DM_LIB}
+	${RM} -f ex6.o
+
+<strong><font color="#FF0000">ex7:</font></strong> ex7.o  chkopts
+	-${CLINKER} -o ex7 ex7.o ${PETSC_DM_LIB}
+	${RM} -f ex7.o
+
+<font color="#A020F0">#--------------------------------------------------------------------------</font>
+
+<strong><font color="#FF0000">runex1:</font></strong>
+	-@${MPIEXEC} -n 2 ./ex1 -dim 3
+
+<strong><font color="#FF0000">runex1f90:</font></strong>
+	-@${MPIEXEC} -n 2 ./ex1 -dim 2
+
+<strong><font color="#FF0000">runex2:</font></strong>
+	-@${MPIEXEC} -n 1 ./ex2 -dim 3 -dm_refine 2 -dm_view hdf5:ex2.h5
+	-${PETSC_DIR}/bin/petsc_gen_xdmf.py ex2.h5
+
+<strong><font color="#FF0000">runex5:</font></strong>
+	-@${MPIEXEC} -n 2 ./ex5 -filename ${PETSC_DIR}/share/petsc/datafiles/meshes/square.msh -new_dm_view
+
+include ${PETSC_DIR}/lib/petsc/conf/test
+</pre>
+</body>
+
+</html>

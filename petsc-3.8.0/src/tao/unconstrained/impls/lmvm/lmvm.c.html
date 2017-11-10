@@ -1,0 +1,337 @@
+<center><a href="lmvm.c">Actual source code: lmvm.c</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/tao/unconstrained/impls/lmvm/lmvm.c.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-27T00:20:51+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/tao/unconstrained/impls/lmvm/lmvm.c.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+<a name="line1">  1: </a> #include <A href="../../../../../include/petsctaolinesearch.h.html">&lt;petsctaolinesearch.h&gt;</A>
+<a name="line2">  2: </a> #include <A href="../../../../../include/../src/tao/matrix/lmvmmat.h.html">&lt;../src/tao/matrix/lmvmmat.h&gt;</A>
+<a name="line3">  3: </a> #include <A href="../../../../../include/../src/tao/unconstrained/impls/lmvm/lmvm.h.html">&lt;../src/tao/unconstrained/impls/lmvm/lmvm.h&gt;</A>
+
+<a name="line5">  5: </a><strong><font color="#228B22">#define LMVM_BFGS                0</font></strong>
+<a name="line6">  6: </a><strong><font color="#228B22">#define LMVM_SCALED_GRADIENT     1</font></strong>
+<a name="line7">  7: </a><strong><font color="#228B22">#define LMVM_GRADIENT            2</font></strong>
+
+<a name="line9">  9: </a><strong><font color="#4169E1"><a name="TaoSolve_LMVM"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> TaoSolve_LMVM(<a href="../../../../../docs/manualpages/Tao/Tao.html#Tao">Tao</a> tao)</font></strong>
+<a name="line10"> 10: </a>{
+<a name="line11"> 11: </a>  TAO_LMVM                     *lmP = (TAO_LMVM *)tao-&gt;data;
+<a name="line12"> 12: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>                    f, fold, gdx, gnorm;
+<a name="line13"> 13: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>                    step = 1.0;
+<a name="line14"> 14: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a>                    delta;
+<a name="line15"> 15: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a>               ierr;
+<a name="line16"> 16: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>                     stepType;
+<a name="line17"> 17: </a>  <a href="../../../../../docs/manualpages/Tao/TaoConvergedReason.html#TaoConvergedReason">TaoConvergedReason</a>           reason = <a href="../../../../../docs/manualpages/Tao/TaoConvergedReason.html#TaoConvergedReason">TAO_CONTINUE_ITERATING</a>;
+<a name="line18"> 18: </a>  TaoLineSearchConvergedReason ls_status = TAOLINESEARCH_CONTINUE_ITERATING;
+
+
+<a name="line22"> 22: </a>  <font color="#4169E1">if</font> (tao-&gt;XL || tao-&gt;XU || tao-&gt;ops-&gt;computebounds) {
+<a name="line23"> 23: </a>    <a href="../../../../../docs/manualpages/Sys/PetscPrintf.html#PetscPrintf">PetscPrintf</a>(((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)tao)-&gt;comm,<font color="#666666">"WARNING: Variable bounds have been set but will be ignored by lmvm algorithm\n"</font>);
+<a name="line24"> 24: </a>  }
+
+<a name="line26"> 26: </a>  <font color="#B22222">/*  Check convergence criteria */</font>
+<a name="line27"> 27: </a>  <a href="../../../../../docs/manualpages/Tao/TaoComputeObjectiveAndGradient.html#TaoComputeObjectiveAndGradient">TaoComputeObjectiveAndGradient</a>(tao, tao-&gt;solution, &amp;f, tao-&gt;gradient);
+<a name="line28"> 28: </a>  TaoGradientNorm(tao, tao-&gt;gradient,<a href="../../../../../docs/manualpages/Vec/NORM_2.html#NORM_2">NORM_2</a>,&amp;gnorm);
+
+<a name="line30"> 30: </a>  <font color="#4169E1">if</font> (PetscIsInfOrNanReal(f) || PetscIsInfOrNanReal(gnorm)) <a href="../../../../../docs/manualpages/Sys/SETERRQ.html#SETERRQ">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>,1, <font color="#666666">"User provided compute function generated Inf or NaN"</font>);
+
+<a name="line32"> 32: </a>  <a href="../../../../../docs/manualpages/Tao/TaoMonitor.html#TaoMonitor">TaoMonitor</a>(tao, tao-&gt;niter, f, gnorm, 0.0, step, &amp;reason);
+<a name="line33"> 33: </a>  <font color="#4169E1">if</font> (reason != <a href="../../../../../docs/manualpages/Tao/TaoConvergedReason.html#TaoConvergedReason">TAO_CONTINUE_ITERATING</a>) <font color="#4169E1">return</font>(0);
+
+<a name="line35"> 35: </a>  <font color="#B22222">/*  Set initial scaling for the function */</font>
+<a name="line36"> 36: </a>  <font color="#4169E1">if</font> (f != 0.0) {
+<a name="line37"> 37: </a>    delta = 2.0 * PetscAbsScalar(f) / (gnorm*gnorm);
+<a name="line38"> 38: </a>  } <font color="#4169E1">else</font> {
+<a name="line39"> 39: </a>    delta = 2.0 / (gnorm*gnorm);
+<a name="line40"> 40: </a>  }
+<a name="line41"> 41: </a>  MatLMVMSetDelta(lmP-&gt;M,delta);
+
+<a name="line43"> 43: </a>  <font color="#B22222">/*  Set counter for gradient/reset steps */</font>
+<a name="line44"> 44: </a>  lmP-&gt;bfgs = 0;
+<a name="line45"> 45: </a>  lmP-&gt;sgrad = 0;
+<a name="line46"> 46: </a>  lmP-&gt;grad = 0;
+
+<a name="line48"> 48: </a>  <font color="#B22222">/*  Have not converged; continue with Newton method */</font>
+<a name="line49"> 49: </a>  <font color="#4169E1">while</font> (reason == <a href="../../../../../docs/manualpages/Tao/TaoConvergedReason.html#TaoConvergedReason">TAO_CONTINUE_ITERATING</a>) {
+<a name="line50"> 50: </a>    <font color="#B22222">/*  Compute direction */</font>
+<a name="line51"> 51: </a>    MatLMVMUpdate(lmP-&gt;M,tao-&gt;solution,tao-&gt;gradient);
+<a name="line52"> 52: </a>    MatLMVMSolve(lmP-&gt;M, tao-&gt;gradient, lmP-&gt;D);
+<a name="line53"> 53: </a>    ++lmP-&gt;bfgs;
+
+<a name="line55"> 55: </a>    <font color="#B22222">/*  Check for success (descent direction) */</font>
+<a name="line56"> 56: </a>    <a href="../../../../../docs/manualpages/Vec/VecDot.html#VecDot">VecDot</a>(lmP-&gt;D, tao-&gt;gradient, &amp;gdx);
+<a name="line57"> 57: </a>    <font color="#4169E1">if</font> ((gdx &lt;= 0.0) || PetscIsInfOrNanReal(gdx)) {
+<a name="line58"> 58: </a>      <font color="#B22222">/* Step is not descent or direction produced not a number</font>
+<a name="line59"> 59: </a><font color="#B22222">         We can assert bfgsUpdates &gt; 1 in this case because</font>
+<a name="line60"> 60: </a><font color="#B22222">         the first solve produces the scaled gradient direction,</font>
+<a name="line61"> 61: </a><font color="#B22222">         which is guaranteed to be descent</font>
+
+<a name="line63"> 63: </a><font color="#B22222">         Use steepest descent direction (scaled)</font>
+<a name="line64"> 64: </a><font color="#B22222">      */</font>
+
+<a name="line66"> 66: </a>      ++lmP-&gt;grad;
+
+<a name="line68"> 68: </a>      <font color="#4169E1">if</font> (f != 0.0) {
+<a name="line69"> 69: </a>        delta = 2.0 * PetscAbsScalar(f) / (gnorm*gnorm);
+<a name="line70"> 70: </a>      } <font color="#4169E1">else</font> {
+<a name="line71"> 71: </a>        delta = 2.0 / (gnorm*gnorm);
+<a name="line72"> 72: </a>      }
+<a name="line73"> 73: </a>      MatLMVMSetDelta(lmP-&gt;M, delta);
+<a name="line74"> 74: </a>      MatLMVMReset(lmP-&gt;M);
+<a name="line75"> 75: </a>      MatLMVMUpdate(lmP-&gt;M, tao-&gt;solution, tao-&gt;gradient);
+<a name="line76"> 76: </a>      MatLMVMSolve(lmP-&gt;M,tao-&gt;gradient, lmP-&gt;D);
+
+<a name="line78"> 78: </a>      <font color="#B22222">/* On a reset, the direction cannot be not a number; it is a</font>
+<a name="line79"> 79: </a><font color="#B22222">         scaled gradient step.  No need to check for this condition. */</font>
+
+<a name="line81"> 81: </a>      lmP-&gt;bfgs = 1;
+<a name="line82"> 82: </a>      ++lmP-&gt;sgrad;
+<a name="line83"> 83: </a>      stepType = LMVM_SCALED_GRADIENT;
+<a name="line84"> 84: </a>    } <font color="#4169E1">else</font> {
+<a name="line85"> 85: </a>      <font color="#4169E1">if</font> (1 == lmP-&gt;bfgs) {
+<a name="line86"> 86: </a>        <font color="#B22222">/*  The first BFGS direction is always the scaled gradient */</font>
+<a name="line87"> 87: </a>        ++lmP-&gt;sgrad;
+<a name="line88"> 88: </a>        stepType = LMVM_SCALED_GRADIENT;
+<a name="line89"> 89: </a>      } <font color="#4169E1">else</font> {
+<a name="line90"> 90: </a>        ++lmP-&gt;bfgs;
+<a name="line91"> 91: </a>        stepType = LMVM_BFGS;
+<a name="line92"> 92: </a>      }
+<a name="line93"> 93: </a>    }
+<a name="line94"> 94: </a>    <a href="../../../../../docs/manualpages/Vec/VecScale.html#VecScale">VecScale</a>(lmP-&gt;D, -1.0);
+
+<a name="line96"> 96: </a>    <font color="#B22222">/*  Perform the linesearch */</font>
+<a name="line97"> 97: </a>    fold = f;
+<a name="line98"> 98: </a>    <a href="../../../../../docs/manualpages/Vec/VecCopy.html#VecCopy">VecCopy</a>(tao-&gt;solution, lmP-&gt;Xold);
+<a name="line99"> 99: </a>    <a href="../../../../../docs/manualpages/Vec/VecCopy.html#VecCopy">VecCopy</a>(tao-&gt;gradient, lmP-&gt;Gold);
+
+<a name="line101">101: </a>    <a href="../../../../../docs/manualpages/TaoLineSearch/TaoLineSearchApply.html#TaoLineSearchApply">TaoLineSearchApply</a>(tao-&gt;linesearch, tao-&gt;solution, &amp;f, tao-&gt;gradient, lmP-&gt;D, &amp;step,&amp;ls_status);
+<a name="line102">102: </a>    <a href="../../../../../docs/manualpages/Tao/TaoAddLineSearchCounts.html#TaoAddLineSearchCounts">TaoAddLineSearchCounts</a>(tao);
+
+<a name="line104">104: </a>    <font color="#4169E1">while</font> (ls_status != TAOLINESEARCH_SUCCESS &amp;&amp; ls_status != TAOLINESEARCH_SUCCESS_USER &amp;&amp; (stepType != LMVM_GRADIENT)) {
+<a name="line105">105: </a>      <font color="#B22222">/*  Linesearch failed */</font>
+<a name="line106">106: </a>      <font color="#B22222">/*  Reset factors and use scaled gradient step */</font>
+<a name="line107">107: </a>      f = fold;
+<a name="line108">108: </a>      <a href="../../../../../docs/manualpages/Vec/VecCopy.html#VecCopy">VecCopy</a>(lmP-&gt;Xold, tao-&gt;solution);
+<a name="line109">109: </a>      <a href="../../../../../docs/manualpages/Vec/VecCopy.html#VecCopy">VecCopy</a>(lmP-&gt;Gold, tao-&gt;gradient);
+
+<a name="line111">111: </a>      <font color="#4169E1">switch</font>(stepType) {
+<a name="line112">112: </a>      <font color="#4169E1">case</font> LMVM_BFGS:
+<a name="line113">113: </a>        <font color="#B22222">/*  Failed to obtain acceptable iterate with BFGS step */</font>
+<a name="line114">114: </a>        <font color="#B22222">/*  Attempt to use the scaled gradient direction */</font>
+
+<a name="line116">116: </a>        <font color="#4169E1">if</font> (f != 0.0) {
+<a name="line117">117: </a>          delta = 2.0 * PetscAbsScalar(f) / (gnorm*gnorm);
+<a name="line118">118: </a>        } <font color="#4169E1">else</font> {
+<a name="line119">119: </a>          delta = 2.0 / (gnorm*gnorm);
+<a name="line120">120: </a>        }
+<a name="line121">121: </a>        MatLMVMSetDelta(lmP-&gt;M, delta);
+<a name="line122">122: </a>        MatLMVMReset(lmP-&gt;M);
+<a name="line123">123: </a>        MatLMVMUpdate(lmP-&gt;M, tao-&gt;solution, tao-&gt;gradient);
+<a name="line124">124: </a>        MatLMVMSolve(lmP-&gt;M, tao-&gt;gradient, lmP-&gt;D);
+
+<a name="line126">126: </a>        <font color="#B22222">/* On a reset, the direction cannot be not a number; it is a</font>
+<a name="line127">127: </a><font color="#B22222">           scaled gradient step.  No need to check for this condition. */</font>
+
+<a name="line129">129: </a>        lmP-&gt;bfgs = 1;
+<a name="line130">130: </a>        ++lmP-&gt;sgrad;
+<a name="line131">131: </a>        stepType = LMVM_SCALED_GRADIENT;
+<a name="line132">132: </a>        <font color="#4169E1">break</font>;
+
+<a name="line134">134: </a>      <font color="#4169E1">case</font> LMVM_SCALED_GRADIENT:
+<a name="line135">135: </a>        <font color="#B22222">/* The scaled gradient step did not produce a new iterate;</font>
+<a name="line136">136: </a><font color="#B22222">           attempt to use the gradient direction.</font>
+<a name="line137">137: </a><font color="#B22222">           Need to make sure we are not using a different diagonal scaling */</font>
+<a name="line138">138: </a>        MatLMVMSetDelta(lmP-&gt;M, 1.0);
+<a name="line139">139: </a>        MatLMVMReset(lmP-&gt;M);
+<a name="line140">140: </a>        MatLMVMUpdate(lmP-&gt;M, tao-&gt;solution, tao-&gt;gradient);
+<a name="line141">141: </a>        MatLMVMSolve(lmP-&gt;M, tao-&gt;gradient, lmP-&gt;D);
+
+<a name="line143">143: </a>        lmP-&gt;bfgs = 1;
+<a name="line144">144: </a>        ++lmP-&gt;grad;
+<a name="line145">145: </a>        stepType = LMVM_GRADIENT;
+<a name="line146">146: </a>        <font color="#4169E1">break</font>;
+<a name="line147">147: </a>      }
+<a name="line148">148: </a>      <a href="../../../../../docs/manualpages/Vec/VecScale.html#VecScale">VecScale</a>(lmP-&gt;D, -1.0);
+
+<a name="line150">150: </a>      <font color="#B22222">/*  Perform the linesearch */</font>
+<a name="line151">151: </a>      <a href="../../../../../docs/manualpages/TaoLineSearch/TaoLineSearchApply.html#TaoLineSearchApply">TaoLineSearchApply</a>(tao-&gt;linesearch, tao-&gt;solution, &amp;f, tao-&gt;gradient, lmP-&gt;D, &amp;step, &amp;ls_status);
+<a name="line152">152: </a>      <a href="../../../../../docs/manualpages/Tao/TaoAddLineSearchCounts.html#TaoAddLineSearchCounts">TaoAddLineSearchCounts</a>(tao);
+<a name="line153">153: </a>    }
+
+<a name="line155">155: </a>    <font color="#4169E1">if</font> (ls_status != TAOLINESEARCH_SUCCESS &amp;&amp; ls_status != TAOLINESEARCH_SUCCESS_USER) {
+<a name="line156">156: </a>      <font color="#B22222">/*  Failed to find an improving point */</font>
+<a name="line157">157: </a>      f = fold;
+<a name="line158">158: </a>      <a href="../../../../../docs/manualpages/Vec/VecCopy.html#VecCopy">VecCopy</a>(lmP-&gt;Xold, tao-&gt;solution);
+<a name="line159">159: </a>      <a href="../../../../../docs/manualpages/Vec/VecCopy.html#VecCopy">VecCopy</a>(lmP-&gt;Gold, tao-&gt;gradient);
+<a name="line160">160: </a>      step = 0.0;
+<a name="line161">161: </a>      reason = <a href="../../../../../docs/manualpages/Tao/TaoConvergedReason.html#TaoConvergedReason">TAO_DIVERGED_LS_FAILURE</a>;
+<a name="line162">162: </a>      tao-&gt;reason = <a href="../../../../../docs/manualpages/Tao/TaoConvergedReason.html#TaoConvergedReason">TAO_DIVERGED_LS_FAILURE</a>;
+<a name="line163">163: </a>    }
+
+<a name="line165">165: </a>    <font color="#B22222">/*  Check for termination */</font>
+<a name="line166">166: </a>    TaoGradientNorm(tao, tao-&gt;gradient,<a href="../../../../../docs/manualpages/Vec/NORM_2.html#NORM_2">NORM_2</a>,&amp;gnorm);
+
+<a name="line168">168: </a>    tao-&gt;niter++;
+<a name="line169">169: </a>    <a href="../../../../../docs/manualpages/Tao/TaoMonitor.html#TaoMonitor">TaoMonitor</a>(tao,tao-&gt;niter,f,gnorm,0.0,step,&amp;reason);
+<a name="line170">170: </a>  }
+<a name="line171">171: </a>  <font color="#4169E1">return</font>(0);
+<a name="line172">172: </a>}
+
+<a name="line174">174: </a><strong><font color="#4169E1"><a name="TaoSetUp_LMVM"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> TaoSetUp_LMVM(<a href="../../../../../docs/manualpages/Tao/Tao.html#Tao">Tao</a> tao)</font></strong>
+<a name="line175">175: </a>{
+<a name="line176">176: </a>  TAO_LMVM       *lmP = (TAO_LMVM *)tao-&gt;data;
+<a name="line177">177: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html#PetscInt">PetscInt</a>       n,N;
+<a name="line179">179: </a>  <a href="../../../../../docs/manualpages/KSP/KSP.html#KSP">KSP</a>            H0ksp;
+
+<a name="line182">182: </a>  <font color="#B22222">/* Existence of tao-&gt;solution checked in <a href="../../../../../docs/manualpages/Tao/TaoSetUp.html#TaoSetUp">TaoSetUp</a>() */</font>
+<a name="line183">183: </a>  <font color="#4169E1">if</font> (!tao-&gt;gradient) {<a href="../../../../../docs/manualpages/Vec/VecDuplicate.html#VecDuplicate">VecDuplicate</a>(tao-&gt;solution,&amp;tao-&gt;gradient);  }
+<a name="line184">184: </a>  <font color="#4169E1">if</font> (!tao-&gt;stepdirection) {<a href="../../../../../docs/manualpages/Vec/VecDuplicate.html#VecDuplicate">VecDuplicate</a>(tao-&gt;solution,&amp;tao-&gt;stepdirection);  }
+<a name="line185">185: </a>  <font color="#4169E1">if</font> (!lmP-&gt;D) {<a href="../../../../../docs/manualpages/Vec/VecDuplicate.html#VecDuplicate">VecDuplicate</a>(tao-&gt;solution,&amp;lmP-&gt;D);  }
+<a name="line186">186: </a>  <font color="#4169E1">if</font> (!lmP-&gt;Xold) {<a href="../../../../../docs/manualpages/Vec/VecDuplicate.html#VecDuplicate">VecDuplicate</a>(tao-&gt;solution,&amp;lmP-&gt;Xold);  }
+<a name="line187">187: </a>  <font color="#4169E1">if</font> (!lmP-&gt;Gold) {<a href="../../../../../docs/manualpages/Vec/VecDuplicate.html#VecDuplicate">VecDuplicate</a>(tao-&gt;solution,&amp;lmP-&gt;Gold);  }
+
+<a name="line189">189: </a>  <font color="#B22222">/*  Create matrix for the limited memory approximation */</font>
+<a name="line190">190: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetLocalSize.html#VecGetLocalSize">VecGetLocalSize</a>(tao-&gt;solution,&amp;n);
+<a name="line191">191: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetSize.html#VecGetSize">VecGetSize</a>(tao-&gt;solution,&amp;N);
+<a name="line192">192: </a>  <a href="../../../../../docs/manualpages/Tao/MatCreateLMVM.html#MatCreateLMVM">MatCreateLMVM</a>(((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)tao)-&gt;comm,n,N,&amp;lmP-&gt;M);
+<a name="line193">193: </a>  MatLMVMAllocateVectors(lmP-&gt;M,tao-&gt;solution);
+
+<a name="line195">195: </a>  <font color="#B22222">/* If the user has set a matrix to solve as the initial H0, set the options prefix here, and set up the <a href="../../../../../docs/manualpages/KSP/KSP.html#KSP">KSP</a> */</font>
+<a name="line196">196: </a>  <font color="#4169E1">if</font> (lmP-&gt;H0) {
+<a name="line197">197: </a>    const char *prefix;
+<a name="line198">198: </a>    <a href="../../../../../docs/manualpages/PC/PC.html#PC">PC</a> H0pc;
+
+<a name="line200">200: </a>    MatLMVMSetH0(lmP-&gt;M, lmP-&gt;H0);
+<a name="line201">201: </a>    MatLMVMGetH0KSP(lmP-&gt;M, &amp;H0ksp);
+
+<a name="line203">203: </a>    <a href="../../../../../docs/manualpages/Tao/TaoGetOptionsPrefix.html#TaoGetOptionsPrefix">TaoGetOptionsPrefix</a>(tao, &amp;prefix);
+<a name="line204">204: </a>    <a href="../../../../../docs/manualpages/KSP/KSPSetOptionsPrefix.html#KSPSetOptionsPrefix">KSPSetOptionsPrefix</a>(H0ksp, prefix);
+<a name="line205">205: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectAppendOptionsPrefix.html#PetscObjectAppendOptionsPrefix">PetscObjectAppendOptionsPrefix</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)H0ksp, <font color="#666666">"tao_h0_"</font>);
+<a name="line206">206: </a>    <a href="../../../../../docs/manualpages/KSP/KSPGetPC.html#KSPGetPC">KSPGetPC</a>(H0ksp, &amp;H0pc);
+<a name="line207">207: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectAppendOptionsPrefix.html#PetscObjectAppendOptionsPrefix">PetscObjectAppendOptionsPrefix</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)H0pc,  <font color="#666666">"tao_h0_"</font>);
+
+<a name="line209">209: </a>    <a href="../../../../../docs/manualpages/KSP/KSPSetFromOptions.html#KSPSetFromOptions">KSPSetFromOptions</a>(H0ksp);
+<a name="line210">210: </a>    <a href="../../../../../docs/manualpages/KSP/KSPSetUp.html#KSPSetUp">KSPSetUp</a>(H0ksp);
+<a name="line211">211: </a>  }
+
+<a name="line213">213: </a>  <font color="#4169E1">return</font>(0);
+<a name="line214">214: </a>}
+
+<a name="line216">216: </a><font color="#B22222">/* ---------------------------------------------------------- */</font>
+<a name="line217">217: </a><strong><font color="#4169E1"><a name="TaoDestroy_LMVM"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> TaoDestroy_LMVM(<a href="../../../../../docs/manualpages/Tao/Tao.html#Tao">Tao</a> tao)</font></strong>
+<a name="line218">218: </a>{
+<a name="line219">219: </a>  TAO_LMVM       *lmP = (TAO_LMVM *)tao-&gt;data;
+
+<a name="line223">223: </a>  <font color="#4169E1">if</font> (tao-&gt;setupcalled) {
+<a name="line224">224: </a>    <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;lmP-&gt;Xold);
+<a name="line225">225: </a>    <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;lmP-&gt;Gold);
+<a name="line226">226: </a>    <a href="../../../../../docs/manualpages/Vec/VecDestroy.html#VecDestroy">VecDestroy</a>(&amp;lmP-&gt;D);
+<a name="line227">227: </a>    <a href="../../../../../docs/manualpages/Mat/MatDestroy.html#MatDestroy">MatDestroy</a>(&amp;lmP-&gt;M);
+<a name="line228">228: </a>  }
+
+<a name="line230">230: </a>  <font color="#4169E1">if</font> (lmP-&gt;H0) {
+<a name="line231">231: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectDereference.html#PetscObjectDereference">PetscObjectDereference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)lmP-&gt;H0);
+<a name="line232">232: </a>  }
+
+<a name="line234">234: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html#PetscFree">PetscFree</a>(tao-&gt;data);
+
+<a name="line236">236: </a>  <font color="#4169E1">return</font>(0);
+<a name="line237">237: </a>}
+
+<a name="line239">239: </a><font color="#B22222">/*------------------------------------------------------------*/</font>
+<a name="line240">240: </a><strong><font color="#4169E1"><a name="TaoSetFromOptions_LMVM"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> TaoSetFromOptions_LMVM(PetscOptionItems *PetscOptionsObject,<a href="../../../../../docs/manualpages/Tao/Tao.html#Tao">Tao</a> tao)</font></strong>
+<a name="line241">241: </a>{
+
+<a name="line245">245: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsHead.html#PetscOptionsHead">PetscOptionsHead</a>(PetscOptionsObject,<font color="#666666">"Limited-memory variable-metric method for unconstrained optimization"</font>);
+<a name="line246">246: </a>  <a href="../../../../../docs/manualpages/TaoLineSearch/TaoLineSearchSetFromOptions.html#TaoLineSearchSetFromOptions">TaoLineSearchSetFromOptions</a>(tao-&gt;linesearch);
+<a name="line247">247: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsTail.html#PetscOptionsTail">PetscOptionsTail</a>();
+<a name="line248">248: </a>  <font color="#4169E1">return</font>(0);
+<a name="line249">249: </a>}
+
+<a name="line251">251: </a><font color="#B22222">/*------------------------------------------------------------*/</font>
+<a name="line252">252: </a><strong><font color="#4169E1"><a name="TaoView_LMVM"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> TaoView_LMVM(<a href="../../../../../docs/manualpages/Tao/Tao.html#Tao">Tao</a> tao, <a href="../../../../../docs/manualpages/Viewer/PetscViewer.html#PetscViewer">PetscViewer</a> viewer)</font></strong>
+<a name="line253">253: </a>{
+<a name="line254">254: </a>  TAO_LMVM       *lm = (TAO_LMVM *)tao-&gt;data;
+<a name="line255">255: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html#PetscBool">PetscBool</a>      isascii;
+
+<a name="line259">259: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html#PetscObjectTypeCompare">PetscObjectTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)viewer, <a href="../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html#PETSCVIEWERASCII">PETSCVIEWERASCII</a>, &amp;isascii);
+<a name="line260">260: </a>  <font color="#4169E1">if</font> (isascii) {
+<a name="line261">261: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPushTab.html#PetscViewerASCIIPushTab">PetscViewerASCIIPushTab</a>(viewer);
+<a name="line262">262: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"BFGS steps: %D\n"</font>, lm-&gt;bfgs);
+<a name="line263">263: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"Scaled gradient steps: %D\n"</font>, lm-&gt;sgrad);
+<a name="line264">264: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html#PetscViewerASCIIPrintf">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"Gradient steps: %D\n"</font>, lm-&gt;grad);
+<a name="line265">265: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPopTab.html#PetscViewerASCIIPopTab">PetscViewerASCIIPopTab</a>(viewer);
+<a name="line266">266: </a>  }
+<a name="line267">267: </a>  <font color="#4169E1">return</font>(0);
+<a name="line268">268: </a>}
+
+<a name="line270">270: </a><font color="#B22222">/* ---------------------------------------------------------- */</font>
+
+<a name="line272">272: </a><font color="#B22222">/*MC</font>
+<a name="line273">273: </a><font color="#B22222">     <a href="../../../../../docs/manualpages/Tao/TAOLMVM.html#TAOLMVM">TAOLMVM</a> - Limited Memory Variable Metric method is a quasi-Newton</font>
+<a name="line274">274: </a><font color="#B22222">     optimization solver for unconstrained minimization. It solves</font>
+<a name="line275">275: </a><font color="#B22222">     the Newton step</font>
+<a name="line276">276: </a><font color="#B22222">              Hkdk = - gk</font>
+
+<a name="line278">278: </a><font color="#B22222">     using an approximation Bk in place of Hk, where Bk is composed using</font>
+<a name="line279">279: </a><font color="#B22222">     the BFGS update formula. A More-Thuente line search is then used</font>
+<a name="line280">280: </a><font color="#B22222">     to computed the steplength in the dk direction</font>
+<a name="line281">281: </a><font color="#B22222">  Options Database Keys:</font>
+<a name="line282">282: </a><font color="#B22222">+     -tao_lmm_vectors - number of vectors to use for approximation</font>
+<a name="line283">283: </a><font color="#B22222">.     -tao_lmm_scale_type - "none","scalar","broyden"</font>
+<a name="line284">284: </a><font color="#B22222">.     -tao_lmm_limit_type - "none","average","relative","absolute"</font>
+<a name="line285">285: </a><font color="#B22222">.     -tao_lmm_rescale_type - "none","scalar","gl"</font>
+<a name="line286">286: </a><font color="#B22222">.     -tao_lmm_limit_mu - mu limiting factor</font>
+<a name="line287">287: </a><font color="#B22222">.     -tao_lmm_limit_nu - nu limiting factor</font>
+<a name="line288">288: </a><font color="#B22222">.     -tao_lmm_delta_min - minimum delta value</font>
+<a name="line289">289: </a><font color="#B22222">.     -tao_lmm_delta_max - maximum delta value</font>
+<a name="line290">290: </a><font color="#B22222">.     -tao_lmm_broyden_phi - phi factor for Broyden scaling</font>
+<a name="line291">291: </a><font color="#B22222">.     -tao_lmm_scalar_alpha - alpha factor for scalar scaling</font>
+<a name="line292">292: </a><font color="#B22222">.     -tao_lmm_rescale_alpha - alpha factor for rescaling diagonal</font>
+<a name="line293">293: </a><font color="#B22222">.     -tao_lmm_rescale_beta - beta factor for rescaling diagonal</font>
+<a name="line294">294: </a><font color="#B22222">.     -tao_lmm_scalar_history - amount of history for scalar scaling</font>
+<a name="line295">295: </a><font color="#B22222">.     -tao_lmm_rescale_history - amount of history for rescaling diagonal</font>
+<a name="line296">296: </a><font color="#B22222">-     -tao_lmm_eps - rejection tolerance</font>
+
+<a name="line298">298: </a><font color="#B22222">  Level: beginner</font>
+<a name="line299">299: </a><font color="#B22222">M*/</font>
+
+<a name="line301">301: </a><strong><font color="#4169E1"><a name="TaoCreate_LMVM"></a>PETSC_EXTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html#PetscErrorCode">PetscErrorCode</a> TaoCreate_LMVM(<a href="../../../../../docs/manualpages/Tao/Tao.html#Tao">Tao</a> tao)</font></strong>
+<a name="line302">302: </a>{
+<a name="line303">303: </a>  TAO_LMVM       *lmP;
+<a name="line304">304: </a>  const char     *morethuente_type = TAOLINESEARCHMT;
+
+<a name="line308">308: </a>  tao-&gt;ops-&gt;setup = TaoSetUp_LMVM;
+<a name="line309">309: </a>  tao-&gt;ops-&gt;solve = TaoSolve_LMVM;
+<a name="line310">310: </a>  tao-&gt;ops-&gt;view = TaoView_LMVM;
+<a name="line311">311: </a>  tao-&gt;ops-&gt;setfromoptions = TaoSetFromOptions_LMVM;
+<a name="line312">312: </a>  tao-&gt;ops-&gt;destroy = TaoDestroy_LMVM;
+
+<a name="line314">314: </a>  <a href="../../../../../docs/manualpages/Sys/PetscNewLog.html#PetscNewLog">PetscNewLog</a>(tao,&amp;lmP);
+<a name="line315">315: </a>  lmP-&gt;D = 0;
+<a name="line316">316: </a>  lmP-&gt;M = 0;
+<a name="line317">317: </a>  lmP-&gt;Xold = 0;
+<a name="line318">318: </a>  lmP-&gt;Gold = 0;
+<a name="line319">319: </a>  lmP-&gt;H0   = NULL;
+
+<a name="line321">321: </a>  tao-&gt;data = (void*)lmP;
+<a name="line322">322: </a>  <font color="#B22222">/* Override default settings (unless already changed) */</font>
+<a name="line323">323: </a>  <font color="#4169E1">if</font> (!tao-&gt;max_it_changed) tao-&gt;max_it = 2000;
+<a name="line324">324: </a>  <font color="#4169E1">if</font> (!tao-&gt;max_funcs_changed) tao-&gt;max_funcs = 4000;
+
+<a name="line326">326: </a>  <a href="../../../../../docs/manualpages/TaoLineSearch/TaoLineSearchCreate.html#TaoLineSearchCreate">TaoLineSearchCreate</a>(((<a href="../../../../../docs/manualpages/Sys/PetscObject.html#PetscObject">PetscObject</a>)tao)-&gt;comm,&amp;tao-&gt;linesearch);
+<a name="line327">327: </a>  <a href="../../../../../docs/manualpages/TaoLineSearch/TaoLineSearchSetType.html#TaoLineSearchSetType">TaoLineSearchSetType</a>(tao-&gt;linesearch,morethuente_type);
+<a name="line328">328: </a>  <a href="../../../../../docs/manualpages/TaoLineSearch/TaoLineSearchUseTaoRoutines.html#TaoLineSearchUseTaoRoutines">TaoLineSearchUseTaoRoutines</a>(tao-&gt;linesearch,tao);
+<a name="line329">329: </a>  <a href="../../../../../docs/manualpages/TaoLineSearch/TaoLineSearchSetOptionsPrefix.html#TaoLineSearchSetOptionsPrefix">TaoLineSearchSetOptionsPrefix</a>(tao-&gt;linesearch,tao-&gt;hdr.prefix);
+<a name="line330">330: </a>  <font color="#4169E1">return</font>(0);
+<a name="line331">331: </a>}
+</pre>
+</body>
+
+</html>

@@ -1,0 +1,135 @@
+<center><a href="somefort.F">Actual source code: somefort.F</a></center><br>
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/sys/fsrc/somefort.F.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:10:56+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/sys/fsrc/somefort.F.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+<a name="line1">  1: </a>!
+<a name="line2">  2: </a>!     Prevents: Warning: Same actual argument associated with INTENT(IN)
+<a name="line3">  3: </a>!     argument 'errorcode' and INTENT(OUT) argument 'ierror' at (1)
+<a name="line4">  4: </a>!     when <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Abort.html#MPI_Abort">MPI_Abort</a>() is called directly by
+<a name="line5">  5: </a>!
+
+<a name="line7">  7: </a>      subroutine MPIU_Abort(comm,ierr)
+<a name="line8">  8: </a>      implicit none
+
+<a name="line10"> 10: </a><font color="#A020F0">#include      &lt;../src/sys/f90-mod/petscsys.h&gt;</font>
+
+<a name="line12"> 12: </a>      integer comm,ierr,nierr
+
+<a name="line14"> 14: </a>      call <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Abort.html#MPI_Abort">MPI_Abort</a>(comm,ierr,nierr)
+
+<a name="line16"> 16: </a>      <font color="#4169E1">return</font>
+<a name="line17"> 17: </a>      end
+
+<a name="line19"> 19: </a>!
+<a name="line20"> 20: </a>!
+<a name="line21"> 21: </a>!     Utility routine used to set constants into the
+<a name="line22"> 22: </a>!     PETSc Fortran common block
+<a name="line23"> 23: </a>!
+
+<a name="line25"> 25: </a>      subroutine PetscSetCommonBlock(c1,c2)
+<a name="line26"> 26: </a>      implicit none
+
+<a name="line28"> 28: </a><font color="#A020F0">#include      &lt;../src/sys/f90-mod/petscsys.h&gt;</font>
+
+<a name="line30"> 30: </a>      integer c1,c2
+
+<a name="line32"> 32: </a>      <a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>    = c1
+<a name="line33"> 33: </a>      <a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>     = c2
+
+<a name="line35"> 35: </a>      call PetscSetFortranBasePointers(PETSC_NULL_CHARACTER,            &amp;
+<a name="line36"> 36: </a>     &amp;     PETSC_NULL_INTEGER,PETSC_NULL_SCALAR,                        &amp;
+<a name="line37"> 37: </a>     &amp;     PETSC_NULL_DOUBLE,PETSC_NULL_REAL,                           &amp;
+<a name="line38"> 38: </a>     &amp;     PETSC_NULL_BOOL,PETSC_NULL_FUNCTION)
+
+<a name="line40"> 40: </a>      <font color="#4169E1">return</font>
+<a name="line41"> 41: </a>      end
+
+<a name="line43"> 43: </a>      subroutine PetscGetCommonCOMM(c1)
+<a name="line44"> 44: </a>      implicit none
+<a name="line45"> 45: </a><font color="#A020F0">#include      &lt;../src/sys/f90-mod/petscsys.h&gt;</font>
+<a name="line46"> 46: </a>      integer c1
+
+<a name="line48"> 48: </a>      c1 = <a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>
+<a name="line49"> 49: </a>      <font color="#4169E1">return</font>
+<a name="line50"> 50: </a>      end
+
+<a name="line52"> 52: </a><font color="#A020F0">#if defined(PETSC_USE_REAL___FLOAT128)</font>
+<a name="line53"> 53: </a>      subroutine PetscSetCommonBlockMPI(freal,fscalar,fsum)
+<a name="line54"> 54: </a>      implicit none
+
+<a name="line56"> 56: </a><font color="#A020F0">#include      &lt;../src/sys/f90-mod/petscsys.h&gt;</font>
+
+<a name="line58"> 58: </a>      integer freal,fscalar,fsum
+
+<a name="line60"> 60: </a>      MPIU_REAL   = freal
+<a name="line61"> 61: </a>      <a href="../../../docs/manualpages/Sys/MPIU_SCALAR.html#MPIU_SCALAR">MPIU_SCALAR</a> = fscalar
+<a name="line62"> 62: </a>      MPIU_SUM    = fsum
+<a name="line63"> 63: </a>      <font color="#4169E1">return</font>
+<a name="line64"> 64: </a>      end
+<a name="line65"> 65: </a><font color="#A020F0">#endif</font>
+
+<a name="line67"> 67: </a>      subroutine PetscSetCommonBlockNumeric(pi,maxreal,minreal,eps,seps,    &amp;
+<a name="line68"> 68: </a>     &amp;                     small,pinf,pninf)
+<a name="line69"> 69: </a>      implicit none
+
+<a name="line71"> 71: </a><font color="#A020F0">#include      &lt;../src/sys/f90-mod/petscsys.h&gt;</font>
+
+<a name="line73"> 73: </a>      <a href="../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> pi,maxreal,minreal,eps,seps
+<a name="line74"> 74: </a>      <a href="../../../docs/manualpages/Sys/PetscReal.html#PetscReal">PetscReal</a> small,pinf,pninf
+
+<a name="line76"> 76: </a>      PETSC_PI = pi
+<a name="line77"> 77: </a>      PETSC_MAX_REAL = maxreal
+<a name="line78"> 78: </a>      PETSC_MIN_REAL = minreal
+<a name="line79"> 79: </a>      PETSC_MACHINE_EPSILON = eps
+<a name="line80"> 80: </a>      PETSC_SQRT_MACHINE_EPSILON = seps
+<a name="line81"> 81: </a>      PETSC_SMALL = small
+<a name="line82"> 82: </a>      PETSC_INFINITY = pinf
+<a name="line83"> 83: </a>      PETSC_NINFINITY = pninf
+
+<a name="line85"> 85: </a>      <font color="#4169E1">return</font>
+<a name="line86"> 86: </a>      end
+
+
+<a name="line89"> 89: </a>      block data PetscCommInit
+<a name="line90"> 90: </a>      implicit none
+<a name="line91"> 91: </a>!
+<a name="line92"> 92: </a>!     this code is duplicated - because including ../src/sys/f90-mod/petscsys.h here
+<a name="line93"> 93: </a>!     gives compile errors.
+<a name="line94"> 94: </a>!
+<a name="line95"> 95: </a>      <a href="../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a> <a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>
+<a name="line96"> 96: </a>      <a href="../../../docs/manualpages/Sys/MPI_Comm.html#MPI_Comm">MPI_Comm</a> <a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>
+<a name="line97"> 97: </a>      common /petscfortran9/ <a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a>
+<a name="line98"> 98: </a>      common /petscfortran10/ <a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a>
+<a name="line99"> 99: </a>      data   <a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html#PETSC_COMM_WORLD">PETSC_COMM_WORLD</a> /0/
+<a name="line100">100: </a>      data   <a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html#PETSC_COMM_SELF">PETSC_COMM_SELF</a> /0/
+<a name="line101">101: </a>      end
+
+<a name="line103">103: </a><font color="#A020F0">#if defined(PETSC_HAVE_FORTRAN_GET_COMMAND_ARGUMENT)</font>
+<a name="line104">104: </a>      integer function PetscCommandArgumentCount()
+<a name="line105">105: </a>      implicit none
+<a name="line106">106: </a>      PetscCommandArgumentCount= command_argument_count()
+<a name="line107">107: </a>      <font color="#4169E1">return</font>
+<a name="line108">108: </a>      end
+
+<a name="line110">110: </a>      subroutine PetscGetCommandArgument(n,val)
+<a name="line111">111: </a>      implicit none
+<a name="line112">112: </a>      integer n
+<a name="line113">113: </a>      character(*) val
+<a name="line114">114: </a>      call get_command_argument(n,val)
+<a name="line115">115: </a>      <font color="#4169E1">return</font>
+<a name="line116">116: </a>      end
+
+<a name="line118">118: </a><font color="#A020F0">#endif</font>
+</pre>
+</body>
+
+</html>

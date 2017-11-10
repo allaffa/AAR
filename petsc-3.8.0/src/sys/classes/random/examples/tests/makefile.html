@@ -1,0 +1,46 @@
+
+<html>
+<head> <link rel="canonical" href="http://www.mcs.anl.gov/petsc/petsc-current/src/sys/classes/random/examples/tests/makefile.html" />
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2017-09-26T23:06:22+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+   <div id="version" align=right><b>petsc-3.8.0 2017-09-26</b></div>
+   <div id="bugreport" align=right><a href="mailto:petsc-maint@mcs.anl.gov?subject=Typo or Error in Documentation &body=Please describe the typo or error in the documentation: petsc-3.8.0 v3.8 src/sys/classes/random/examples/tests/makefile.html "><small>Report Typos and Errors</small></a></div>
+<pre width="80">
+CFLAGS	        =
+FFLAGS	        =
+CPPFLAGS        =
+FPPFLAGS        =
+LOCDIR          = src/sys/classes/random/examples/tests/
+EXAMPLESC       = ex3.c
+EXAMPLESF       =
+MANSEC          = Sys
+
+include ${PETSC_DIR}/lib/petsc/conf/variables
+include ${PETSC_DIR}/lib/petsc/conf/rules
+
+<strong><font color="#FF0000">ex3:</font></strong> ex3.o chkopts
+	-${CLINKER} -o ex3 ex3.o  ${PETSC_SYS_LIB}
+	${RM} -f ex3.o
+
+<font color="#A020F0">#----------------------------------------------------------------------------</font>
+<strong><font color="#FF0000">runex3:</font></strong>
+	-@${MPIEXEC} -n 1 ./ex3
+
+TESTEXAMPLES_C		       =
+TESTEXAMPLES_C_X	       =
+TESTEXAMPLES_FORTRAN	       =
+TESTEXAMPLES_FORTRAN_NOCOMPLEX =
+TESTEXAMPLES_FORTRAN_COMPLEX   =
+TESTEXAMPLES_FORTRAN_MPIUNI    =
+TESTEXAMPLES_C_X_MPIUNI      =
+TESTEXAMPLES_13		       =
+
+include ${PETSC_DIR}/lib/petsc/conf/test
+</pre>
+</body>
+
+</html>
