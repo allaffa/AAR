@@ -544,7 +544,7 @@ void Setup_and_Initialize(AAR_OBJ* pAAR)
 
 void ObjectInitialize(AAR_OBJ* pAAR)
 {
-  PetscOptionsGetString(PETSC_NULL,"-name",pAAR->file,sizeof(pAAR->file),PETSC_NULL);
+  PetscOptionsGetString(PETSC_NULL,PETSC_NULL, "-name",pAAR->file,sizeof(pAAR->file),PETSC_NULL);
 }
 
 void Objects_Create(AAR_OBJ* pAAR)
