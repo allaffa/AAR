@@ -1,0 +1,13 @@
+This folder contains two function files:
+(1) AAJ.m - contains the main AAJ function
+(2) AndersonMixing_AAJ.m - contains the Anderson update function called by AAJ.
+
+It also contains two .mat files with sample matrices and right hand side vectors (one for periodic Poisson and other for periodic Helmholtz).
+
+Running the code:
+(1) Load one of the .mat files that has a matrix (A) and the right hand side vector (b).
+(2) Specify the initial guess vector (eg: x_guess=ones(size(b));) and convergence tolerance (eg: tol=1e-8;) in the command window of MATLAB.
+(3) Run the code as:
+       x = AAJ(A,b,x_guess,tol); % solves Ax=b
+
+NOTE: Modify the "Input Parameters" in AAJ.m for optimizing the performance for the chosen problem

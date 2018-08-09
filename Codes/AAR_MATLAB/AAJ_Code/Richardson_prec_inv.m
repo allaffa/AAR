@@ -1,0 +1,37 @@
+function [sol, count, rel_residual]=Richardson_prec_inv(A, rhs, initial_guess, eps, iter, M1, M2)
+
+    sol=initial_guess;
+
+    rhs = M2 * rhs;
+    rhs = M1 * rhs;
+    
+    vec = A * sol;
+    vec = M2 * vec;
+    vec = M1 * vec;
+    
+    rel_residual=norm(rhs-vec,2)/norm(rhs,2);
+    count=0;
+
+    r=rhs-vec;
+    R=rel_residual;
+    
+    while(rel_residual>eps && count<=iter)
+        
+             count = count+1;
+             sol = sol+r; 
+             
+             vec = A * sol;
+             vec = M2 * vec;
+             vec = M1 * vec;
+             
+             r = rhs - vec;
+             
+             rel_residual = norm(r,2)/norm(rhs,2);
+             R = [R rel_residual];    
+             
+    end
+
+
+end
+
+
