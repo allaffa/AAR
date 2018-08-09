@@ -1,0 +1,23 @@
+#PBS -N Petsc_real
+#PBS -q mps
+#PBS -o output.sqdft.${PBS_JOBID}
+#PBS -j oe ##PBS -k oe
+#PBS -l nodes=1:ppn=32
+#PBS -l mem=100gb
+#PBS -l walltime=5:00:00
+MYPROCS=32
+
+module purge
+module load intel/15.0
+module load mvapich2/2.1
+module load fftw/3.3.4
+module load mkl/11.2
+module load petsc/3.5.3/opt
+
+ulimit -s unlimited
+
+cd ${PBS_O_WORKDIR}
+echo $PWD
+echo "======================================================================="
+mpirun -env MV2_ENABLE_AFFINITY=1 -env MV2_CPU_BINDING_POLICY=bunch -n $MYPROCS ./AAR_Real -name test -log_summary>test.out 
+echo "======================================================================="

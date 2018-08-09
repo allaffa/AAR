@@ -1,0 +1,10 @@
+matrix_file: Transport
+permutation: none
+prec_type: block_jacobi
+solver_tol: 0.000000001
+maxit: 100000
+gmres: 1
+aar_ne: 1
+aar_lsqr: 0
+
+

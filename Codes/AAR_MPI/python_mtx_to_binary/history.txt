@@ -1,0 +1,1000 @@
+  746  cd /home/utente/Dropbox/Massi/PhD/Talks/Pre_defense
+  747  clear
+  748  cd /home/utente/Dropbox/Massi/PhD/Talks/Pre_defense
+  749  clear
+  750  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+  751  clear
+  752  cd /home/utente/Dropbox/Massi/PhD/Talks/Pre_defense
+  753  clear
+  754  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+  755  clear
+  756  cd /home/utente/Dropbox/Massi/PhD/Talks/Pre_defense
+  757  clear
+  758  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+  759  clear
+  760  cd /home/utente/Dropbox/Massi/PhD/Talks/Pre_defense
+  761  clear
+  762  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+  763  clear
+  764  cd /home/utente/Dropbox/Massi/PhD/Talks/Pre_defense
+  765  clear
+  766  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+  767  clear
+  768  cd /home/utente/Dropbox/Massi/PhD/Talks/Pre_defense
+  769  clear
+  770  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+  771  clear
+  772  cd /home/utente/Dropbox/Massi/PhD/Talks/Pre_defense
+  773  clear
+  774  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+  775  clear
+  776  cd /home/utente/Dropbox/Massi/PhD/Talks/Pre_defense
+  777  clear
+  778  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+  779  clear
+  780  cd /home/utente/Dropbox/Massi/PhD/Talks/Pre_defense
+  781  clear
+  782  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+  783  clear
+  784  cd /home/utente/Dropbox/Massi/PhD/Talks/Pre_defense
+  785  clear
+  786  cd /home/utente/Dropbox/Massi/PhD/Curriculum_Vitae
+  787  clear
+  788  cd /home/utente/Dropbox/Massi/PhD/Curriculum_Vitae
+  789  clear
+  790  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/JVN2018/cover_letter
+  791  clear
+  792  cd /home/utente/Dropbox/Massi/PhD/Curriculum_Vitae
+  793  clear
+  794  skype
+  795  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/Wilkinson2018/cover_letter
+  796  clear
+  797  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/Wilkinson2018/research_statement
+  798  clear
+  799  cd /home/utente/Dropbox/Massi/PhD/Curriculum_Vitae
+  800  clear
+  801  cd /home/utente/Dropbox/Massi/PhD/Resume/Cathy_Scott_reviewed
+  802  clear
+  803  cd /home/utente/Dropbox/Massi/PhD/Talks/Pre_defense
+  804  clear
+  805  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+  806  clear
+  807  cd /home/utente/Dropbox/Massi/PhD/Talks/Pre_defense
+  808  clear
+  809  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+  810  clear
+  811  cd /home/utente/Dropbox/Massi/PhD/Talks/Pre_defense
+  812  clear
+  813  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+  814  clear
+  815  cd /home/utente/Dropbox/Massi/PhD/Talks/Pre_defense
+  816  clear
+  817  cd /home/utente/Dropbox/Massi/PhD/Talks/Athens_2016
+  818  clear
+  819  cd /home/utente/Dropbox/Massi/PhD/Talks/Pre_defense
+  820  clear
+  821  cd /home/utente/Dropbox/Massi/PhD/Talks/Athens_2016
+  822  clear
+  823  cd /home/utente/Dropbox/Massi/PhD/Talks/Pre_defense
+  824  clear
+  825  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/Wilkinson2018/research_statement
+  826  clear
+  827  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/Wilkinson2018/research_statement
+  828  clear
+  829  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/Wilkinson2018/research_statement
+  830  clear
+  831  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/Wilkinson2018/research_statement
+  832  clear
+  833  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/Householder2018/cover_letter
+  834  clear
+  835  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/Householder2018/cover_letter
+  836  clear
+  837  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/Householder2018/cover_letter
+  838  clear
+  839  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/Householder2018/research_statement
+  840  clear
+  841  cd /home/utente/Dropbox/Massi/PhD/Talks/Pre_defense
+  842  clear
+  843  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+  844  clear
+  845  cd /home/utente/Dropbox/Massi/PhD/Talks/Pre_defense
+  846  clear
+  847  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+  848  clear
+  849  cd /home/utente/Dropbox/Massi/PhD/Talks/Pre_defense
+  850  clear
+  851  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+  852  clear
+  853  cd /home/utente/Dropbox/Massi/PhD/Talks/Pre_defense
+  854  clear
+  855  cd '/home/utente/Dropbox/Massi/PhD/Courses/Iterative Method for Linear Systems/Final project'
+  856  clear
+  857  cd /home/utente/Dropbox/Massi/PhD/Talks/Pre_defense
+  858  clear
+  859  cd /home/utente/Dropbox/Massi/PhD/Talks/Pre_defense
+  860  clear
+  861  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/Householder2018/research_statement
+  862  clear
+  863  cd /home/utente/Dropbox/Massi/PhD/Talks/Pre_defense
+  864  clear
+  865  cd /home/utente/Dropbox/Massi/PhD/Talks/Athens_2016
+  866  clear
+  867  cd /home/utente/Dropbox/Massi/PhD/Talks/Pre_defense
+  868  clear
+  869  cd /home/utente/Dropbox/Massi/PhD/Talks/Pre_defense
+  870  clear
+  871  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+  872  clear
+  873  cd /home/utente/Dropbox/Massi/PhD/Talks/Pre_defense
+  874  clear
+  875  cd /home/utente/Dropbox/Massi/PhD/Talks/Pre_defense
+  876  clear
+  877  cd /home/utente/Dropbox/Massi/PhD/Talks/Pre_defense
+  878  clear
+  879  cd /home/utente/Dropbox/Massi/PhD/Talks/Pre_defense
+  880  clear
+  881  cd /home/utente/Dropbox/Massi/PhD/Talks/SCG_Presentation5
+  882  clear
+  883  cd /home/utente/Dropbox/Massi/PhD/Talks/Pre_defense
+  884  clear
+  885  cd /home/utente/Dropbox/Massi/PhD/Talks/SCG_Presentation5
+  886  clear
+  887  cd /home/utente/Dropbox/Massi/PhD/Talks/Pre_defense
+  888  clear
+  889  ifconfig
+  890  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/Wilkinson2018/research_statement
+  891  clear
+  892  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/Wilkinson2018/cover_letter
+  893  clear
+  894  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/Wilkinson2018/cover_letter
+  895  clear
+  896  cd /home/utente/Dropbox/Massi/PhD/Curriculum_Vitae
+  897  clear
+  898  cd /home/utente/Dropbox/Massi/PhD/Resume/Cathy_Scott_reviewed
+  899  clear
+  900  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/Householder2018/research_statement
+  901  clear
+  902  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/Householder2018/cover_letter
+  903  clear
+  904  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/Householder2018/research_statement
+  905  clear
+  906  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/Householder2018/research_statement
+  907  clear
+  908  cd /home/utente/Dropbox/Massi/PhD/Talks/Pre_defense
+  909  clear
+  910  cd /home/utente/Dropbox/Massi/PhD/Talks/Pre_defense
+  911  clear
+  912  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/Householder2018/research_statement
+  913  clear
+  914  cd /home/utente/Dropbox/Massi/PhD/Curriculum_Vitae
+  915  clear
+  916  cd /home/utente/Dropbox/Massi/PhD/Resume/Cathy_Scott_reviewed
+  917  clear
+  918  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+  919  clear
+  920  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+  921  clear
+  922  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+  923  clear
+  924  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+  925  clear
+  926  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+  927  clear
+  928  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+  929  clear
+  930  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+  931  clear
+  932  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+  933  clear
+  934  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+  935  clear
+  936  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+  937  clear
+  938  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+  939  clear
+  940  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+  941  clear
+  942  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+  943  clear
+  944  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+  945  clear
+  946  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+  947  clear
+  948  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+  949  clear
+  950  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+  951  clear
+  952  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+  953  clear
+  954  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+  955  clear
+  956  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+  957  clear
+  958  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+  959  clear
+  960  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+  961  clear
+  962  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+  963  clear
+  964  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+  965  clear
+  966  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+  967  clear
+  968  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+  969  clear
+  970  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+  971  clear
+  972  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+  973  clear
+  974  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+  975  clear
+  976  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+  977  clear
+  978  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+  979  clear
+  980  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+  981  clear
+  982  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+  983  clear
+  984  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+  985  clear
+  986  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+  987  clear
+  988  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+  989  clear
+  990  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+  991  clear
+  992  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+  993  clear
+  994  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+  995  clear
+  996  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+  997  clear
+  998  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+  999  clear
+ 1000  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1001  clear
+ 1002  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+ 1003  clear
+ 1004  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1005  clear
+ 1006  cd /home/utente/Dropbox/Massi/PhD/Talks/Pre_defense
+ 1007  clear
+ 1008  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+ 1009  clear
+ 1010  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1011  clear
+ 1012  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+ 1013  clear
+ 1014  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1015  clear
+ 1016  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+ 1017  clear
+ 1018  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1019  clear
+ 1020  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+ 1021  clear
+ 1022  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1023  clear
+ 1024  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+ 1025  clear
+ 1026  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1027  clear
+ 1028  cd /home/utente/Dropbox/Massi/PhD/Papers/AAR_paper/AAAR
+ 1029  clear
+ 1030  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1031  clear
+ 1032  cd /home/utente/Dropbox/Massi/PhD/Papers/MC_paper
+ 1033  clear
+ 1034  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_6
+ 1035  clear
+ 1036  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1037  clear
+ 1038  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1039  clear
+ 1040  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1041  clear
+ 1042  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1043  clear
+ 1044  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1045  clear
+ 1046  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1047  clear
+ 1048  ssh mlupopa@lab0z.mathcs.emory.edu
+ 1049  ssh mlupopa@compute.mathcs.emory.edu
+ 1050  ls
+ 1051  cd Desktop/
+ 1052  ls
+ 1053  cd Matlab_data/
+ 1054  ls
+ 1055  scp mlupopa@compute.mathcs.emory.edu:~/priv/PhD_project/Codes/Linear_Solver/AAJ_Code/results/*.mat .
+ 1056  matlab &
+ 1057  scp mlupopa@compute.mathcs.emory.edu:~/priv/PhD_project/Codes/Linear_Solver/AAJ_Code/simulations_test.m .
+ 1058  scp mlupopa@compute.mathcs.emory.edu:~/priv/PhD_project/Codes/Linear_Solver/AAJ_Code/simulation* .
+ 1059  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1060  clear
+ 1061  ssh mlupopa@compute.mathcs.emory.edu
+ 1062  cd
+ 1063  ssh mlupopa@compute.mathcs.emory.edu
+ 1064  cd
+ 1065  ssh mlupopa@compute.mathcs.emory.edu
+ 1066  cd
+ 1067  ssh mlupopa@compute.mathcs.emory.edu
+ 1068  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1069  clear
+ 1070  cd /home/utente/Dropbox/Massi/PhD/Resume/Cathy_Scott_reviewed
+ 1071  clear
+ 1072  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1073  clear
+ 1074  cd /home/utente/Dropbox/Massi/PhD/Curriculum_Vitae
+ 1075  clear
+ 1076  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1077  clear
+ 1078  cd
+ 1079  ssh mlupopa@compute.mathcs.emory.edu
+ 1080  cd Desktop/
+ 1081  ls
+ 1082  cd Matlab_data/
+ 1083  scp mlupopa@compute.mathcs.emory.edu:~/priv/PhD_project/Codes/Linear_Solver/AAJ_Code/spd_simulation* .
+ 1084  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1085  clear
+ 1086  cd /home/utente/Dropbox/Massi/PhD/Papers/AAAR/AAAR
+ 1087  clear
+ 1088  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1089  clear
+ 1090  ssh mlupopa@compute.mathcs.emory.edu
+ 1091  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1092  clear
+ 1093  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1094  clear
+ 1095  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1096  clear
+ 1097  ssh mlupopa@compute.mathcs.emory.edu
+ 1098  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1099  clear
+ 1100  cd /home/utente/Dropbox/Massi/PhD/Talks/CopperMountain_2018/student-paper-master
+ 1101  clear
+ 1102  cd /home/utente/Dropbox/Massi/PhD/Talks/CopperMountain_2018/student-paper-master
+ 1103  clear
+ 1104  cd /home/utente/Dropbox/Massi/PhD/Papers/AAAR/AAAR
+ 1105  clear
+ 1106  cd /home/utente/Dropbox/Massi/PhD/Talks/CopperMountain_2018/student-paper-master
+ 1107  clear
+ 1108  cd /home/utente/Dropbox/Massi/PhD/Papers/AAAR/AAAR
+ 1109  clear
+ 1110  cd /home/utente/Dropbox/Massi/PhD/Talks/CopperMountain_2018/student-paper-master
+ 1111  clear
+ 1112  cd /home/utente/Dropbox/Massi/PhD/Papers/AAAR/AAAR
+ 1113  clear
+ 1114  cd /home/utente/Dropbox/Massi/PhD/Talks/CopperMountain_2018/student-paper-master
+ 1115  clear
+ 1116  cd /home/utente/Dropbox/Massi/PhD/Papers/AAAR/AAAR
+ 1117  clear
+ 1118  cd /home/utente/Dropbox/Massi/PhD/Talks/CopperMountain_2018/student-paper-master
+ 1119  clear
+ 1120  cd /home/utente/Dropbox/Massi/PhD/Papers/AAAR/AAAR
+ 1121  clear
+ 1122  cd /home/utente/Dropbox/Massi/PhD/Talks/CopperMountain_2018/student-paper-master
+ 1123  clear
+ 1124  cd /home/utente/Dropbox/Massi/PhD/Papers/AAAR/AAAR
+ 1125  clear
+ 1126  cd /home/utente/Dropbox/Massi/PhD/Talks/CopperMountain_2018/student-paper-master
+ 1127  clear
+ 1128  cd /home/utente/Dropbox/Massi/PhD/Papers/AAAR/AAAR
+ 1129  clear
+ 1130  cd /home/utente/Dropbox/Massi/PhD/Talks/CopperMountain_2018/student-paper-master
+ 1131  clear
+ 1132  cd /home/utente/Dropbox/Massi/PhD/Papers/AAAR/AAAR
+ 1133  clear
+ 1134  cd /home/utente/Dropbox/Massi/PhD/Talks/CopperMountain_2018/student-paper-master
+ 1135  clear
+ 1136  cd /home/utente/Dropbox/Massi/PhD/Papers/AAAR/AAAR
+ 1137  clear
+ 1138  cd /home/utente/Dropbox/Massi/PhD/Talks/CopperMountain_2018/student-paper-master
+ 1139  clear
+ 1140  cd /home/utente/Dropbox/Massi/PhD/Papers/AAAR/AAAR
+ 1141  clear
+ 1142  cd /home/utente/Dropbox/Massi/PhD/Talks/CopperMountain_2018/student-paper-master
+ 1143  clear
+ 1144  cd /home/utente/Dropbox/Massi/PhD/Papers/AAAR/AAAR
+ 1145  clear
+ 1146  cd /home/utente/Dropbox/Massi/PhD/Talks/CopperMountain_2018/student-paper-master
+ 1147  clear
+ 1148  cd /home/utente/Dropbox/Massi/PhD/Papers/AAAR/AAAR
+ 1149  clear
+ 1150  cd /home/utente/Dropbox/Massi/PhD/Talks/CopperMountain_2018/student-paper-master
+ 1151  clear
+ 1152  cd /home/utente/Dropbox/Massi/PhD/Papers/AAAR/AAAR
+ 1153  clear
+ 1154  cd /home/utente/Dropbox/Massi/PhD/Talks/CopperMountain_2018/student-paper-master
+ 1155  clear
+ 1156  cd /home/utente/Dropbox/Massi/PhD/Papers/AAAR/AAAR
+ 1157  clear
+ 1158  cd /home/utente/Dropbox/Massi/PhD/Talks/CopperMountain_2018/student-paper-master
+ 1159  clear
+ 1160  cd /home/utente/Dropbox/Massi/PhD/Papers/AAAR/AAAR
+ 1161  clear
+ 1162  cd /home/utente/Dropbox/Massi/PhD/Talks/CopperMountain_2018/student-paper-master
+ 1163  clear
+ 1164  cd /home/utente/Dropbox/Massi/PhD/Papers/AAAR/AAAR
+ 1165  clear
+ 1166  cd /home/utente/Dropbox/Massi/PhD/Talks/CopperMountain_2018/student-paper-master
+ 1167  clear
+ 1168  cd /home/utente/Dropbox/Massi/PhD/Papers/AAAR/AAAR
+ 1169  clear
+ 1170  cd /home/utente/Dropbox/Massi/PhD/Talks/CopperMountain_2018/student-paper-master
+ 1171  clear
+ 1172  cd /home/utente/Dropbox/Massi/PhD/Papers/AAAR/AAAR
+ 1173  clear
+ 1174  cd /home/utente/Dropbox/Massi/PhD/Talks/CopperMountain_2018/student-paper-master
+ 1175  clear
+ 1176  cd /home/utente/Dropbox/Massi/PhD/Talks/CopperMountain_2018/student-paper-master
+ 1177  clear
+ 1178  cd Desktop/
+ 1179  wget https://www.siam.org/journals/tex/standard/siamart1116.cls
+ 1180  wget https://www.siam.org/journals/tex/standard/siamplain.bst
+ 1181  cd
+ 1182  ssh mlupopa@compute.mathcs.emory.edu
+ 1183  cd Dropbox/Massi/PhD/
+ 1184  ls
+ 1185  cd Talks/
+ 1186  ls
+ 1187  cd CopperMountain_2018/
+ 1188  ls
+ 1189  cd student-paper-master/
+ 1190  ls
+ 1191  rm *.eps
+ 1192  ls
+ 1193  rm profile*
+ 1194  ls
+ 1195  scp mlupopa@compute.mathcs.emory.edu:/home/mlupopa/priv/PhD_project/Article2/profile* .
+ 1196  cd /home/utente/Dropbox/Massi/PhD/Talks/CopperMountain_2018/student-paper-master
+ 1197  clear
+ 1198  cd /home/utente/Dropbox/Massi/PhD/Papers/AAAR/AAAR
+ 1199  clear
+ 1200  cd /home/utente/Dropbox/Massi/PhD/Talks/CopperMountain_2018/student-paper-master
+ 1201  clear
+ 1202  cd /home/utente/Dropbox/Massi/PhD/Papers/AAAR/AAAR
+ 1203  clear
+ 1204  cd /home/utente/Dropbox/Massi/PhD/Talks/CopperMountain_2018/student-paper-master
+ 1205  clear
+ 1206  ssh mlupopa@compute.mathcs.emory.edu
+ 1207  cd /home/utente/Dropbox/Massi/PhD/Talks/CopperMountain_2018/student-paper-master
+ 1208  clear
+ 1209  cd /home/utente/Dropbox/Massi/PhD/Papers/AAAR/AAAR
+ 1210  clear
+ 1211  cd /home/utente/Dropbox/Massi/PhD/Talks/CopperMountain_2018/student-paper-master
+ 1212  clear
+ 1213  cd /home/utente/Dropbox/Massi/PhD/Papers/AAAR/AAAR
+ 1214  clear
+ 1215  cd /home/utente/Dropbox/Massi/PhD/Talks/CopperMountain_2018/student-paper-master
+ 1216  clear
+ 1217  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1218  clear
+ 1219  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1220  clear
+ 1221  cd /home/utente/Dropbox/Massi/PhD/Curriculum_Vitae
+ 1222  clear
+ 1223  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1224  clear
+ 1225  cd /home/utente/Dropbox/Massi/PhD/Resume/Cathy_Scott_reviewed
+ 1226  clear
+ 1227  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1228  clear
+ 1229  cd /home/utente/Dropbox/Massi/PhD/Papers/AAAR/AAAR
+ 1230  clear
+ 1231  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1232  clear
+ 1233  cd /home/utente/Dropbox/Massi/PhD/Papers/AAAR/AAAR
+ 1234  clear
+ 1235  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1236  clear
+ 1237  cd /home/utente/Dropbox/Massi/PhD/Papers/AAAR/AAAR
+ 1238  clear
+ 1239  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1240  clear
+ 1241  cd /home/utente/Dropbox/Massi/PhD/Papers/AAAR/AAAR
+ 1242  clear
+ 1243  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1244  clear
+ 1245  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/JVN2018/research_statement
+ 1246  clear
+ 1247  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1248  clear
+ 1249  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/JVN2018/research_statement
+ 1250  clear
+ 1251  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1252  clear
+ 1253  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/JVN2018/research_statement
+ 1254  clear
+ 1255  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1256  clear
+ 1257  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/JVN2018/research_statement
+ 1258  clear
+ 1259  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1260  clear
+ 1261  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/JVN2018/research_statement
+ 1262  clear
+ 1263  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1264  clear
+ 1265  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/JVN2018/research_statement
+ 1266  clear
+ 1267  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1268  clear
+ 1269  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/JVN2018/research_statement
+ 1270  clear
+ 1271  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1272  clear
+ 1273  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/JVN2018/research_statement
+ 1274  clear
+ 1275  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1276  clear
+ 1277  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/JVN2018/research_statement
+ 1278  clear
+ 1279  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1280  clear
+ 1281  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/JVN2018/research_statement
+ 1282  clear
+ 1283  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1284  clear
+ 1285  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/JVN2018/research_statement
+ 1286  clear
+ 1287  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1288  clear
+ 1289  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/JVN2018/research_statement
+ 1290  clear
+ 1291  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1292  clear
+ 1293  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/JVN2018/research_statement
+ 1294  clear
+ 1295  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1296  clear
+ 1297  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/JVN2018/research_statement
+ 1298  clear
+ 1299  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1300  clear
+ 1301  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/JVN2018/research_statement
+ 1302  clear
+ 1303  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1304  clear
+ 1305  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/JVN2018/research_statement
+ 1306  clear
+ 1307  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1308  clear
+ 1309  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/JVN2018/research_statement
+ 1310  clear
+ 1311  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1312  clear
+ 1313  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/JVN2018/research_statement
+ 1314  clear
+ 1315  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1316  clear
+ 1317  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/JVN2018/research_statement
+ 1318  clear
+ 1319  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1320  clear
+ 1321  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/JVN2018/research_statement
+ 1322  clear
+ 1323  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1324  clear
+ 1325  ssh mlupopa@compute.mathcs.emory.edu
+ 1326  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1327  clear
+ 1328  cd /home/utente/Dropbox/Massi/TESI_magistrale/TEX_compatta
+ 1329  clear
+ 1330  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1331  clear
+ 1332  cd /home/utente/Dropbox/Massi/TESI_magistrale/TEX_compatta
+ 1333  clear
+ 1334  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1335  clear
+ 1336  cd /home/utente/Dropbox/Massi/TESI_magistrale/TEX_compatta
+ 1337  clear
+ 1338  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1339  clear
+ 1340  cd /home/utente/Dropbox/Massi/TESI_magistrale/TEX_compatta
+ 1341  clear
+ 1342  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1343  clear
+ 1344  cd /home/utente/Dropbox/Massi/TESI_magistrale/TEX_compatta
+ 1345  clear
+ 1346  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1347  clear
+ 1348  cd /home/utente/Dropbox/Massi/TESI_magistrale/TEX_compatta
+ 1349  clear
+ 1350  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1351  clear
+ 1352  cd /home/utente/Dropbox/Massi/TESI_magistrale/TEX_compatta
+ 1353  clear
+ 1354  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1355  clear
+ 1356  cd /home/utente/Dropbox/Massi/TESI_magistrale/TEX_compatta
+ 1357  clear
+ 1358  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1359  clear
+ 1360  cd /home/utente/Dropbox/Massi/TESI_magistrale/TEX_compatta
+ 1361  clear
+ 1362  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1363  clear
+ 1364  cd /home/utente/Dropbox/Massi/TESI_magistrale/TEX_compatta
+ 1365  clear
+ 1366  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1367  clear
+ 1368  cd /home/utente/Dropbox/Massi/TESI_magistrale/TEX_compatta
+ 1369  clear
+ 1370  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1371  clear
+ 1372  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1373  clear
+ 1374  cd /home/utente/Dropbox/Massi/TESI_magistrale/TEX_compatta
+ 1375  clear
+ 1376  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1377  clear
+ 1378  cd /home/utente/Dropbox/Massi/TESI_magistrale/TEX_compatta
+ 1379  clear
+ 1380  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1381  clear
+ 1382  cd /home/utente/Dropbox/Massi/TESI_magistrale/TEX_compatta
+ 1383  clear
+ 1384  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1385  clear
+ 1386  cd /home/utente/Dropbox/Massi/TESI_magistrale/TEX_compatta
+ 1387  clear
+ 1388  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1389  clear
+ 1390  cd /home/utente/Dropbox/Massi/TESI_magistrale/TEX_compatta
+ 1391  clear
+ 1392  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1393  clear
+ 1394  cd /home/utente/Dropbox/Massi/TESI_magistrale/TEX_compatta
+ 1395  clear
+ 1396  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1397  clear
+ 1398  cd /home/utente/Dropbox/Massi/TESI_magistrale/TEX_compatta
+ 1399  clear
+ 1400  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1401  clear
+ 1402  cd /home/utente/Dropbox/Massi/TESI_magistrale/TEX_compatta
+ 1403  clear
+ 1404  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1405  clear
+ 1406  cd /home/utente/Dropbox/Massi/TESI_magistrale/TEX_compatta
+ 1407  clear
+ 1408  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1409  clear
+ 1410  cd /home/utente/Dropbox/Massi/TESI_magistrale/TEX_compatta
+ 1411  clear
+ 1412  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1413  clear
+ 1414  cd /home/utente/Dropbox/Massi/TESI_magistrale/TEX_compatta
+ 1415  clear
+ 1416  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1417  clear
+ 1418  cd /home/utente/Dropbox/Massi/TESI_magistrale/TEX_compatta
+ 1419  clear
+ 1420  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1421  clear
+ 1422  cd /home/utente/Dropbox/Massi/TESI_magistrale/TEX_compatta
+ 1423  clear
+ 1424  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1425  clear
+ 1426  cd /home/utente/Dropbox/Massi/TESI_magistrale/TEX_compatta
+ 1427  clear
+ 1428  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1429  clear
+ 1430  cd /home/utente/Dropbox/Massi/TESI_magistrale/TEX_compatta
+ 1431  clear
+ 1432  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1433  clear
+ 1434  cd /home/utente/Dropbox/Massi/TESI_magistrale/TEX_compatta
+ 1435  clear
+ 1436  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1437  clear
+ 1438  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1439  clear
+ 1440  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1441  clear
+ 1442  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1443  clear
+ 1444  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1445  clear
+ 1446  cd /home/utente/Dropbox/Massi/PhD/Talks/CopperMountain_2018/student-paper-master
+ 1447  clear
+ 1448  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1449  clear
+ 1450  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1451  clear
+ 1452  ssh mlupopa@compute.mathcs.emory.edu
+ 1453  cd /home/utente/Dropbox/Massi/PhD/Talks/CopperMountain_2018/student-paper-master
+ 1454  clear
+ 1455  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1456  clear
+ 1457  ssh mlupopa@compute.mathcs.emory.edu
+ 1458  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1459  clear
+ 1460  cd /home/utente/Dropbox/Massi/PhD/Job_Applications/LSU/research_statement
+ 1461  clear
+ 1462  cd /home/utente/Dropbox/Massi/PhD/Job_Applications/LSU/research_statement
+ 1463  clear
+ 1464  cd /home/utente/Dropbox/Massi/PhD/Internships/Sandia/2016/Paper/SummerProceedings2016
+ 1465  clear
+ 1466  cd /home/utente/Dropbox/Massi/PhD/Job_Applications/LSU/research_statement
+ 1467  clear
+ 1468  cd /home/utente/Desktop/Math111Syllabus
+ 1469  clear
+ 1470  cd /usr/share/texlive/texmf-dist/tex/latex/geometry
+ 1471  clear
+ 1472  cd /home/utente/Desktop/Math111Syllabus
+ 1473  clear
+ 1474  ssh mlupopa@compute.mathcs.emory.edu
+ 1475  cd /home/utente/Desktop/Math111Syllabus
+ 1476  clear
+ 1477  ssh cheetah
+ 1478  ssh mlupopa@compute.mathcs.emory.edu
+ 1479  cd /home/utente/Dropbox/Massi/PhD/Teaching/Math111Syllabus
+ 1480  clear
+ 1481  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/Goldstine2018
+ 1482  clear
+ 1483  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/Goldstine2018
+ 1484  clear
+ 1485  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/Goldstine2018
+ 1486  clear
+ 1487  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/Goldstine2018
+ 1488  clear
+ 1489  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/THESIS
+ 1490  clear
+ 1491  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/Goldstine2018
+ 1492  clear
+ 1493  cd /home/utente/Dropbox/Massi/PhD/Fellowship_applications/Goldstine2018
+ 1494  clear
+ 1495  cd /home/utente/Dropbox/Massi/PhD/Teaching/Math111Syllabus
+ 1496  clear
+ 1497  sudo apt-get upgrade
+ 1498  sudo apt-get update
+ 1499  sudo apt install network-manager-openconnect
+ 1500  sudo systemctl daemon-reload
+ 1501  cd Downloads/
+ 1502  ls
+ 1503  ./anyconnect-linux64-4.5.03040-core-vpn-webdeploy-k9.sh
+ 1504  sudo ./anyconnect-linux64-4.5.03040-core-vpn-webdeploy-k9.sh
+ 1505  vim anyconnect-linux64-4.5.03040-core-vpn-webdeploy-k9.sh 
+ 1506  chmod +x anyconnect-linux64-4.5.03040-core-vpn-webdeploy-k9.sh 
+ 1507  ls
+ 1508  ./anyconnect-linux64-4.5.03040-core-vpn-webdeploy-k9.sh
+ 1509  sudo ./anyconnect-linux64-4.5.03040-core-vpn-webdeploy-k9.sh
+ 1510  cd
+ 1511  sudo yum install pangox-compat
+ 1512  sudo apt-get install yum
+ 1513  sudo yum install pangox-compat
+ 1514  ssh mpasini3@mps.pace.gatech.edu
+ 1515  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1516  clear
+ 1517  cd /home/utente/Dropbox/Massi/PhD/Teaching/Math111Syllabus
+ 1518  clear
+ 1519  cd /home/utente/Dropbox/Massi/PhD/PhD_Project/Report_AAJ
+ 1520  clear
+ 1521  ssh mpasini3@mps.pace.gatech.edu
+ 1522  cd Desktop/
+ 1523  scp AAR_petsc_real_16AUG2017.zip  mpasini3@mps.pace.gatech.edu
+ 1524  scp AAR_petsc_complex_15JUL2017.zip  mpasini3@mps.pace.gatech.edu
+ 1525  cd
+ 1526  sudo apt-get update
+ 1527  sudo apt-get install filezilla
+ 1528  filezilla
+ 1529  ssh mpasini3@mps.pace.gatech.edu
+ 1530  exit
+ 1531  ssh mpasini3@mps.pace.gatech.edu
+ 1532  ls
+ 1533  cd Documents/
+ 1534  ls
+ 1535  cd ..
+ 1536  ls
+ 1537  cd TOOLS/
+ 1538  ls
+ 1539  cd PETSC/
+ 1540  ls
+ 1541  git clone -b maint https://bitbucket.org/petsc/petsc petsc
+ 1542  sudo apt-get install git
+ 1543  ls
+ 1544  git clone -b maint https://bitbucket.org/petsc/petsc petsc
+ 1545  ls
+ 1546  cd petsc/
+ 1547  ls
+ 1548  ./configure
+ 1549  ./configure --download-mpich
+ 1550  sudo apt-get install valgrind
+ 1551  ls
+ 1552  ./configure 
+ 1553  ./configure --download-mpich
+ 1554  ./configure --download-mpich --download-fblaslapack
+ 1555  ./configure --with-fc=gfortran --download-mpich --download-fblaslapack
+ 1556  gfortran 
+ 1557  gfortran --version
+ 1558  sudo apt-get install gfortran
+ 1559  ./configure --with-fc=gfortran --download-mpich --download-fblaslapack
+ 1560  make PETSC_DIR=/home/utente/TOOLS/PETSC/petsc PETSC_ARCH=arch-linux2-c-debug all
+ 1561  make PETSC_DIR=/home/utente/TOOLS/PETSC/petsc PETSC_ARCH=arch-linux2-c-debug test
+ 1562  make PETSC_DIR=/home/utente/TOOLS/PETSC/petsc PETSC_ARCH=arch-linux2-c-debug streams
+ 1563  ls
+ 1564  pwd
+ 1565  git status
+ 1566  setenv PETSC_DIR /home/utente/TOOLS/PETSC/petsc
+ 1567  vim ~/.bashrc
+ 1568  export PETSC_DIR = /home/utente/TOOLS/PETSC/petsc
+ 1569  export PETSC_DIR=/home/utente/TOOLS/PETSC/petsc
+ 1570  export PETSC_ARCH=linux-gnu-c-debug
+ 1571  cd ..
+ 1572  cd..
+ 1573  cd ..
+ 1574  ls
+ 1575  mkdir python_mtx_to_binary
+ 1576  ls
+ 1577  cd python_mtx_to_binary/
+ 1578  git clone https://github.com/Perif/MatrixMarketToPETSc.git
+ 1579  ls
+ 1580  cd MatrixMarketToPETSc/
+ 1581  ls
+ 1582  python matrixConverter.py massi_matrix.mtx 
+ 1583  sudo apt-get install scipy
+ 1584  sudo apt-get install python-numpy python-scipy
+ 1585  python matrixConverter.py massi_matrix.mtx 
+ 1586  ls
+ 1587  cd converted/
+ 1588  ls
+ 1589  cd ..
+ 1590  ls
+ 1591  vim README.md 
+ 1592  vim matrixConverter.py 
+ 1593  python matrixConverter.py 
+ 1594  python matrixConverter.py ./
+ 1595  ls
+ 1596  cd converted/
+ 1597  ls
+ 1598  vim massi_matrix_42949x42949.dat 
+ 1599  ls
+ 1600  cd ..
+ 1601  ls
+ 1602  vim matrixConverter.py 
+ 1603  cd
+ 1604  ssh mpasini3@mps.pace.gatech.edu
+ 1605  cd
+ 1606  matlab &
+ 1607  ls
+ 1608  cd..
+ 1609  cd ..
+ 1610  ls
+ 1611  cd ..
+ 1612  ls
+ 1613  cd cdrom/
+ 1614  ls
+ 1615  cd ..
+ 1616  cd media/
+ 1617  ls
+ 1618  cd utente/
+ 1619  ls
+ 1620  cd MATHWORKS_MATLAB_R2013A_8_01_LIN/
+ 1621  ls
+ 1622  ./install_auto_linux 
+ 1623  ./uninstall_auto_linux 
+ 1624  matlab &
+ 1625  cd ..
+ 1626  ls
+ 1627  cd..
+ 1628  ls
+ 1629  cd ..
+ 1630  ls
+ 1631  cd media/
+ 1632  ls
+ 1633  cd utente/
+ 1634  ls
+ 1635  cd MATHWORKS_MATLAB_R2013A_8_01_LIN/
+ 1636  ls
+ 1637  ./install_auto_linux 
+ 1638  ./install_linux 
+ 1639  ./install
+ 1640  sudo ./install -javadir /usr/lib/jvm/java-8-oracle/
+ 1641  sudo add-apt-repository ppa:webupd8team/java sudo apt-get update sudo apt-get install oracle-java8-installer sudo apt-get install oracle-java8-set-default
+ 1642  sudo add-apt-repository ppa:webupd8team/java 
+ 1643  sudo add-apt-repository ppa:webupd8team/java sudo apt-get update sudo apt-get install oracle-java8-installer sudo apt-get install oracle-java8-set-default
+ 1644  sudo apt-get update
+ 1645  sudo apt-get install oracle-java8-installer
+ 1646  ls
+ 1647  ./install_auto_linux
+ 1648  sudo apt-get install openjdk-7-jre
+ 1649  sudo apt-get install oracle-java7-installer
+ 1650  sudo apt-get install openjdk-7-jre 
+ 1651  sudo ./install -javadir  /usr/lib/jvm/java-7-openjdk-amd64/jre
+ 1652  sudo ./install 
+ 1653  install oracle-java: sudo add-apt-repository ppa:webupd8team/java sudo apt-get update sudo apt-get install oracle-java8-installer sudo apt-get install oracle-java8-set-default
+ 1654  sudo install oracle-java
+ 1655  sudo add-apt-repository ppa:webupd8team/java
+ 1656  sudo apt-get install oracle-java8-installer
+ 1657  cd /home/utente/Dropbox/Massi/PhD/Resume/Industries
+ 1658  clear
+ 1659  cd /home/utente/Dropbox/Massi/PhD/Teaching/Prerequisites
+ 1660  clear
+ 1661  cd /home/utente/Dropbox/Massi/PhD/Curriculum_Vitae
+ 1662  clear
+ 1663  cd /home/utente/Dropbox/Massi/PhD/Teaching/Prerequisites
+ 1664  clear
+ 1665  cd /home/utente/Dropbox/Massi/PhD/Curriculum_Vitae
+ 1666  clear
+ 1667  cd /home/utente/Dropbox/Massi/PhD/Teaching/Prerequisites
+ 1668  clear
+ 1669  cd /home/utente/Dropbox/Massi/PhD/Curriculum_Vitae
+ 1670  clear
+ 1671  cd /home/utente/Dropbox/Massi/PhD/Teaching/Prerequisites
+ 1672  clear
+ 1673  cd /home/utente/Dropbox/Massi/PhD/Curriculum_Vitae
+ 1674  clear
+ 1675  cd /home/utente/Dropbox/Massi/PhD/Teaching/Prerequisites
+ 1676  clear
+ 1677  cd /home/utente/Dropbox/Massi/PhD/Teaching/Math111Syllabus
+ 1678  clear
+ 1679  cd /home/utente/Dropbox/Massi/PhD/Teaching/Prerequisites
+ 1680  clear
+ 1681  cd /home/utente/Dropbox/Massi/PhD/Teaching/Math111Syllabus
+ 1682  clear
+ 1683  cd /home/utente/Dropbox/Massi/PhD/Teaching/Prerequisites
+ 1684  clear
+ 1685  cd /home/utente/Dropbox/Massi/PhD/Teaching/Prerequisites
+ 1686  clear
+ 1687  cd /home/utente/Dropbox/Massi/PhD/Teaching/Math111Syllabus
+ 1688  clear
+ 1689  ssh mlupopa@compute.mathcs.emory.edu
+ 1690  ssh mpasini3@mps.pace.gatech.edu
+ 1691  exit
+ 1692  ssh mpasini3@mps.pace.gatech.edu
+ 1693  cd /home/utente/Dropbox/Massi/PhD/Teaching/Prerequisites
+ 1694  clear
+ 1695  ssh mpasini3@mps.pace.gatech.edu
+ 1696  exit
+ 1697  ssh mpasini3@mps.pace.gatech.edu
+ 1698  ssh mpasini3@mps.gatech.edu
+ 1699  ssh mpasini3@mps.pace.gatech.edu
+ 1700  cd TOOLS/
+ 1701  ls
+ 1702  cd python_mtx_to_binary/
+ 1703  ls
+ 1704  cd MatrixMarketToPETSc/
+ 1705  ls
+ 1706  vim README.md 
+ 1707  vim matrix
+ 1708  vim matrix.mtx 
+ 1709  vim matrix_massi.mtx 
+ 1710  vim massi_matrix.mtx 
+ 1711  ./converter
+ 1712  ./matrixConverter.py 
+ 1713  cd TOOLS/
+ 1714  ls
+ 1715  cd python_mtx_to_binary/
+ 1716  ls
+ 1717  cd MatrixMarketToPETSc/
+ 1718  ls
+ 1719  vim README.md 
+ 1720  ./matrixConverter.py 
+ 1721  ls
+ 1722  cd converted/
+ 1723  ls
+ 1724  rm .*
+ 1725  rm *
+ 1726  ls
+ 1727  cd ..
+ 1728  ls
+ 1729  ./matrixConverter.py matrix matrix.mtx
+ 1730  ./matrixConverter.py *.mtx
+ 1731  ls
+ 1732  vim matrixConverter.py 
+ 1733  ./matrixConverter.py ./converted
+ 1734  rm matrix.mtx 
+ 1735  ls
+ 1736  ./matrixConverter.py ./converted/
+ 1737  vim README.md 
+ 1738  ./matrixConverter.py massi_matrix massi_matrix.mtx 
+ 1739  vim matrixConverter.py 
+ 1740  ./matrixConverter.py ./
+ 1741  history
+ 1742  ls
+ 1743  ./matrixConverter.py ./
+ 1744  history
+ 1745  history > history.txt
