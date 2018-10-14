@@ -3,9 +3,9 @@ close all
 restoredefaultpath
 
 
-n = 10;
+n = 5;
 
-[A,b] = block_circulant(n);
+[A,b] = block_circulant(3,n);
 
 x = A\b;
 
@@ -24,8 +24,8 @@ time_gmres2 = 0.0;
 x_guess = zeros(size(A,1),1);
 
 start_aaj2 = cputime;
-[x_aaj2, iter_aaj2, relres_aaj2, sol_aaj2_hist] = AAJ2_correct(A,b,x_guess,tol,maxit,M1,M2,1,1,maxit,2);
-% [x_aaj2, iter_aaj2] = AAJ2(A,b,x_guess,tol,maxit,M1,M2, 0.2, 10, 6);
+[x_aaj2, iter_aaj2, relres_aaj2, sol_aaj2_hist] = AAJ2_correct(A,b,x_guess,tol,maxit,M1,M2,1,1,maxit,3);
+% [x_aaj2, iter_aaj2, relres_aaj2, sol_aaj2_hist] = AAJ2(A,b,x_guess,tol,maxit,M1,M2, 1,1, maxit, 1);
 finish_aaj2 = cputime; 
 
 error_aaj2 = norm(x_aaj2 - x)/norm(x);
@@ -39,6 +39,12 @@ finish_gmres2 = cputime;
 time_gmres2 = time_gmres2 + (finish_gmres2 - start_gmres2);
 
 error_gmres2 = norm(x_gmres2 - x)/norm(x);
+
+semilogy(relres_aaj2, '-o', 'LineWidth', 2)
+axis([0 length(relres_aaj2) min(relres_aaj2)-0.5 10])
+set(gca, 'fontsize', 18)
+xlabel('Iteration index')
+ylabel('Relative residual norm')
 
 display(['Modified Anderson took', ' ', num2str(time_aaj2), ' seconds', ' with error ', num2str(error_aaj2)]);
 display(['GMRES2', ' ', num2str(time_gmres2), ' seconds', ' with error ', num2str(error_gmres2)]);
