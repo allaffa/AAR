@@ -98,11 +98,11 @@ int main( int argc, char **argv )
   char matrix_file[30]="";
 
   PetscInitialize(&argc,&argv,(char*)0,help);
-  ierr = PetscOptionsSetValue("-pc_hypre_pilut_maxiter","1"); CHKERRQ(ierr);
-  ierr = PetscOptionsSetValue("-pc_hypre_pilut_tol","0.05"); CHKERRQ(ierr);
-  ierr = PetscOptionsSetValue("-pc_hypre_parasails_nlevels","1"); CHKERRQ(ierr);
-  ierr = PetscOptionsSetValue("-pc_hypre_parasails_thresh","0.05"); CHKERRQ(ierr);
-  PetscOptionsInsert(&argc,&argv,PETSC_NULL);
+  ierr = PetscOptionsSetValue(PETSC_NULL, "-pc_hypre_pilut_maxiter","1"); CHKERRQ(ierr);
+  ierr = PetscOptionsSetValue(PETSC_NULL, "-pc_hypre_pilut_tol","0.05"); CHKERRQ(ierr);
+  ierr = PetscOptionsSetValue(PETSC_NULL, "-pc_hypre_parasails_nlevels","1"); CHKERRQ(ierr);
+  ierr = PetscOptionsSetValue(PETSC_NULL, "-pc_hypre_parasails_thresh","0.05"); CHKERRQ(ierr);
+  PetscOptionsInsert(PETSC_NULL, &argc,&argv,PETSC_NULL);
 
   int world_rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
@@ -243,7 +243,7 @@ void ReadInputFile(AAR_PARAMS* params, char *matrix_file)
   char matrix_name[20];
   strcat(matrix_file, "./matrix_collection/");
 
-  PetscOptionsGetString(PETSC_NULL,"-name",ConfigFile,sizeof(ConfigFile),&flg);
+  PetscOptionsGetString(PETSC_NULL, PETSC_NULL, "-name",ConfigFile,sizeof(ConfigFile),&flg);
   strcat(ConfigFile,".in");
 
   if((fConfFile = fopen((const char*)ConfigFile, "rb"))==NULL)
@@ -369,8 +369,8 @@ static PetscErrorCode PCSetFromOptions_HYPRE_Pilut()
    PetscErrorCode ierr;
 
    //PetscOptionsBegin(PETSC_COMM_WORLD, "", "Options for the ILUT preconditioner", "");
-   ierr = PetscOptionsSetValue("-pc_hypre_pilut_maxiter","1"); CHKERRQ(ierr);
-   ierr = PetscOptionsSetValue("-pc_hypre_pilut_tol","0.9"); CHKERRQ(ierr);
+   ierr = PetscOptionsSetValue(PETSC_NULL, "-pc_hypre_pilut_maxiter","1"); CHKERRQ(ierr);
+   ierr = PetscOptionsSetValue(PETSC_NULL, "-pc_hypre_pilut_tol","0.9"); CHKERRQ(ierr);
    //PetscOptionsEnd();
 
    return(0);
@@ -385,8 +385,8 @@ static PetscErrorCode PCSetFromOptions_HYPRE_Parasails()
    PetscErrorCode ierr;
 
    //PetscOptionsBegin(PETSC_COMM_WORLD, "", "Options for the SPAI preconditioner", "");
-   ierr = PetscOptionsSetValue("-pc_hypre_parasails_nlevels","5"); CHKERRQ(ierr);
-   ierr = PetscOptionsSetValue("-pc_hypre_parasails_thresh","0.01"); CHKERRQ(ierr);
+   ierr = PetscOptionsSetValue(NULL, "-pc_hypre_parasails_nlevels","5"); CHKERRQ(ierr);
+   ierr = PetscOptionsSetValue(NULL, "-pc_hypre_parasails_thresh","0.01"); CHKERRQ(ierr);
    //PetscOptionsEnd();
 
    return(0);
