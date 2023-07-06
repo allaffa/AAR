@@ -283,11 +283,16 @@ int main( int argc, char **argv )
     aar_ne_iter_TOT += aar_ne_output.iterations;
   }
 
+  PetscPrintf(PETSC_COMM_WORLD, "\n \n");
   PetscPrintf(PETSC_COMM_WORLD, "Construction of the preconditioner: Time elapsed: %f (s)\n", t_prec_construction_final-t_prec_construction_init);
-  PetscPrintf(PETSC_COMM_WORLD, "AAR_LSQR - Number of iterations: %d\nFinal relative residual norm: %.9f\n Time elapsed: %f (s)\n", aar_lsqr_iter_TOT/number_runs, rel_res_aar_lsqr, t_aar_lsqr_TOT/number_runs);
-  PetscPrintf(PETSC_COMM_WORLD, "AAR_NE - Number of iterations: %d\nFinal relative residual norm: %.9f\n Time elapsed: %f (s)\n", aar_ne_iter_TOT/number_runs, rel_res_aar_ne, t_aar_ne_TOT/number_runs);
-  PetscPrintf(PETSC_COMM_WORLD, "Restarted GMRES(10) - Number of iterations: %d\nFinal relative residual norm: %.9f\n Time elapsed: %f (s)\n", gmres1_iter_TOT/number_runs, rel_res_gmres1, t_gmres1_TOT/number_runs);
-  PetscPrintf(PETSC_COMM_WORLD, "Restarted GMRES(30) - Number of iterations: %d\nFinal relative residual norm: %.9f\n Time elapsed: %f (s)\n", gmres2_iter_TOT/number_runs, rel_res_gmres2, t_gmres2_TOT/number_runs);
+  if(aar_parameters.aar_lsqr_compute == 1)
+  	PetscPrintf(PETSC_COMM_WORLD, "AAR_LSQR - Number of iterations: %d\nFinal relative residual norm: %.9f\n Time elapsed: %f (s)\n", aar_lsqr_iter_TOT/number_runs, rel_res_aar_lsqr, t_aar_lsqr_TOT/number_runs);
+  if(aar_parameters.aar_ne_compute == 1)
+  	PetscPrintf(PETSC_COMM_WORLD, "AAR_NE - Number of iterations: %d\nFinal relative residual norm: %.9f\n Time elapsed: %f (s)\n", aar_ne_iter_TOT/number_runs, rel_res_aar_ne, t_aar_ne_TOT/number_runs);
+  if(aar_parameters.gmres_compute == 1)
+  	PetscPrintf(PETSC_COMM_WORLD, "Restarted GMRES(10) - Number of iterations: %d\nFinal relative residual norm: %.9f\n Time elapsed: %f (s)\n", gmres1_iter_TOT/number_runs, rel_res_gmres1, t_gmres1_TOT/number_runs);
+  	PetscPrintf(PETSC_COMM_WORLD, "Restarted GMRES(30) - Number of iterations: %d\nFinal relative residual norm: %.9f\n Time elapsed: %f (s)\n", gmres2_iter_TOT/number_runs, rel_res_gmres2, t_gmres2_TOT/number_runs);
+
 
   VecDestroy(&x);
   VecDestroy(&x_guess);
@@ -298,8 +303,8 @@ int main( int argc, char **argv )
   PCDestroy(&prec);
   KSPDestroy(&restarted_gmres1);
   KSPDestroy(&restarted_gmres2);
-  AAR_LSQR_Solver_Destroy(&aar_lsqr_solver);
-  AAR_NE_Solver_Destroy(&aar_ne_solver);
+  //AAR_LSQR_Solver_Destroy(&aar_lsqr_solver);
+  //AAR_NE_Solver_Destroy(&aar_ne_solver);
   PetscRandomDestroy(&rnd);
 
   ierr = PetscFinalize();CHKERRQ(ierr);
