@@ -5,8 +5,8 @@ import sys
 import re
 
 dirs = os.environ['PETSC_DIR']
-sys.path.insert(0, dirs+'/bin/pythonscripts/')
-sys.path.insert(0, dirs+'/bin/')
+sys.path.insert(0, dirs+'/lib/petsc/bin/pythonscripts/')
+sys.path.insert(0, dirs+'/lib/petsc/bin/')
 
 import PetscBinaryIO
 
@@ -22,7 +22,7 @@ def grep(path, regex):
     return res
 
 if(len(sys.argv)!=2):
-	print 'Usage : python '+sys.argv[0]+' pathToMatrixFiles'
+	print('Usage : python '+sys.argv[0]+' pathToMatrixFiles')
 	exit(1)
 
 matrixFileList = []
@@ -31,7 +31,7 @@ for root, dirnames, filenames in os.walk(sys.argv[1]):
       matrixFileList.append(os.path.join(root, filename))
 
 for matrix in matrixFileList:
-	print 'Matrix to convert '+matrix
+	print('Matrix to convert '+matrix)
 
 if not os.path.exists(converted):
     os.makedirs(converted)
@@ -43,13 +43,13 @@ for matrixFile in matrixFileList:
 	try:
 		if A.shape[1]!=1:
 			outputfile = converted+'/'+matName+'_'+str(A.shape[0])+'x'+str(A.shape[1])+'.dat'
-			print 'Outputing : '+outputfile
+			print('Outputing : '+outputfile)
 			mfile = open(outputfile,'w')
 			PetscBinaryIO.PetscBinaryIO().writeMatSciPy(mfile, A)
 		else:
 
 			outputfile = converted+'/'+matName+'_'+str(A.shape[0])+'.dat'
-			print 'Outputing : '+outputfile
+			print('Outputing : '+outputfile)
 			mfile = open(outputfile,'w')
 			PetscBinaryIO.PetscBinaryIO().writeVec(mfile, A)
 
@@ -57,8 +57,8 @@ for matrixFile in matrixFileList:
 		
 		
 
-	except Exception, e:
-		print 'Error Creating file '+outputfile
+	except ValueError:
+		print('Error Creating file '+outputfile)
 		if os.path.isfile(outputfile):
 			os.remove(outputfile)
-			print 'File has been removed'
+			print('File has been removed')
