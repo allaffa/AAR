@@ -541,7 +541,7 @@ void AAR_LSQR_SetUp(AAR_LSQR_SOLVER* solver, Mat* A, Vec* x_guess, PC* prec, Pet
   }
 
   MatCreate(PETSC_COMM_WORLD, &solver->DF_matrix);
-  MatSetSizes(solver->DF_matrix,PETSC_DECIDE,p_aar,solver->M,p_aar);
+  MatSetSizes(solver->DF_matrix,PETSC_DECIDE,PETSC_DECIDE,solver->M,p_aar);
   MatSetType(solver->DF_matrix,MATAIJ);
   MatMPIDenseSetPreallocation(solver->DF_matrix,PETSC_NULL);
   MatSetUp(solver->DF_matrix);
